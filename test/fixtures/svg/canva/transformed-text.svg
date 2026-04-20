@@ -1,0 +1,6 @@
+<svg width="480" height="240" viewBox="0 0 480 240" xmlns="http://www.w3.org/2000/svg">
+  <rect width="480" height="240" fill="#f3ebe2" />
+  <path d="M0 180 C100 150 180 235 300 205 C360 190 430 150 480 170 L480 240 L0 240 Z" fill="#d5d9f7" />
+  <text x="42" y="84" font-size="42" font-family="Arial" fill="#2a261f" transform="rotate(-8 42 84)">Rotated display line</text>
+  <text x="40" y="156" font-size="20" font-family="Arial" fill="#4f4a43">This fixture should warn and keep the transformed text in the raster background.</text>
+</svg>

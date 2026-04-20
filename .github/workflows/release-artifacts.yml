@@ -1,0 +1,88 @@
+name: Release Artifacts
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Audit Illustrator fixtures
+        run: pnpm check:illustrator-fixtures
+
+      - name: Build Illustrator bundle
+        run: pnpm build:illustrator
+
+      - name: Build Figma plugin
+        run: pnpm build:figma
+
+      - name: Package panel zip
+        run: pnpm package:panel:zip
+
+      - name: Package panel zxp
+        run: pnpm package:panel
+
+      - name: Package Figma plugin zip
+        run: |
+          mkdir -p dist/figma-plugin/dist
+          cp plugins/figma/manifest.json dist/figma-plugin/manifest.json
+          cp plugins/figma/dist/* dist/figma-plugin/dist/
+          python3 - <<'PY'
+          import os
+          import zipfile
+          root = "dist/figma-plugin"
+          out = "dist/all2html-figma-plugin.zip"
+          with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+              for dirpath, _, filenames in os.walk(root):
+                  for filename in filenames:
+                      path = os.path.join(dirpath, filename)
+                      arcname = os.path.relpath(path, root)
+                      zf.write(path, arcname)
+          PY
+
+      - name: Collect release assets
+        run: |
+          mkdir -p release-assets
+          cp dist/all2html.js release-assets/all2html.js
+          cp dist/all2html-after-effects.zip release-assets/all2html-after-effects.zip
+          cp dist/all2html-figma-plugin.zip release-assets/all2html-figma-plugin.zip
+          cp plugins/illustrator/panel/dist/zip/all2html_0.1.0.zip release-assets/all2html-panel.zip
+          cp plugins/illustrator/panel/dist/zxp/com.all2html.panel.zxp release-assets/all2html-panel.zxp
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: all2html-release-assets
+          path: release-assets/*
+
+      - name: Upload to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*

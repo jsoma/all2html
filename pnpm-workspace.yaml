@@ -1,0 +1,5 @@
+packages:
+  - "plugins/illustrator/panel"
+  - "apps/svg-dropzone"
+
+onlyBuiltDependencies: lefthook

@@ -1,0 +1,13 @@
+<svg width="520" height="300" viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="520" height="300" fill="#ffffff" />
+  <rect x="42" y="56" width="132" height="72" rx="18" fill="#d9e7ff" stroke="#2d4dcf" />
+  <rect x="196" y="56" width="132" height="72" rx="18" fill="#ffe5d6" stroke="#f0642d" />
+  <rect x="350" y="56" width="132" height="72" rx="18" fill="#dff5eb" stroke="#0a8a5b" />
+  <path d="M174 92 H196" stroke="#2a261f" stroke-width="4" />
+  <path d="M328 92 H350" stroke="#2a261f" stroke-width="4" />
+  <text x="80" y="100" font-size="18" font-family="Arial" fill="#1f1d1a">Load</text>
+  <text x="228" y="100" font-size="18" font-family="Arial" fill="#1f1d1a">Transform</text>
+  <text x="392" y="100" font-size="18" font-family="Arial" fill="#1f1d1a">Emit</text>
+  <text x="42" y="216" font-size="22" font-family="Arial" font-weight="700" fill="#1f1d1a">Generic SVG fixture</text>
+  <text x="42" y="246" font-size="16" font-family="Arial" fill="#50483f">Non-Canva input should exercise the same importer path.</text>
+</svg>

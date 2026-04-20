@@ -1,0 +1,58 @@
+name: CI Artifacts
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Run typecheck
+        run: pnpm run typecheck
+
+      - name: Audit Illustrator fixtures
+        run: pnpm check:illustrator-fixtures
+
+      - name: Build Illustrator bundle
+        run: pnpm build:illustrator
+
+      - name: Package panel zip
+        run: pnpm package:panel:zip
+
+      - name: Collect CI artifacts
+        run: |
+          mkdir -p ci-artifacts
+          cp dist/all2html.js ci-artifacts/all2html.js
+          find plugins/illustrator/panel/dist/zip -type f -name '*.zip' -maxdepth 3 -exec cp {} ci-artifacts/ \;
+          find plugins/illustrator/panel/dist/zxp -type f -name '*.zxp' -maxdepth 3 -exec cp {} ci-artifacts/ \;
+
+      - name: Upload CI artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: all2html-main-build-${{ github.sha }}
+          path: ci-artifacts/*
+          retention-days: 90

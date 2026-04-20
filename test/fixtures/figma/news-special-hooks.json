@@ -1,0 +1,92 @@
+[
+  {
+    "sourceNodeId": "figma-news-special-hooks",
+    "name": "news-special-hooks",
+    "originalName": "news-special-hooks",
+    "width": 700,
+    "height": 400,
+    "actualWidth": 700,
+    "actualHeight": 400,
+    "layers": [
+      {
+        "sourceNodeId": "figma-news-special-hooks-before",
+        "name": "promo-note",
+        "type": "html-before",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "rawHtml",
+            "content": "<aside class=\"promo-note\" data-hook=\"before\">Subscriber-only context box</aside>"
+          }
+        ]
+      },
+      {
+        "sourceNodeId": "figma-news-special-hooks-content",
+        "name": "content",
+        "type": "default",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "text",
+            "id": "figma-news-special-hooks-headline",
+            "kind": "area",
+            "position": { "x": 36, "y": 226, "width": 420, "height": 80 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Transit planners add weekend trains for the next construction phase",
+                "alignment": "left",
+                "leading": 36,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Transit planners add weekend trains for the next construction phase",
+                    "fontName": "Inter-Bold",
+                    "fontPostScriptName": "Inter-Bold",
+                    "fontSize": 29,
+                    "color": { "r": 24, "g": 31, "b": 41 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sourceNodeId": "figma-news-special-hooks-after",
+        "name": "source-line",
+        "type": "html-after",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "rawHtml",
+            "content": "<footer class=\"source-line\" data-hook=\"after\">Source: Regional transit authority</footer>"
+          }
+        ]
+      }
+    ],
+    "assets": [
+      {
+        "id": "bg-news-special-hooks",
+        "path": "all2html-output/news-special-hooks-news-special-hooks.png",
+        "mimeType": "image/png",
+        "width": 700,
+        "height": 400,
+        "artboardName": "news-special-hooks",
+        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+      }
+    ]
+  }
+]

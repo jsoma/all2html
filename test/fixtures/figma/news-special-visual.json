@@ -1,0 +1,146 @@
+[
+  {
+    "sourceNodeId": "figma-news-special-visual",
+    "name": "news-special-visual",
+    "originalName": "news-special-visual",
+    "width": 720,
+    "height": 420,
+    "actualWidth": 720,
+    "actualHeight": 420,
+    "layers": [
+      {
+        "sourceNodeId": "figma-news-special-visual-inline",
+        "name": "alert-ring",
+        "type": "svg",
+        "inlineSvg": true,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "rawHtml",
+            "content": "<svg data-inline-special=\"alert-ring\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 720 420\"><circle cx=\"584\" cy=\"112\" r=\"54\" fill=\"none\" stroke=\"#FFB27A\" stroke-width=\"10\"/><circle cx=\"584\" cy=\"112\" r=\"22\" fill=\"#FFB27A\" opacity=\"0.35\"/></svg>"
+          }
+        ]
+      },
+      {
+        "sourceNodeId": "figma-news-special-visual-overlay",
+        "name": "storm-track",
+        "type": "png",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 65,
+        "elements": []
+      },
+      {
+        "sourceNodeId": "figma-news-special-visual-svg",
+        "name": "cone-map",
+        "type": "svg",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": []
+      },
+      {
+        "sourceNodeId": "figma-news-special-visual-content",
+        "name": "content",
+        "type": "default",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "text",
+            "id": "figma-news-special-visual-kicker",
+            "kind": "area",
+            "position": { "x": 36, "y": 234, "width": 200, "height": 18 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "COASTAL WATCH",
+                "alignment": "left",
+                "leading": 16,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "COASTAL WATCH",
+                    "fontName": "Inter-SemiBold",
+                    "fontPostScriptName": "Inter-SemiBold",
+                    "fontSize": 12,
+                    "color": { "r": 38, "g": 95, "b": 129 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "id": "figma-news-special-visual-headline",
+            "kind": "area",
+            "position": { "x": 36, "y": 258, "width": 360, "height": 82 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Harbor crews stage floating barriers ahead of the next tide cycle",
+                "alignment": "left",
+                "leading": 38,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Harbor crews stage floating barriers ahead of the next tide cycle",
+                    "fontName": "Inter-Bold",
+                    "fontPostScriptName": "Inter-Bold",
+                    "fontSize": 30,
+                    "color": { "r": 24, "g": 31, "b": 41 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "assets": [
+      {
+        "id": "bg-news-special-visual",
+        "path": "all2html-output/news-special-visual-news-special-visual.png",
+        "mimeType": "image/png",
+        "width": 720,
+        "height": 420,
+        "artboardName": "news-special-visual",
+        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+      },
+      {
+        "id": "png-news-special-visual-storm-track",
+        "path": "all2html-output/news-special-visual-news-special-visual-storm-track.png",
+        "mimeType": "image/png",
+        "width": 720,
+        "height": 420,
+        "artboardName": "news-special-visual",
+        "layerName": "storm-track",
+        "exportParams": { "format": "png", "scale": 1, "transparent": true }
+      },
+      {
+        "id": "svg-news-special-visual-cone-map",
+        "path": "all2html-output/news-special-visual-news-special-visual-cone-map.svg",
+        "mimeType": "image/svg+xml",
+        "width": 720,
+        "height": 420,
+        "artboardName": "news-special-visual",
+        "layerName": "cone-map",
+        "exportParams": { "format": "svg", "scale": 1, "transparent": true }
+      }
+    ]
+  }
+]

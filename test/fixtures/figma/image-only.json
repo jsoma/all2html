@@ -1,0 +1,34 @@
+[
+  {
+    "sourceNodeId": "figma-frame-image",
+    "name": "photo",
+    "originalName": "photo:800:image",
+    "width": 800,
+    "height": 450,
+    "actualWidth": 800,
+    "actualHeight": 450,
+    "imageOnly": true,
+    "layers": [
+      {
+        "sourceNodeId": "figma-layer-image",
+        "name": "content",
+        "type": "default",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": []
+      }
+    ],
+    "assets": [
+      {
+        "id": "bg-photo",
+        "path": "all2html-output/photo.png",
+        "mimeType": "image/png",
+        "width": 800,
+        "height": 450,
+        "artboardName": "photo:800:image",
+        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+      }
+    ]
+  }
+]

@@ -1,0 +1,161 @@
+{
+  "generator": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "namespace": "g-",
+    "responsiveness": "dynamic"
+  },
+  "fonts": [],
+  "artboards": [
+    {
+      "name": "main",
+      "originalName": "main",
+      "width": 600,
+      "height": 400,
+      "actualWidth": 600,
+      "actualHeight": 400,
+      "layers": [
+        {
+          "name": "Layer1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-headline",
+              "kind": "area",
+              "position": {
+                "x": 20,
+                "y": 10,
+                "width": 560,
+                "height": 40
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "binding": {
+                "path": "headlines.main",
+                "allowHtml": false
+              },
+              "paragraphs": [
+                {
+                  "text": "Default Headline",
+                  "alignment": "left",
+                  "leading": 28,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Default Headline",
+                      "fontName": "ArialMT",
+                      "fontSize": 24,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-body",
+              "kind": "area",
+              "position": {
+                "x": 20,
+                "y": 60,
+                "width": 560,
+                "height": 200
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "binding": {
+                "path": "content.body",
+                "allowHtml": true
+              },
+              "paragraphs": [
+                {
+                  "text": "Default body text",
+                  "alignment": "left",
+                  "leading": 18,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Default body text",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-static",
+              "kind": "area",
+              "position": {
+                "x": 20,
+                "y": 300,
+                "width": 560,
+                "height": 30
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Static text (no binding)",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Static text (no binding)",
+                      "fontName": "ArialMT",
+                      "fontSize": 12,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [],
+  "assets": {},
+  "metadata": {
+    "slug": "tagged-text-test"
+  },
+  "irVersion": "0.0.0"
+}

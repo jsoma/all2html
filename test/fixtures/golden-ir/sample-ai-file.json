@@ -1,0 +1,244 @@
+{
+  "generator": {
+    "tool": "illustrator",
+    "toolVersion": "29.8.5",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "settings_version": "0.56",
+    "image_format": "png",
+    "responsiveness": "fixed",
+    "output": "one-file",
+    "html_output_path": "/ai2html-output/",
+    "html_output_extension": ".html",
+    "image_output_path": "",
+    "local_preview_template": "template-nyt.html",
+    "png_number_of_colors": "128",
+    "jpg_quality": "60",
+    "headline": "Ai Graphic Headline",
+    "leadin": "Introductory text here.",
+    "notes": "Notes: Text goes here.",
+    "sources": "Source: Name goes here.",
+    "credit": "By ai2html",
+    "show_completion_dialog_box": "no",
+    "clickable_link": "http://nytimes.com"
+  },
+  "fonts": [],
+  "artboards": [
+    {
+      "name": "mobile",
+      "originalName": "mobile",
+      "width": 300,
+      "height": 400,
+      "actualWidth": 300,
+      "actualHeight": 400,
+      "layers": [
+        {
+          "name": "Layer 3",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai2-1",
+              "kind": "area",
+              "position": {
+                "x": 21,
+                "y": 266.1669921875,
+                "width": 112.755859375,
+                "height": 84.1836395263672
+              },
+              "opacity": 100,
+              "valign": "bottom",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Bottom left aligned area text. Bottom left aligned area text. Bottom left aligned area text. Bottom left aligned area.",
+                  "alignment": "left",
+                  "leading": 14,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Bottom left aligned area text. Bottom left aligned area text. Bottom left aligned area text. Bottom left aligned area.",
+                      "fontName": "ArialMT",
+                      "fontSize": 12,
+                      "color": {
+                        "r": 0,
+                        "g": 204,
+                        "b": 153
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai2-2",
+              "kind": "area",
+              "position": {
+                "x": 168.908203125,
+                "y": 252.1669921875,
+                "width": 110.091796875,
+                "height": 98.1836395263672
+              },
+              "opacity": 100,
+              "valign": "bottom",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Bottom right aligned area text. Bottom right aligned area text. Bottom right aligned area text. Bottom right aligned area text. ",
+                  "alignment": "right",
+                  "leading": 14,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Bottom right aligned area text. Bottom right aligned area text. Bottom right aligned area text. Bottom right aligned area text. ",
+                      "fontName": "ArialMT",
+                      "fontSize": 12,
+                      "color": {
+                        "r": 51,
+                        "g": 153,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai2-3",
+              "kind": "area",
+              "position": {
+                "x": 21,
+                "y": 50,
+                "width": 112.755859375,
+                "height": 90.1836395263672
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Top left aligned area text. Top left aligned area text. Top left aligned area text. Top left aligned area text. ",
+                  "alignment": "left",
+                  "leading": 14,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Top left aligned area text. Top left aligned area text. Top left aligned area text. Top left aligned area text. ",
+                      "fontName": "ArialMT",
+                      "fontSize": 12,
+                      "color": {
+                        "r": 255,
+                        "g": 0,
+                        "b": 51
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai2-4",
+              "kind": "area",
+              "position": {
+                "x": 168.908203125,
+                "y": 50,
+                "width": 110.091796875,
+                "height": 90.1836395263672
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Top right aligned area text. Top right aligned area text. Top right aligned area text. Top right aligned area text. ",
+                  "alignment": "right",
+                  "leading": 14,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Top right aligned area text. Top right aligned area text. Top right aligned area text. Top right aligned area text. ",
+                      "fontName": "ArialMT",
+                      "fontSize": 12,
+                      "color": {
+                        "r": 0,
+                        "g": 51,
+                        "b": 255
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "area text",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": []
+        },
+        {
+          "name": "background",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": []
+        }
+      ]
+    }
+  ],
+  "customBlocks": [],
+  "assets": {
+    "sample-ai-file-mobile": {
+      "id": "sample-ai-file-mobile",
+      "path": "sample-ai-file-mobile.png",
+      "mimeType": "image/png",
+      "width": 600,
+      "height": 800,
+      "artboardName": "mobile",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 60,
+        "colors": 128
+      }
+    }
+  },
+  "metadata": {
+    "slug": "sample-ai-file",
+    "headline": "Ai Graphic Headline",
+    "leadin": "Introductory text here.",
+    "summary": "",
+    "notes": "Notes: Text goes here.",
+    "sources": "Source: Name goes here.",
+    "credit": "By ai2html"
+  },
+  "irVersion": "0.0.0"
+}

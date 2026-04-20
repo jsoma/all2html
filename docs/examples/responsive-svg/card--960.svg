@@ -1,0 +1,16 @@
+<svg width="960" height="540" viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fdf3d5" />
+      <stop offset="100%" stop-color="#e6eefc" />
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#sky)" />
+  <circle cx="170" cy="136" r="58" fill="#ff8a5b" opacity="0.88" />
+  <circle cx="810" cy="90" r="34" fill="#3350d8" opacity="0.78" />
+  <path d="M0 375 C180 305 350 460 560 404 C650 380 780 314 960 352 L960 540 L0 540 Z" fill="#f7dcb1" />
+  <rect x="48" y="44" width="864" height="452" rx="34" fill="rgba(255,255,255,0.46)" stroke="rgba(40,35,28,0.14)" />
+  <text x="84" y="138" font-size="28" font-family="Georgia" fill="#6b6359">Canva export sample</text>
+  <text x="84" y="236" font-size="72" font-family="Arial" font-weight="700" fill="#22201c">Desktop card headline</text>
+  <text x="84" y="292" font-size="28" font-family="Arial" fill="#3d3832">The wider responsive variant should group with the 640px file and still keep text live.</text>
+</svg>

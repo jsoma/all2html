@@ -1,0 +1,167 @@
+{
+  "generator": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "namespace": "g-",
+    "responsiveness": "fixed",
+    "textResponsiveness": "dynamic"
+  },
+  "fonts": [],
+  "artboards": [
+    {
+      "name": "desktop",
+      "originalName": "desktop",
+      "width": 1200,
+      "height": 800,
+      "actualWidth": 1200,
+      "actualHeight": 800,
+      "layers": [
+        {
+          "name": "Layer1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai0-1",
+              "kind": "area",
+              "position": {
+                "x": 50,
+                "y": 30,
+                "width": 400,
+                "height": 60
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Headline Text Here",
+                  "alignment": "left",
+                  "leading": 28,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Headline Text Here",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 24,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-2",
+              "kind": "area",
+              "position": {
+                "x": 50,
+                "y": 100,
+                "width": 500,
+                "height": 120
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "This is body text that describes the graphic in detail.",
+                  "alignment": "left",
+                  "leading": 18,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "This is body text that describes the graphic in detail.",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 51,
+                        "g": 51,
+                        "b": 51
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-3",
+              "kind": "point",
+              "position": {
+                "x": 900,
+                "y": 400,
+                "width": 80,
+                "height": 16
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Label",
+                  "alignment": "center",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Label",
+                      "fontName": "ArialMT",
+                      "fontSize": 12,
+                      "color": {
+                        "r": 102,
+                        "g": 102,
+                        "b": 102
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0.05
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [],
+  "assets": {
+    "bg-desktop": {
+      "id": "bg-desktop",
+      "path": "test-desktop.png",
+      "mimeType": "image/png",
+      "width": 2400,
+      "height": 1600,
+      "artboardName": "desktop",
+      "exportParams": {
+        "format": "png",
+        "scale": 2
+      }
+    }
+  },
+  "metadata": {
+    "slug": "test-graphic"
+  },
+  "irVersion": "0.0.0"
+}

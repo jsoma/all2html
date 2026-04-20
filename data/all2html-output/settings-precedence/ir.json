@@ -1,0 +1,145 @@
+{
+  "irVersion": "0.0.0",
+  "generator": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "imageFormat": [
+      "png"
+    ],
+    "output": "one-file",
+    "jpgQuality": 85,
+    "maxWidth": 640
+  },
+  "fonts": [
+    
+  ],
+  "artboards": [
+    {
+      "name": "desktop",
+      "originalName": "desktop",
+      "width": 640,
+      "height": 420,
+      "actualWidth": 640,
+      "actualHeight": 420,
+      "layers": [
+        {
+          "name": "content",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "settings-body",
+              "kind": "area",
+              "position": {
+                "x": 40,
+                "y": 147.7255859375,
+                "width": 420,
+                "height": 120
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Text block should beat config for image format. Config should still provide max width and jpg quality for unlocked keys.",
+                  "alignment": "left",
+                  "leading": 19.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Text block should beat config for image format. Config should still provide max width and jpg quality for unlocked keys.",
+                      "fontName": "ArialMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "settings-title",
+              "kind": "point",
+              "position": {
+                "x": 40,
+                "y": 76.0224609375,
+                "width": 367.2265625,
+                "height": 34.5625
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Settings precedence fixture",
+                  "alignment": "left",
+                  "leading": 33.6,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Settings precedence fixture",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 28,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [
+    
+  ],
+  "assets": {
+    "settings-precedence-desktop": {
+      "id": "settings-precedence-desktop",
+      "path": "settings-precedence-desktop.png",
+      "mimeType": "image/png",
+      "width": 1280,
+      "height": 840,
+      "artboardName": "desktop",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 85,
+        "colors": 128
+      }
+    }
+  },
+  "metadata": {
+    "slug": "settings-precedence",
+    "headline": "",
+    "leadin": "",
+    "summary": "",
+    "notes": "",
+    "sources": "",
+    "credit": ""
+  }
+}

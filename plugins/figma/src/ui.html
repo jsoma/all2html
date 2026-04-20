@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>all2html</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f7f7f8;
+        --panel: #ffffff;
+        --fg: #141416;
+        --muted: #63656b;
+        --border: #d7d9df;
+        --accent: #0b63ff;
+        --accent-soft: rgba(11, 99, 255, 0.08);
+        --success: #1f7a3e;
+        --warning: #9b5d00;
+        --warning-soft: rgba(155, 93, 0, 0.08);
+        --error: #b3261e;
+        --error-soft: rgba(179, 38, 30, 0.08);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1f2024;
+          --panel: #2a2c31;
+          --fg: #f2f3f5;
+          --muted: #b0b4bc;
+          --border: #3c3f46;
+          --accent: #79a7ff;
+          --accent-soft: rgba(121, 167, 255, 0.12);
+          --success: #86d19a;
+          --warning: #f0b46a;
+          --warning-soft: rgba(240, 180, 106, 0.12);
+          --error: #ff8a80;
+          --error-soft: rgba(255, 138, 128, 0.12);
+        }
+      }
+      body {
+        margin: 0;
+        padding: 16px;
+        background: var(--bg);
+        color: var(--fg);
+        font: 13px/1.5 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      main {
+        display: grid;
+        gap: 14px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      h2 {
+        margin: 0;
+        font-size: 13px;
+        letter-spacing: 0.01em;
+      }
+      p {
+        margin: 0;
+      }
+      section,
+      details {
+        display: grid;
+        gap: 10px;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--panel);
+      }
+      summary {
+        cursor: pointer;
+        font-weight: 600;
+      }
+      details > summary {
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      details > summary::-webkit-details-marker {
+        display: none;
+      }
+      details > summary::before {
+        content: "+";
+        font-weight: 600;
+        color: var(--muted);
+      }
+      details[open] > summary::before {
+        content: "−";
+      }
+      .section-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .helper {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .legend-chip,
+      .mode-chip {
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 3px 6px;
+        color: var(--muted);
+        background: transparent;
+      }
+      .mode-chip-active {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+      .field-wide {
+        grid-column: 1 / -1;
+      }
+      label {
+        font-weight: 600;
+      }
+      input,
+      textarea,
+      select,
+      button {
+        font: inherit;
+      }
+      input,
+      textarea,
+      select {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: inherit;
+        border-radius: 4px;
+        padding: 8px 10px;
+      }
+      textarea {
+        min-height: 180px;
+        resize: vertical;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      textarea[data-alt-text] {
+        min-height: 72px;
+      }
+      .checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .checkbox input {
+        width: auto;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      button {
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 8px 12px;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+      }
+      button[data-export] {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+        font-weight: 600;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .selection-groups,
+      .result-list,
+      .result-sublist {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .selection-group,
+      .result-item {
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 8px 10px;
+      }
+      .selection-group {
+        display: grid;
+        gap: 4px;
+      }
+      .selection-inline {
+        display: grid;
+        gap: 8px;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: transparent;
+      }
+      .selection-group-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .warning-panel {
+        border-color: var(--warning);
+        background: var(--warning-soft);
+      }
+      .warning-inline {
+        display: grid;
+        gap: 4px;
+        padding: 8px 10px;
+        border: 1px solid var(--warning);
+        border-radius: 4px;
+        background: var(--warning-soft);
+      }
+      .warning-heading {
+        color: var(--warning);
+      }
+      .status {
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 8px 10px;
+        background: var(--panel);
+        color: var(--muted);
+      }
+      .status-success {
+        color: var(--success);
+      }
+      .status-error {
+        color: var(--error);
+        border-color: var(--error);
+        background: var(--error-soft);
+      }
+      .export-section {
+        border-color: var(--accent);
+      }
+      .result-item-warning {
+        border-color: var(--warning);
+        background: var(--warning-soft);
+      }
+      .result-sublist {
+        gap: 4px;
+        margin-top: 6px;
+      }
+      .result-sublist li {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+        word-break: break-word;
+      }
+      .validation {
+        display: grid;
+        gap: 6px;
+      }
+      .validation-error {
+        color: var(--error);
+      }
+      .empty-state {
+        color: var(--muted);
+      }
+      .stack {
+        display: grid;
+        gap: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="export-section">
+        <div class="section-head">
+          <h2>Export</h2>
+          <span class="helper">ZIP bundle with ir.json, HTML, and assets</span>
+        </div>
+        <div class="selection-inline">
+          <div class="section-head">
+            <strong>Selection</strong>
+            <span class="mode-chip" data-selection-mode></span>
+          </div>
+          <div class="stack" data-selection></div>
+          <div class="validation" data-validation></div>
+        </div>
+        <div class="warning-inline" data-export-notice hidden>
+          <strong class="warning-heading" data-export-notice-title></strong>
+          <p class="helper" data-export-notice-copy></p>
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label for="preset">Preset</label>
+            <select id="preset" data-preset>
+              <option value="standard-story">Standard story</option>
+              <option value="responsive-story">Responsive story</option>
+              <option value="image-only-graphic">Image-only graphic</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="format">Output format</label>
+            <select id="format" data-format>
+              <option value="html">HTML</option>
+              <option value="standalone">Standalone HTML</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="html-layout">HTML file layout</label>
+            <select id="html-layout" data-output>
+              <option value="one-file">One file</option>
+              <option value="multiple-files">One file per group</option>
+            </select>
+          </div>
+          <div class="field field-wide">
+            <label for="project-name">Export name / slug</label>
+            <input id="project-name" data-project-name type="text" placeholder="story" />
+          </div>
+        </div>
+        <div class="actions">
+          <button type="button" data-save>Save shared config</button>
+          <button type="button" data-export>Export ZIP</button>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>Content</h2>
+          <span class="helper">Headline and alt text</span>
+        </div>
+        <div class="grid">
+          <div class="field field-wide">
+            <label for="headline">Headline</label>
+            <input id="headline" data-headline type="text" placeholder="Optional headline" />
+          </div>
+          <div class="field field-wide">
+            <label for="alt-text">Alt text</label>
+            <textarea id="alt-text" data-alt-text placeholder="Describe the overall graphic for screen readers"></textarea>
+          </div>
+          <div class="field field-wide">
+            <label for="image-alt-text">Image alt text</label>
+            <input id="image-alt-text" data-image-alt-text type="text" placeholder="Optional image alt text" />
+          </div>
+        </div>
+      </section>
+
+      <details data-more-settings-panel>
+        <summary>More settings</summary>
+        <div class="grid">
+          <div class="field">
+            <label for="responsiveness">Default responsiveness</label>
+            <select id="responsiveness" data-responsiveness>
+              <option value="fixed">Fixed</option>
+              <option value="dynamic">Dynamic</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="image-format">Image format</label>
+            <select id="image-format" data-image-format>
+              <option value="auto">Auto</option>
+              <option value="png">PNG</option>
+              <option value="png24">PNG24</option>
+              <option value="jpg">JPG</option>
+              <option value="svg">SVG</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="render-text-as">Text rendering</label>
+            <select id="render-text-as" data-render-text-as>
+              <option value="html">HTML text</option>
+              <option value="image">Image fallback</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="render-rotated">Rotated/skewed text</label>
+            <select id="render-rotated" data-render-rotated>
+              <option value="html">HTML text</option>
+              <option value="image">Image fallback</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="responsive-image-mode">Responsive image mode</label>
+            <select id="responsive-image-mode" data-responsive-image-mode>
+              <option value="img-src">IMG src</option>
+              <option value="css-var">CSS variables</option>
+            </select>
+          </div>
+          <div class="field checkbox">
+            <input id="center-output" data-center-output type="checkbox" />
+            <label for="center-output">Center output container</label>
+          </div>
+          <div class="field">
+            <label for="aria-role">ARIA role</label>
+            <input id="aria-role" data-aria-role type="text" placeholder="img" />
+          </div>
+        </div>
+      </details>
+
+      <details data-advanced-panel>
+        <summary>Advanced JSONC</summary>
+        <p class="helper">
+          This editor reflects the same canonical config as the controls above. Invalid JSONC blocks save and export.
+        </p>
+        <section>
+          <label for="config">Shared JSONC config</label>
+          <textarea id="config" data-config spellcheck="false"></textarea>
+          <div class="actions">
+            <button type="button" data-reset-config>Reset to form values</button>
+          </div>
+        </section>
+      </details>
+
+      <section class="result-panel" data-result-panel hidden>
+        <div class="section-head">
+          <h2>Last export</h2>
+          <span class="helper" data-result-headline></span>
+        </div>
+        <ul class="result-list" data-result></ul>
+      </section>
+
+      <div class="status" data-status></div>
+    </main>
+    <script>
+/*__UI_BUNDLE__*/
+    </script>
+  </body>
+</html>

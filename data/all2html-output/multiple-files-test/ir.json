@@ -1,0 +1,514 @@
+{
+  "irVersion": "0.0.0",
+  "generator": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "imageFormat": [
+      "png"
+    ],
+    "output": "multiple-files",
+    "responsiveness": "fixed",
+    "htmlOutputPath": "/ai2html-output/",
+    "imageOutputPath": "/ai2html-output/",
+    "htmlOutputExtension": ".html",
+    "jpgQuality": 60,
+    "pngNumberOfColors": 128
+  },
+  "fonts": [
+    
+  ],
+  "artboards": [
+    {
+      "name": "Artboard_1",
+      "originalName": "Artboard_1",
+      "width": 600,
+      "height": 472,
+      "actualWidth": 600,
+      "actualHeight": 472,
+      "layers": [
+        {
+          "name": "Layers",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai0-1",
+              "kind": "area",
+              "position": {
+                "x": 173.26250956979,
+                "y": 194.69927753125,
+                "width": 253.474980860417,
+                "height": 76.6528386444515
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Artboard_1",
+                  "alignment": "center",
+                  "leading": 28.8,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Artboard_1",
+                      "fontName": "MyriadPro-Regular",
+                      "fontSize": 24,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                },
+                {
+                  "text": "Artboard width: 600px",
+                  "alignment": "center",
+                  "leading": 28.8,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Artboard width: 600px",
+                      "fontName": "MyriadPro-Regular",
+                      "fontSize": 24,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "600 map",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Artboard_1",
+      "originalName": "Artboard_1",
+      "width": 300,
+      "height": 600,
+      "actualWidth": 300,
+      "actualHeight": 600,
+      "layers": [
+        {
+          "name": "Layers",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai1-1",
+              "kind": "area",
+              "position": {
+                "x": 23.2625095697895,
+                "y": 258.62527353125,
+                "width": 253.47498086041,
+                "height": 76.6528386444525
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Artboard_1",
+                  "alignment": "center",
+                  "leading": 28.8,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Artboard_1",
+                      "fontName": "MyriadPro-Regular",
+                      "fontSize": 24,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                },
+                {
+                  "text": "Artboard width: 300px",
+                  "alignment": "center",
+                  "leading": 28.8,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Artboard width: 300px",
+                      "fontName": "MyriadPro-Regular",
+                      "fontSize": 24,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "600 map",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Artboard_2",
+      "originalName": "Artboard_2",
+      "width": 600,
+      "height": 472,
+      "actualWidth": 600,
+      "actualHeight": 472,
+      "layers": [
+        {
+          "name": "Layers",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai2-1",
+              "kind": "area",
+              "position": {
+                "x": 173.26250956979,
+                "y": 198.244024544312,
+                "width": 253.474980860417,
+                "height": 76.6528386444515
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Artboard_2",
+                  "alignment": "center",
+                  "leading": 28.8,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Artboard_2",
+                      "fontName": "MyriadPro-Regular",
+                      "fontSize": 24,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                },
+                {
+                  "text": "Artboard width: 600px",
+                  "alignment": "center",
+                  "leading": 28.8,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Artboard width: 600px",
+                      "fontName": "MyriadPro-Regular",
+                      "fontSize": 24,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "600 map",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Artboard_2",
+      "originalName": "Artboard_2",
+      "width": 450,
+      "height": 450,
+      "actualWidth": 450,
+      "actualHeight": 450,
+      "layers": [
+        {
+          "name": "Layers",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai3-1",
+              "kind": "area",
+              "position": {
+                "x": 98.2625095697931,
+                "y": 187.170020544312,
+                "width": 253.47498086041,
+                "height": 76.6528386444515
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Artboard_2",
+                  "alignment": "center",
+                  "leading": 28.8,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Artboard_2",
+                      "fontName": "MyriadPro-Regular",
+                      "fontSize": 24,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                },
+                {
+                  "text": "Artboard width: 450px",
+                  "alignment": "center",
+                  "leading": 28.8,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Artboard width: 450px",
+                      "fontName": "MyriadPro-Regular",
+                      "fontSize": 24,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "600 map",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Artboard_2",
+      "originalName": "Artboard_2",
+      "width": 300,
+      "height": 600,
+      "actualWidth": 300,
+      "actualHeight": 600,
+      "layers": [
+        {
+          "name": "Layers",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai4-1",
+              "kind": "area",
+              "position": {
+                "x": 28.5634100235202,
+                "y": 262.170020544312,
+                "width": 253.474980860421,
+                "height": 76.6528386444515
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Artboard_2",
+                  "alignment": "center",
+                  "leading": 28.8,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Artboard_2",
+                      "fontName": "MyriadPro-Regular",
+                      "fontSize": 24,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                },
+                {
+                  "text": "Artboard width: 300px",
+                  "alignment": "center",
+                  "leading": 28.8,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Artboard width: 300px",
+                      "fontName": "MyriadPro-Regular",
+                      "fontSize": 24,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "600 map",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [
+    
+  ],
+  "assets": {
+    "multiple-files-test-artboard-1": {
+      "id": "multiple-files-test-artboard-1",
+      "path": "multiple-files-test-artboard-1.png",
+      "mimeType": "image/png",
+      "width": 600,
+      "height": 1200,
+      "artboardName": "Artboard_1",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 60,
+        "colors": 128
+      }
+    },
+    "multiple-files-test-artboard-2": {
+      "id": "multiple-files-test-artboard-2",
+      "path": "multiple-files-test-artboard-2.png",
+      "mimeType": "image/png",
+      "width": 600,
+      "height": 1200,
+      "artboardName": "Artboard_2",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 60,
+        "colors": 128
+      }
+    }
+  },
+  "metadata": {
+    "slug": "multiple-files-test",
+    "headline": "",
+    "leadin": "",
+    "summary": "",
+    "notes": "",
+    "sources": "",
+    "credit": "By ai2html"
+  }
+}

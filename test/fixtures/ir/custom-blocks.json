@@ -1,0 +1,95 @@
+{
+  "generator": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "namespace": "g-"
+  },
+  "fonts": [],
+  "artboards": [
+    {
+      "name": "desktop",
+      "originalName": "desktop",
+      "width": 600,
+      "height": 400,
+      "actualWidth": 600,
+      "actualHeight": 400,
+      "layers": [
+        {
+          "name": "Layer1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "t1",
+              "kind": "area",
+              "position": {
+                "x": 10,
+                "y": 10,
+                "width": 200,
+                "height": 30
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Hello",
+                  "alignment": "left",
+                  "leading": 18,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Hello",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [
+    {
+      "type": "css",
+      "content": ".custom-class { color: red; }"
+    },
+    {
+      "type": "js",
+      "content": "console.log('hello from ai2html');"
+    },
+    {
+      "type": "html-before",
+      "content": "<div class=\"promo-banner\">Breaking</div>"
+    },
+    {
+      "type": "html-after",
+      "content": "<footer>Source: test</footer>"
+    }
+  ],
+  "assets": {},
+  "metadata": {
+    "slug": "custom-blocks-test",
+    "altText": "A test graphic with custom blocks",
+    "ariaRole": "img"
+  },
+  "irVersion": "0.0.0"
+}

@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES3",
+    "module": "None",
+    "strict": false,
+    "noLib": true,
+    "esModuleInterop": false,
+    "skipLibCheck": true,
+    "types": ["types-for-adobe"]
+  },
+  "include": ["src/jsx/**/*", "src/shared/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

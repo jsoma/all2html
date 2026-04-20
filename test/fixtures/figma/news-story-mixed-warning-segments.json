@@ -1,0 +1,15 @@
+[
+  {
+    "characters": "Tap to review the branch map",
+    "start": 0,
+    "end": 28,
+    "fontName": { "family": "Inter", "style": "Medium" },
+    "fontSize": 15,
+    "letterSpacing": { "value": 0, "unit": "PIXELS" },
+    "lineHeight": { "value": 22, "unit": "PIXELS" },
+    "fills": [{ "type": "SOLID", "color": { "r": 0.1098, "g": 0.3176, "b": 0.4588 } }],
+    "textCase": "ORIGINAL",
+    "textDecoration": "NONE",
+    "hyperlink": { "type": "NODE", "value": "3:46" }
+  }
+]

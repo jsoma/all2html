@@ -1,0 +1,840 @@
+{
+  "irVersion": "0.0.0",
+  "generator": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "settings_version": "0.106.0",
+    "image_format": "auto",
+    "responsiveness": "fixed",
+    "output": "one-file",
+    "html_output_path": "/ai2html-output/",
+    "html_output_extension": ".html",
+    "image_output_path": "",
+    "local_preview_template": "",
+    "png_number_of_colors": "128",
+    "jpg_quality": "60",
+    "headline": "",
+    "leadin": "",
+    "notes": "",
+    "sources": "",
+    "credit": ""
+  },
+  "fonts": [
+    
+  ],
+  "artboards": [
+    {
+      "name": "Artboard 1",
+      "originalName": "Artboard 1",
+      "width": 859,
+      "height": 475,
+      "actualWidth": 859,
+      "actualHeight": 475,
+      "layers": [
+        {
+          "name": "Layer 1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai0-1",
+              "kind": "point",
+              "position": {
+                "x": 336.8916015625,
+                "y": 395.779296875,
+                "width": 51.5625,
+                "height": 19.75
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "7 units",
+                  "alignment": "left",
+                  "leading": 19.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "7 units",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-2",
+              "kind": "point",
+              "position": {
+                "x": 53.03857421875,
+                "y": 393.5048828125,
+                "width": 236.787109375,
+                "height": 23.6572265625
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "your work won’t look good!",
+                  "alignment": "right",
+                  "leading": 24,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "your work won’t look good!",
+                      "fontName": "ArialMT",
+                      "fontSize": 20,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-3",
+              "kind": "point",
+              "position": {
+                "x": 53.03857421875,
+                "y": 324.6044921875,
+                "width": 110.029296875,
+                "height": 24.6875
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "otherwise...",
+                  "alignment": "right",
+                  "leading": 24,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "otherwise...",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 20,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-4",
+              "kind": "point",
+              "position": {
+                "x": 53.03857421875,
+                "y": 255.6943359375,
+                "width": 176.767578125,
+                "height": 23.6572265625
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "and see how to fix it",
+                  "alignment": "right",
+                  "leading": 24,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "and see how to fix it",
+                      "fontName": "ArialMT",
+                      "fontSize": 20,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-5",
+              "kind": "point",
+              "position": {
+                "x": 420.279296875,
+                "y": 249.08984375,
+                "width": 79.1015625,
+                "height": 19.75
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Important!",
+                  "alignment": "left",
+                  "leading": 19.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Important!",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-6",
+              "kind": "point",
+              "position": {
+                "x": 53.03857421875,
+                "y": 186.79052734375,
+                "width": 141.181640625,
+                "height": 23.65673828125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "for you to watch",
+                  "alignment": "right",
+                  "leading": 24,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "for you to watch",
+                      "fontName": "ArialMT",
+                      "fontSize": 20,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-7",
+              "kind": "point",
+              "position": {
+                "x": 53.03857421875,
+                "y": 117.88623046875,
+                "width": 102.275390625,
+                "height": 23.6572265625
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "is a graphic",
+                  "alignment": "right",
+                  "leading": 24,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "is a graphic",
+                      "fontName": "ArialMT",
+                      "fontSize": 20,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-8",
+              "kind": "point",
+              "position": {
+                "x": 53.03857421875,
+                "y": 48.9814453125,
+                "width": 83.369140625,
+                "height": 23.6572265625
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "This here",
+                  "alignment": "right",
+                  "leading": 24,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "This here",
+                      "fontName": "ArialMT",
+                      "fontSize": 20,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-9",
+              "kind": "point",
+              "position": {
+                "x": 761.046875,
+                "y": 46.32470703125,
+                "width": 60.4609375,
+                "height": 19.75
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "80 units",
+                  "alignment": "right",
+                  "leading": 19.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "80 units",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 255,
+                        "g": 255,
+                        "b": 255
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Artboard 3",
+      "originalName": "Artboard 3",
+      "width": 730,
+      "height": 420,
+      "actualWidth": 730,
+      "actualHeight": 420,
+      "layers": [
+        {
+          "name": "Layer 1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai1-1",
+              "kind": "point",
+              "position": {
+                "x": 309.84521484375,
+                "y": 374.8251953125,
+                "width": 51.5625,
+                "height": 19.75
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "7 units",
+                  "alignment": "left",
+                  "leading": 19.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "7 units",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-2",
+              "kind": "point",
+              "position": {
+                "x": 146.68408203125,
+                "y": 364.1259765625,
+                "width": 118.09521484375,
+                "height": 40.5087890625
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "your work won’t",
+                  "alignment": "right",
+                  "leading": 20.4,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "your work won’t",
+                      "fontName": "ArialMT",
+                      "fontSize": 17,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                },
+                {
+                  "text": "look good!",
+                  "alignment": "right",
+                  "leading": 20.4,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "look good!",
+                      "fontName": "ArialMT",
+                      "fontSize": 17,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-3",
+              "kind": "point",
+              "position": {
+                "x": 169.25439453125,
+                "y": 306.2255859375,
+                "width": 93.52490234375,
+                "height": 20.984375
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "otherwise...",
+                  "alignment": "right",
+                  "leading": 20.4,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "otherwise...",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 17,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-4",
+              "kind": "point",
+              "position": {
+                "x": 395.23291015625,
+                "y": 227.13671875,
+                "width": 79.10107421875,
+                "height": 19.75
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Important!",
+                  "alignment": "left",
+                  "leading": 19.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Important!",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-5",
+              "kind": "point",
+              "position": {
+                "x": 166.3740234375,
+                "y": 223.3154296875,
+                "width": 96.4052734375,
+                "height": 40.509765625
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "and see how",
+                  "alignment": "right",
+                  "leading": 20.4,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "and see how",
+                      "fontName": "ArialMT",
+                      "fontSize": 17,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                },
+                {
+                  "text": "to fix it",
+                  "alignment": "right",
+                  "leading": 20.4,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "to fix it",
+                      "fontName": "ArialMT",
+                      "fontSize": 17,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-6",
+              "kind": "point",
+              "position": {
+                "x": 142.77490234375,
+                "y": 162.4111328125,
+                "width": 120.00439453125,
+                "height": 20.109375
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "for you to watch",
+                  "alignment": "right",
+                  "leading": 20.4,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "for you to watch",
+                      "fontName": "ArialMT",
+                      "fontSize": 17,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-7",
+              "kind": "point",
+              "position": {
+                "x": 175.84521484375,
+                "y": 90.5068359375,
+                "width": 86.93408203125,
+                "height": 20.1083984375
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "is a graphic",
+                  "alignment": "right",
+                  "leading": 20.4,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "is a graphic",
+                      "fontName": "ArialMT",
+                      "fontSize": 17,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-8",
+              "kind": "point",
+              "position": {
+                "x": 191.91552734375,
+                "y": 29.6025390625,
+                "width": 70.86376953125,
+                "height": 20.1083984375
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "This here",
+                  "alignment": "right",
+                  "leading": 20.4,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "This here",
+                      "fontName": "ArialMT",
+                      "fontSize": 17,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-9",
+              "kind": "point",
+              "position": {
+                "x": 649.7431640625,
+                "y": 27.3076171875,
+                "width": 52.9033203125,
+                "height": 17.28125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "80 units",
+                  "alignment": "right",
+                  "leading": 16.8,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "80 units",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 255,
+                        "g": 255,
+                        "b": 255
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [
+    
+  ],
+  "assets": {
+    "fixed-artboard-1": {
+      "id": "fixed-artboard-1",
+      "path": "fixed-artboard-1.png",
+      "mimeType": "image/png",
+      "width": 1718,
+      "height": 950,
+      "artboardName": "Artboard 1",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 60,
+        "colors": 128
+      }
+    },
+    "fixed-artboard-3": {
+      "id": "fixed-artboard-3",
+      "path": "fixed-artboard-3.png",
+      "mimeType": "image/png",
+      "width": 1460,
+      "height": 840,
+      "artboardName": "Artboard 3",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 60,
+        "colors": 128
+      }
+    }
+  },
+  "metadata": {
+    "slug": "fixed",
+    "headline": "",
+    "leadin": "",
+    "summary": "",
+    "notes": "",
+    "sources": "",
+    "credit": ""
+  }
+}

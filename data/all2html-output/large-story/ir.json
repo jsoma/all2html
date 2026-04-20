@@ -1,0 +1,978 @@
+{
+  "irVersion": "0.0.0",
+  "generator": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    
+  },
+  "fonts": [
+    
+  ],
+  "artboards": [
+    {
+      "name": "story-1",
+      "originalName": "story-1:dynamic,640",
+      "width": 640,
+      "height": 480,
+      "actualWidth": 640,
+      "actualHeight": 480,
+      "layers": [
+        {
+          "name": "highlight",
+          "type": "png",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        },
+        {
+          "name": "locator",
+          "type": "svg",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        },
+        {
+          "name": "content",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "story-body-1",
+              "kind": "area",
+              "position": {
+                "x": 39.9755859375,
+                "y": 87.7255859375,
+                "width": 320,
+                "height": 120
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "A realistic multi-artboard fixture for export and performance hardening. Card 1 keeps enough editorial text on the page to stress the HTML pipeline without becoming unwieldy.",
+                  "alignment": "left",
+                  "leading": 19.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "A realistic multi-artboard fixture for export and performance hardening. Card 1 keeps enough editorial text on the page to stress the HTML pipeline without becoming unwieldy.",
+                      "fontName": "ArialMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "story-title-1",
+              "kind": "point",
+              "position": {
+                "x": 40,
+                "y": 27.73828125,
+                "width": 150.287109375,
+                "height": 32.09375
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Story card 1",
+                  "alignment": "left",
+                  "leading": 31.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Story card 1",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 26,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "responsiveness": "dynamic"
+    },
+    {
+      "name": "story-2",
+      "originalName": "story-2:dynamic,720",
+      "width": 720,
+      "height": 480,
+      "actualWidth": 720,
+      "actualHeight": 480,
+      "layers": [
+        {
+          "name": "highlight",
+          "type": "png",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        },
+        {
+          "name": "locator",
+          "type": "svg",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        },
+        {
+          "name": "content",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "story-body-2",
+              "kind": "area",
+              "position": {
+                "x": 39.9755859375,
+                "y": 87.7255859375,
+                "width": 320,
+                "height": 120
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "A realistic multi-artboard fixture for export and performance hardening. Card 2 keeps enough editorial text on the page to stress the HTML pipeline without becoming unwieldy.",
+                  "alignment": "left",
+                  "leading": 19.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "A realistic multi-artboard fixture for export and performance hardening. Card 2 keeps enough editorial text on the page to stress the HTML pipeline without becoming unwieldy.",
+                      "fontName": "ArialMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "story-title-2",
+              "kind": "point",
+              "position": {
+                "x": 40,
+                "y": 27.73828125,
+                "width": 150.287109375,
+                "height": 32.09375
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Story card 2",
+                  "alignment": "left",
+                  "leading": 31.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Story card 2",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 26,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "responsiveness": "dynamic"
+    },
+    {
+      "name": "story-3",
+      "originalName": "story-3:fixed,800",
+      "width": 800,
+      "height": 480,
+      "actualWidth": 800,
+      "actualHeight": 480,
+      "layers": [
+        {
+          "name": "highlight",
+          "type": "png",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        },
+        {
+          "name": "locator",
+          "type": "svg",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        },
+        {
+          "name": "content",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "story-body-3",
+              "kind": "area",
+              "position": {
+                "x": 39.9755859375,
+                "y": 87.7255859375,
+                "width": 320,
+                "height": 120
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "A realistic multi-artboard fixture for export and performance hardening. Card 3 keeps enough editorial text on the page to stress the HTML pipeline without becoming unwieldy.",
+                  "alignment": "left",
+                  "leading": 19.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "A realistic multi-artboard fixture for export and performance hardening. Card 3 keeps enough editorial text on the page to stress the HTML pipeline without becoming unwieldy.",
+                      "fontName": "ArialMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "story-title-3",
+              "kind": "point",
+              "position": {
+                "x": 40,
+                "y": 27.73828125,
+                "width": 150.287109375,
+                "height": 32.09375
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Story card 3",
+                  "alignment": "left",
+                  "leading": 31.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Story card 3",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 26,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "responsiveness": "fixed"
+    },
+    {
+      "name": "story-4",
+      "originalName": "story-4:dynamic,960",
+      "width": 960,
+      "height": 480,
+      "actualWidth": 960,
+      "actualHeight": 480,
+      "layers": [
+        {
+          "name": "highlight",
+          "type": "png",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        },
+        {
+          "name": "locator",
+          "type": "svg",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        },
+        {
+          "name": "content",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "story-body-4",
+              "kind": "area",
+              "position": {
+                "x": 39.9755859375,
+                "y": 87.7255859375,
+                "width": 320,
+                "height": 120
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "A realistic multi-artboard fixture for export and performance hardening. Card 4 keeps enough editorial text on the page to stress the HTML pipeline without becoming unwieldy.",
+                  "alignment": "left",
+                  "leading": 19.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "A realistic multi-artboard fixture for export and performance hardening. Card 4 keeps enough editorial text on the page to stress the HTML pipeline without becoming unwieldy.",
+                      "fontName": "ArialMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "story-title-4",
+              "kind": "point",
+              "position": {
+                "x": 40,
+                "y": 27.73828125,
+                "width": 150.287109375,
+                "height": 32.09375
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Story card 4",
+                  "alignment": "left",
+                  "leading": 31.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Story card 4",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 26,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "responsiveness": "dynamic"
+    },
+    {
+      "name": "story-5",
+      "originalName": "story-5:fixed,1120",
+      "width": 1120,
+      "height": 480,
+      "actualWidth": 1120,
+      "actualHeight": 480,
+      "layers": [
+        {
+          "name": "highlight",
+          "type": "png",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        },
+        {
+          "name": "locator",
+          "type": "svg",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        },
+        {
+          "name": "content",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "story-body-5",
+              "kind": "area",
+              "position": {
+                "x": 39.9755859375,
+                "y": 87.7255859375,
+                "width": 320,
+                "height": 120
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "A realistic multi-artboard fixture for export and performance hardening. Card 5 keeps enough editorial text on the page to stress the HTML pipeline without becoming unwieldy.",
+                  "alignment": "left",
+                  "leading": 19.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "A realistic multi-artboard fixture for export and performance hardening. Card 5 keeps enough editorial text on the page to stress the HTML pipeline without becoming unwieldy.",
+                      "fontName": "ArialMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "story-title-5",
+              "kind": "point",
+              "position": {
+                "x": 40,
+                "y": 27.73828125,
+                "width": 150.287109375,
+                "height": 32.09375
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Story card 5",
+                  "alignment": "left",
+                  "leading": 31.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Story card 5",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 26,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "responsiveness": "fixed"
+    },
+    {
+      "name": "story-6",
+      "originalName": "story-6:dynamic,1280",
+      "width": 1280,
+      "height": 480,
+      "actualWidth": 1280,
+      "actualHeight": 480,
+      "layers": [
+        {
+          "name": "highlight",
+          "type": "png",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        },
+        {
+          "name": "locator",
+          "type": "svg",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        },
+        {
+          "name": "content",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "story-body-6",
+              "kind": "area",
+              "position": {
+                "x": 39.9755859375,
+                "y": 87.7255859375,
+                "width": 320,
+                "height": 120
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "A realistic multi-artboard fixture for export and performance hardening. Card 6 keeps enough editorial text on the page to stress the HTML pipeline without becoming unwieldy.",
+                  "alignment": "left",
+                  "leading": 19.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "A realistic multi-artboard fixture for export and performance hardening. Card 6 keeps enough editorial text on the page to stress the HTML pipeline without becoming unwieldy.",
+                      "fontName": "ArialMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "story-title-6",
+              "kind": "point",
+              "position": {
+                "x": 40,
+                "y": 27.73828125,
+                "width": 150.287109375,
+                "height": 32.09375
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Story card 6",
+                  "alignment": "left",
+                  "leading": 31.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Story card 6",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 26,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "responsiveness": "dynamic"
+    }
+  ],
+  "customBlocks": [
+    
+  ],
+  "assets": {
+    "large-story-story-1": {
+      "id": "large-story-story-1",
+      "path": "large-story-story-1.png",
+      "mimeType": "image/png",
+      "width": 1280,
+      "height": 960,
+      "artboardName": "story-1",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 85,
+        "colors": 128
+      }
+    },
+    "large-story-story-2": {
+      "id": "large-story-story-2",
+      "path": "large-story-story-2.png",
+      "mimeType": "image/png",
+      "width": 1440,
+      "height": 960,
+      "artboardName": "story-2",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 85,
+        "colors": 128
+      }
+    },
+    "large-story-story-3": {
+      "id": "large-story-story-3",
+      "path": "large-story-story-3.png",
+      "mimeType": "image/png",
+      "width": 1600,
+      "height": 960,
+      "artboardName": "story-3",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 85,
+        "colors": 128
+      }
+    },
+    "large-story-story-4": {
+      "id": "large-story-story-4",
+      "path": "large-story-story-4.png",
+      "mimeType": "image/png",
+      "width": 1920,
+      "height": 960,
+      "artboardName": "story-4",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 85,
+        "colors": 128
+      }
+    },
+    "large-story-story-5": {
+      "id": "large-story-story-5",
+      "path": "large-story-story-5.png",
+      "mimeType": "image/png",
+      "width": 2240,
+      "height": 960,
+      "artboardName": "story-5",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 85,
+        "colors": 128
+      }
+    },
+    "large-story-story-6": {
+      "id": "large-story-story-6",
+      "path": "large-story-story-6.png",
+      "mimeType": "image/png",
+      "width": 2560,
+      "height": 960,
+      "artboardName": "story-6",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 85,
+        "colors": 128
+      }
+    },
+    "large-story-story-1-highlight": {
+      "id": "large-story-story-1-highlight",
+      "path": "large-story-story-1-highlight.png",
+      "mimeType": "image/png",
+      "width": 1280,
+      "height": 960,
+      "artboardName": "story-1",
+      "layerName": "highlight",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": true
+      }
+    },
+    "large-story-story-1-locator": {
+      "id": "large-story-story-1-locator",
+      "path": "large-story-story-1-locator.svg",
+      "mimeType": "image/svg+xml",
+      "width": 640,
+      "height": 480,
+      "artboardName": "story-1",
+      "layerName": "locator",
+      "exportParams": {
+        "format": "svg",
+        "scale": 1
+      }
+    },
+    "large-story-story-2-highlight": {
+      "id": "large-story-story-2-highlight",
+      "path": "large-story-story-2-highlight.png",
+      "mimeType": "image/png",
+      "width": 1440,
+      "height": 960,
+      "artboardName": "story-2",
+      "layerName": "highlight",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": true
+      }
+    },
+    "large-story-story-2-locator": {
+      "id": "large-story-story-2-locator",
+      "path": "large-story-story-2-locator.svg",
+      "mimeType": "image/svg+xml",
+      "width": 720,
+      "height": 480,
+      "artboardName": "story-2",
+      "layerName": "locator",
+      "exportParams": {
+        "format": "svg",
+        "scale": 1
+      }
+    },
+    "large-story-story-3-highlight": {
+      "id": "large-story-story-3-highlight",
+      "path": "large-story-story-3-highlight.png",
+      "mimeType": "image/png",
+      "width": 1600,
+      "height": 960,
+      "artboardName": "story-3",
+      "layerName": "highlight",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": true
+      }
+    },
+    "large-story-story-3-locator": {
+      "id": "large-story-story-3-locator",
+      "path": "large-story-story-3-locator.svg",
+      "mimeType": "image/svg+xml",
+      "width": 800,
+      "height": 480,
+      "artboardName": "story-3",
+      "layerName": "locator",
+      "exportParams": {
+        "format": "svg",
+        "scale": 1
+      }
+    },
+    "large-story-story-4-highlight": {
+      "id": "large-story-story-4-highlight",
+      "path": "large-story-story-4-highlight.png",
+      "mimeType": "image/png",
+      "width": 1920,
+      "height": 960,
+      "artboardName": "story-4",
+      "layerName": "highlight",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": true
+      }
+    },
+    "large-story-story-4-locator": {
+      "id": "large-story-story-4-locator",
+      "path": "large-story-story-4-locator.svg",
+      "mimeType": "image/svg+xml",
+      "width": 960,
+      "height": 480,
+      "artboardName": "story-4",
+      "layerName": "locator",
+      "exportParams": {
+        "format": "svg",
+        "scale": 1
+      }
+    },
+    "large-story-story-5-highlight": {
+      "id": "large-story-story-5-highlight",
+      "path": "large-story-story-5-highlight.png",
+      "mimeType": "image/png",
+      "width": 2240,
+      "height": 960,
+      "artboardName": "story-5",
+      "layerName": "highlight",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": true
+      }
+    },
+    "large-story-story-5-locator": {
+      "id": "large-story-story-5-locator",
+      "path": "large-story-story-5-locator.svg",
+      "mimeType": "image/svg+xml",
+      "width": 1120,
+      "height": 480,
+      "artboardName": "story-5",
+      "layerName": "locator",
+      "exportParams": {
+        "format": "svg",
+        "scale": 1
+      }
+    },
+    "large-story-story-6-highlight": {
+      "id": "large-story-story-6-highlight",
+      "path": "large-story-story-6-highlight.png",
+      "mimeType": "image/png",
+      "width": 2560,
+      "height": 960,
+      "artboardName": "story-6",
+      "layerName": "highlight",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": true
+      }
+    },
+    "large-story-story-6-locator": {
+      "id": "large-story-story-6-locator",
+      "path": "large-story-story-6-locator.svg",
+      "mimeType": "image/svg+xml",
+      "width": 1280,
+      "height": 480,
+      "artboardName": "story-6",
+      "layerName": "locator",
+      "exportParams": {
+        "format": "svg",
+        "scale": 1
+      }
+    }
+  },
+  "metadata": {
+    "slug": "large-story",
+    "headline": "",
+    "leadin": "",
+    "summary": "",
+    "notes": "",
+    "sources": "",
+    "credit": ""
+  }
+}

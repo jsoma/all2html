@@ -1,0 +1,64 @@
+[
+  {
+    "sourceNodeId": "figma-frame-nested",
+    "name": "nested",
+    "originalName": "nested:720",
+    "width": 720,
+    "height": 405,
+    "actualWidth": 720,
+    "actualHeight": 405,
+    "layers": [
+      {
+        "sourceNodeId": "figma-layer-nested",
+        "name": "content",
+        "type": "default",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "text",
+            "id": "figma-nested-text",
+            "kind": "point",
+            "position": { "x": 188, "y": 142, "width": 260, "height": 32 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Nested frame text",
+                "alignment": "center",
+                "leading": 28,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Nested frame text",
+                    "fontName": "Inter-Medium",
+                    "fontPostScriptName": "Inter-Medium",
+                    "fontSize": 24,
+                    "color": { "r": 20, "g": 20, "b": 20 },
+                    "letterSpacing": 0.02,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "assets": [
+      {
+        "id": "bg-nested",
+        "path": "all2html-output/nested.png",
+        "mimeType": "image/png",
+        "width": 720,
+        "height": 405,
+        "artboardName": "nested:720",
+        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+      }
+    ]
+  }
+]

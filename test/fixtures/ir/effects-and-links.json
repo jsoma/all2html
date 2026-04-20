@@ -1,0 +1,256 @@
+{
+  "generator": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "namespace": "g-",
+    "responsiveness": "fixed",
+    "textResponsiveness": "dynamic"
+  },
+  "fonts": [],
+  "artboards": [
+    {
+      "name": "desktop",
+      "originalName": "desktop",
+      "width": 1200,
+      "height": 800,
+      "actualWidth": 1200,
+      "actualHeight": 800,
+      "layers": [
+        {
+          "name": "Layer1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai0-1",
+              "kind": "area",
+              "position": {
+                "x": 50,
+                "y": 30,
+                "width": 400,
+                "height": 60
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "effects": [
+                {
+                  "type": "dropShadow",
+                  "offsetX": 2,
+                  "offsetY": 4,
+                  "blurRadius": 3,
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "opacity": 50
+                  }
+                }
+              ],
+              "paragraphs": [
+                {
+                  "text": "Shadow Title",
+                  "alignment": "left",
+                  "leading": 28,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Shadow Title",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 24,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-2",
+              "kind": "area",
+              "position": {
+                "x": 50,
+                "y": 100,
+                "width": 400,
+                "height": 60
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "effects": [
+                {
+                  "type": "dropShadow",
+                  "offsetX": 2,
+                  "offsetY": 4,
+                  "blurRadius": 3,
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "opacity": 50
+                  }
+                }
+              ],
+              "paragraphs": [
+                {
+                  "text": "Another shadow element",
+                  "alignment": "left",
+                  "leading": 28,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Another shadow element",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 24,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-3",
+              "kind": "area",
+              "position": {
+                "x": 50,
+                "y": 200,
+                "width": 400,
+                "height": 60
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "effects": [
+                {
+                  "type": "blur",
+                  "radius": 4
+                }
+              ],
+              "paragraphs": [
+                {
+                  "text": "Blurry text",
+                  "alignment": "left",
+                  "leading": 28,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Blurry text",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 51,
+                        "g": 51,
+                        "b": 51
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-4",
+              "kind": "area",
+              "position": {
+                "x": 50,
+                "y": 300,
+                "width": 500,
+                "height": 40
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Click here for more info",
+                  "alignment": "left",
+                  "leading": 18,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Click ",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 51,
+                        "g": 51,
+                        "b": 51
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    },
+                    {
+                      "text": "here",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 255
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "hyperlink": {
+                        "href": "https://example.com",
+                        "target": "_blank"
+                      },
+                      "letterSpacing": 0
+                    },
+                    {
+                      "text": " for more info",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 51,
+                        "g": 51,
+                        "b": 51
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [],
+  "assets": {},
+  "metadata": {
+    "slug": "effects-test"
+  },
+  "irVersion": "0.0.0"
+}

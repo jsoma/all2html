@@ -1,0 +1,7 @@
+{
+  "settings": {
+    "image_format": "jpg",
+    "max_width": 640,
+    "jpg_quality": 85
+  }
+}

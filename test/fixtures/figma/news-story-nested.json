@@ -1,0 +1,273 @@
+[
+  {
+    "sourceNodeId": "figma-news-nested",
+    "name": "news-story-nested",
+    "originalName": "news-story-nested",
+    "width": 720,
+    "height": 520,
+    "actualWidth": 720,
+    "actualHeight": 520,
+    "layers": [
+      {
+        "sourceNodeId": "figma-news-nested-layer",
+        "name": "content",
+        "type": "default",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "text",
+            "id": "figma-news-nested-eyebrow",
+            "kind": "area",
+            "position": { "x": 60, "y": 244, "width": 320, "height": 16 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "SCHOOLS",
+                "alignment": "left",
+                "leading": 16,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "SCHOOLS",
+                    "fontName": "Inter-SemiBold",
+                    "fontPostScriptName": "Inter-SemiBold",
+                    "fontSize": 12,
+                    "color": { "r": 163, "g": 95, "b": 67 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "id": "figma-news-nested-headline",
+            "kind": "area",
+            "position": { "x": 60, "y": 274, "width": 360, "height": 102 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Parents juggle shifting bus times as districts swap routes",
+                "alignment": "left",
+                "leading": 34,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Parents juggle shifting bus times as districts swap routes",
+                    "fontName": "Inter-Bold",
+                    "fontPostScriptName": "Inter-Bold",
+                    "fontSize": 28,
+                    "color": { "r": 22, "g": 27, "b": 32 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "id": "figma-news-nested-body-a",
+            "kind": "area",
+            "position": { "x": 60, "y": 390, "width": 360, "height": 72 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Transportation planners say the reshuffle could cut delays, but families worry about longer walks in the rain.",
+                "alignment": "left",
+                "leading": 24,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Transportation planners say the reshuffle could cut delays, but families worry about longer walks in the rain.",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 16,
+                    "color": { "r": 64, "g": 70, "b": 80 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "id": "figma-news-nested-body-b",
+            "kind": "area",
+            "position": { "x": 60, "y": 472, "width": 360, "height": 44 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Read the full service guide for neighborhood-by-neighborhood changes.",
+                "alignment": "left",
+                "leading": 22,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Read the ",
+                    "fontName": "Inter-Medium",
+                    "fontPostScriptName": "Inter-Medium",
+                    "fontSize": 15,
+                    "color": { "r": 36, "g": 95, "b": 134 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  },
+                  {
+                    "text": "full service guide",
+                    "fontName": "Inter-Medium",
+                    "fontPostScriptName": "Inter-Medium",
+                    "fontSize": 15,
+                    "color": { "r": 36, "g": 95, "b": 134 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal",
+                    "hyperlink": { "href": "https://example.com/service-guide", "target": "_blank" }
+                  },
+                  {
+                    "text": " for neighborhood-by-neighborhood changes.",
+                    "fontName": "Inter-Medium",
+                    "fontPostScriptName": "Inter-Medium",
+                    "fontSize": 15,
+                    "color": { "r": 36, "g": 95, "b": 134 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "id": "figma-news-nested-sidebar-title",
+            "kind": "area",
+            "position": { "x": 486, "y": 296, "width": 184, "height": 18 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "What changed",
+                "alignment": "left",
+                "leading": 18,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "What changed",
+                    "fontName": "Inter-SemiBold",
+                    "fontPostScriptName": "Inter-SemiBold",
+                    "fontSize": 14,
+                    "color": { "r": 159, "g": 215, "b": 224 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "id": "figma-news-nested-sidebar-list",
+            "kind": "area",
+            "position": { "x": 486, "y": 324, "width": 184, "height": 60 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "• Earlier pickups",
+                "alignment": "left",
+                "leading": 20,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "• Earlier pickups",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 14,
+                    "color": { "r": 255, "g": 255, "b": 255 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              },
+              {
+                "text": "• New transfer stop",
+                "alignment": "left",
+                "leading": 20,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "• New transfer stop",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 14,
+                    "color": { "r": 255, "g": 255, "b": 255 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              },
+              {
+                "text": "• Fewer late buses",
+                "alignment": "left",
+                "leading": 20,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "• Fewer late buses",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 14,
+                    "color": { "r": 255, "g": 255, "b": 255 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "assets": [
+      {
+        "id": "bg-news-story-nested",
+        "path": "all2html-output/news-story-nested-news-story-nested.png",
+        "mimeType": "image/png",
+        "width": 720,
+        "height": 520,
+        "artboardName": "news-story-nested",
+        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+      }
+    ]
+  }
+]

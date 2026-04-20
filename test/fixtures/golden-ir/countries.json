@@ -1,0 +1,1536 @@
+{
+  "generator": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "settings_version": "0.106.0",
+    "image_format": "auto",
+    "inline_svg": "true",
+    "responsiveness": "fixed",
+    "output": "one-file",
+    "html_output_path": "/ai2html-output/",
+    "html_output_extension": ".html",
+    "image_output_path": "",
+    "local_preview_template": "",
+    "png_number_of_colors": "128",
+    "jpg_quality": "60",
+    "headline": "",
+    "leadin": "",
+    "notes": "",
+    "sources": "",
+    "credit": ""
+  },
+  "fonts": [],
+  "artboards": [
+    {
+      "name": "Artboard 3",
+      "originalName": "Artboard 3",
+      "width": 780,
+      "height": 490,
+      "actualWidth": 780,
+      "actualHeight": 490,
+      "layers": [
+        {
+          "name": "interactions",
+          "type": "svg",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": []
+        },
+        {
+          "name": "Layer 1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai0-1",
+              "kind": "point",
+              "position": {
+                "x": 25.0400390625,
+                "y": 455.62291096351,
+                "width": 7.7861328125,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "0",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "0",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-2",
+              "kind": "point",
+              "position": {
+                "x": 210.685546875,
+                "y": 455.62291096351,
+                "width": 42.8203125,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "20,000",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "20,000",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-3",
+              "kind": "point",
+              "position": {
+                "x": 419.2451171875,
+                "y": 455.62291096351,
+                "width": 42.8203125,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "40,000",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "40,000",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-4",
+              "kind": "point",
+              "position": {
+                "x": 622.7119140625,
+                "y": 455.62291096351,
+                "width": 50.6064453125,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "$60,000",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "$60,000",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-5",
+              "kind": "point",
+              "position": {
+                "x": 708.8271484375,
+                "y": 430.44517658851,
+                "width": 15.572265625,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "30",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "30",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-6",
+              "kind": "point",
+              "position": {
+                "x": 708.8271484375,
+                "y": 353.95103596351,
+                "width": 15.572265625,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "40",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "40",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-7",
+              "kind": "point",
+              "position": {
+                "x": 708.8271484375,
+                "y": 276.61509846351,
+                "width": 15.572265625,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "50",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "50",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "text-2",
+              "kind": "point",
+              "position": {
+                "x": 413.3203125,
+                "y": 231.26255940101,
+                "width": 181.4453125,
+                "height": 54.92578125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "This country is an",
+                  "alignment": "left",
+                  "leading": 18,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "This country is an",
+                      "fontName": "ArialMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                },
+                {
+                  "text": "important country",
+                  "alignment": "left",
+                  "leading": 18,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "important country",
+                      "fontName": "ArialMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 140,
+                        "g": 219,
+                        "b": 241
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                },
+                {
+                  "text": "that we want to talk about",
+                  "alignment": "left",
+                  "leading": 18,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "that we want to talk about",
+                      "fontName": "ArialMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-9",
+              "kind": "point",
+              "position": {
+                "x": 708.8271484375,
+                "y": 200.12095783851,
+                "width": 15.572265625,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "60",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "60",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-10",
+              "kind": "point",
+              "position": {
+                "x": 708.8271484375,
+                "y": 122.78502033851,
+                "width": 15.572265625,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "70",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "70",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-11",
+              "kind": "point",
+              "position": {
+                "x": 708.8271484375,
+                "y": 46.2928328385096,
+                "width": 53.6962890625,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "80 years",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "80 years",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-12",
+              "kind": "point",
+              "position": {
+                "x": 55.0146484375,
+                "y": 18.2645125260096,
+                "width": 45.14453125,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Europe",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Europe",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-13",
+              "kind": "point",
+              "position": {
+                "x": 134.0166015625,
+                "y": 18.2645125260096,
+                "width": 35.8076171875,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Africa",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Africa",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-14",
+              "kind": "point",
+              "position": {
+                "x": 203.6806640625,
+                "y": 18.2635359635096,
+                "width": 27.255859375,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Asia",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Asia",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-15",
+              "kind": "point",
+              "position": {
+                "x": 264.81494140625,
+                "y": 18.2645125260096,
+                "width": 52.14453125,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Oceania",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Oceania",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-16",
+              "kind": "point",
+              "position": {
+                "x": 350.837890625,
+                "y": 18.2645125260096,
+                "width": 91.0478515625,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "South America",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "South America",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-17",
+              "kind": "point",
+              "position": {
+                "x": 475.7646484375,
+                "y": 18.2645125260096,
+                "width": 88.6962890625,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "North America",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "North America",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Artboard 4",
+      "originalName": "Artboard 4",
+      "width": 435,
+      "height": 497,
+      "actualWidth": 435,
+      "actualHeight": 497,
+      "layers": [
+        {
+          "name": "interactions",
+          "type": "svg",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": []
+        },
+        {
+          "name": "Layer 1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai1-1",
+              "kind": "point",
+              "position": {
+                "x": 17.5849609375,
+                "y": 479.177840344553,
+                "width": 8.07861328125,
+                "height": 16.560546875
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "0",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "0",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-2",
+              "kind": "point",
+              "position": {
+                "x": 104.8046875,
+                "y": 479.177840344553,
+                "width": 44.4287109375,
+                "height": 16.560546875
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "20,000",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "20,000",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-3",
+              "kind": "point",
+              "position": {
+                "x": 212.99853515625,
+                "y": 479.177840344553,
+                "width": 44.4287109375,
+                "height": 16.560546875
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "40,000",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "40,000",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-4",
+              "kind": "point",
+              "position": {
+                "x": 316.53125,
+                "y": 479.177840344553,
+                "width": 52.5068359375,
+                "height": 16.560546875
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "$60,000",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "$60,000",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-5",
+              "kind": "point",
+              "position": {
+                "x": 370.29296875,
+                "y": 454.000105969553,
+                "width": 16.15625,
+                "height": 16.560546875
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "30",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "30",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-6",
+              "kind": "point",
+              "position": {
+                "x": 370.29296875,
+                "y": 377.505965344553,
+                "width": 16.15625,
+                "height": 16.560546875
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "40",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "40",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-7",
+              "kind": "point",
+              "position": {
+                "x": 370.29296875,
+                "y": 300.170027844553,
+                "width": 16.15625,
+                "height": 16.560546875
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "50",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "50",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "text-1",
+              "kind": "point",
+              "position": {
+                "x": 151.0654296875,
+                "y": 238.488387219553,
+                "width": 188.25732421875,
+                "height": 54.92578125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "This country is an",
+                  "alignment": "left",
+                  "leading": 18,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "This country is an",
+                      "fontName": "ArialMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                },
+                {
+                  "text": "important country",
+                  "alignment": "left",
+                  "leading": 18,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "important country",
+                      "fontName": "ArialMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 140,
+                        "g": 219,
+                        "b": 241
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                },
+                {
+                  "text": "that we want to talk about",
+                  "alignment": "left",
+                  "leading": 18,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "that we want to talk about",
+                      "fontName": "ArialMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-9",
+              "kind": "point",
+              "position": {
+                "x": 370.29296875,
+                "y": 223.675887219553,
+                "width": 16.15625,
+                "height": 16.560546875
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "60",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "60",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-10",
+              "kind": "point",
+              "position": {
+                "x": 370.29296875,
+                "y": 146.339949719553,
+                "width": 16.15625,
+                "height": 16.560546875
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "70",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "70",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-11",
+              "kind": "point",
+              "position": {
+                "x": 370.8447265625,
+                "y": 69.8477622195533,
+                "width": 55.7109375,
+                "height": 16.560546875
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "80 years",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "80 years",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 77,
+                        "g": 77,
+                        "b": 77
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-12",
+              "kind": "point",
+              "position": {
+                "x": 41.94384765625,
+                "y": 35.5811606570533,
+                "width": 91.0478515625,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "South America",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "South America",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-13",
+              "kind": "point",
+              "position": {
+                "x": 166.8701171875,
+                "y": 35.5811606570533,
+                "width": 88.6962890625,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "North America",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "North America",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-14",
+              "kind": "point",
+              "position": {
+                "x": 42.521484375,
+                "y": 10.6065512820533,
+                "width": 45.14453125,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Europe",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Europe",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-15",
+              "kind": "point",
+              "position": {
+                "x": 121.52294921875,
+                "y": 10.6055747195533,
+                "width": 35.8076171875,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Africa",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Africa",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-16",
+              "kind": "point",
+              "position": {
+                "x": 191.1875,
+                "y": 10.6055747195533,
+                "width": 27.255859375,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Asia",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Asia",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-17",
+              "kind": "point",
+              "position": {
+                "x": 252.3212890625,
+                "y": 10.6055747195533,
+                "width": 52.14453125,
+                "height": 16.5595703125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Oceania",
+                  "alignment": "left",
+                  "leading": 16,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Oceania",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [
+    {
+      "type": "html",
+      "content": "<script src=\"https://cdnjs.cloudflare.com/ajax/libs/d3/7.3.0/d3.min.js\"></script>\r<style>\r    .hidden { visibility: hidden; }\r</style>"
+    }
+  ],
+  "assets": {
+    "countries-artboard-3": {
+      "id": "countries-artboard-3",
+      "path": "countries-artboard-3.png",
+      "mimeType": "image/png",
+      "width": 1560,
+      "height": 980,
+      "artboardName": "Artboard 3",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 60,
+        "colors": 128
+      }
+    },
+    "countries-artboard-4": {
+      "id": "countries-artboard-4",
+      "path": "countries-artboard-4.png",
+      "mimeType": "image/png",
+      "width": 870,
+      "height": 994,
+      "artboardName": "Artboard 4",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 60,
+        "colors": 128
+      }
+    },
+    "countries-artboard-3-interactions": {
+      "id": "countries-artboard-3-interactions",
+      "path": "countries-artboard-3-interactions.svg",
+      "mimeType": "image/svg+xml",
+      "width": 780,
+      "height": 490,
+      "artboardName": "Artboard 3",
+      "layerName": "interactions",
+      "exportParams": {
+        "format": "svg",
+        "scale": 1
+      }
+    },
+    "countries-artboard-4-interactions": {
+      "id": "countries-artboard-4-interactions",
+      "path": "countries-artboard-4-interactions.svg",
+      "mimeType": "image/svg+xml",
+      "width": 435,
+      "height": 497,
+      "artboardName": "Artboard 4",
+      "layerName": "interactions",
+      "exportParams": {
+        "format": "svg",
+        "scale": 1
+      }
+    }
+  },
+  "metadata": {
+    "slug": "countries",
+    "headline": "",
+    "leadin": "",
+    "summary": "",
+    "notes": "",
+    "sources": "",
+    "credit": ""
+  },
+  "irVersion": "0.0.0"
+}

@@ -1,0 +1,124 @@
+[
+  {
+    "sourceNodeId": "figma-news-mixed-warning",
+    "name": "news-story-mixed-warning",
+    "originalName": "news-story-mixed-warning",
+    "width": 760,
+    "height": 460,
+    "actualWidth": 760,
+    "actualHeight": 460,
+    "layers": [
+      {
+        "sourceNodeId": "figma-news-mixed-warning-layer",
+        "name": "content",
+        "type": "default",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "text",
+            "id": "figma-news-mixed-warning-headline",
+            "kind": "area",
+            "position": { "x": 32, "y": 228, "width": 560, "height": 72 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Library branches extend hours after a spike in afternoon visits",
+                "alignment": "left",
+                "leading": 36,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Library branches extend hours after a spike in afternoon visits",
+                    "fontName": "Inter-Bold",
+                    "fontPostScriptName": "Inter-Bold",
+                    "fontSize": 30,
+                    "color": { "r": 23, "g": 26, "b": 31 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "id": "figma-news-mixed-warning-body",
+            "kind": "area",
+            "position": { "x": 32, "y": 316, "width": 520, "height": 48 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Branch managers say students and remote workers are filling reading rooms earlier than expected this spring.",
+                "alignment": "left",
+                "leading": 24,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Branch managers say students and remote workers are filling reading rooms earlier than expected this spring.",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 16,
+                    "color": { "r": 64, "g": 70, "b": 80 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "id": "figma-news-mixed-warning-link",
+            "kind": "area",
+            "position": { "x": 568, "y": 316, "width": 136, "height": 44 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Tap to review the branch map",
+                "alignment": "left",
+                "leading": 22,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Tap to review the branch map",
+                    "fontName": "Inter-Medium",
+                    "fontPostScriptName": "Inter-Medium",
+                    "fontSize": 15,
+                    "color": { "r": 28, "g": 81, "b": 117 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "assets": [
+      {
+        "id": "bg-news-story-mixed-warning",
+        "path": "all2html-output/news-story-mixed-warning-news-story-mixed-warning.png",
+        "mimeType": "image/png",
+        "width": 760,
+        "height": 460,
+        "artboardName": "news-story-mixed-warning",
+        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+      }
+    ]
+  }
+]

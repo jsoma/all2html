@@ -1,0 +1,140 @@
+{
+  "irVersion": "0.0.0",
+  "generator": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    
+  },
+  "fonts": [
+    
+  ],
+  "artboards": [
+    {
+      "name": "desktop",
+      "originalName": "desktop",
+      "width": 720,
+      "height": 460,
+      "actualWidth": 720,
+      "actualHeight": 460,
+      "layers": [
+        {
+          "name": "content",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "overset-body",
+              "kind": "area",
+              "position": {
+                "x": 40,
+                "y": 127.7255859375,
+                "width": 220,
+                "height": 60
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "This area text is intentionally too long for its frame. It should trigger the exporter overset warning and still preserve visible content in the generated HTML output for regression testing.",
+                  "alignment": "left",
+                  "leading": 19.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "This area text is intentionally too long for its frame. It should trigger the exporter overset warning and still preserve visible content in the generated HTML output for regression testing.",
+                      "fontName": "ArialMT",
+                      "fontSize": 16,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "overset-title",
+              "kind": "point",
+              "position": {
+                "x": 40,
+                "y": 59.4541015625,
+                "width": 218.75390625,
+                "height": 29.625
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Overset text fixture",
+                  "alignment": "left",
+                  "leading": 28.8,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Overset text fixture",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 24,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [
+    
+  ],
+  "assets": {
+    "overset-text-real-desktop": {
+      "id": "overset-text-real-desktop",
+      "path": "overset-text-real-desktop.png",
+      "mimeType": "image/png",
+      "width": 1440,
+      "height": 920,
+      "artboardName": "desktop",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 85,
+        "colors": 128
+      }
+    }
+  },
+  "metadata": {
+    "slug": "overset-text-real",
+    "headline": "",
+    "leadin": "",
+    "summary": "",
+    "notes": "",
+    "sources": "",
+    "credit": ""
+  }
+}

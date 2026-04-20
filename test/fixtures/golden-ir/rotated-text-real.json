@@ -1,0 +1,139 @@
+{
+  "irVersion": "0.0.0",
+  "generator": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {},
+  "fonts": [],
+  "artboards": [
+    {
+      "name": "desktop",
+      "originalName": "desktop",
+      "width": 640,
+      "height": 420,
+      "actualWidth": 640,
+      "actualHeight": 420,
+      "layers": [
+        {
+          "name": "content",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "rotated-label",
+              "kind": "point",
+              "position": {
+                "x": 278.94873046875,
+                "y": 202.3251953125,
+                "width": 88.93017578125,
+                "height": 63.765625
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Angle 28",
+                  "alignment": "left",
+                  "leading": 26.4,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Angle 28",
+                      "fontName": "ArialMT",
+                      "fontSize": 22,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ],
+              "rotation": 27.9998588011113,
+              "transformMatrix": [
+                0.88294994831085, 0.46947002410889, -0.46947002410889, 0.88294994831085,
+                -10605.8754882812, 3882.69580078125
+              ]
+            },
+            {
+              "type": "text",
+              "id": "rotated-title",
+              "kind": "point",
+              "position": {
+                "x": 40,
+                "y": 67.73828125,
+                "width": 380.884765625,
+                "height": 32.09375
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Rotated text should stay HTML",
+                  "alignment": "left",
+                  "leading": 31.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Rotated text should stay HTML",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 26,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [],
+  "assets": {
+    "rotated-text-real-desktop": {
+      "id": "rotated-text-real-desktop",
+      "path": "rotated-text-real-desktop.png",
+      "mimeType": "image/png",
+      "width": 1280,
+      "height": 840,
+      "artboardName": "desktop",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 85,
+        "colors": 128
+      }
+    }
+  },
+  "metadata": {
+    "slug": "rotated-text-real",
+    "headline": "",
+    "leadin": "",
+    "summary": "",
+    "notes": "",
+    "sources": "",
+    "credit": ""
+  }
+}

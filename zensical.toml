@@ -1,0 +1,57 @@
+[project]
+site_name = "all2html"
+site_description = "Release-first documentation for installing, using, and understanding all2html."
+site_url = "https://jsoma.github.io/all2html/"
+docs_dir = "docs"
+site_dir = "site"
+repo_url = "https://github.com/jsoma/all2html"
+edit_uri = "edit/main/docs/"
+copyright = "&copy; 2026 all2html"
+nav = [
+  {"Home" = "index.md"},
+  {"Install" = "install.md"},
+  {"SVG Converter" = "https://jsoma.github.io/all2html/svg-converter/"},
+  {"Options" = [
+    "options/illustrator.md",
+    "options/after-effects.md",
+    "options/figma.md",
+    "options/svg-conversion.md"
+  ]},
+  {"Examples" = [
+    "examples/index.md",
+    "examples/svg-photo-card/index.md",
+    "examples/responsive-svg/index.md",
+    "examples/dynamic-resizing/index.md",
+    "examples/multi-artboard-responsive/index.md",
+    "examples/mixed-responsiveness/index.md",
+    "examples/custom-blocks/index.md",
+    "examples/image-only/index.md",
+    "examples/special-layers/index.md",
+    "examples/links-accessibility/index.md",
+    "examples/todo.md"
+  ]},
+  {"How It Works" = [
+    "how-it-works/index.md",
+    "how-it-works/canonical-ir.md",
+    "how-it-works/pipeline.md",
+    "how-it-works/responsive-output.md",
+    "how-it-works/special-layers.md"
+  ]},
+  {"Reference" = [
+    "reference/settings.md",
+    "reference/formats.md",
+    "reference/ir-schema.md"
+  ]},
+  {"Troubleshooting" = "troubleshooting.md"},
+  {"GitHub Releases" = "https://github.com/jsoma/all2html/releases/latest"}
+]
+
+[project.theme]
+features = [
+  "navigation.tabs",
+  "navigation.sections",
+  "navigation.indexes",
+  "navigation.top",
+  "navigation.path",
+  "toc.follow"
+]

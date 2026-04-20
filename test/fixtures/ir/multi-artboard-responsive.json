@@ -1,0 +1,229 @@
+{
+  "generator": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "namespace": "g-",
+    "responsiveness": "fixed",
+    "includeResizerCss": true
+  },
+  "fonts": [],
+  "artboards": [
+    {
+      "name": "mobile",
+      "originalName": "mobile",
+      "width": 320,
+      "height": 500,
+      "actualWidth": 320,
+      "actualHeight": 500,
+      "layers": [
+        {
+          "name": "Layer1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai0-1",
+              "kind": "area",
+              "position": {
+                "x": 10,
+                "y": 20,
+                "width": 300,
+                "height": 40
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Mobile Title",
+                  "alignment": "left",
+                  "leading": 22,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Mobile Title",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 18,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "tablet",
+      "originalName": "tablet",
+      "width": 768,
+      "height": 600,
+      "actualWidth": 768,
+      "actualHeight": 600,
+      "layers": [
+        {
+          "name": "Layer1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai1-1",
+              "kind": "area",
+              "position": {
+                "x": 30,
+                "y": 40,
+                "width": 500,
+                "height": 50
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Tablet Title",
+                  "alignment": "left",
+                  "leading": 28,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Tablet Title",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 22,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "desktop",
+      "originalName": "desktop",
+      "width": 1200,
+      "height": 800,
+      "actualWidth": 1200,
+      "actualHeight": 800,
+      "layers": [
+        {
+          "name": "Layer1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai2-1",
+              "kind": "area",
+              "position": {
+                "x": 50,
+                "y": 50,
+                "width": 600,
+                "height": 60
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Desktop Title",
+                  "alignment": "left",
+                  "leading": 34,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Desktop Title",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 28,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [],
+  "assets": {
+    "bg-mobile": {
+      "id": "bg-mobile",
+      "path": "test-mobile.png",
+      "mimeType": "image/png",
+      "width": 640,
+      "height": 1000,
+      "artboardName": "mobile",
+      "exportParams": {
+        "format": "png",
+        "scale": 2
+      }
+    },
+    "bg-tablet": {
+      "id": "bg-tablet",
+      "path": "test-tablet.png",
+      "mimeType": "image/png",
+      "width": 1536,
+      "height": 1200,
+      "artboardName": "tablet",
+      "exportParams": {
+        "format": "png",
+        "scale": 2
+      }
+    },
+    "bg-desktop": {
+      "id": "bg-desktop",
+      "path": "test-desktop.png",
+      "mimeType": "image/png",
+      "width": 2400,
+      "height": 1600,
+      "artboardName": "desktop",
+      "exportParams": {
+        "format": "png",
+        "scale": 2
+      }
+    }
+  },
+  "metadata": {
+    "slug": "responsive-test"
+  },
+  "irVersion": "0.0.0"
+}

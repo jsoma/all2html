@@ -1,0 +1,54 @@
+import type { CEP_Config } from "vite-cep-plugin";
+
+const config: CEP_Config = {
+  version: "0.1.0",
+  id: "com.all2html.panel",
+  displayName: "all2html",
+  symlink: "local",
+  port: 3000,
+  servePort: 5000,
+  startingDebugPort: 8870,
+  extensionManifestVersion: 6.0,
+  requiredRuntimeVersion: 9.0,
+  hosts: [
+    { name: "ILST", version: "[23.0,99.9]" },
+    { name: "AEFT", version: "[16.0,99.9]" },
+  ],
+  type: "Panel",
+  iconDarkNormal: "./src/js/assets/icon-light.png",
+  iconNormal: "./src/js/assets/icon-dark.png",
+  iconDarkNormalRollOver: "./src/js/assets/icon-light.png",
+  iconNormalRollOver: "./src/js/assets/icon-dark.png",
+  parameters: ["--v=0", "--enable-nodejs", "--mixed-context"],
+  width: 300,
+  height: 400,
+  panels: [
+    {
+      mainPath: "./main/index.html",
+      name: "main",
+      panelDisplayName: "all2html",
+      autoVisible: true,
+      width: 300,
+      height: 400,
+    },
+  ],
+  build: {
+    jsxBin: "off",
+    sourceMap: true,
+  },
+  zxp: {
+    country: "US",
+    province: "NY",
+    org: "all2html",
+    password: "all2html-dev",
+    tsa: ["http://timestamp.digicert.com/"],
+    allowSkipTSA: true,
+    sourceMap: false,
+    jsxBin: "off",
+  },
+  installModules: [],
+  copyAssets: [],
+  copyZipAssets: [],
+};
+
+export default config;

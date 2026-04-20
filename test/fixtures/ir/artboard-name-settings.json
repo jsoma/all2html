@@ -1,0 +1,77 @@
+{
+  "generator": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "namespace": "g-",
+    "responsiveness": "fixed"
+  },
+  "fonts": [],
+  "artboards": [
+    {
+      "name": "graphic",
+      "originalName": "graphic",
+      "width": 500,
+      "height": 400,
+      "actualWidth": 600,
+      "actualHeight": 400,
+      "layers": [
+        {
+          "name": "Layer1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai0-1",
+              "kind": "area",
+              "position": {
+                "x": 20,
+                "y": 20,
+                "width": 400,
+                "height": 50
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Width override test",
+                  "alignment": "left",
+                  "leading": 24,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Width override test",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 20,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [],
+  "assets": {},
+  "metadata": {
+    "slug": "artboard-name-test"
+  },
+  "irVersion": "0.0.0"
+}

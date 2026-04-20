@@ -1,0 +1,89 @@
+{
+  "generator": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "namespace": "g-"
+  },
+  "fonts": [],
+  "artboards": [
+    {
+      "name": "desktop",
+      "originalName": "desktop",
+      "width": 600,
+      "height": 400,
+      "actualWidth": 600,
+      "actualHeight": 400,
+      "layers": [
+        {
+          "name": "Layer1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "styled-area-1",
+              "kind": "area",
+              "position": {
+                "x": 50,
+                "y": 50,
+                "width": 400,
+                "height": 200
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "areaFill": {
+                "r": 255,
+                "g": 255,
+                "b": 200
+              },
+              "areaBorder": {
+                "width": 1,
+                "color": {
+                  "r": 100,
+                  "g": 100,
+                  "b": 100
+                }
+              },
+              "paragraphs": [
+                {
+                  "text": "This area text has a yellow background and gray border.",
+                  "alignment": "left",
+                  "leading": 20,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "This area text has a yellow background and gray border.",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [],
+  "assets": {},
+  "metadata": {
+    "slug": "area-text-styled-test"
+  },
+  "irVersion": "0.0.0"
+}

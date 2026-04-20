@@ -1,0 +1,342 @@
+{
+  "generator": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "namespace": "g-"
+  },
+  "fonts": [],
+  "artboards": [
+    {
+      "name": "desktop",
+      "originalName": "desktop",
+      "width": 800,
+      "height": 600,
+      "actualWidth": 800,
+      "actualHeight": 600,
+      "layers": [
+        {
+          "name": "Layer1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "h1",
+              "kind": "area",
+              "position": {
+                "x": 20,
+                "y": 20,
+                "width": 300,
+                "height": 30
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Headline One",
+                  "alignment": "left",
+                  "leading": 24,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Headline One",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 20,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "h2",
+              "kind": "area",
+              "position": {
+                "x": 20,
+                "y": 60,
+                "width": 300,
+                "height": 30
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Headline Two",
+                  "alignment": "left",
+                  "leading": 24,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Headline Two",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 20,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "b1",
+              "kind": "area",
+              "position": {
+                "x": 20,
+                "y": 100,
+                "width": 350,
+                "height": 60
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Body text paragraph one with more content here to ensure this is the most common style by character count.",
+                  "alignment": "left",
+                  "leading": 18,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Body text paragraph one with more content here to ensure this is the most common style by character count.",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 51,
+                        "g": 51,
+                        "b": 51
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "b2",
+              "kind": "area",
+              "position": {
+                "x": 20,
+                "y": 170,
+                "width": 350,
+                "height": 60
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Body text paragraph two also has plenty of characters to contribute to the body style character count.",
+                  "alignment": "left",
+                  "leading": 18,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Body text paragraph two also has plenty of characters to contribute to the body style character count.",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 51,
+                        "g": 51,
+                        "b": 51
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "b3",
+              "kind": "area",
+              "position": {
+                "x": 20,
+                "y": 240,
+                "width": 350,
+                "height": 40
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Body text paragraph three continues the same style as the others above.",
+                  "alignment": "left",
+                  "leading": 18,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Body text paragraph three continues the same style as the others above.",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 51,
+                        "g": 51,
+                        "b": 51
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "b4",
+              "kind": "area",
+              "position": {
+                "x": 20,
+                "y": 290,
+                "width": 350,
+                "height": 40
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Body text paragraph four is identical in style.",
+                  "alignment": "left",
+                  "leading": 18,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Body text paragraph four is identical in style.",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 51,
+                        "g": 51,
+                        "b": 51
+                      },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "cap1",
+              "kind": "area",
+              "position": {
+                "x": 20,
+                "y": 350,
+                "width": 200,
+                "height": 20
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "CAPTION TEXT",
+                  "alignment": "left",
+                  "leading": 14,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "CAPTION TEXT",
+                      "fontName": "ArialMT",
+                      "fontSize": 10,
+                      "color": {
+                        "r": 102,
+                        "g": 102,
+                        "b": 102
+                      },
+                      "capitalization": "allcaps",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0.05
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "cap2",
+              "kind": "area",
+              "position": {
+                "x": 20,
+                "y": 380,
+                "width": 200,
+                "height": 20
+              },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "SOURCE: DATA",
+                  "alignment": "left",
+                  "leading": 14,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "SOURCE: DATA",
+                      "fontName": "ArialMT",
+                      "fontSize": 10,
+                      "color": {
+                        "r": 102,
+                        "g": 102,
+                        "b": 102
+                      },
+                      "capitalization": "allcaps",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0.05
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [],
+  "assets": {},
+  "metadata": {
+    "slug": "style-dedup-test"
+  },
+  "irVersion": "0.0.0"
+}

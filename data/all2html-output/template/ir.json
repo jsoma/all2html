@@ -1,0 +1,415 @@
+{
+  "irVersion": "0.0.0",
+  "generator": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "settings_version": "0.121.1",
+    "image_format": "auto",
+    "responsiveness": "fixed",
+    "include_resizer_script": "true",
+    "use_lazy_loader": "false",
+    "output": "one-file",
+    "html_output_path": "ai2html-output/",
+    "image_output_path": "ai2html-output/",
+    "image_source_path": "",
+    "local_preview_template": "",
+    "png_number_of_colors": "128",
+    "jpg_quality": "80",
+    "headline": "",
+    "leadin": "",
+    "notes": "",
+    "sources": "",
+    "credit": ""
+  },
+  "fonts": [
+    
+  ],
+  "artboards": [
+    {
+      "name": "full",
+      "originalName": "full",
+      "width": 700,
+      "height": 425,
+      "actualWidth": 700,
+      "actualHeight": 425,
+      "layers": [
+        {
+          "name": "Layer 1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai0-1",
+              "kind": "point",
+              "position": {
+                "x": 124.19580078125,
+                "y": 277.791015625,
+                "width": 452.513671875,
+                "height": 53.5205078125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "But also some small text",
+                  "alignment": "center",
+                  "leading": 48,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "But also some ",
+                      "fontName": "HelveticaNeue",
+                      "fontSize": 40,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    },
+                    {
+                      "text": "small text",
+                      "fontName": "HelveticaNeue-Bold",
+                      "fontSize": 40,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-2",
+              "kind": "point",
+              "position": {
+                "x": 44.2119140625,
+                "y": 60.0771484375,
+                "width": 594.9169921875,
+                "height": 208.4296875
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "FULL SIZE",
+                  "alignment": "center",
+                  "leading": 204,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "FULL SIZE",
+                      "fontName": "Impact",
+                      "fontSize": 170,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "medium",
+      "originalName": "medium",
+      "width": 490,
+      "height": 350,
+      "actualWidth": 490,
+      "actualHeight": 350,
+      "layers": [
+        {
+          "name": "Layer 1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai1-1",
+              "kind": "point",
+              "position": {
+                "x": 20.6298828125,
+                "y": 246.8671875,
+                "width": 452.513671875,
+                "height": 53.5205078125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "But also some small text",
+                  "alignment": "center",
+                  "leading": 48,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "But also some ",
+                      "fontName": "HelveticaNeue",
+                      "fontSize": 40,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    },
+                    {
+                      "text": "small text",
+                      "fontName": "HelveticaNeue-Bold",
+                      "fontSize": 40,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai1-2",
+              "kind": "point",
+              "position": {
+                "x": 1.802734375,
+                "y": 51.7900390625,
+                "width": 485.5224609375,
+                "height": 183.9091796875
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "MEDIUM",
+                  "alignment": "center",
+                  "leading": 180,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "MEDIUM",
+                      "fontName": "Impact",
+                      "fontSize": 150,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "mobile",
+      "originalName": "mobile",
+      "width": 375,
+      "height": 471,
+      "actualWidth": 375,
+      "actualHeight": 471,
+      "layers": [
+        {
+          "name": "Layer 1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai2-1",
+              "kind": "point",
+              "position": {
+                "x": 29.541015625,
+                "y": 274.4205078125,
+                "width": 316.759765625,
+                "height": 37.4638671875
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "But also some small text",
+                  "alignment": "center",
+                  "leading": 33.6,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "But also some ",
+                      "fontName": "HelveticaNeue",
+                      "fontSize": 28,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    },
+                    {
+                      "text": "small text",
+                      "fontName": "HelveticaNeue-Bold",
+                      "fontSize": 28,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai2-2",
+              "kind": "point",
+              "position": {
+                "x": 11.9912109375,
+                "y": 112.4927734375,
+                "width": 347.9296875,
+                "height": 147.126953125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "MOBILE",
+                  "alignment": "center",
+                  "leading": 144,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "MOBILE",
+                      "fontName": "Impact",
+                      "fontSize": 120,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [
+    
+  ],
+  "assets": {
+    "template-full": {
+      "id": "template-full",
+      "path": "template-full.png",
+      "mimeType": "image/png",
+      "width": 1400,
+      "height": 850,
+      "artboardName": "full",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 80,
+        "colors": 128
+      }
+    },
+    "template-medium": {
+      "id": "template-medium",
+      "path": "template-medium.png",
+      "mimeType": "image/png",
+      "width": 980,
+      "height": 700,
+      "artboardName": "medium",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 80,
+        "colors": 128
+      }
+    },
+    "template-mobile": {
+      "id": "template-mobile",
+      "path": "template-mobile.png",
+      "mimeType": "image/png",
+      "width": 750,
+      "height": 942,
+      "artboardName": "mobile",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 80,
+        "colors": 128
+      }
+    }
+  },
+  "metadata": {
+    "slug": "template",
+    "headline": "",
+    "leadin": "",
+    "summary": "",
+    "notes": "",
+    "sources": "",
+    "credit": ""
+  }
+}

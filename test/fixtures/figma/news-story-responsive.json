@@ -1,0 +1,431 @@
+[
+  {
+    "sourceNodeId": "figma-news-responsive-640",
+    "name": "news-story-responsive",
+    "originalName": "news-story-responsive:640",
+    "width": 640,
+    "height": 420,
+    "actualWidth": 640,
+    "actualHeight": 420,
+    "layers": [
+      {
+        "sourceNodeId": "figma-news-responsive-layer-640",
+        "name": "content",
+        "type": "default",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "text",
+            "id": "figma-news-responsive-kicker-640",
+            "kind": "area",
+            "position": { "x": 320, "y": 70, "width": 288, "height": 16 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "COASTAL WEATHER",
+                "alignment": "left",
+                "leading": 16,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "COASTAL WEATHER",
+                    "fontName": "Inter-SemiBold",
+                    "fontPostScriptName": "Inter-SemiBold",
+                    "fontSize": 12,
+                    "color": { "r": 44, "g": 109, "b": 138 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "id": "figma-news-responsive-headline-640",
+            "kind": "area",
+            "position": { "x": 320, "y": 96, "width": 288, "height": 144 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Storm barriers rise as neighborhoods prepare for evening tides",
+                "alignment": "left",
+                "leading": 36,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Storm barriers rise as neighborhoods prepare for evening tides",
+                    "fontName": "Inter-Bold",
+                    "fontPostScriptName": "Inter-Bold",
+                    "fontSize": 28,
+                    "color": { "r": 24, "g": 33, "b": 43 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "id": "figma-news-responsive-deck-640",
+            "kind": "area",
+            "position": { "x": 320, "y": 265, "width": 288, "height": 100 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Emergency managers urged residents to watch the final commuter trains and check street-level flood maps before sunset.",
+                "alignment": "left",
+                "leading": 25,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Emergency managers urged residents to watch the final commuter trains and check street-level ",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 17,
+                    "color": { "r": 62, "g": 70, "b": 80 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  },
+                  {
+                    "text": "flood maps",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 17,
+                    "color": { "r": 36, "g": 95, "b": 134 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal",
+                    "hyperlink": { "href": "https://example.com/flood-maps", "target": "_blank" }
+                  },
+                  {
+                    "text": " before sunset.",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 17,
+                    "color": { "r": 62, "g": 70, "b": 80 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "assets": [
+      {
+        "id": "bg-news-story-responsive-640",
+        "path": "all2html-output/news-story-responsive-news-story-responsive-640.png",
+        "mimeType": "image/png",
+        "width": 640,
+        "height": 420,
+        "artboardName": "news-story-responsive:640",
+        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+      }
+    ]
+  },
+  {
+    "sourceNodeId": "figma-news-responsive-960",
+    "name": "news-story-responsive",
+    "originalName": "news-story-responsive:960",
+    "width": 960,
+    "height": 440,
+    "actualWidth": 960,
+    "actualHeight": 440,
+    "layers": [
+      {
+        "sourceNodeId": "figma-news-responsive-layer-960",
+        "name": "content",
+        "type": "default",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "text",
+            "id": "figma-news-responsive-kicker-960",
+            "kind": "area",
+            "position": { "x": 480, "y": 70, "width": 432, "height": 16 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "COASTAL WEATHER",
+                "alignment": "left",
+                "leading": 16,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "COASTAL WEATHER",
+                    "fontName": "Inter-SemiBold",
+                    "fontPostScriptName": "Inter-SemiBold",
+                    "fontSize": 12,
+                    "color": { "r": 44, "g": 109, "b": 138 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "id": "figma-news-responsive-headline-960",
+            "kind": "area",
+            "position": { "x": 480, "y": 96, "width": 432, "height": 132 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Storm barriers rise as neighborhoods prepare for evening tides",
+                "alignment": "left",
+                "leading": 44,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Storm barriers rise as neighborhoods prepare for evening tides",
+                    "fontName": "Inter-Bold",
+                    "fontPostScriptName": "Inter-Bold",
+                    "fontSize": 36,
+                    "color": { "r": 24, "g": 33, "b": 43 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "id": "figma-news-responsive-deck-960",
+            "kind": "area",
+            "position": { "x": 480, "y": 244, "width": 432, "height": 75 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Emergency managers urged residents to watch the final commuter trains and check street-level flood maps before sunset.",
+                "alignment": "left",
+                "leading": 25,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Emergency managers urged residents to watch the final commuter trains and check street-level ",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 17,
+                    "color": { "r": 62, "g": 70, "b": 80 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  },
+                  {
+                    "text": "flood maps",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 17,
+                    "color": { "r": 36, "g": 95, "b": 134 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal",
+                    "hyperlink": { "href": "https://example.com/flood-maps", "target": "_blank" }
+                  },
+                  {
+                    "text": " before sunset.",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 17,
+                    "color": { "r": 62, "g": 70, "b": 80 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "assets": [
+      {
+        "id": "bg-news-story-responsive-960",
+        "path": "all2html-output/news-story-responsive-news-story-responsive-960.png",
+        "mimeType": "image/png",
+        "width": 960,
+        "height": 440,
+        "artboardName": "news-story-responsive:960",
+        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+      }
+    ]
+  },
+  {
+    "sourceNodeId": "figma-news-responsive-1280",
+    "name": "news-story-responsive",
+    "originalName": "news-story-responsive:1280",
+    "width": 1280,
+    "height": 480,
+    "actualWidth": 1280,
+    "actualHeight": 480,
+    "layers": [
+      {
+        "sourceNodeId": "figma-news-responsive-layer-1280",
+        "name": "content",
+        "type": "default",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "text",
+            "id": "figma-news-responsive-kicker-1280",
+            "kind": "area",
+            "position": { "x": 640, "y": 70, "width": 576, "height": 16 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "COASTAL WEATHER",
+                "alignment": "left",
+                "leading": 16,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "COASTAL WEATHER",
+                    "fontName": "Inter-SemiBold",
+                    "fontPostScriptName": "Inter-SemiBold",
+                    "fontSize": 12,
+                    "color": { "r": 44, "g": 109, "b": 138 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "id": "figma-news-responsive-headline-1280",
+            "kind": "area",
+            "position": { "x": 640, "y": 96, "width": 576, "height": 150 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Storm barriers rise as neighborhoods prepare for evening tides",
+                "alignment": "left",
+                "leading": 50,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Storm barriers rise as neighborhoods prepare for evening tides",
+                    "fontName": "Inter-Bold",
+                    "fontPostScriptName": "Inter-Bold",
+                    "fontSize": 42,
+                    "color": { "r": 24, "g": 33, "b": 43 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "id": "figma-news-responsive-deck-1280",
+            "kind": "area",
+            "position": { "x": 640, "y": 262, "width": 576, "height": 50 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Emergency managers urged residents to watch the final commuter trains and check street-level flood maps before sunset.",
+                "alignment": "left",
+                "leading": 25,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Emergency managers urged residents to watch the final commuter trains and check street-level ",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 17,
+                    "color": { "r": 62, "g": 70, "b": 80 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  },
+                  {
+                    "text": "flood maps",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 17,
+                    "color": { "r": 36, "g": 95, "b": 134 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal",
+                    "hyperlink": { "href": "https://example.com/flood-maps", "target": "_blank" }
+                  },
+                  {
+                    "text": " before sunset.",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 17,
+                    "color": { "r": 62, "g": 70, "b": 80 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "assets": [
+      {
+        "id": "bg-news-story-responsive-1280",
+        "path": "all2html-output/news-story-responsive-news-story-responsive-1280.png",
+        "mimeType": "image/png",
+        "width": 1280,
+        "height": 480,
+        "artboardName": "news-story-responsive:1280",
+        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+      }
+    ]
+  }
+]

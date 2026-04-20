@@ -1,0 +1,34 @@
+{
+  "canva/card": {
+    "entrypoints": ["canva/card--640.svg", "canva/card--960.svg"],
+    "artboards": 2,
+    "warnings": [],
+    "assets": ["card-640.png", "card-960.png"]
+  },
+  "canva/photo-card": {
+    "entrypoints": ["canva/photo-card.svg"],
+    "artboards": 1,
+    "warnings": [],
+    "assets": ["photo-card.jpg"]
+  },
+  "canva/transformed-text": {
+    "entrypoints": ["canva/transformed-text.svg"],
+    "artboards": 1,
+    "warnings": ["canva/transformed-text.svg: left transformed text in SVG background asset."],
+    "assets": ["transformed-text.png"]
+  },
+  "canva/effects": {
+    "entrypoints": ["canva/effects.svg"],
+    "artboards": 1,
+    "warnings": [
+      "canva/effects.svg: preserving filters, masks, or clip paths inside SVG asset output."
+    ],
+    "assets": ["effects.png"]
+  },
+  "generic/diagram": {
+    "entrypoints": ["generic/diagram.svg"],
+    "artboards": 1,
+    "warnings": [],
+    "assets": ["diagram.png"]
+  }
+}

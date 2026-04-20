@@ -1,0 +1,192 @@
+[
+  {
+    "sourceNodeId": "figma-news-special-mixed-640",
+    "name": "news-special-mixed",
+    "originalName": "news-special-mixed:640",
+    "width": 640,
+    "height": 420,
+    "actualWidth": 640,
+    "actualHeight": 420,
+    "layers": [
+      {
+        "sourceNodeId": "figma-news-special-mixed-before-640",
+        "name": "briefing-chip",
+        "type": "html-before",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "rawHtml",
+            "content": "<div class=\"briefing-chip\" data-hook=\"briefing\">Morning briefing</div>"
+          }
+        ]
+      },
+      {
+        "sourceNodeId": "figma-news-special-mixed-overlay-640",
+        "name": "route-highlight",
+        "type": "png",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 70,
+        "elements": []
+      },
+      {
+        "sourceNodeId": "figma-news-special-mixed-content-640",
+        "name": "content",
+        "type": "default",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "text",
+            "id": "figma-news-special-mixed-headline-640",
+            "kind": "area",
+            "position": { "x": 36, "y": 250, "width": 360, "height": 82 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Commuter shuttles fan out after an early-service shakeup downtown",
+                "alignment": "left",
+                "leading": 36,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Commuter shuttles fan out after an early-service shakeup downtown",
+                    "fontName": "Inter-Bold",
+                    "fontPostScriptName": "Inter-Bold",
+                    "fontSize": 30,
+                    "color": { "r": 24, "g": 31, "b": 41 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "assets": [
+      {
+        "id": "bg-news-special-mixed-640",
+        "path": "all2html-output/news-special-mixed-news-special-mixed-640.png",
+        "mimeType": "image/png",
+        "width": 640,
+        "height": 420,
+        "artboardName": "news-special-mixed:640",
+        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+      },
+      {
+        "id": "png-news-special-mixed-route-highlight-640",
+        "path": "all2html-output/news-special-mixed-news-special-mixed-640-route-highlight.png",
+        "mimeType": "image/png",
+        "width": 640,
+        "height": 420,
+        "artboardName": "news-special-mixed:640",
+        "layerName": "route-highlight",
+        "exportParams": { "format": "png", "scale": 1, "transparent": true }
+      }
+    ]
+  },
+  {
+    "sourceNodeId": "figma-news-special-mixed-960",
+    "name": "news-special-mixed",
+    "originalName": "news-special-mixed:960",
+    "width": 960,
+    "height": 440,
+    "actualWidth": 960,
+    "actualHeight": 440,
+    "layers": [
+      {
+        "sourceNodeId": "figma-news-special-mixed-before-960",
+        "name": "briefing-chip",
+        "type": "html-before",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "rawHtml",
+            "content": "<div class=\"briefing-chip\" data-hook=\"briefing\">Morning briefing</div>"
+          }
+        ]
+      },
+      {
+        "sourceNodeId": "figma-news-special-mixed-overlay-960",
+        "name": "route-highlight",
+        "type": "png",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 70,
+        "elements": []
+      },
+      {
+        "sourceNodeId": "figma-news-special-mixed-content-960",
+        "name": "content",
+        "type": "default",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "text",
+            "id": "figma-news-special-mixed-headline-960",
+            "kind": "area",
+            "position": { "x": 54, "y": 268, "width": 500, "height": 88 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Commuter shuttles fan out after an early-service shakeup downtown",
+                "alignment": "left",
+                "leading": 40,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Commuter shuttles fan out after an early-service shakeup downtown",
+                    "fontName": "Inter-Bold",
+                    "fontPostScriptName": "Inter-Bold",
+                    "fontSize": 34,
+                    "color": { "r": 24, "g": 31, "b": 41 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "assets": [
+      {
+        "id": "bg-news-special-mixed-960",
+        "path": "all2html-output/news-special-mixed-news-special-mixed-960.png",
+        "mimeType": "image/png",
+        "width": 960,
+        "height": 440,
+        "artboardName": "news-special-mixed:960",
+        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+      },
+      {
+        "id": "png-news-special-mixed-route-highlight-960",
+        "path": "all2html-output/news-special-mixed-news-special-mixed-960-route-highlight.png",
+        "mimeType": "image/png",
+        "width": 960,
+        "height": 440,
+        "artboardName": "news-special-mixed:960",
+        "layerName": "route-highlight",
+        "exportParams": { "format": "png", "scale": 1, "transparent": true }
+      }
+    ]
+  }
+]

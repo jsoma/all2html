@@ -1,0 +1,128 @@
+[
+  {
+    "sourceNodeId": "figma-frame-1",
+    "name": "story",
+    "originalName": "story:640",
+    "width": 640,
+    "height": 360,
+    "actualWidth": 640,
+    "actualHeight": 360,
+    "responsiveness": "dynamic",
+    "layers": [
+      {
+        "sourceNodeId": "figma-layer-1",
+        "name": "content",
+        "type": "default",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "text",
+            "id": "figma-text-1",
+            "kind": "point",
+            "position": { "x": 20, "y": 24, "width": 300, "height": 30 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Responsive small",
+                "alignment": "left",
+                "leading": 28,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Responsive small",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 22,
+                    "color": { "r": 0, "g": 0, "b": 0 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "assets": [
+      {
+        "id": "bg-story-640",
+        "path": "all2html-output/story-640.png",
+        "mimeType": "image/png",
+        "width": 640,
+        "height": 360,
+        "artboardName": "story:640",
+        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+      }
+    ]
+  },
+  {
+    "sourceNodeId": "figma-frame-2",
+    "name": "story",
+    "originalName": "story:1024",
+    "width": 1024,
+    "height": 360,
+    "actualWidth": 1024,
+    "actualHeight": 360,
+    "responsiveness": "dynamic",
+    "layers": [
+      {
+        "sourceNodeId": "figma-layer-2",
+        "name": "content",
+        "type": "default",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "text",
+            "id": "figma-text-2",
+            "kind": "point",
+            "position": { "x": 36, "y": 28, "width": 420, "height": 36 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Responsive wide",
+                "alignment": "left",
+                "leading": 32,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Responsive wide",
+                    "fontName": "Inter-Bold",
+                    "fontPostScriptName": "Inter-Bold",
+                    "fontSize": 28,
+                    "color": { "r": 0, "g": 0, "b": 0 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "assets": [
+      {
+        "id": "bg-story-1024",
+        "path": "all2html-output/story-1024.png",
+        "mimeType": "image/png",
+        "width": 1024,
+        "height": 360,
+        "artboardName": "story:1024",
+        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+      }
+    ]
+  }
+]

@@ -1,0 +1,135 @@
+[
+  {
+    "sourceNodeId": "figma-news-single",
+    "name": "news-story-single",
+    "originalName": "news-story-single",
+    "width": 640,
+    "height": 420,
+    "actualWidth": 640,
+    "actualHeight": 420,
+    "layers": [
+      {
+        "sourceNodeId": "figma-news-single-layer",
+        "name": "content",
+        "type": "default",
+        "inlineSvg": false,
+        "visible": true,
+        "opacity": 100,
+        "elements": [
+          {
+            "type": "text",
+            "id": "figma-news-single-kicker",
+            "kind": "area",
+            "position": { "x": 32, "y": 272, "width": 180, "height": 16 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "CITY HALL",
+                "alignment": "left",
+                "leading": 16,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "CITY HALL",
+                    "fontName": "Inter-SemiBold",
+                    "fontPostScriptName": "Inter-SemiBold",
+                    "fontSize": 12,
+                    "color": { "r": 196, "g": 111, "b": 82 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "id": "figma-news-single-headline",
+            "kind": "area",
+            "position": { "x": 32, "y": 292, "width": 500, "height": 72 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Mayor unveils a late-night plan to keep buses moving",
+                "alignment": "left",
+                "leading": 36,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Mayor unveils a late-night plan to keep buses moving",
+                    "fontName": "Inter-Bold",
+                    "fontPostScriptName": "Inter-Bold",
+                    "fontSize": 30,
+                    "color": { "r": 20, "g": 24, "b": 31 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "id": "figma-news-single-deck",
+            "kind": "area",
+            "position": { "x": 32, "y": 376, "width": 520, "height": 48 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "html",
+            "paragraphs": [
+              {
+                "text": "Officials say the overnight pilot would focus on hospital routes and neighborhoods with the longest commutes. Read the transit plan.",
+                "alignment": "left",
+                "leading": 24,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Officials say the overnight pilot would focus on hospital routes and neighborhoods with the longest commutes. Read the ",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 16,
+                    "color": { "r": 63, "g": 70, "b": 80 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  },
+                  {
+                    "text": "transit plan.",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 16,
+                    "color": { "r": 36, "g": 95, "b": 134 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal",
+                    "hyperlink": { "href": "https://example.com/transit-plan", "target": "_blank" }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "assets": [
+      {
+        "id": "bg-news-story-single",
+        "path": "all2html-output/news-story-single-news-story-single.png",
+        "mimeType": "image/png",
+        "width": 640,
+        "height": 420,
+        "artboardName": "news-story-single",
+        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+      }
+    ]
+  }
+]

@@ -1,0 +1,187 @@
+{
+  "irVersion": "0.0.0",
+  "generator": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "imageFormat": [
+      "svg"
+    ],
+    "output": "one-file",
+    "responsiveness": "fixed",
+    "jpgQuality": 60,
+    "pngNumberOfColors": 128,
+    "maxWidth": null
+  },
+  "fonts": [
+    
+  ],
+  "artboards": [
+    {
+      "name": "Artboard 1",
+      "originalName": "Artboard 1",
+      "width": 460,
+      "height": 460,
+      "actualWidth": 460,
+      "actualHeight": 460,
+      "layers": [
+        {
+          "name": "Fig1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai0-1",
+              "kind": "point",
+              "position": {
+                "x": 81,
+                "y": 299.9892578125,
+                "width": 87.9033203125,
+                "height": 17.28125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Lorem Ipsum",
+                  "alignment": "left",
+                  "leading": 16.8,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Lorem Ipsum",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 255,
+                        "g": 255,
+                        "b": 255
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "g-ai0-2",
+              "kind": "point",
+              "position": {
+                "x": 278,
+                "y": 140.9892578125,
+                "width": 87.9033203125,
+                "height": 17.28125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "Lorem Ipsum",
+                  "alignment": "left",
+                  "leading": 16.8,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Lorem Ipsum",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 14,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Fig2",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        },
+        {
+          "name": "Fig5",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        },
+        {
+          "name": "Fig3",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        },
+        {
+          "name": "Fig4",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [
+    
+  ],
+  "assets": {
+    "mask-test-artboard-1": {
+      "id": "mask-test-artboard-1",
+      "path": "mask-test-artboard-1.png",
+      "mimeType": "image/png",
+      "width": 920,
+      "height": 920,
+      "artboardName": "Artboard 1",
+      "exportParams": {
+        "format": "svg",
+        "scale": 2,
+        "transparent": false,
+        "quality": 60,
+        "colors": 128
+      }
+    }
+  },
+  "metadata": {
+    "slug": "mask-test",
+    "headline": "",
+    "leadin": "",
+    "summary": "",
+    "notes": "",
+    "sources": "",
+    "credit": "By The New York Times"
+  }
+}

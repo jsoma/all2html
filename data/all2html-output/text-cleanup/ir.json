@@ -1,0 +1,129 @@
+{
+  "irVersion": "0.0.0",
+  "generator": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "settings_version": "0.106.0",
+    "image_format": "auto",
+    "responsiveness": "fixed",
+    "output": "one-file",
+    "html_output_path": "/ai2html-output/",
+    "html_output_extension": ".html",
+    "image_output_path": "",
+    "local_preview_template": "",
+    "png_number_of_colors": "128",
+    "jpg_quality": "60",
+    "headline": "",
+    "leadin": "",
+    "notes": "",
+    "sources": "",
+    "credit": ""
+  },
+  "fonts": [
+    
+  ],
+  "artboards": [
+    {
+      "name": "Artboard 1",
+      "originalName": "Artboard 1",
+      "width": 780,
+      "height": 400,
+      "actualWidth": 780,
+      "actualHeight": 400,
+      "layers": [
+        {
+          "name": "shadow-text",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "g-ai0-1",
+              "kind": "point",
+              "position": {
+                "x": 60,
+                "y": 66,
+                "width": 591.6337890625,
+                "height": 77.17724609375
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "This is easier to read",
+                  "alignment": "left",
+                  "leading": 85.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "This is easier to read",
+                      "fontName": "MyriadPro-Regular",
+                      "fontSize": 71,
+                      "color": {
+                        "r": 255,
+                        "g": 255,
+                        "b": 255
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Layer 1",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [
+    {
+      "type": "css",
+      "content": ".g-shadow-text {\r    text-shadow: 0 0 5px black;\r}"
+    }
+  ],
+  "assets": {
+    "text-cleanup-artboard-1": {
+      "id": "text-cleanup-artboard-1",
+      "path": "text-cleanup-artboard-1.png",
+      "mimeType": "image/png",
+      "width": 1560,
+      "height": 800,
+      "artboardName": "Artboard 1",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "quality": 60,
+        "colors": 128
+      }
+    }
+  },
+  "metadata": {
+    "slug": "text-cleanup",
+    "headline": "",
+    "leadin": "",
+    "summary": "",
+    "notes": "",
+    "sources": "",
+    "credit": ""
+  }
+}

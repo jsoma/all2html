@@ -1,0 +1,91 @@
+{
+  "name": "all2html",
+  "version": "0.1.0",
+  "description": "Plugin-based system for converting design tool documents into responsive HTML",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/src/browser.d.ts",
+      "default": "./dist/src/browser.js"
+    },
+    "./svg-node": {
+      "types": "./dist/src/importers/svg/node.d.ts",
+      "default": "./dist/src/importers/svg/node.js"
+    }
+  },
+  "bin": {
+    "all2html": "./dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/cli/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "check:illustrator-fixtures": "pnpm exec tsx scripts/audit-illustrator-fixtures.ts",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "check": "biome check . && tsc --noEmit",
+    "build:extendscript": "node scripts/build-extendscript.mjs",
+    "build:figma": "node scripts/build-figma-plugin.mjs",
+    "build:illustrator": "pnpm build:extendscript && node scripts/assemble-illustrator.mjs",
+    "export:illustrator-fixtures": "pnpm exec tsx scripts/export-illustrator-fixtures.ts --golden",
+    "build:panel": "pnpm build:illustrator && pnpm build:after-effects && pnpm --filter @all2html/panel build",
+    "dev:panel": "pnpm build:panel && pnpm --filter @all2html/panel dev",
+    "package:panel": "pnpm build:illustrator && pnpm build:after-effects && pnpm --filter @all2html/panel zxp",
+    "package:panel:zip": "pnpm build:illustrator && pnpm build:after-effects && pnpm --filter @all2html/panel zip",
+    "build:after-effects": "node scripts/package-after-effects.mjs",
+    "build:svg-dropzone": "pnpm --filter @all2html/svg-dropzone build",
+    "dev:svg-dropzone": "pnpm --filter @all2html/svg-dropzone dev",
+    "docs:serve": "uvx --from zensical zensical serve",
+    "docs:build": "node scripts/build-docs-site.mjs",
+    "package:after-effects": "node scripts/package-after-effects.mjs",
+    "test:visual": "playwright test",
+    "diagnostics:illustrator": "pnpm exec tsx scripts/read-cep-diagnostics.ts illustrator",
+    "diagnostics:after-effects": "pnpm exec tsx scripts/read-cep-diagnostics.ts after-effects"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "@resvg/resvg-wasm": "^2.6.2",
+    "fflate": "^0.8.2",
+    "hast-util-to-html": "^9.0.4",
+    "hastscript": "^9.0.1",
+    "jpeg-js": "^0.4.4",
+    "jsonc-parser": "^3.3.1",
+    "svgson": "^5.3.1",
+    "upng-js": "^2.1.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.10",
+    "@figma/plugin-typings": "^1.124.0",
+    "@playwright/test": "^1.59.1",
+    "@rollup/plugin-typescript": "^12.3.0",
+    "@types/hast": "^3.0.4",
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.28.0",
+    "jsdom": "^29.0.2",
+    "lefthook": "^2.1.4",
+    "rollup": "^4.60.1",
+    "tslib": "^2.8.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "lefthook"
+    ]
+  }
+}

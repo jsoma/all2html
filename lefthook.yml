@@ -1,0 +1,21 @@
+pre-commit:
+  parallel: true
+  commands:
+    check:
+      glob: "*.{ts,tsx,js,json}"
+      run: npx biome check --staged --no-errors-on-unmatched --write
+      stage_fixed: true
+
+post-commit:
+  commands:
+    docs-reminder:
+      run: |
+        changed=$(git diff-tree --no-commit-id --name-only -r HEAD)
+        code_changed=$(echo "$changed" | grep -q '^src/' && echo yes || echo no)
+        docs_changed=$(echo "$changed" | grep -qE '(CLAUDE\.md|README\.md|SPEC\.md|\.claude/)' && echo yes || echo no)
+        if [ "$code_changed" = "yes" ] && [ "$docs_changed" = "no" ]; then
+          echo ""
+          echo "📝 Reminder: src/ changed but no docs were updated."
+          echo "   Consider updating: CLAUDE.md, README.md, SPEC.md"
+          echo ""
+        fi

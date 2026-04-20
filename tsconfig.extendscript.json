@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES5",
+    "module": "ES2015",
+    "moduleResolution": "bundler",
+    "lib": ["ES5"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": false,
+    "sourceMap": false,
+    "downlevelIteration": false,
+    "importHelpers": false
+  },
+  "include": [
+    "src/extendscript/**/*",
+    "src/core/**/*",
+    "src/emitters/html-string.ts",
+    "src/emitters/shared/css.ts",
+    "src/emitters/shared/assets.ts",
+    "src/ir/types.ts",
+    "src/ir/defaults.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}
