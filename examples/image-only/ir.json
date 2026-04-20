@@ -1,0 +1,76 @@
+{
+  "irVersion": "0.0.0",
+  "generator": {
+    "tool": "svg",
+    "toolVersion": "1.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "imageFormat": [
+      "auto"
+    ],
+    "writeImageFiles": true,
+    "pngTransparent": false,
+    "pngNumberOfColors": 128,
+    "jpgQuality": 85,
+    "use2xImages": true,
+    "cacheBustToken": null,
+    "namespace": "g-",
+    "projectName": "photo-card-image",
+    "output": "one-file",
+    "htmlOutputPath": "all2html-output/",
+    "htmlOutputExtension": ".html",
+    "imageOutputPath": "all2html-output/",
+    "imageSourcePath": "",
+    "responsiveness": "fixed",
+    "textResponsiveness": "dynamic",
+    "maxWidth": null,
+    "centerHtmlOutput": true,
+    "renderTextAs": "html",
+    "renderRotatedSkewedTextAs": "html",
+    "testingMode": false,
+    "includeResizerCss": true,
+    "includeResizerWidths": true,
+    "responsiveImageMode": "img-src",
+    "useLazyLoader": true,
+    "inlineSvg": false,
+    "svgIdPrefix": "",
+    "svgEmbedImages": false,
+    "clickableLink": "",
+    "createPromoImage": false,
+    "promoImageWidth": 1024,
+    "localPreviewTemplate": ""
+  },
+  "fonts": [],
+  "artboards": [
+    {
+      "name": "photo-card",
+      "originalName": "photo-card--image",
+      "width": 720,
+      "height": 480,
+      "actualWidth": 720,
+      "actualHeight": 480,
+      "imageOnly": true,
+      "layers": []
+    }
+  ],
+  "customBlocks": [],
+  "assets": {
+    "photo-card-image.jpg": {
+      "id": "photo-card-image.jpg",
+      "path": "photo-card-image.jpg",
+      "mimeType": "image/jpeg",
+      "width": 1440,
+      "height": 960,
+      "artboardName": "photo-card",
+      "exportParams": {
+        "format": "jpg",
+        "scale": 2,
+        "quality": 85
+      }
+    }
+  },
+  "metadata": {
+    "slug": "photo-card-image"
+  }
+}

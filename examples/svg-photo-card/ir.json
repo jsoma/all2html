@@ -1,0 +1,215 @@
+{
+  "irVersion": "0.0.0",
+  "generator": {
+    "tool": "svg",
+    "toolVersion": "1.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "imageFormat": [
+      "auto"
+    ],
+    "writeImageFiles": true,
+    "pngTransparent": false,
+    "pngNumberOfColors": 128,
+    "jpgQuality": 85,
+    "use2xImages": true,
+    "cacheBustToken": null,
+    "namespace": "g-",
+    "projectName": "photo-card",
+    "output": "one-file",
+    "htmlOutputPath": "all2html-output/",
+    "htmlOutputExtension": ".html",
+    "imageOutputPath": "all2html-output/",
+    "imageSourcePath": "",
+    "responsiveness": "fixed",
+    "textResponsiveness": "dynamic",
+    "maxWidth": null,
+    "centerHtmlOutput": true,
+    "renderTextAs": "html",
+    "renderRotatedSkewedTextAs": "html",
+    "testingMode": false,
+    "includeResizerCss": true,
+    "includeResizerWidths": true,
+    "responsiveImageMode": "img-src",
+    "useLazyLoader": true,
+    "inlineSvg": false,
+    "svgIdPrefix": "",
+    "svgEmbedImages": false,
+    "clickableLink": "",
+    "createPromoImage": false,
+    "promoImageWidth": 1024,
+    "localPreviewTemplate": ""
+  },
+  "fonts": [
+    {
+      "aifont": "Arial__400__normal",
+      "family": "Arial",
+      "weight": "400",
+      "style": "normal"
+    },
+    {
+      "aifont": "Arial__700__normal",
+      "family": "Arial",
+      "weight": "700",
+      "style": "normal"
+    }
+  ],
+  "artboards": [
+    {
+      "name": "photo-card",
+      "originalName": "photo-card",
+      "width": 720,
+      "height": 480,
+      "actualWidth": 720,
+      "actualHeight": 480,
+      "layers": [
+        {
+          "name": "content",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "photo-card-text-1",
+              "kind": "point",
+              "position": {
+                "x": 52,
+                "y": 92,
+                "width": 197.86,
+                "height": 31.2
+              },
+              "opacity": 100,
+              "valign": "top",
+              "paragraphs": [
+                {
+                  "text": "Embedded image",
+                  "alignment": "left",
+                  "direction": "ltr",
+                  "leading": 31.2,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Embedded image",
+                      "fontName": "Arial__400__normal",
+                      "fontSize": 26,
+                      "color": {
+                        "r": 248,
+                        "g": 243,
+                        "b": 237
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ],
+              "renderAs": "html"
+            },
+            {
+              "type": "text",
+              "id": "photo-card-text-2",
+              "kind": "point",
+              "position": {
+                "x": 52,
+                "y": 130,
+                "width": 311.4600000000001,
+                "height": 69.6
+              },
+              "opacity": 100,
+              "valign": "top",
+              "paragraphs": [
+                {
+                  "text": "Photo card",
+                  "alignment": "left",
+                  "direction": "ltr",
+                  "leading": 69.6,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Photo card",
+                      "fontName": "Arial__700__normal",
+                      "fontSize": 58,
+                      "color": {
+                        "r": 255,
+                        "g": 255,
+                        "b": 255
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ],
+              "renderAs": "html"
+            },
+            {
+              "type": "text",
+              "id": "photo-card-text-3",
+              "kind": "point",
+              "position": {
+                "x": 52,
+                "y": 214,
+                "width": 742.9400000000006,
+                "height": 26.4
+              },
+              "opacity": 100,
+              "valign": "top",
+              "paragraphs": [
+                {
+                  "text": "Auto format should choose JPG because raster content is present.",
+                  "alignment": "left",
+                  "direction": "ltr",
+                  "leading": 26.4,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Auto format should choose JPG because raster content is present.",
+                      "fontName": "Arial__400__normal",
+                      "fontSize": 22,
+                      "color": {
+                        "r": 207,
+                        "g": 216,
+                        "b": 241
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ],
+              "renderAs": "html"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [],
+  "assets": {
+    "photo-card.jpg": {
+      "id": "photo-card.jpg",
+      "path": "photo-card.jpg",
+      "mimeType": "image/jpeg",
+      "width": 1440,
+      "height": 960,
+      "artboardName": "photo-card",
+      "exportParams": {
+        "format": "jpg",
+        "scale": 2,
+        "quality": 85
+      }
+    }
+  },
+  "metadata": {
+    "slug": "photo-card"
+  }
+}

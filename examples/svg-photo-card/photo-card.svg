@@ -1,0 +1,8 @@
+<svg width="720" height="480" viewBox="0 0 720 480" xmlns="http://www.w3.org/2000/svg">
+  <rect width="720" height="480" fill="#0f1629" />
+  <image x="390" y="40" width="280" height="320" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVR4nGP8z/D/PwMDAwMjI2MAAA+5AgHx0M0xAAAAAElFTkSuQmCC" />
+  <rect x="36" y="36" width="648" height="408" rx="24" fill="none" stroke="#ffffff" opacity="0.14" />
+  <text x="52" y="118" font-size="26" font-family="Arial" fill="#f8f3ed">Embedded image</text>
+  <text x="52" y="188" font-size="58" font-family="Arial" font-weight="700" fill="#ffffff">Photo card</text>
+  <text x="52" y="236" font-size="22" font-family="Arial" fill="#cfd8f1">Auto format should choose JPG because raster content is present.</text>
+</svg>

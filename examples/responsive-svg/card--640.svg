@@ -1,0 +1,16 @@
+<svg width="640" height="360" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fdf3d5" />
+      <stop offset="100%" stop-color="#e6eefc" />
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#sky)" />
+  <circle cx="120" cy="98" r="42" fill="#ff8a5b" opacity="0.88" />
+  <circle cx="540" cy="70" r="26" fill="#3350d8" opacity="0.78" />
+  <path d="M0 250 C140 210 220 320 360 284 C420 268 536 212 640 236 L640 360 L0 360 Z" fill="#f7dcb1" />
+  <rect x="28" y="28" width="584" height="304" rx="28" fill="rgba(255,255,255,0.42)" stroke="rgba(40,35,28,0.14)" />
+  <text x="48" y="98" font-size="22" font-family="Georgia" fill="#6b6359">Canva export sample</text>
+  <text x="48" y="156" font-size="48" font-family="Arial" font-weight="700" fill="#22201c">Mobile card headline</text>
+  <text x="48" y="198" font-size="19" font-family="Arial" fill="#3d3832">SVG import should keep this copy live while the drawing behind it rasterizes.</text>
+</svg>

@@ -1,0 +1,374 @@
+{
+  "irVersion": "0.0.0",
+  "generator": {
+    "tool": "svg",
+    "toolVersion": "1.0",
+    "pluginVersion": "0.1.0"
+  },
+  "settings": {
+    "imageFormat": [
+      "auto"
+    ],
+    "writeImageFiles": true,
+    "pngTransparent": false,
+    "pngNumberOfColors": 128,
+    "jpgQuality": 85,
+    "use2xImages": true,
+    "cacheBustToken": null,
+    "namespace": "g-",
+    "projectName": "responsive-svg",
+    "output": "one-file",
+    "htmlOutputPath": "all2html-output/",
+    "htmlOutputExtension": ".html",
+    "imageOutputPath": "all2html-output/",
+    "imageSourcePath": "",
+    "responsiveness": "fixed",
+    "textResponsiveness": "dynamic",
+    "maxWidth": null,
+    "centerHtmlOutput": true,
+    "renderTextAs": "html",
+    "renderRotatedSkewedTextAs": "html",
+    "testingMode": false,
+    "includeResizerCss": true,
+    "includeResizerWidths": true,
+    "responsiveImageMode": "img-src",
+    "useLazyLoader": true,
+    "inlineSvg": false,
+    "svgIdPrefix": "",
+    "svgEmbedImages": false,
+    "clickableLink": "",
+    "createPromoImage": false,
+    "promoImageWidth": 1024,
+    "localPreviewTemplate": ""
+  },
+  "fonts": [
+    {
+      "aifont": "Georgia__400__normal",
+      "family": "Georgia",
+      "weight": "400",
+      "style": "normal"
+    },
+    {
+      "aifont": "Arial__700__normal",
+      "family": "Arial",
+      "weight": "700",
+      "style": "normal"
+    },
+    {
+      "aifont": "Arial__400__normal",
+      "family": "Arial",
+      "weight": "400",
+      "style": "normal"
+    }
+  ],
+  "artboards": [
+    {
+      "name": "card",
+      "originalName": "card--640",
+      "width": 640,
+      "height": 360,
+      "actualWidth": 640,
+      "actualHeight": 360,
+      "responsiveness": "fixed",
+      "layers": [
+        {
+          "name": "content",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "card-640-text-1",
+              "kind": "point",
+              "position": {
+                "x": 48,
+                "y": 76,
+                "width": 223.95999999999992,
+                "height": 26.4
+              },
+              "opacity": 100,
+              "valign": "top",
+              "paragraphs": [
+                {
+                  "text": "Canva export sample",
+                  "alignment": "left",
+                  "direction": "ltr",
+                  "leading": 26.4,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Canva export sample",
+                      "fontName": "Georgia__400__normal",
+                      "fontSize": 22,
+                      "color": {
+                        "r": 107,
+                        "g": 99,
+                        "b": 89
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ],
+              "renderAs": "html"
+            },
+            {
+              "type": "text",
+              "id": "card-640-text-2",
+              "kind": "point",
+              "position": {
+                "x": 48,
+                "y": 108,
+                "width": 515.52,
+                "height": 57.599999999999994
+              },
+              "opacity": 100,
+              "valign": "top",
+              "paragraphs": [
+                {
+                  "text": "Mobile card headline",
+                  "alignment": "left",
+                  "direction": "ltr",
+                  "leading": 57.599999999999994,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Mobile card headline",
+                      "fontName": "Arial__700__normal",
+                      "fontSize": 48,
+                      "color": {
+                        "r": 34,
+                        "g": 32,
+                        "b": 28
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ],
+              "renderAs": "html"
+            },
+            {
+              "type": "text",
+              "id": "card-640-text-3",
+              "kind": "point",
+              "position": {
+                "x": 48,
+                "y": 179,
+                "width": 766.8399999999992,
+                "height": 22.8
+              },
+              "opacity": 100,
+              "valign": "top",
+              "paragraphs": [
+                {
+                  "text": "SVG import should keep this copy live while the drawing behind it rasterizes.",
+                  "alignment": "left",
+                  "direction": "ltr",
+                  "leading": 22.8,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "SVG import should keep this copy live while the drawing behind it rasterizes.",
+                      "fontName": "Arial__400__normal",
+                      "fontSize": 19,
+                      "color": {
+                        "r": 61,
+                        "g": 56,
+                        "b": 50
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ],
+              "renderAs": "html"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "card",
+      "originalName": "card--960",
+      "width": 960,
+      "height": 540,
+      "actualWidth": 960,
+      "actualHeight": 540,
+      "responsiveness": "fixed",
+      "layers": [
+        {
+          "name": "content",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "elements": [
+            {
+              "type": "text",
+              "id": "card-960-text-1",
+              "kind": "point",
+              "position": {
+                "x": 84,
+                "y": 110,
+                "width": 285.0400000000001,
+                "height": 33.6
+              },
+              "opacity": 100,
+              "valign": "top",
+              "paragraphs": [
+                {
+                  "text": "Canva export sample",
+                  "alignment": "left",
+                  "direction": "ltr",
+                  "leading": 33.6,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Canva export sample",
+                      "fontName": "Georgia__400__normal",
+                      "fontSize": 28,
+                      "color": {
+                        "r": 107,
+                        "g": 99,
+                        "b": 89
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ],
+              "renderAs": "html"
+            },
+            {
+              "type": "text",
+              "id": "card-960-text-2",
+              "kind": "point",
+              "position": {
+                "x": 84,
+                "y": 164,
+                "width": 813.6000000000004,
+                "height": 86.39999999999999
+              },
+              "opacity": 100,
+              "valign": "top",
+              "paragraphs": [
+                {
+                  "text": "Desktop card headline",
+                  "alignment": "left",
+                  "direction": "ltr",
+                  "leading": 86.39999999999999,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "Desktop card headline",
+                      "fontName": "Arial__700__normal",
+                      "fontSize": 72,
+                      "color": {
+                        "r": 34,
+                        "g": 32,
+                        "b": 28
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ],
+              "renderAs": "html"
+            },
+            {
+              "type": "text",
+              "id": "card-960-text-3",
+              "kind": "point",
+              "position": {
+                "x": 84,
+                "y": 264,
+                "width": 1273.9999999999998,
+                "height": 33.6
+              },
+              "opacity": 100,
+              "valign": "top",
+              "paragraphs": [
+                {
+                  "text": "The wider responsive variant should group with the 640px file and still keep text live.",
+                  "alignment": "left",
+                  "direction": "ltr",
+                  "leading": 33.6,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "The wider responsive variant should group with the 640px file and still keep text live.",
+                      "fontName": "Arial__400__normal",
+                      "fontSize": 28,
+                      "color": {
+                        "r": 61,
+                        "g": 56,
+                        "b": 50
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ],
+              "renderAs": "html"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [],
+  "assets": {
+    "card-640.png": {
+      "id": "card-640.png",
+      "path": "card-640.png",
+      "mimeType": "image/png",
+      "width": 1280,
+      "height": 720,
+      "artboardName": "card",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "colors": 128
+      }
+    },
+    "card-960.png": {
+      "id": "card-960.png",
+      "path": "card-960.png",
+      "mimeType": "image/png",
+      "width": 1920,
+      "height": 1080,
+      "artboardName": "card",
+      "exportParams": {
+        "format": "png",
+        "scale": 2,
+        "transparent": false,
+        "colors": 128
+      }
+    }
+  },
+  "metadata": {
+    "slug": "responsive-svg"
+  }
+}
