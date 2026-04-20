@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build ExtendScript bundle
+        run: pnpm build:extendscript
+
       - name: Run tests
         run: pnpm test
 
@@ -68,12 +71,27 @@ jobs:
 
       - name: Collect release assets
         run: |
+          set -euo pipefail
+
+          panel_zip=$(find plugins/illustrator/panel/dist/zip -maxdepth 2 -type f -name '*.zip' | head -n 1)
+          panel_zxp=$(find plugins/illustrator/panel/dist/zxp -maxdepth 2 -type f -name '*.zxp' | head -n 1)
+
+          if [ -z "$panel_zip" ]; then
+            echo "Panel zip package not found"
+            exit 1
+          fi
+
+          if [ -z "$panel_zxp" ]; then
+            echo "Panel zxp package not found"
+            exit 1
+          fi
+
           mkdir -p release-assets
           cp dist/all2html.js release-assets/all2html.js
           cp dist/all2html-after-effects.zip release-assets/all2html-after-effects.zip
           cp dist/all2html-figma-plugin.zip release-assets/all2html-figma-plugin.zip
-          cp plugins/illustrator/panel/dist/zip/all2html_0.1.0.zip release-assets/all2html-panel.zip
-          cp plugins/illustrator/panel/dist/zxp/com.all2html.panel.zxp release-assets/all2html-panel.zxp
+          cp "$panel_zip" release-assets/all2html-panel.zip
+          cp "$panel_zxp" release-assets/all2html-panel.zxp
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4

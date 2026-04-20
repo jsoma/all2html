@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build ExtendScript bundle
+        run: pnpm build:extendscript
+
       - name: Run tests
         run: pnpm test
 
