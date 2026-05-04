@@ -1,9 +1,4 @@
 {
-  "generator": {
-    "tool": "test",
-    "toolVersion": "1.0",
-    "pluginVersion": "0.1.0"
-  },
   "settings": {
     "namespace": "g-",
     "responsiveness": "fixed",
@@ -13,11 +8,8 @@
   "artboards": [
     {
       "name": "mobile",
-      "originalName": "mobile",
       "width": 320,
       "height": 500,
-      "actualWidth": 320,
-      "actualHeight": 500,
       "layers": [
         {
           "name": "Layer1",
@@ -64,17 +56,26 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:mobile:layer:layer1",
+          "source": {
+            "tool": "test",
+            "name": "Layer1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:mobile",
+      "source": {
+        "tool": "test",
+        "name": "mobile",
+        "width": 320,
+        "height": 500
+      }
     },
     {
       "name": "tablet",
-      "originalName": "tablet",
       "width": 768,
       "height": 600,
-      "actualWidth": 768,
-      "actualHeight": 600,
       "layers": [
         {
           "name": "Layer1",
@@ -121,17 +122,26 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:tablet:layer:layer1",
+          "source": {
+            "tool": "test",
+            "name": "Layer1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:tablet",
+      "source": {
+        "tool": "test",
+        "name": "tablet",
+        "width": 768,
+        "height": 600
+      }
     },
     {
       "name": "desktop",
-      "originalName": "desktop",
       "width": 1200,
       "height": 800,
-      "actualWidth": 1200,
-      "actualHeight": 800,
       "layers": [
         {
           "name": "Layer1",
@@ -178,9 +188,21 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:desktop:layer:layer1",
+          "source": {
+            "tool": "test",
+            "name": "Layer1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:desktop",
+      "source": {
+        "tool": "test",
+        "name": "desktop",
+        "width": 1200,
+        "height": 800
+      }
     }
   ],
   "customBlocks": [],
@@ -191,10 +213,14 @@
       "mimeType": "image/png",
       "width": 640,
       "height": 1000,
-      "artboardName": "mobile",
       "exportParams": {
         "format": "png",
         "scale": 2
+      },
+      "artboardId": "artboard:mobile",
+      "source": {
+        "tool": "test",
+        "name": "mobile"
       }
     },
     "bg-tablet": {
@@ -203,10 +229,14 @@
       "mimeType": "image/png",
       "width": 1536,
       "height": 1200,
-      "artboardName": "tablet",
       "exportParams": {
         "format": "png",
         "scale": 2
+      },
+      "artboardId": "artboard:tablet",
+      "source": {
+        "tool": "test",
+        "name": "tablet"
       }
     },
     "bg-desktop": {
@@ -215,15 +245,24 @@
       "mimeType": "image/png",
       "width": 2400,
       "height": 1600,
-      "artboardName": "desktop",
       "exportParams": {
         "format": "png",
         "scale": 2
+      },
+      "artboardId": "artboard:desktop",
+      "source": {
+        "tool": "test",
+        "name": "desktop"
       }
     }
   },
   "metadata": {
     "slug": "responsive-test"
   },
-  "irVersion": "0.0.0"
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "adapterVersion": "0.1.0"
+  }
 }

@@ -1,9 +1,4 @@
 {
-  "generator": {
-    "tool": "test",
-    "toolVersion": "1.0",
-    "pluginVersion": "0.1.0"
-  },
   "settings": {
     "namespace": "g-",
     "responsiveness": "fixed",
@@ -13,11 +8,8 @@
   "artboards": [
     {
       "name": "mobile",
-      "originalName": "mobile:dynamic",
       "width": 320,
       "height": 500,
-      "actualWidth": 320,
-      "actualHeight": 500,
       "responsiveness": "dynamic",
       "layers": [
         {
@@ -65,17 +57,26 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:mobile-dynamic:layer:layer1",
+          "source": {
+            "tool": "test",
+            "name": "Layer1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:mobile-dynamic",
+      "source": {
+        "tool": "test",
+        "name": "mobile:dynamic",
+        "width": 320,
+        "height": 500
+      }
     },
     {
       "name": "desktop",
-      "originalName": "desktop",
       "width": 1000,
       "height": 600,
-      "actualWidth": 1000,
-      "actualHeight": 600,
       "responsiveness": "fixed",
       "layers": [
         {
@@ -123,9 +124,21 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:desktop:layer:layer1",
+          "source": {
+            "tool": "test",
+            "name": "Layer1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:desktop",
+      "source": {
+        "tool": "test",
+        "name": "desktop",
+        "width": 1000,
+        "height": 600
+      }
     }
   ],
   "customBlocks": [],
@@ -133,5 +146,10 @@
   "metadata": {
     "slug": "mixed-responsive-test"
   },
-  "irVersion": "0.0.0"
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "adapterVersion": "0.1.0"
+  }
 }

@@ -6,17 +6,13 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Canonical settings concepts and where they show up across the product.">
+        <meta name="description" content="How new source tools, browser surfaces, and emitters connect to the shared all2html pipeline.">
       
       
       
-        <link rel="canonical" href="https://jsoma.github.io/all2html/reference/settings/">
+        <link rel="canonical" href="https://jsoma.github.io/all2html/how-it-works/adapters/">
       
       
-        <link rel="prev" href="../../how-it-works/special-layers/">
-      
-      
-        <link rel="next" href="../formats/">
       
       
         
@@ -27,7 +23,7 @@
     
     
       
-        <title>Settings Reference - all2html</title>
+        <title>Adapters And Extension Points - all2html</title>
       
     
     
@@ -71,7 +67,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#settings-reference" class="md-skip">
+        <a href="#adapters-and-extension-points" class="md-skip">
           Skip to content
         </a>
       
@@ -105,7 +101,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Settings Reference
+              Adapters And Extension Points
             
           </span>
         </div>
@@ -251,7 +247,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../how-it-works/" class="md-tabs__link">
+        <a href="../" class="md-tabs__link">
           
   
   How It Works
@@ -266,13 +262,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="././" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../reference/settings/" class="md-tabs__link">
           
   
   Reference
@@ -1013,7 +1007,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../how-it-works/" class="md-nav__link ">
+            <a href="../" class="md-nav__link ">
               
   
   
@@ -1055,7 +1049,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-it-works/canonical-ir/" class="md-nav__link">
+      <a href="../canonical-ir/" class="md-nav__link">
         
   
   
@@ -1082,7 +1076,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-it-works/pipeline/" class="md-nav__link">
+      <a href="../pipeline/" class="md-nav__link">
         
   
   
@@ -1109,7 +1103,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-it-works/responsive-output/" class="md-nav__link">
+      <a href="../responsive-output/" class="md-nav__link">
         
   
   
@@ -1136,7 +1130,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-it-works/special-layers/" class="md-nav__link">
+      <a href="../special-layers/" class="md-nav__link">
         
   
   
@@ -1167,10 +1161,8 @@
       
   
   
-    
   
   
-  
     
     
       
@@ -1184,22 +1176,19 @@
     
     
       
-        
-        
-      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
         
           
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
             
   
   
@@ -1216,7 +1205,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1230,36 +1219,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Settings Reference
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="././" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../reference/settings/" class="md-nav__link">
         
   
   
@@ -1274,270 +1237,6 @@
   
 
       </a>
-      
-        
-
-
-<nav class="md-nav md-nav--secondary" aria-label="On this page">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      On this page
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#important-families" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Important Families
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Important Families">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#output" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Output
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#responsiveness" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Responsiveness
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#images" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Images
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#html-behavior" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        HTML Behavior
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#accessibility-and-metadata" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Accessibility And Metadata
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#covered-panel-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Covered Panel Settings
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Covered Panel Settings">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#responsiveness_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>responsiveness</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#rendertextas" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>renderTextAs</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#googlefonts" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>googleFonts</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#output_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>output</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#imageformat" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>imageFormat</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#use2ximages" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>use2xImages</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#htmloutputpath" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>htmlOutputPath</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#imageoutputpath" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>imageOutputPath</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#textresponsiveness" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>textResponsiveness</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#includeresizercss" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>includeResizerCss</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#inlinesvg" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>inlineSvg</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#svgembedimages" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>svgEmbedImages</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#canonical-naming" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Canonical Naming
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-settings-come-from" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Where Settings Come From
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1550,7 +1249,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../formats/" class="md-nav__link">
+      <a href="../../reference/formats/" class="md-nav__link">
         
   
   
@@ -1577,7 +1276,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ir-schema/" class="md-nav__link">
+      <a href="../../reference/ir-schema/" class="md-nav__link">
         
   
   
@@ -1697,231 +1396,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#important-families" class="md-nav__link">
+  <a href="#adapter-responsibilities" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Important Families
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Important Families">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#output" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Output
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#responsiveness" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Responsiveness
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#images" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Images
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#html-behavior" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        HTML Behavior
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#accessibility-and-metadata" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Accessibility And Metadata
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#covered-panel-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Covered Panel Settings
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Covered Panel Settings">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#responsiveness_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>responsiveness</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#rendertextas" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>renderTextAs</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#googlefonts" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>googleFonts</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#output_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>output</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#imageformat" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>imageFormat</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#use2ximages" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>use2xImages</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#htmloutputpath" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>htmlOutputPath</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#imageoutputpath" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>imageOutputPath</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#textresponsiveness" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>textResponsiveness</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#includeresizercss" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>includeResizerCss</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#inlinesvg" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>inlineSvg</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#svgembedimages" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        <code>svgEmbedImages</code>
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#canonical-naming" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Canonical Naming
+        Adapter Responsibilities
       </span>
     </span>
   </a>
@@ -1929,10 +1407,65 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#where-settings-come-from" class="md-nav__link">
+  <a href="#id-rules" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Where Settings Come From
+        ID Rules
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#importer-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Importer Registry
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#emitter-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Emitter Registry
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#browser-sdk" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Browser SDK
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#host-apps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Host Apps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#library-direction" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Library Direction
       </span>
     </span>
   </a>
@@ -1957,46 +1490,6 @@
   
 
 
-  <nav class="md-path" aria-label="Navigation" >
-    <ol class="md-path__list">
-      
-        
-  
-  
-    <li class="md-path__item">
-      <a href="../.." class="md-path__link">
-        
-  <span class="md-ellipsis">
-    Home
-  </span>
-
-      </a>
-    </li>
-  
-
-      
-      
-        
-  
-  
-    
-    
-      <li class="md-path__item">
-        <a href="././" class="md-path__link">
-          
-  <span class="md-ellipsis">
-    Reference
-  </span>
-
-        </a>
-      </li>
-    
-  
-
-      
-    </ol>
-  </nav>
-
               
               <article class="md-content__inner md-typeset">
                 
@@ -2005,135 +1498,50 @@
   
 
 
-<h1 id="settings-reference">Settings Reference<a class="headerlink" href="#settings-reference" title="Permanent link">&para;</a></h1>
-<p>all2html keeps one canonical settings model even though each source tool exposes it differently.</p>
-<h2 id="important-families">Important Families<a class="headerlink" href="#important-families" title="Permanent link">&para;</a></h2>
-<h3 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h3>
+<h1 id="adapters-and-extension-points">Adapters And Extension Points<a class="headerlink" href="#adapters-and-extension-points" title="Permanent link">&para;</a></h1>
+<p>all2html is structured so new surfaces can reuse the same contracts instead of forking rendering logic.</p>
+<h2 id="adapter-responsibilities">Adapter Responsibilities<a class="headerlink" href="#adapter-responsibilities" title="Permanent link">&para;</a></h2>
+<p>An adapter owns source-tool behavior:</p>
 <ul>
-<li><code>output</code></li>
-<li><code>htmlOutputPath</code></li>
-<li><code>imageOutputPath</code></li>
-<li><code>slug</code></li>
+<li>finding source documents, frames, layers, or files</li>
+<li>translating tool-native objects into canonical IR</li>
+<li>assigning stable artboard and layer IDs</li>
+<li>attaching source metadata for traceability</li>
+<li>returning imported asset files when raster or extracted assets are needed</li>
 </ul>
-<h3 id="responsiveness">Responsiveness<a class="headerlink" href="#responsiveness" title="Permanent link">&para;</a></h3>
+<p>The adapter should stop at the IR boundary. The shared core handles settings resolution, grouping, styling, and emitter-ready preparation.</p>
+<h2 id="id-rules">ID Rules<a class="headerlink" href="#id-rules" title="Permanent link">&para;</a></h2>
+<p>Canonical IDs are part of the adapter contract:</p>
 <ul>
-<li><code>responsiveness</code></li>
-<li><code>textResponsiveness</code></li>
-<li><code>responsiveImageMode</code></li>
+<li>artboard IDs must be stable and unique inside the document</li>
+<li>layer IDs must be stable and unique inside their artboard</li>
+<li>asset <code>artboardId</code> and <code>layerId</code> values must reference those canonical IDs</li>
+<li>source-native IDs are preferred when a host provides them</li>
+<li>file importers should include path context, not just basenames, to avoid collisions</li>
 </ul>
-<h3 id="images">Images<a class="headerlink" href="#images" title="Permanent link">&para;</a></h3>
+<p>Source-native labels, original names, and host metadata belong in <code>source</code>, not in ID-dependent lookup fields.</p>
+<h2 id="importer-registry">Importer Registry<a class="headerlink" href="#importer-registry" title="Permanent link">&para;</a></h2>
+<p>Node-capable importers use the importer registry. Built-in importers and internal future importers are registered through the same <code>registerImporter</code> path.</p>
+<p>This is intentionally an internal registry for now. Pre-release all2html should keep third-party plugin loading out of scope until the IR and bundle contracts are stable enough to support it.</p>
+<h2 id="emitter-registry">Emitter Registry<a class="headerlink" href="#emitter-registry" title="Permanent link">&para;</a></h2>
+<p>Emitters write web-facing output from emitter-ready documents. Built-in HTML, Standalone HTML, Svelte, and React emitters use the emitter registry, and internal future emitters can use <code>registerEmitter</code>.</p>
+<p>Browser-safe emitters use <code>registerBrowserEmitter</code> so browser apps do not accidentally pull in Node-only dependencies.</p>
+<h2 id="browser-sdk">Browser SDK<a class="headerlink" href="#browser-sdk" title="Permanent link">&para;</a></h2>
+<p>Browser apps can use the browser entry points to avoid duplicating orchestration code. The SVG converter uses <code>convertLoadedSvgFilesInBrowser</code> to import files, process IR, emit output, build a bundle, and return UI-ready summary data.</p>
+<p>That split is what keeps web apps, bookmarklets, Tampermonkey scripts, or custom design apps from needing to know the entire pipeline.</p>
+<h2 id="host-apps">Host Apps<a class="headerlink" href="#host-apps" title="Permanent link">&para;</a></h2>
+<p>Extension-driven tools such as Illustrator, After Effects, Figma, and similar apps should treat all2html as a shared conversion core.</p>
+<p>Host-specific code should stay focused on:</p>
 <ul>
-<li><code>imageFormat</code></li>
-<li><code>jpgQuality</code></li>
-<li><code>pngNumberOfColors</code></li>
-<li><code>use2xImages</code></li>
+<li>permissions and install model</li>
+<li>document selection</li>
+<li>host API extraction</li>
+<li>panel or plugin UI</li>
+<li>file writing and download behavior</li>
 </ul>
-<h3 id="html-behavior">HTML Behavior<a class="headerlink" href="#html-behavior" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>namespace</code></li>
-<li><code>clickableLink</code></li>
-<li><code>inlineSvg</code></li>
-<li><code>googleFonts</code></li>
-</ul>
-<h3 id="accessibility-and-metadata">Accessibility And Metadata<a class="headerlink" href="#accessibility-and-metadata" title="Permanent link">&para;</a></h3>
-<p>These mostly live in <code>metadata</code> rather than settings:</p>
-<ul>
-<li><code>altText</code></li>
-<li><code>imageAltText</code></li>
-<li><code>ariaRole</code></li>
-<li><code>lang</code></li>
-</ul>
-<h2 id="covered-panel-settings">Covered Panel Settings<a class="headerlink" href="#covered-panel-settings" title="Permanent link">&para;</a></h2>
-<p><a id="responsiveness"></a></p>
-<h3 id="responsiveness_1"><code>responsiveness</code><a class="headerlink" href="#responsiveness_1" title="Permanent link">&para;</a></h3>
-<p><strong>Panel label:</strong> <code>Layout</code></p>
-<p>Controls whether artboards export at fixed widths or as layouts that can stretch with the container.</p>
-<p>Use <code>fixed</code> for classic ai2html-style breakpoint swaps. Use <code>dynamic</code> when the layout itself should scale more fluidly instead of behaving like a locked-width panel.</p>
-<p>Tradeoffs: <code>fixed</code> is easier to reason about and matches newsroom embed expectations. <code>dynamic</code> is more flexible, but you should expect more responsive behavior in the emitted HTML and CSS.</p>
-<p><a id="renderTextAs"></a></p>
-<h3 id="rendertextas"><code>renderTextAs</code><a class="headerlink" href="#rendertextas" title="Permanent link">&para;</a></h3>
-<p><strong>Panel label:</strong> <code>Text as</code></p>
-<p>Chooses whether text is emitted as live HTML or baked into the exported background image.</p>
-<p>Use <code>html</code> when you want searchable, selectable, and styleable text. Use <code>image</code> when exact Illustrator fidelity matters more than live text.</p>
-<p>Tradeoffs: HTML is better for accessibility and editing. Image text is more faithful visually, but loses semantic text behavior.</p>
-<p><a id="googleFonts"></a></p>
-<h3 id="googlefonts"><code>googleFonts</code><a class="headerlink" href="#googlefonts" title="Permanent link">&para;</a></h3>
-<p><strong>Panel label:</strong> <code>Google Fonts</code></p>
-<p>Controls whether all2html emits Google Fonts loading markup for mapped live text fonts.</p>
-<p>Supported values:</p>
-<ul>
-<li><code>none</code>: emits no external font loading markup</li>
-<li><code>import</code>: prepends a CSS <code>@import</code> rule to the generated CSS</li>
-<li><code>link</code>: emits Google preconnect tags plus a stylesheet <code>&lt;link&gt;</code> before the generated style output</li>
-</ul>
-<p>The generated URL comes from the first non-generic, non-web-safe CSS family in each font mapping. For example, <code>'IBM Plex Sans', system-ui, sans-serif</code> becomes an <code>IBM Plex Sans</code> request. all2html does not validate that a family exists on Google Fonts; invalid family requests fall back through normal browser font behavior.</p>
-<p>Tradeoffs: <code>none</code> is best for privacy, self-hosted fonts, and fully offline output. <code>import</code> is the recommended enabled mode for snippets and component output. <code>link</code> is useful when the integration expects font loading markup outside the generated CSS.</p>
-<p><a id="output"></a></p>
-<h3 id="output_1"><code>output</code><a class="headerlink" href="#output_1" title="Permanent link">&para;</a></h3>
-<p><strong>Panel label:</strong> <code>Output</code></p>
-<p>Controls whether related artboards are emitted into one HTML file or split into separate files.</p>
-<p>Use <code>one-file</code> for one responsive graphic with multiple artboards or breakpoints. Use <code>multiple-files</code> when each artboard or responsive group should stand alone as its own deliverable.</p>
-<p>Tradeoffs: one file is simpler for a single embed; multiple files are easier when publishing outputs separately.</p>
-<p><a id="imageFormat"></a></p>
-<h3 id="imageformat"><code>imageFormat</code><a class="headerlink" href="#imageformat" title="Permanent link">&para;</a></h3>
-<p><strong>Panel label:</strong> <code>Format</code></p>
-<p>Chooses the raster or vector format used for exported background artwork.</p>
-<p>Use <code>auto</code> unless you know the output needs a specific format. PNG is better for transparency and flatter artwork; JPEG is smaller for photo-heavy work; SVG keeps vector output when compatible.</p>
-<p>Tradeoffs: PNG is larger but safer, JPEG is smaller but lossy, and SVG can stay crisp while exposing more browser rendering differences.</p>
-<p><a id="use2xImages"></a></p>
-<h3 id="use2ximages"><code>use2xImages</code><a class="headerlink" href="#use2ximages" title="Permanent link">&para;</a></h3>
-<p><strong>Panel label:</strong> <code>Retina (2x) images</code></p>
-<p>Exports high-density image assets so the graphic looks sharper on retina screens.</p>
-<p>Use it when display quality matters and you can afford larger assets. Turn it off when file size is the main constraint.</p>
-<p>Tradeoffs: sharper images versus heavier image payloads.</p>
-<p><a id="htmlOutputPath"></a></p>
-<h3 id="htmloutputpath"><code>htmlOutputPath</code><a class="headerlink" href="#htmloutputpath" title="Permanent link">&para;</a></h3>
-<p><strong>Panel label:</strong> <code>HTML path</code></p>
-<p>Controls where exported HTML files are written. Relative paths are resolved next to the Illustrator document unless you use an absolute path.</p>
-<p>Use the default <code>all2html-output/</code> for most projects. Change it when your publishing workflow expects HTML somewhere else.</p>
-<p>Tradeoffs: custom paths help fit an asset pipeline, but make the output location less obvious when you reopen the document later.</p>
-<p><a id="imageOutputPath"></a></p>
-<h3 id="imageoutputpath"><code>imageOutputPath</code><a class="headerlink" href="#imageoutputpath" title="Permanent link">&para;</a></h3>
-<p><strong>Panel label:</strong> <code>Image path</code></p>
-<p>Controls where exported image assets are written.</p>
-<p>Most projects keep this aligned with <code>htmlOutputPath</code>. Split it only when your build or CMS wants images in a different location from the HTML files.</p>
-<p>Tradeoffs: separate asset roots can be useful, but you then need to keep image references and deployment paths in sync.</p>
-<p><a id="textResponsiveness"></a></p>
-<h3 id="textresponsiveness"><code>textResponsiveness</code><a class="headerlink" href="#textresponsiveness" title="Permanent link">&para;</a></h3>
-<p><strong>Panel label:</strong> <code>Text sizing</code></p>
-<p>Controls whether live HTML text keeps fixed sizing or scales more dynamically with the layout.</p>
-<p>This matters only when text is emitted as HTML. Use <code>dynamic</code> for more flexible live text behavior. Use <code>fixed</code> when you want text geometry to stay closer to the Illustrator artboard.</p>
-<p>Tradeoffs: dynamic adapts better to responsive layouts; fixed is more rigid but can feel more predictable.</p>
-<p><a id="includeResizerCss"></a></p>
-<h3 id="includeresizercss"><code>includeResizerCss</code><a class="headerlink" href="#includeresizercss" title="Permanent link">&para;</a></h3>
-<p><strong>Panel label:</strong> <code>Container query CSS</code></p>
-<p>Adds the responsive CSS rules that switch between artboards at breakpoints.</p>
-<p>Leave it on for normal responsive exports. Turn it off only if you are deliberately replacing the generated CSS with your own responsive handling.</p>
-<p>Tradeoffs: the default generated CSS is convenient, but custom site integrations may prefer tighter control.</p>
-<p><a id="inlineSvg"></a></p>
-<h3 id="inlinesvg"><code>inlineSvg</code><a class="headerlink" href="#inlinesvg" title="Permanent link">&para;</a></h3>
-<p><strong>Panel label:</strong> <code>Inline SVG layers</code></p>
-<p>Keeps eligible SVG layers inline in the HTML instead of rasterizing them into background images.</p>
-<p>Use it when you need live vector layers in the markup for crispness or styling hooks. Leave it off when you want simpler HTML and more predictable cross-browser behavior.</p>
-<p>Tradeoffs: inline SVG can stay crisp and editable, but produces more verbose markup and can surface more browser differences.</p>
-<p><a id="svgEmbedImages"></a></p>
-<h3 id="svgembedimages"><code>svgEmbedImages</code><a class="headerlink" href="#svgembedimages" title="Permanent link">&para;</a></h3>
-<p><strong>Panel label:</strong> <code>Embed images in SVG</code></p>
-<p>Embeds image assets directly inside inline SVG output instead of referencing separate files.</p>
-<p>Use it when you need a self-contained SVG fragment. Leave it off when normal external image files are acceptable.</p>
-<p>Tradeoffs: self-contained SVG is convenient, but increases HTML size and duplicates binary image data.</p>
-<h2 id="canonical-naming">Canonical Naming<a class="headerlink" href="#canonical-naming" title="Permanent link">&para;</a></h2>
-<p>Inside the IR and core config parsing, settings always use canonical camelCase keys. Tool-native snake_case belongs only on the tool side of the boundary.</p>
-<h2 id="where-settings-come-from">Where Settings Come From<a class="headerlink" href="#where-settings-come-from" title="Permanent link">&para;</a></h2>
-<p>Depending on the surface, settings can come from:</p>
-<ul>
-<li>document annotations</li>
-<li>config files</li>
-<li>panel UI state</li>
-<li>plugin UI controls</li>
-<li>CLI config</li>
-</ul>
-<p>The important point is that they all resolve to the same final settings object before emitting output.</p>
+<p>The portable contract is still canonical IR plus the common output bundle.</p>
+<h2 id="library-direction">Library Direction<a class="headerlink" href="#library-direction" title="Permanent link">&para;</a></h2>
+<p>For custom Svelte design apps or other web-native tools, the clean path is a library-style adapter that emits canonical IR directly and calls the browser SDK. That avoids pretending every integration is a design-tool plugin while still sharing emitters, settings, bundles, and validation.</p>
 
 
 
