@@ -58,10 +58,13 @@ The standalone script and the panel both read project-local configuration from `
 That file is used for:
 
 - font mappings
+- Google Fonts loading mode
 - overlay prefix
 - output root
 - video template
 - poster template
+
+The shared panel exposes the same `Google Fonts` choices as Illustrator and Figma. `CSS @import` injects an `@import` rule into the player template's style block. `Link tag` injects Google preconnect and stylesheet links before the player CSS. Leave it off for self-hosted fonts, private fonts, or fully offline exports.
 
 ## Current Limits
 

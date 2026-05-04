@@ -1,9 +1,10 @@
 /// <reference types="@figma/plugin-typings" />
 
-import type { Paragraph, TextElement } from "../../../src/ir/types.js";
+import type { FontMapping, Paragraph, TextElement } from "../../../src/ir/types.js";
 import { parseLayerType } from "./extract/layers.js";
-import { segmentsToParagraphs, type FigmaTextSegment } from "./extract/text.js";
+import { figmaFontToMapping, segmentsToParagraphs, type FigmaTextSegment } from "./extract/text.js";
 import { extractFrameInfo } from "./extract/frames.js";
+import { makeFigmaArtboardId, makeFigmaLayerId } from "./ir-ids.js";
 import type { ExtractedAsset, ExtractedFrame, ExtractedLayer } from "./types.js";
 
 const TEXT_SEGMENT_FIELDS = [
@@ -147,15 +148,37 @@ export function collectSegmentWarnings(
   return warnings;
 }
 
-function extractParagraphs(textNode: TextNode, warnings: string[]): Paragraph[] {
-  const segments = textNode.getStyledTextSegments([...TEXT_SEGMENT_FIELDS]) as FigmaTextSegment[];
+function addSegmentFontMappings(
+  segments: readonly FigmaTextSegment[],
+  fontMappings: Map<string, FontMapping>,
+): void {
+  for (const segment of segments) {
+    const mapping = figmaFontToMapping(segment.fontName);
+    fontMappings.set(mapping.sourceFont, mapping);
+  }
+}
+
+function extractParagraphs(
+  textNode: TextNode,
+  warnings: string[],
+  fontMappings: Map<string, FontMapping>,
+): Paragraph[] {
+  const segments = textNode.getStyledTextSegments([
+    ...TEXT_SEGMENT_FIELDS,
+  ]) as FigmaTextSegment[];
   warnings.push(...collectSegmentWarnings(segments, { name: textNode.name, id: textNode.id }));
+  addSegmentFontMappings(segments, fontMappings);
   return segmentsToParagraphs(segments, { alignment: mapAlignment(textNode) });
 }
 
-function extractTextElement(textNode: TextNode, frame: FrameNode, warnings: string[]): TextElement {
+function extractTextElement(
+  textNode: TextNode,
+  frame: FrameNode,
+  warnings: string[],
+  fontMappings: Map<string, FontMapping>,
+): TextElement {
   const position = getNodeBoundsRelativeToFrame(textNode, frame);
-  const paragraphs = extractParagraphs(textNode, warnings);
+  const paragraphs = extractParagraphs(textNode, warnings, fontMappings);
   const opacity = Math.round(textNode.opacity * 100);
 
   return {
@@ -322,7 +345,12 @@ function createBackgroundAsset(
     mimeType: "image/png",
     width: actualWidth,
     height: actualHeight,
-    artboardName: frameInfo.originalName,
+    artboardId: makeFigmaArtboardId(frameInfo),
+    source: {
+      tool: "figma",
+      id: frameInfo.sourceNodeId,
+      name: frameInfo.originalName,
+    },
     exportParams: { format: "png", scale: 1, transparent: false },
     bytes,
   };
@@ -331,7 +359,7 @@ function createBackgroundAsset(
 function createSpecialLayerAsset(
   slug: string,
   frameInfo: ReturnType<typeof extractFrameInfo>,
-  layer: Pick<ExtractedLayer, "name" | "type">,
+  layer: Pick<ExtractedLayer, "name" | "type" | "sourceNodeId">,
   node: SceneNode,
   options: {
     bytes: Uint8Array;
@@ -351,8 +379,13 @@ function createSpecialLayerAsset(
     mimeType: options.mimeType,
     width,
     height,
-    artboardName: frameInfo.originalName,
-    layerName: layer.name,
+    artboardId: makeFigmaArtboardId(frameInfo),
+    layerId: makeFigmaLayerId(frameInfo, layer),
+    source: {
+      tool: "figma",
+      id: layer.sourceNodeId,
+      name: layer.name,
+    },
     exportParams: {
       format: options.extension,
       scale: 1,
@@ -366,6 +399,7 @@ function buildDefaultLayer(
   frameClone: FrameNode,
   frameInfo: ReturnType<typeof extractFrameInfo>,
   warnings: string[],
+  fontMappings: Map<string, FontMapping>,
 ): ExtractedLayer {
   const textNodes: TextNode[] = [];
   walkVisibleTextNodes(frameClone, textNodes);
@@ -373,7 +407,7 @@ function buildDefaultLayer(
   const elements = frameInfo.imageOnly
     ? []
     : textNodes
-        .map((textNode) => extractTextElement(textNode, frameClone, warnings))
+        .map((textNode) => extractTextElement(textNode, frameClone, warnings, fontMappings))
         .sort((a, b) => {
           if (a.position.y !== b.position.y) return a.position.y - b.position.y;
           return a.position.x - b.position.x;
@@ -555,6 +589,7 @@ export async function extractFramesFromSelection(
       });
       const specialLayersByIndex = new Map<number, ExtractedLayer>();
       const specialAssets: ExtractedAsset[] = [];
+      const fontMappings = new Map<string, FontMapping>();
       const discovered = discoverTopLevelSpecialLayerNodes(movedClone);
       const children = [...movedClone.children];
 
@@ -565,7 +600,12 @@ export async function extractFramesFromSelection(
           continue;
         }
 
-        const extractedSpecial = await extractSpecialLayer(candidate, frameInfo, options.slug, warnings);
+        const extractedSpecial = await extractSpecialLayer(
+          candidate,
+          frameInfo,
+          options.slug,
+          warnings,
+        );
         if (extractedSpecial.layer) {
           specialLayersByIndex.set(index, extractedSpecial.layer);
         }
@@ -573,7 +613,7 @@ export async function extractFramesFromSelection(
         setNodeVisible(child, false);
       }
 
-      const defaultLayer = buildDefaultLayer(movedClone, frameInfo, warnings);
+      const defaultLayer = buildDefaultLayer(movedClone, frameInfo, warnings, fontMappings);
       const orderedLayers: ExtractedLayer[] = [];
       let defaultInserted = false;
       for (let index = 0; index < children.length; index++) {
@@ -599,6 +639,7 @@ export async function extractFramesFromSelection(
         actualWidth: selected.width,
         actualHeight: selected.height,
         layers: orderedLayers,
+        fonts: [...fontMappings.values()],
         assets: [
           createBackgroundAsset(options.slug, frameInfo, selected.width, selected.height, bytes),
           ...specialAssets,

@@ -3,15 +3,16 @@
 import wasmUrl from "@resvg/resvg-wasm/index_bg.wasm?url";
 import {
   bundleToZipBytes,
+  convertLoadedSvgFilesInBrowser,
   createBrowserSvgRasterizer,
   createOutputBundle,
   getBundleFile,
   getBrowserEmitter,
-  getEmitterConfig,
   importSVGFilesWithRasterizer,
   loadSVGImportFilesFromBrowser,
   parseConfigText,
   processDocumentInBrowser,
+  type BrowserSvgConversionResult,
   type LoadedSVGImportFiles,
   type OutputBundle,
   type SvgRasterizer,
@@ -40,6 +41,7 @@ interface AppDependencies {
   process: typeof processDocumentInBrowser;
   emitter: typeof getBrowserEmitter;
   buildBundle: typeof createOutputBundle;
+  convert: typeof convertLoadedSvgFilesInBrowser;
   zipBundle: typeof bundleToZipBytes;
   download(name: string, bytes: Uint8Array): void;
 }
@@ -56,6 +58,7 @@ const defaultDependencies: AppDependencies = {
   process: processDocumentInBrowser,
   emitter: getBrowserEmitter,
   buildBundle: createOutputBundle,
+  convert: convertLoadedSvgFilesInBrowser,
   zipBundle: bundleToZipBytes,
   download(name, bytes) {
     const blob = new Blob([toArrayBuffer(bytes)], { type: "application/zip" });
@@ -328,48 +331,44 @@ export function mountSvgDropzoneApp(
       const format = formatSelect.value as SupportedFormat;
       const slug = slugInput.value.trim() || loaded.slug;
 
-      const imported = await deps.importFiles(loaded.files, {
+      const conversion = await deps.convert({
+        loaded,
         slug,
-        entrypointPaths: loaded.entrypointPaths,
-        settings: parsedConfig?.settings,
+        format,
+        formatLabel: getOutputFormatLabel(format),
+        parsedConfig,
         rasterizer,
-      });
-      const processed = deps.process(imported.document, {
-        inlineConfig: parsedConfig,
-      });
-      const emitterConfig = getEmitterConfig(parsedConfig);
-      const emitResult = deps.emitter(format).emitAll(processed.document, processed.groups, emitterConfig);
-      if (emitResult.files.length === 0) {
-        throw new Error(`No ${getOutputFormatLabel(format)} files were emitted.`);
-      }
-      const bundle = deps.buildBundle({
-        irDocument: imported.document,
-        emittedFiles: emitResult.files,
-        assetFiles: imported.assetFiles,
-        assetRoot: processed.document.settings.imageOutputPath || "",
+        importFiles: deps.importFiles,
+        process: deps.process,
+        emitter: deps.emitter,
+        buildBundle: deps.buildBundle,
       });
 
-      state.currentRun = {
-        loaded,
-        bundle,
-        emittedPath: `${emitResult.files[0].slug}${emitResult.files[0].extension}`,
-        format,
-        slug,
-        importWarnings: imported.warnings,
-        renderWarnings: [...processed.warnings, ...emitResult.warnings],
-        artboardSummary: [
-          `${processed.document.artboards.length} artboard(s) imported`,
-          `${processed.groups.length} responsive group(s)`,
-          `Assets: ${imported.assetFiles.length}`,
-        ],
-        fileSummary: emitResult.files.map((file) => `${file.slug}${file.extension}`),
-      };
+      state.currentRun = toRunState(conversion);
       renderRunState();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       renderErrorState(message);
     }
   }
+}
+
+function toRunState(conversion: BrowserSvgConversionResult): RunState {
+  return {
+    loaded: conversion.loaded,
+    bundle: conversion.bundle,
+    emittedPath: conversion.emittedPath,
+    format: conversion.format as SupportedFormat,
+    slug: conversion.slug,
+    importWarnings: conversion.importWarnings,
+    renderWarnings: conversion.renderWarnings,
+    artboardSummary: [
+      `${conversion.artboardCount} artboard(s) imported`,
+      `${conversion.groupCount} responsive group(s)`,
+      `Assets: ${conversion.assetCount}`,
+    ],
+    fileSummary: conversion.filePaths,
+  };
 }
 
 export function getImportLabel(file: File): string {

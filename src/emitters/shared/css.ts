@@ -1,8 +1,8 @@
-import type {
-  ComputedTextStyle,
-  EmitterReadyArtboard,
-  EmitterReadyDocument,
-} from "../../ir/types.js";
+import { makeArtboardKey } from "../../core/identifiers.js";
+import type { ComputedTextStyle, EmitterReadyDocument } from "../../ir/types.js";
+import { renderGoogleFontsImport } from "./google-fonts.js";
+
+export { makeArtboardKey, makeKeyword } from "../../core/identifiers.js";
 
 function formatStyleRule(style: ComputedTextStyle): string {
   return Object.entries(style)
@@ -13,34 +13,6 @@ function formatStyleRule(style: ComputedTextStyle): string {
       return `  ${prop}: ${v};`;
     })
     .join("\n");
-}
-
-export function makeKeyword(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-export function makeArtboardKey(
-  artboard: Pick<EmitterReadyArtboard, "name" | "originalName" | "width">,
-  artboards: readonly Pick<EmitterReadyArtboard, "name" | "originalName" | "width">[],
-): string {
-  const duplicateCount = artboards.filter((candidate) => candidate.name === artboard.name).length;
-  if (duplicateCount <= 1) {
-    return makeKeyword(artboard.name);
-  }
-
-  const originalKey =
-    artboard.originalName && artboard.originalName !== artboard.name
-      ? makeKeyword(artboard.originalName)
-      : "";
-
-  if (originalKey) {
-    return originalKey;
-  }
-
-  return makeKeyword(`${artboard.name}-${artboard.width}`);
 }
 
 /**
@@ -84,6 +56,11 @@ export function generateCSS(doc: EmitterReadyDocument, options?: CSSOptions): CS
   // fitMode interaction rules
   if (fitMode === "cover" && settings.maxWidth) {
     warnings.push("fitMode 'cover' ignores maxWidth setting");
+  }
+
+  if (settings.googleFonts === "import") {
+    const fontImport = renderGoogleFontsImport(doc.fonts);
+    if (fontImport) lines.push(fontImport);
   }
 
   // Container queries setup

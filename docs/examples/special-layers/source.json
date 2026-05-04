@@ -1,9 +1,4 @@
 {
-  "generator": {
-    "tool": "test",
-    "toolVersion": "1.0",
-    "pluginVersion": "0.1.0"
-  },
   "settings": {
     "namespace": "g-"
   },
@@ -11,11 +6,8 @@
   "artboards": [
     {
       "name": "desktop",
-      "originalName": "desktop",
       "width": 600,
       "height": 400,
-      "actualWidth": 600,
-      "actualHeight": 400,
       "layers": [
         {
           "name": "Layer1",
@@ -62,7 +54,12 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:desktop:layer:layer1",
+          "source": {
+            "tool": "test",
+            "name": "Layer1"
+          }
         },
         {
           "name": "highlight",
@@ -70,9 +67,21 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 70,
-          "elements": []
+          "elements": [],
+          "id": "artboard:desktop:layer:highlight",
+          "source": {
+            "tool": "test",
+            "name": "highlight"
+          }
         }
-      ]
+      ],
+      "id": "artboard:desktop",
+      "source": {
+        "tool": "test",
+        "name": "desktop",
+        "width": 600,
+        "height": 400
+      }
     }
   ],
   "customBlocks": [],
@@ -83,17 +92,26 @@
       "mimeType": "image/png",
       "width": 1200,
       "height": 800,
-      "artboardName": "desktop",
-      "layerName": "highlight",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": true
+      },
+      "artboardId": "artboard:desktop",
+      "layerId": "artboard:desktop:layer:highlight",
+      "source": {
+        "tool": "test",
+        "name": "highlight"
       }
     }
   },
   "metadata": {
     "slug": "png-overlay-test"
   },
-  "irVersion": "0.0.0"
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "adapterVersion": "0.1.0"
+  }
 }

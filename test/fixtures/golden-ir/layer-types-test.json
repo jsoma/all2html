@@ -1,20 +1,12 @@
 {
-  "irVersion": "0.0.0",
-  "generator": {
-    "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "pluginVersion": "0.1.0"
-  },
+  "irVersion": "0.1.0",
   "settings": {},
   "fonts": [],
   "artboards": [
     {
       "name": "Artboard 1",
-      "originalName": "Artboard 1",
       "width": 600,
       "height": 400,
-      "actualWidth": 600,
-      "actualHeight": 400,
       "layers": [
         {
           "name": "highlight",
@@ -22,7 +14,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:artboard-1:layer:highlight",
+          "source": {
+            "tool": "illustrator",
+            "name": "highlight"
+          }
         },
         {
           "name": "footer",
@@ -35,7 +32,12 @@
               "type": "rawHtml",
               "content": "<footer>Source: Test Data</footer>"
             }
-          ]
+          ],
+          "id": "artboard:artboard-1:layer:footer",
+          "source": {
+            "tool": "illustrator",
+            "name": "footer"
+          }
         },
         {
           "name": "banner",
@@ -48,7 +50,12 @@
               "type": "rawHtml",
               "content": "<div class=\"promo\">Breaking News</div>"
             }
-          ]
+          ],
+          "id": "artboard:artboard-1:layer:banner",
+          "source": {
+            "tool": "illustrator",
+            "name": "banner"
+          }
         },
         {
           "name": "bg",
@@ -61,7 +68,12 @@
               "type": "video",
               "url": "https://example.com/background.mp4"
             }
-          ]
+          ],
+          "id": "artboard:artboard-1:layer:bg",
+          "source": {
+            "tool": "illustrator",
+            "name": "bg"
+          }
         },
         {
           "name": "markers",
@@ -102,7 +114,12 @@
               },
               "shapeType": "circle"
             }
-          ]
+          ],
+          "id": "artboard:artboard-1:layer:markers",
+          "source": {
+            "tool": "illustrator",
+            "name": "markers"
+          }
         },
         {
           "name": "content",
@@ -187,9 +204,21 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:artboard-1:layer:content",
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          }
         }
-      ]
+      ],
+      "id": "artboard:artboard-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 1",
+        "width": 600,
+        "height": 400
+      }
     }
   ],
   "customBlocks": [],
@@ -200,13 +229,17 @@
       "mimeType": "image/png",
       "width": 1200,
       "height": 800,
-      "artboardName": "Artboard 1",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
+      },
+      "artboardId": "artboard:artboard-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 1"
       }
     },
     "layer-types-test-artboard-1-highlight": {
@@ -215,12 +248,16 @@
       "mimeType": "image/png",
       "width": 1200,
       "height": 800,
-      "artboardName": "Artboard 1",
-      "layerName": "highlight",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": true
+      },
+      "artboardId": "artboard:artboard-1",
+      "layerId": "artboard:artboard-1:layer:highlight",
+      "source": {
+        "tool": "illustrator",
+        "name": "highlight"
       }
     }
   },
@@ -232,5 +269,10 @@
     "notes": "",
     "sources": "",
     "credit": ""
+  },
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "adapterVersion": "0.1.0"
   }
 }

@@ -28,12 +28,16 @@ export interface ResolveAeStateLayersInput {
 }
 
 export const aeDefaults: Required<
-  Pick<AePanelSettings, "overlayPrefix" | "outputRoot" | "videoTemplate" | "posterTemplate">
+  Pick<
+    AePanelSettings,
+    "overlayPrefix" | "outputRoot" | "videoTemplate" | "posterTemplate" | "googleFonts"
+  >
 > = {
   overlayPrefix: "overlay:",
   outputRoot: "",
   videoTemplate: "",
   posterTemplate: "",
+  googleFonts: "none",
 };
 
 export function loadAeAppDefaults(): AeAppDefaults | null {
@@ -55,6 +59,19 @@ export function saveAeAppDefaults(
 
 function normalizeFonts(fonts: FontEntry[] | undefined): FontEntry[] {
   return normalizeStoredFonts(fonts);
+}
+
+function normalizeAeSettings(settings: Record<string, unknown>): AePanelSettings {
+  const normalized: AePanelSettings = { ...(settings as AePanelSettings) };
+  if (
+    normalized.googleFonts === undefined &&
+    (settings.google_fonts === "none" ||
+      settings.google_fonts === "import" ||
+      settings.google_fonts === "link")
+  ) {
+    normalized.googleFonts = settings.google_fonts;
+  }
+  return normalized;
 }
 
 function isRecordLike(value: unknown): value is Record<string, unknown> {
@@ -92,7 +109,7 @@ export function normalizeAeConfigData(raw: unknown): AeConfigData | null {
   if (!parsed) return null;
 
   const settings = isRecordLike(parsed.settings)
-    ? (parsed.settings as AePanelSettings)
+    ? normalizeAeSettings(parsed.settings)
     : {};
   const fonts = Array.isArray(parsed.fonts)
     ? normalizeFonts(parsed.fonts as FontEntry[])

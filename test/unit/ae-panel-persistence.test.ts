@@ -13,6 +13,7 @@ describe("ae panel persistence", () => {
           overlayPrefix: "app:",
           outputRoot: "defaults-output",
           videoTemplate: "H.264",
+          googleFonts: "import",
         },
         fonts: [{ sourceFont: "ArialMT", family: "Arial" }],
       },
@@ -23,6 +24,7 @@ describe("ae panel persistence", () => {
           targetCompId: "42",
           outputRoot: "project-output",
           posterTemplate: "PNG Sequence",
+          googleFonts: "link",
         },
         fonts: [{ aifont: "ArialMT", family: "Inter" }],
       },
@@ -34,6 +36,7 @@ describe("ae panel persistence", () => {
     expect(resolved.settings.outputRoot).toBe("project-output");
     expect(resolved.settings.videoTemplate).toBe("H.264");
     expect(resolved.settings.posterTemplate).toBe("PNG Sequence");
+    expect(resolved.settings.googleFonts).toBe("link");
     expect(resolved.fonts).toEqual([
       {
         sourceFont: "ArialMT",
@@ -50,6 +53,7 @@ describe("ae panel persistence", () => {
     expect(resolved.settings.outputRoot).toBe("");
     expect(resolved.settings.videoTemplate).toBe("");
     expect(resolved.settings.posterTemplate).toBe("");
+    expect(resolved.settings.googleFonts).toBe("none");
     expect(resolved.fonts).toEqual([]);
   });
 
@@ -95,5 +99,17 @@ describe("ae panel persistence", () => {
         family: "Inter",
       },
     ]);
+  });
+
+  it("normalizes snake_case Google Fonts project settings for the panel", () => {
+    const normalized = normalizeAeConfigData({
+      version: "1.0.0",
+      settings: {
+        google_fonts: "import",
+      },
+      fonts: [],
+    });
+
+    expect(normalized?.settings.googleFonts).toBe("import");
   });
 });

@@ -75,6 +75,7 @@ interface UiElements {
   imageFormatEl: HTMLSelectElement;
   renderTextAsEl: HTMLSelectElement;
   renderRotatedEl: HTMLSelectElement;
+  googleFontsEl: HTMLSelectElement;
   responsiveImageModeEl: HTMLSelectElement;
   centerOutputEl: HTMLInputElement;
   statusEl: HTMLElement;
@@ -108,6 +109,7 @@ function getRequiredElements(): UiElements {
   const imageFormatEl = document.querySelector<HTMLSelectElement>("[data-image-format]");
   const renderTextAsEl = document.querySelector<HTMLSelectElement>("[data-render-text-as]");
   const renderRotatedEl = document.querySelector<HTMLSelectElement>("[data-render-rotated]");
+  const googleFontsEl = document.querySelector<HTMLSelectElement>("[data-google-fonts]");
   const responsiveImageModeEl = document.querySelector<HTMLSelectElement>("[data-responsive-image-mode]");
   const centerOutputEl = document.querySelector<HTMLInputElement>("[data-center-output]");
   const statusEl = document.querySelector<HTMLElement>("[data-status]");
@@ -140,6 +142,7 @@ function getRequiredElements(): UiElements {
     !imageFormatEl ||
     !renderTextAsEl ||
     !renderRotatedEl ||
+    !googleFontsEl ||
     !responsiveImageModeEl ||
     !centerOutputEl ||
     !statusEl ||
@@ -175,6 +178,7 @@ function getRequiredElements(): UiElements {
     imageFormatEl,
     renderTextAsEl,
     renderRotatedEl,
+    googleFontsEl,
     responsiveImageModeEl,
     centerOutputEl,
     statusEl,
@@ -281,6 +285,10 @@ function readControls(elements: UiElements): FigmaDirectControls {
     centerHtmlOutput: elements.centerOutputEl.checked,
     renderTextAs: elements.renderTextAsEl.value === "image" ? "image" : "html",
     renderRotatedSkewedTextAs: elements.renderRotatedEl.value === "image" ? "image" : "html",
+    googleFonts:
+      elements.googleFontsEl.value === "import" || elements.googleFontsEl.value === "link"
+        ? elements.googleFontsEl.value
+        : "none",
     responsiveImageMode:
       elements.responsiveImageModeEl.value === "css-var" ? "css-var" : "img-src",
   };
@@ -298,6 +306,7 @@ function writeControls(elements: UiElements, controls: FigmaDirectControls): voi
   elements.centerOutputEl.checked = controls.centerHtmlOutput;
   elements.renderTextAsEl.value = controls.renderTextAs;
   elements.renderRotatedEl.value = controls.renderRotatedSkewedTextAs;
+  elements.googleFontsEl.value = controls.googleFonts;
   elements.responsiveImageModeEl.value = controls.responsiveImageMode;
 }
 
@@ -399,6 +408,7 @@ export function bootstrapUi(): void {
     elements.imageFormatEl,
     elements.renderTextAsEl,
     elements.renderRotatedEl,
+    elements.googleFontsEl,
     elements.responsiveImageModeEl,
     elements.centerOutputEl,
   ];

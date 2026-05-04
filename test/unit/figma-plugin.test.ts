@@ -10,8 +10,13 @@ import {
   parseFrameName,
 } from "../../plugins/figma/src/extract/frames.js";
 import { parseLayerType } from "../../plugins/figma/src/extract/layers.js";
-import { segmentsToParagraph, segmentToRun } from "../../plugins/figma/src/extract/text.js";
+import {
+  figmaFontToMapping,
+  segmentsToParagraph,
+  segmentToRun,
+} from "../../plugins/figma/src/extract/text.js";
 import { buildArtboard, buildDocument } from "../../plugins/figma/src/ir-builder.js";
+import { makeFigmaArtboardId } from "../../plugins/figma/src/ir-ids.js";
 import type { ExtractedFrame } from "../../plugins/figma/src/types.js";
 import {
   applyDirectControlsToConfig,
@@ -19,12 +24,15 @@ import {
   directControlsFromConfig,
   serializePluginConfig,
 } from "../../plugins/figma/src/ui.js";
+import { CURRENT_IR_VERSION } from "../../src/ir/types.js";
 
 function makeFrame(overrides: Partial<ExtractedFrame> = {}): ExtractedFrame {
+  const sourceNodeId = overrides.sourceNodeId ?? "frame-1";
+  const originalName = overrides.originalName ?? "story:dynamic";
   return {
-    sourceNodeId: "frame-1",
+    sourceNodeId,
     name: "story",
-    originalName: "story:dynamic",
+    originalName,
     width: 640,
     height: 360,
     actualWidth: 640,
@@ -80,7 +88,7 @@ function makeFrame(overrides: Partial<ExtractedFrame> = {}): ExtractedFrame {
         mimeType: "image/png",
         width: 640,
         height: 360,
-        artboardName: overrides.originalName ?? "story:dynamic",
+        artboardId: makeFigmaArtboardId({ sourceNodeId, originalName }),
         exportParams: { format: "png", scale: 1, transparent: false },
         bytes: new TextEncoder().encode("png-bytes"),
       },
@@ -157,6 +165,32 @@ describe("Figma plugin foundation", () => {
   });
 
   describe("text extraction", () => {
+    it("infers CSS font mappings from Figma family and style data", () => {
+      expect(
+        figmaFontToMapping({
+          family: "IBM Plex Sans",
+          style: "Semi Bold Italic",
+        }),
+      ).toEqual({
+        sourceFont: "IBM Plex Sans-SemiBoldItalic",
+        family: "'IBM Plex Sans',system-ui,sans-serif",
+        weight: "600",
+        style: "italic",
+      });
+
+      expect(
+        figmaFontToMapping({
+          family: "Poppins",
+          style: "ExtraBold",
+        }),
+      ).toMatchObject({
+        sourceFont: "Poppins-ExtraBold",
+        family: "Poppins,system-ui,sans-serif",
+        weight: "800",
+        style: "",
+      });
+    });
+
     it("converts Figma segments to canonical runs", () => {
       const run = segmentToRun({
         characters: "Hello",
@@ -219,12 +253,13 @@ describe("Figma plugin foundation", () => {
     it("parses JSONC config for settings, metadata, and fonts", () => {
       const config = parsePluginConfig(`{
         // story-specific overrides
-        "settings": { "output": "multiple-files", "projectName": "figma-story" },
+        "settings": { "output": "multiple-files", "projectName": "figma-story", "googleFonts": "link" },
         "metadata": { "headline": "Testing", "lang": "en" },
-        "fonts": [{ "aifont": "Inter-Bold", "family": "Inter", "weight": "700" }]
+        "fonts": [{ "sourceFont": "Inter-Bold", "family": "Inter", "weight": "700" }]
       }`);
 
       expect(config.settings?.output).toBe("multiple-files");
+      expect(config.settings?.googleFonts).toBe("link");
       expect(config.metadata?.headline).toBe("Testing");
       expect(config.fonts?.[0].family).toBe("Inter");
     });
@@ -252,12 +287,49 @@ describe("Figma plugin foundation", () => {
         metadata: { headline: "Figma Story" },
       });
 
-      expect(doc.irVersion).toBe("0.0.0");
-      expect(doc.generator.tool).toBe("figma");
+      expect(doc.irVersion).toBe(CURRENT_IR_VERSION);
+      expect(doc.source.tool).toBe("figma");
       expect(doc.metadata.slug).toBe("figma-story");
       expect(doc.metadata.headline).toBe("Figma Story");
       expect(doc.artboards).toHaveLength(1);
       expect(doc.assets["story-bg"].path).toBe("all2html-output/story-bg.png");
+    });
+
+    it("auto-adds Figma font mappings and lets config override them", () => {
+      const frame = makeFrame();
+      const element = frame.layers[0].elements[0];
+      if (element.type !== "text") {
+        throw new Error("Expected text fixture element.");
+      }
+      const run = element.paragraphs[0].runs[0];
+      run.fontName = "Poppins-ExtraBold";
+      run.fontPostScriptName = "Poppins-ExtraBold";
+
+      const automatic = buildDocument([frame], { slug: "figma-story" });
+      expect(automatic.fonts).toContainEqual({
+        sourceFont: "Poppins-ExtraBold",
+        family: "Poppins,system-ui,sans-serif",
+        weight: "800",
+        style: "",
+      });
+
+      const bundle = buildExportBundle(automatic, {
+        format: "html",
+        assetFiles: frame.assets,
+      });
+      expect(bundle.warnings).toEqual([]);
+      const htmlEntry = bundle.entries.find((entry) => entry.path === "figma-story.html");
+      expect(htmlEntry?.content).toContain("font-family: Poppins,system-ui,sans-serif;");
+
+      const configured = buildDocument([frame], {
+        slug: "figma-story",
+        fonts: [{ sourceFont: "Poppins-ExtraBold", family: "'Hosted Poppins'", weight: "900" }],
+      });
+      expect(configured.fonts).toContainEqual({
+        sourceFont: "Poppins-ExtraBold",
+        family: "'Hosted Poppins'",
+        weight: "900",
+      });
     });
   });
 
@@ -278,7 +350,10 @@ describe("Figma plugin foundation", () => {
                 mimeType: "image/png",
                 width: 1024,
                 height: 360,
-                artboardName: "story:1024:dynamic",
+                artboardId: makeFigmaArtboardId({
+                  sourceNodeId: "frame-2",
+                  originalName: "story:1024:dynamic",
+                }),
                 exportParams: { format: "png", scale: 1, transparent: false },
                 bytes: new TextEncoder().encode("wide-png"),
               },
@@ -288,7 +363,7 @@ describe("Figma plugin foundation", () => {
         {
           slug: "figma-story",
           settings: { output: "multiple-files", projectName: "figma-story" },
-          fonts: [{ aifont: "Inter-Bold", family: "Inter", weight: "700" }],
+          fonts: [{ sourceFont: "Inter-Bold", family: "Inter", weight: "700" }],
         },
       );
 
@@ -304,7 +379,10 @@ describe("Figma plugin foundation", () => {
                 mimeType: "image/png",
                 width: 1024,
                 height: 360,
-                artboardName: "story:1024:dynamic",
+                artboardId: makeFigmaArtboardId({
+                  sourceNodeId: "frame-2",
+                  originalName: "story:1024:dynamic",
+                }),
                 exportParams: { format: "png", scale: 1, transparent: false },
                 bytes: new TextEncoder().encode("wide-png"),
               },
@@ -336,7 +414,7 @@ describe("Figma plugin foundation", () => {
       const archive = createZipArchive(bundle);
       const files = unzipSync(archive);
 
-      expect(strFromU8(files["ir.json"])).toContain('"generator"');
+      expect(strFromU8(files["ir.json"])).toContain('"source"');
       expect(Object.keys(files)).toContain("figma-story.html");
       expect(strFromU8(files["figma-story.html"])).toContain("Hello from Figma");
       expect(strFromU8(files["all2html-output/story-bg.png"])).toBe("png-bytes");
@@ -377,6 +455,7 @@ describe("Figma plugin foundation", () => {
           centerHtmlOutput: false,
           renderTextAs: "image",
           renderRotatedSkewedTextAs: "image",
+          googleFonts: "import",
           responsiveImageMode: "css-var",
         },
         metadata: {
@@ -390,11 +469,13 @@ describe("Figma plugin foundation", () => {
       expect(controls.projectName).toBe("story");
       expect(controls.output).toBe("multiple-files");
       expect(controls.imageFormat).toBe("jpg");
+      expect(controls.googleFonts).toBe("import");
       expect(controls.responsiveImageMode).toBe("css-var");
 
       const config = applyDirectControlsToConfig({}, controls);
       expect(config.settings?.projectName).toBe("story");
       expect(config.settings?.imageFormat).toEqual(["jpg"]);
+      expect(config.settings?.googleFonts).toBe("import");
       expect(config.metadata?.headline).toBe("Story headline");
       expect(config.metadata?.ariaRole).toBe("img");
       expect(serializePluginConfig(config)).toContain('"projectName": "story"');

@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { processDocument } from "../../src/core/pipeline.js";
-import { emitHTML } from "../../src/emitters/html.js";
 import { emitReact } from "../../src/emitters/react.js";
 import { emitStandalone } from "../../src/emitters/standalone.js";
 import { emitSvelte } from "../../src/emitters/svelte.js";
@@ -54,6 +53,29 @@ describe("Svelte emitter", () => {
     const { svelte } = emitSvelte(doc, undefined, { allowUnsafeHtml: false });
     expect(svelte).not.toContain('data-binding-html="true"');
   });
+
+  it("preserves Google Fonts import and link modes", () => {
+    const importDoc = loadAndProcess("single-artboard-basic.json");
+    importDoc.settings.googleFonts = "import";
+    importDoc.fonts = [
+      { sourceFont: "Inter-Regular", family: "Inter,system-ui,sans-serif", weight: "400" },
+    ];
+    expect(emitSvelte(importDoc).svelte).toContain(
+      '@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap");',
+    );
+
+    const linkDoc = loadAndProcess("single-artboard-basic.json");
+    linkDoc.settings.googleFonts = "link";
+    linkDoc.fonts = [
+      { sourceFont: "Inter-Regular", family: "Inter,system-ui,sans-serif", weight: "400" },
+    ];
+    const { svelte } = emitSvelte(linkDoc);
+    expect(svelte).toContain("<svelte:head>");
+    expect(svelte).toContain(
+      'href="https://fonts.googleapis.com/css2?family=Inter:wght@400&amp;display=swap"',
+    );
+    expect(svelte).not.toContain("data-all2html-google-fonts");
+  });
 });
 
 describe("React emitter", () => {
@@ -90,6 +112,29 @@ describe("React emitter", () => {
     });
     expect(jsx).not.toContain('data-binding-html="true"');
     expect(jsx).toContain("interface");
+  });
+
+  it("preserves Google Fonts import and link modes", () => {
+    const importDoc = loadAndProcess("single-artboard-basic.json");
+    importDoc.settings.googleFonts = "import";
+    importDoc.fonts = [
+      { sourceFont: "Inter-Regular", family: "Inter,system-ui,sans-serif", weight: "400" },
+    ];
+    expect(emitReact(importDoc).jsx).toContain(
+      '@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap");',
+    );
+
+    const linkDoc = loadAndProcess("single-artboard-basic.json");
+    linkDoc.settings.googleFonts = "link";
+    linkDoc.fonts = [
+      { sourceFont: "Inter-Regular", family: "Inter,system-ui,sans-serif", weight: "400" },
+    ];
+    const { jsx } = emitReact(linkDoc);
+    expect(jsx).toContain(
+      'const googleFontsHref = "https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap";',
+    );
+    expect(jsx).toContain('<link rel="stylesheet" href={googleFontsHref} />');
+    expect(jsx).not.toContain("data-all2html-google-fonts");
   });
 });
 

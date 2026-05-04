@@ -48,9 +48,15 @@ function getHostGlobalState(): any {
   return ($.global as any);
 }
 
+type SerializedHostCommandArgs<K extends HostCommandName> = {
+  0: [];
+  1: [string];
+  2: [string, string];
+}[HostCommandArgs<K>["length"]];
+
 function registerHostCommand<K extends HostCommandName>(
   command: K,
-  fn: (...args: HostCommandArgs<K>) => string,
+  fn: (...args: SerializedHostCommandArgs<K>) => string,
 ): void {
   ($ as any)[HOST_NAMESPACE][command] = fn;
 }
@@ -150,11 +156,32 @@ function stripJsonComments(content: string): string {
 /**
  * Get info about the active document. Returns JSON or "null".
  */
+function hashString(value: string): string {
+  var hash = 5381;
+  for (var i = 0; i < value.length; i += 1) {
+    hash = ((hash << 5) + hash) ^ value.charCodeAt(i);
+  }
+  return value.length + ":" + (hash >>> 0).toString(16);
+}
+
+function getSettingsBlockSignature(): string | null {
+  try {
+    var tf = findSettingsBlock();
+    if (!tf) {
+      return null;
+    }
+    return hashString(tf.contents || "");
+  } catch (e) {
+    return null;
+  }
+}
+
 function readActiveDocumentInfo(): {
   name: string;
   path: string;
   saved: boolean;
   artboardCount: number;
+  settingsBlockSignature: string | null;
 } | null {
   try {
     var doc = app.activeDocument;
@@ -171,6 +198,7 @@ function readActiveDocumentInfo(): {
       path: path,
       saved: doc.saved,
       artboardCount: doc.artboards.length,
+      settingsBlockSignature: getSettingsBlockSignature(),
     };
   } catch (e) {
     return null;

@@ -1,7 +1,7 @@
 import { strToU8, zipSync } from "fflate";
 import type { EmitFile } from "./emitters/registry.js";
 import type { ImportedAssetFile } from "./importers/types.js";
-import type { Document } from "./ir/types.js";
+import type { Document, SourceMetadata } from "./ir/types.js";
 
 export interface OutputBundleFile {
   path: string;
@@ -12,6 +12,25 @@ export interface OutputBundleFile {
 
 export interface OutputBundle {
   files: OutputBundleFile[];
+  manifest: OutputBundleManifest;
+}
+
+export interface OutputBundleManifestFile {
+  path: string;
+  mimeType: string;
+  role: "source-ir" | "emitted" | "asset" | "manifest";
+  bytes: number;
+}
+
+export interface OutputBundleManifest {
+  schemaVersion: "0.1.0";
+  createdAt: string;
+  source: SourceMetadata;
+  irVersion: string;
+  slug: string;
+  emittedFormat?: string;
+  warnings: string[];
+  files: OutputBundleManifestFile[];
 }
 
 export interface OutputBundleOptions {
@@ -19,10 +38,12 @@ export interface OutputBundleOptions {
   emittedFiles: readonly EmitFile[];
   assetFiles: readonly ImportedAssetFile[];
   assetRoot?: string;
+  emittedFormat?: string;
+  warnings?: readonly string[];
 }
 
 export function createOutputBundle(options: OutputBundleOptions): OutputBundle {
-  const files: OutputBundleFile[] = [
+  const filesWithoutManifest: OutputBundleFile[] = [
     createTextBundleFile(
       "ir.json",
       `${JSON.stringify(options.irDocument, null, 2)}\n`,
@@ -32,7 +53,7 @@ export function createOutputBundle(options: OutputBundleOptions): OutputBundle {
   const assetRoot = normalizeBundlePath(options.assetRoot || "");
 
   for (const asset of options.assetFiles) {
-    files.push({
+    filesWithoutManifest.push({
       path: joinBundlePath(assetRoot, asset.path),
       bytes: asset.bytes,
       mimeType: asset.mimeType,
@@ -48,12 +69,71 @@ export function createOutputBundle(options: OutputBundleOptions): OutputBundle {
         : relativePath.endsWith(".tsx") || relativePath.endsWith(".jsx")
           ? "text/plain"
           : "text/plain";
-    files.push(createTextBundleFile(relativePath, emitted.output, mimeType));
+    filesWithoutManifest.push(createTextBundleFile(relativePath, emitted.output, mimeType));
   }
 
+  const sortedFiles = filesWithoutManifest.sort((a, b) => a.path.localeCompare(b.path));
+  const { manifest, manifestFile } = createManifestFile(createManifest(options, sortedFiles));
+
   return {
-    files: files.sort((a, b) => a.path.localeCompare(b.path)),
+    files: [...sortedFiles, manifestFile].sort((a, b) => a.path.localeCompare(b.path)),
+    manifest,
   };
+}
+
+function createManifest(
+  options: OutputBundleOptions,
+  files: readonly OutputBundleFile[],
+): OutputBundleManifest {
+  const emittedPaths = new Set(options.emittedFiles.map((file) => `${file.slug}${file.extension}`));
+  const slug = options.irDocument.settings.projectName || options.irDocument.metadata.slug;
+  return {
+    schemaVersion: "0.1.0",
+    createdAt: new Date().toISOString(),
+    source: options.irDocument.source,
+    irVersion: options.irDocument.irVersion,
+    slug,
+    emittedFormat: options.emittedFormat,
+    warnings: [...(options.warnings ?? [])],
+    files: files.map((file) => ({
+      path: file.path,
+      mimeType: file.mimeType,
+      role:
+        file.path === "ir.json" ? "source-ir" : emittedPaths.has(file.path) ? "emitted" : "asset",
+      bytes: file.bytes.byteLength,
+    })),
+  };
+}
+
+function createManifestFile(baseManifest: OutputBundleManifest): {
+  manifest: OutputBundleManifest;
+  manifestFile: OutputBundleFile;
+} {
+  let manifestFileBytes = 0;
+
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const manifest: OutputBundleManifest = {
+      ...baseManifest,
+      files: [
+        ...baseManifest.files,
+        {
+          path: "manifest.json",
+          mimeType: "application/json",
+          role: "manifest",
+          bytes: manifestFileBytes,
+        },
+      ],
+    };
+    const manifestText = `${JSON.stringify(manifest, null, 2)}\n`;
+    const manifestFile = createTextBundleFile("manifest.json", manifestText, "application/json");
+
+    if (manifestFile.bytes.byteLength === manifestFileBytes) {
+      return { manifest, manifestFile };
+    }
+    manifestFileBytes = manifestFile.bytes.byteLength;
+  }
+
+  throw new Error("Failed to stabilize manifest.json byte size.");
 }
 
 export function getBundleFile(bundle: OutputBundle, path: string): OutputBundleFile | undefined {

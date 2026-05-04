@@ -6,10 +6,20 @@
     type FontEntry,
   } from "../../shared/types";
   import Collapsible from "../components/Collapsible.svelte";
+  import FieldHelp from "../components/FieldHelp.svelte";
+  import { getSettingHelp } from "../setting-help.js";
+
+  type GoogleFontsMode = "none" | "import" | "link";
 
   interface Props {
     fonts: FontEntry[];
     onchange: () => void;
+    googleFonts?: GoogleFontsMode;
+    googleFontsDisabled?: boolean;
+    googleFontsLocked?: boolean;
+    googleFontsBadge?: string;
+    googleFontsBadgeTitle?: string;
+    ongooglefontschange?: (value: GoogleFontsMode) => void;
     sourceLabel?: string;
     ondetectmissing?: (fonts: FontEntry[]) => Promise<string[]>;
   }
@@ -17,6 +27,12 @@
   let {
     fonts = $bindable(),
     onchange,
+    googleFonts = "none",
+    googleFontsDisabled = false,
+    googleFontsLocked = false,
+    googleFontsBadge = "",
+    googleFontsBadgeTitle,
+    ongooglefontschange,
     sourceLabel = "Source Font",
     ondetectmissing,
   }: Props = $props();
@@ -62,9 +78,41 @@
     fonts = fonts;
     onchange();
   }
+
+  function changeGoogleFonts(value: string): void {
+    if (googleFontsDisabled) return;
+    const mode: GoogleFontsMode = value === "import" || value === "link" ? value : "none";
+    googleFonts = mode;
+    ongooglefontschange?.(mode);
+  }
 </script>
 
 <Collapsible title="Fonts" count={countLabel} open={true}>
+  <div style="margin-bottom: 8px">
+    <FieldHelp
+      label="Google Fonts"
+      helpId="googleFonts"
+      help={getSettingHelp("googleFonts")}
+      locked={googleFontsLocked}
+      badge={googleFontsBadge}
+      badgeTitle={googleFontsBadgeTitle}
+    >
+      {#snippet children()}
+      <select
+        id="google-fonts-select"
+        value={googleFonts}
+        disabled={googleFontsDisabled}
+        title={googleFontsLocked ? "Controlled by ai2html-settings in the document" : undefined}
+        onchange={(e) => changeGoogleFonts((e.target as HTMLSelectElement).value)}
+      >
+        <option value="none">Off</option>
+        <option value="import">CSS @import</option>
+        <option value="link">Link tag</option>
+      </select>
+      {/snippet}
+    </FieldHelp>
+  </div>
+
   <div style="margin-bottom: 6px">
     <button class="btn-secondary" onclick={detectMissing} disabled={detecting || !ondetectmissing}>
       {detecting ? "Detecting..." : "Detect missing fonts"}

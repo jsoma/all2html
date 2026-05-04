@@ -109,6 +109,9 @@ jobs:
           cp "$panel_zip" release-assets/all2html-panel.zip
           cp "$panel_zxp" release-assets/all2html-panel.zxp
 
+      - name: Verify release assets
+        run: pnpm check:release-artifacts release-assets
+
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:

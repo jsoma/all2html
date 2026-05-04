@@ -1,20 +1,12 @@
 {
-  "irVersion": "0.0.0",
-  "generator": {
-    "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "pluginVersion": "0.1.0"
-  },
+  "irVersion": "0.1.0",
   "settings": {},
   "fonts": [],
   "artboards": [
     {
       "name": "story-1",
-      "originalName": "story-1:dynamic,640",
       "width": 640,
       "height": 480,
-      "actualWidth": 640,
-      "actualHeight": 480,
       "layers": [
         {
           "name": "highlight",
@@ -22,7 +14,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:story-1-dynamic-640:layer:highlight",
+          "source": {
+            "tool": "illustrator",
+            "name": "highlight"
+          }
         },
         {
           "name": "locator",
@@ -30,7 +27,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:story-1-dynamic-640:layer:locator",
+          "source": {
+            "tool": "illustrator",
+            "name": "locator"
+          }
         },
         {
           "name": "content",
@@ -115,18 +117,27 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:story-1-dynamic-640:layer:content",
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          }
         }
       ],
-      "responsiveness": "dynamic"
+      "responsiveness": "dynamic",
+      "id": "artboard:story-1-dynamic-640",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-1:dynamic,640",
+        "width": 640,
+        "height": 480
+      }
     },
     {
       "name": "story-2",
-      "originalName": "story-2:dynamic,720",
       "width": 720,
       "height": 480,
-      "actualWidth": 720,
-      "actualHeight": 480,
       "layers": [
         {
           "name": "highlight",
@@ -134,7 +145,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:story-2-dynamic-720:layer:highlight",
+          "source": {
+            "tool": "illustrator",
+            "name": "highlight"
+          }
         },
         {
           "name": "locator",
@@ -142,7 +158,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:story-2-dynamic-720:layer:locator",
+          "source": {
+            "tool": "illustrator",
+            "name": "locator"
+          }
         },
         {
           "name": "content",
@@ -227,18 +248,27 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:story-2-dynamic-720:layer:content",
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          }
         }
       ],
-      "responsiveness": "dynamic"
+      "responsiveness": "dynamic",
+      "id": "artboard:story-2-dynamic-720",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-2:dynamic,720",
+        "width": 720,
+        "height": 480
+      }
     },
     {
       "name": "story-3",
-      "originalName": "story-3:fixed,800",
       "width": 800,
       "height": 480,
-      "actualWidth": 800,
-      "actualHeight": 480,
       "layers": [
         {
           "name": "highlight",
@@ -246,7 +276,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:story-3-fixed-800:layer:highlight",
+          "source": {
+            "tool": "illustrator",
+            "name": "highlight"
+          }
         },
         {
           "name": "locator",
@@ -254,7 +289,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:story-3-fixed-800:layer:locator",
+          "source": {
+            "tool": "illustrator",
+            "name": "locator"
+          }
         },
         {
           "name": "content",
@@ -339,18 +379,27 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:story-3-fixed-800:layer:content",
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          }
         }
       ],
-      "responsiveness": "fixed"
+      "responsiveness": "fixed",
+      "id": "artboard:story-3-fixed-800",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-3:fixed,800",
+        "width": 800,
+        "height": 480
+      }
     },
     {
       "name": "story-4",
-      "originalName": "story-4:dynamic,960",
       "width": 960,
       "height": 480,
-      "actualWidth": 960,
-      "actualHeight": 480,
       "layers": [
         {
           "name": "highlight",
@@ -358,7 +407,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:story-4-dynamic-960:layer:highlight",
+          "source": {
+            "tool": "illustrator",
+            "name": "highlight"
+          }
         },
         {
           "name": "locator",
@@ -366,7 +420,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:story-4-dynamic-960:layer:locator",
+          "source": {
+            "tool": "illustrator",
+            "name": "locator"
+          }
         },
         {
           "name": "content",
@@ -451,18 +510,27 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:story-4-dynamic-960:layer:content",
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          }
         }
       ],
-      "responsiveness": "dynamic"
+      "responsiveness": "dynamic",
+      "id": "artboard:story-4-dynamic-960",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-4:dynamic,960",
+        "width": 960,
+        "height": 480
+      }
     },
     {
       "name": "story-5",
-      "originalName": "story-5:fixed,1120",
       "width": 1120,
       "height": 480,
-      "actualWidth": 1120,
-      "actualHeight": 480,
       "layers": [
         {
           "name": "highlight",
@@ -470,7 +538,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:story-5-fixed-1120:layer:highlight",
+          "source": {
+            "tool": "illustrator",
+            "name": "highlight"
+          }
         },
         {
           "name": "locator",
@@ -478,7 +551,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:story-5-fixed-1120:layer:locator",
+          "source": {
+            "tool": "illustrator",
+            "name": "locator"
+          }
         },
         {
           "name": "content",
@@ -563,18 +641,27 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:story-5-fixed-1120:layer:content",
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          }
         }
       ],
-      "responsiveness": "fixed"
+      "responsiveness": "fixed",
+      "id": "artboard:story-5-fixed-1120",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-5:fixed,1120",
+        "width": 1120,
+        "height": 480
+      }
     },
     {
       "name": "story-6",
-      "originalName": "story-6:dynamic,1280",
       "width": 1280,
       "height": 480,
-      "actualWidth": 1280,
-      "actualHeight": 480,
       "layers": [
         {
           "name": "highlight",
@@ -582,7 +669,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:story-6-dynamic-1280:layer:highlight",
+          "source": {
+            "tool": "illustrator",
+            "name": "highlight"
+          }
         },
         {
           "name": "locator",
@@ -590,7 +682,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:story-6-dynamic-1280:layer:locator",
+          "source": {
+            "tool": "illustrator",
+            "name": "locator"
+          }
         },
         {
           "name": "content",
@@ -675,10 +772,22 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:story-6-dynamic-1280:layer:content",
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          }
         }
       ],
-      "responsiveness": "dynamic"
+      "responsiveness": "dynamic",
+      "id": "artboard:story-6-dynamic-1280",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-6:dynamic,1280",
+        "width": 1280,
+        "height": 480
+      }
     }
   ],
   "customBlocks": [],
@@ -689,13 +798,17 @@
       "mimeType": "image/png",
       "width": 1280,
       "height": 960,
-      "artboardName": "story-1",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
+      },
+      "artboardId": "artboard:story-1-dynamic-640",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-1"
       }
     },
     "large-story-story-2": {
@@ -704,13 +817,17 @@
       "mimeType": "image/png",
       "width": 1440,
       "height": 960,
-      "artboardName": "story-2",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
+      },
+      "artboardId": "artboard:story-2-dynamic-720",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-2"
       }
     },
     "large-story-story-3": {
@@ -719,13 +836,17 @@
       "mimeType": "image/png",
       "width": 1600,
       "height": 960,
-      "artboardName": "story-3",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
+      },
+      "artboardId": "artboard:story-3-fixed-800",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-3"
       }
     },
     "large-story-story-4": {
@@ -734,13 +855,17 @@
       "mimeType": "image/png",
       "width": 1920,
       "height": 960,
-      "artboardName": "story-4",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
+      },
+      "artboardId": "artboard:story-4-dynamic-960",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-4"
       }
     },
     "large-story-story-5": {
@@ -749,13 +874,17 @@
       "mimeType": "image/png",
       "width": 2240,
       "height": 960,
-      "artboardName": "story-5",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
+      },
+      "artboardId": "artboard:story-5-fixed-1120",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-5"
       }
     },
     "large-story-story-6": {
@@ -764,13 +893,17 @@
       "mimeType": "image/png",
       "width": 2560,
       "height": 960,
-      "artboardName": "story-6",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
+      },
+      "artboardId": "artboard:story-6-dynamic-1280",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-6"
       }
     },
     "large-story-story-1-highlight": {
@@ -779,12 +912,16 @@
       "mimeType": "image/png",
       "width": 1280,
       "height": 960,
-      "artboardName": "story-1",
-      "layerName": "highlight",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": true
+      },
+      "artboardId": "artboard:story-1-dynamic-640",
+      "layerId": "artboard:story-1-dynamic-640:layer:highlight",
+      "source": {
+        "tool": "illustrator",
+        "name": "highlight"
       }
     },
     "large-story-story-1-locator": {
@@ -793,11 +930,15 @@
       "mimeType": "image/svg+xml",
       "width": 640,
       "height": 480,
-      "artboardName": "story-1",
-      "layerName": "locator",
       "exportParams": {
         "format": "svg",
         "scale": 1
+      },
+      "artboardId": "artboard:story-1-dynamic-640",
+      "layerId": "artboard:story-1-dynamic-640:layer:locator",
+      "source": {
+        "tool": "illustrator",
+        "name": "locator"
       }
     },
     "large-story-story-2-highlight": {
@@ -806,12 +947,16 @@
       "mimeType": "image/png",
       "width": 1440,
       "height": 960,
-      "artboardName": "story-2",
-      "layerName": "highlight",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": true
+      },
+      "artboardId": "artboard:story-2-dynamic-720",
+      "layerId": "artboard:story-2-dynamic-720:layer:highlight",
+      "source": {
+        "tool": "illustrator",
+        "name": "highlight"
       }
     },
     "large-story-story-2-locator": {
@@ -820,11 +965,15 @@
       "mimeType": "image/svg+xml",
       "width": 720,
       "height": 480,
-      "artboardName": "story-2",
-      "layerName": "locator",
       "exportParams": {
         "format": "svg",
         "scale": 1
+      },
+      "artboardId": "artboard:story-2-dynamic-720",
+      "layerId": "artboard:story-2-dynamic-720:layer:locator",
+      "source": {
+        "tool": "illustrator",
+        "name": "locator"
       }
     },
     "large-story-story-3-highlight": {
@@ -833,12 +982,16 @@
       "mimeType": "image/png",
       "width": 1600,
       "height": 960,
-      "artboardName": "story-3",
-      "layerName": "highlight",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": true
+      },
+      "artboardId": "artboard:story-3-fixed-800",
+      "layerId": "artboard:story-3-fixed-800:layer:highlight",
+      "source": {
+        "tool": "illustrator",
+        "name": "highlight"
       }
     },
     "large-story-story-3-locator": {
@@ -847,11 +1000,15 @@
       "mimeType": "image/svg+xml",
       "width": 800,
       "height": 480,
-      "artboardName": "story-3",
-      "layerName": "locator",
       "exportParams": {
         "format": "svg",
         "scale": 1
+      },
+      "artboardId": "artboard:story-3-fixed-800",
+      "layerId": "artboard:story-3-fixed-800:layer:locator",
+      "source": {
+        "tool": "illustrator",
+        "name": "locator"
       }
     },
     "large-story-story-4-highlight": {
@@ -860,12 +1017,16 @@
       "mimeType": "image/png",
       "width": 1920,
       "height": 960,
-      "artboardName": "story-4",
-      "layerName": "highlight",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": true
+      },
+      "artboardId": "artboard:story-4-dynamic-960",
+      "layerId": "artboard:story-4-dynamic-960:layer:highlight",
+      "source": {
+        "tool": "illustrator",
+        "name": "highlight"
       }
     },
     "large-story-story-4-locator": {
@@ -874,11 +1035,15 @@
       "mimeType": "image/svg+xml",
       "width": 960,
       "height": 480,
-      "artboardName": "story-4",
-      "layerName": "locator",
       "exportParams": {
         "format": "svg",
         "scale": 1
+      },
+      "artboardId": "artboard:story-4-dynamic-960",
+      "layerId": "artboard:story-4-dynamic-960:layer:locator",
+      "source": {
+        "tool": "illustrator",
+        "name": "locator"
       }
     },
     "large-story-story-5-highlight": {
@@ -887,12 +1052,16 @@
       "mimeType": "image/png",
       "width": 2240,
       "height": 960,
-      "artboardName": "story-5",
-      "layerName": "highlight",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": true
+      },
+      "artboardId": "artboard:story-5-fixed-1120",
+      "layerId": "artboard:story-5-fixed-1120:layer:highlight",
+      "source": {
+        "tool": "illustrator",
+        "name": "highlight"
       }
     },
     "large-story-story-5-locator": {
@@ -901,11 +1070,15 @@
       "mimeType": "image/svg+xml",
       "width": 1120,
       "height": 480,
-      "artboardName": "story-5",
-      "layerName": "locator",
       "exportParams": {
         "format": "svg",
         "scale": 1
+      },
+      "artboardId": "artboard:story-5-fixed-1120",
+      "layerId": "artboard:story-5-fixed-1120:layer:locator",
+      "source": {
+        "tool": "illustrator",
+        "name": "locator"
       }
     },
     "large-story-story-6-highlight": {
@@ -914,12 +1087,16 @@
       "mimeType": "image/png",
       "width": 2560,
       "height": 960,
-      "artboardName": "story-6",
-      "layerName": "highlight",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": true
+      },
+      "artboardId": "artboard:story-6-dynamic-1280",
+      "layerId": "artboard:story-6-dynamic-1280:layer:highlight",
+      "source": {
+        "tool": "illustrator",
+        "name": "highlight"
       }
     },
     "large-story-story-6-locator": {
@@ -928,11 +1105,15 @@
       "mimeType": "image/svg+xml",
       "width": 1280,
       "height": 480,
-      "artboardName": "story-6",
-      "layerName": "locator",
       "exportParams": {
         "format": "svg",
         "scale": 1
+      },
+      "artboardId": "artboard:story-6-dynamic-1280",
+      "layerId": "artboard:story-6-dynamic-1280:layer:locator",
+      "source": {
+        "tool": "illustrator",
+        "name": "locator"
       }
     }
   },
@@ -944,5 +1125,10 @@
     "notes": "",
     "sources": "",
     "credit": ""
+  },
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "adapterVersion": "0.1.0"
   }
 }

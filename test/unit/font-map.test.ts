@@ -50,7 +50,7 @@ describe("createFontMap", () => {
 
   it("custom fonts override builtins", () => {
     const custom = createFontMap([
-      { aifont: "ArialMT", family: "'Custom Arial', sans-serif", weight: "400" },
+      { sourceFont: "ArialMT", family: "'Custom Arial', sans-serif", weight: "400" },
     ]);
     const result = custom("ArialMT");
     expect(result.matched).toBe(true);

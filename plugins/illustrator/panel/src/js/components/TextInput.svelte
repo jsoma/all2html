@@ -1,4 +1,8 @@
 <script lang="ts">
+  import type { PanelSettingKey } from "../../shared/types";
+  import FieldHelp from "./FieldHelp.svelte";
+  import type { SettingHelpEntry } from "../setting-help.js";
+
   interface Props {
     label: string;
     value: string;
@@ -8,6 +12,8 @@
     locked?: boolean;
     badge?: string;
     badgeTitle?: string;
+    helpId?: PanelSettingKey;
+    help?: SettingHelpEntry;
   }
 
   let {
@@ -19,17 +25,13 @@
     locked = false,
     badge = "",
     badgeTitle,
+    helpId,
+    help,
   }: Props = $props();
 </script>
 
-<div class="field" class:field-locked={locked}>
-  <span class="field-label">
-    {label}
-    {#if badge}
-      <span class="field-badge" title={badgeTitle}>{badge}</span>
-    {/if}
-  </span>
-  <div class="field-control">
+<FieldHelp {label} {locked} {badge} {badgeTitle} {helpId} {help}>
+  {#snippet children()}
     <input
       type="text"
       bind:value
@@ -38,5 +40,5 @@
       {disabled}
       title={locked ? "Controlled by ai2html-settings in the document" : undefined}
     />
-  </div>
-</div>
+  {/snippet}
+</FieldHelp>

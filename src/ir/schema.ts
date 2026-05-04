@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { SETTING_DEFINITIONS, type SettingDefinition } from "./settings-definitions.js";
+import { CURRENT_IR_VERSION } from "./types.js";
 
 // Recursive JSON-serializable value schema
 const JsonLiteralSchema = z.union([z.string(), z.number().finite(), z.boolean(), z.null()]);
@@ -20,6 +22,16 @@ const BoundingBoxSchema = z.object({
   width: z.number(),
   height: z.number(),
 });
+
+const SourceMetadataSchema = z
+  .object({
+    tool: z.string().min(1),
+    toolVersion: z.string().optional(),
+    adapterVersion: z.string().optional(),
+    id: z.string().optional(),
+    name: z.string().optional(),
+  })
+  .catchall(JsonValueSchema);
 
 export const CharacterRunSchema = z.object({
   text: z.string(),
@@ -137,8 +149,10 @@ const ElementSchema = z.discriminatedUnion("type", [
 ]);
 
 export const LayerSchema = z.object({
+  id: z.string().min(1),
   name: z.string(),
   type: z.enum(["default", "svg", "png", "symbol", "div", "video", "html-before", "html-after"]),
+  source: SourceMetadataSchema.optional(),
   inlineSvg: z.boolean(),
   visible: z.boolean(),
   opacity: z.number().min(0).max(100),
@@ -146,19 +160,18 @@ export const LayerSchema = z.object({
 });
 
 export const ArtboardSchema = z.object({
+  id: z.string().min(1),
   name: z.string().min(1),
-  originalName: z.string().min(1),
   width: z.number().positive(),
   height: z.number().positive(),
-  actualWidth: z.number().positive(),
-  actualHeight: z.number().positive(),
+  source: SourceMetadataSchema.optional(),
   responsiveness: z.enum(["fixed", "dynamic"]).optional(),
   imageOnly: z.boolean().optional(),
   layers: z.array(LayerSchema),
 });
 
 export const FontMappingSchema = z.object({
-  aifont: z.string().min(1),
+  sourceFont: z.string().min(1),
   family: z.string().min(1),
   weight: z.string().optional(),
   style: z.string().optional(),
@@ -177,8 +190,9 @@ export const AssetSchema = z.object({
   mimeType: z.string().min(1),
   width: z.number().positive(),
   height: z.number().positive(),
-  artboardName: z.string().min(1),
-  layerName: z.string().optional(),
+  artboardId: z.string().min(1),
+  layerId: z.string().optional(),
+  source: SourceMetadataSchema.optional(),
   exportParams: z.object({
     format: z.enum(["png", "png24", "jpg", "svg"]),
     scale: z.number().positive(),
@@ -188,43 +202,44 @@ export const AssetSchema = z.object({
   }),
 });
 
-const ImageFormatSchema = z.enum(["auto", "png", "png24", "jpg", "svg"]);
+export const SAFE_SETTING_IDENTIFIER_RE = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+
+function settingSchemaFor(definition: SettingDefinition): z.ZodTypeAny {
+  switch (definition.kind) {
+    case "boolean":
+      return z.boolean();
+    case "string":
+      return z.string();
+    case "string-safe":
+      return z.string().refine((value) => value === "" || SAFE_SETTING_IDENTIFIER_RE.test(value), {
+        message:
+          "Must be empty or a CSS-safe identifier using letters, numbers, underscores, or hyphens",
+      });
+    case "enum":
+      return z.enum(definition.values as [string, ...string[]]);
+    case "enum-array":
+      return z.array(z.enum(definition.values as [string, ...string[]]));
+    case "integer": {
+      let schema = z.number().int();
+      if (definition.min !== undefined) schema = schema.min(definition.min);
+      if (definition.max !== undefined) schema = schema.max(definition.max);
+      return schema;
+    }
+    case "positive-integer":
+      return z.number().int().positive();
+    case "positive-integer-nullable":
+      return z.number().int().positive().nullable();
+    case "positive-number-nullable":
+      return z.number().positive().nullable();
+  }
+}
 
 export const SettingsSchema = z
-  .object({
-    imageFormat: z.array(ImageFormatSchema),
-    writeImageFiles: z.boolean(),
-    pngTransparent: z.boolean(),
-    pngNumberOfColors: z.number().int().min(1).max(256),
-    jpgQuality: z.number().int().min(0).max(100),
-    use2xImages: z.boolean(),
-    cacheBustToken: z.number().int().positive().nullable(),
-    namespace: z.string(),
-    projectName: z.string(),
-    output: z.enum(["one-file", "multiple-files"]),
-    htmlOutputPath: z.string(),
-    htmlOutputExtension: z.string(),
-    imageOutputPath: z.string(),
-    imageSourcePath: z.string(),
-    responsiveness: z.enum(["fixed", "dynamic"]),
-    textResponsiveness: z.enum(["fixed", "dynamic"]),
-    maxWidth: z.number().positive().nullable(),
-    centerHtmlOutput: z.boolean(),
-    renderTextAs: z.enum(["html", "image"]),
-    renderRotatedSkewedTextAs: z.enum(["html", "image"]),
-    testingMode: z.boolean(),
-    includeResizerCss: z.boolean(),
-    includeResizerWidths: z.boolean(),
-    responsiveImageMode: z.enum(["img-src", "css-var"]),
-    useLazyLoader: z.boolean(),
-    inlineSvg: z.boolean(),
-    svgIdPrefix: z.string(),
-    svgEmbedImages: z.boolean(),
-    clickableLink: z.string(),
-    createPromoImage: z.boolean(),
-    promoImageWidth: z.number().int().positive(),
-    localPreviewTemplate: z.string(),
-  })
+  .object(
+    Object.fromEntries(
+      SETTING_DEFINITIONS.map((definition) => [definition.key, settingSchemaFor(definition)]),
+    ),
+  )
   .partial();
 
 export const MetadataSchema = z
@@ -243,23 +258,67 @@ export const MetadataSchema = z
   })
   .catchall(JsonValueSchema);
 
-export const DocumentSchema = z.object({
-  irVersion: z.string().min(1),
-  generator: z.object({
-    tool: z.string().min(1),
-    toolVersion: z.string(),
-    pluginVersion: z.string(),
-  }),
-  settings: SettingsSchema,
-  fonts: z.array(FontMappingSchema),
-  artboards: z.array(ArtboardSchema).min(1),
-  customBlocks: z.array(CustomBlockSchema),
-  assets: z
-    .record(AssetSchema)
-    .refine((assets) => Object.entries(assets).every(([key, asset]) => key === asset.id), {
-      message: "Asset record key must equal asset.id",
-    }),
-  metadata: MetadataSchema,
-});
+export const DocumentSchema = z
+  .object({
+    irVersion: z.literal(CURRENT_IR_VERSION),
+    source: SourceMetadataSchema,
+    settings: SettingsSchema,
+    fonts: z.array(FontMappingSchema),
+    artboards: z.array(ArtboardSchema).min(1),
+    customBlocks: z.array(CustomBlockSchema),
+    assets: z
+      .record(AssetSchema)
+      .refine((assets) => Object.entries(assets).every(([key, asset]) => key === asset.id), {
+        message: "Asset record key must equal asset.id",
+      }),
+    metadata: MetadataSchema,
+  })
+  .superRefine((document, ctx) => {
+    const artboardLayerIds = new Map<string, Set<string>>();
+
+    document.artboards.forEach((artboard, artboardIndex) => {
+      if (artboardLayerIds.has(artboard.id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["artboards", artboardIndex, "id"],
+          message: `Duplicate artboard id "${artboard.id}".`,
+        });
+        return;
+      }
+
+      const layerIds = new Set<string>();
+      artboard.layers.forEach((layer, layerIndex) => {
+        if (layerIds.has(layer.id)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["artboards", artboardIndex, "layers", layerIndex, "id"],
+            message: `Duplicate layer id "${layer.id}" in artboard "${artboard.id}".`,
+          });
+        }
+        layerIds.add(layer.id);
+      });
+      artboardLayerIds.set(artboard.id, layerIds);
+    });
+
+    for (const [assetKey, asset] of Object.entries(document.assets)) {
+      const layerIds = artboardLayerIds.get(asset.artboardId);
+      if (!layerIds) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["assets", assetKey, "artboardId"],
+          message: `Asset references unknown artboard id "${asset.artboardId}".`,
+        });
+        continue;
+      }
+
+      if (asset.layerId && !layerIds.has(asset.layerId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["assets", assetKey, "layerId"],
+          message: `Asset references unknown layer id "${asset.layerId}" for artboard "${asset.artboardId}".`,
+        });
+      }
+    }
+  });
 
 export type DocumentInput = z.input<typeof DocumentSchema>;

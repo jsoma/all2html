@@ -1,13 +1,11 @@
-// === Base IR Types (as produced by the exporter) ===
+// === Base IR Types (as produced by importers/exporters) ===
+
+export const CURRENT_IR_VERSION = "0.1.0";
 
 export interface Document {
-  /** IR schema version. Use "0.0.0" for pre-release. */
+  /** IR schema version. Big-bang pre-release revisions do not guarantee compatibility. */
   irVersion: string;
-  generator: {
-    tool: string;
-    toolVersion: string;
-    pluginVersion: string;
-  };
+  source: SourceMetadata;
   settings: Partial<Settings>;
   fonts: FontMapping[];
   artboards: Artboard[];
@@ -24,6 +22,21 @@ export type JsonValue =
   | null
   | JsonValue[]
   | { [key: string]: JsonValue };
+
+export interface SourceMetadata {
+  /** Source tool or adapter name, e.g. "illustrator", "figma", "svg". */
+  tool: string;
+  /** Version of the source tool when available. */
+  toolVersion?: string;
+  /** Version of the all2html adapter/exporter that produced this IR. */
+  adapterVersion?: string;
+  /** Source-native document/node identifier when available. */
+  id?: string;
+  /** Source-native display name when available. */
+  name?: string;
+  /** Arbitrary JSON-serializable source metadata. */
+  [key: string]: JsonValue | undefined;
+}
 
 export interface Metadata {
   slug: string;
@@ -63,6 +76,7 @@ export interface Settings {
   centerHtmlOutput: boolean;
   renderTextAs: "html" | "image";
   renderRotatedSkewedTextAs: "html" | "image";
+  googleFonts: "none" | "import" | "link";
   testingMode: boolean;
   includeResizerCss: boolean;
   includeResizerWidths: boolean;
@@ -81,12 +95,12 @@ export type ImageFormat = "auto" | "png" | "png24" | "jpg" | "svg";
 export type Responsiveness = "fixed" | "dynamic";
 
 export interface Artboard {
+  /** Stable canonical ID used by assets, grouping, and diagnostics. */
+  id: string;
   name: string;
-  originalName: string;
   width: number;
   height: number;
-  actualWidth: number;
-  actualHeight: number;
+  source?: SourceMetadata;
   responsiveness?: Responsiveness;
   imageOnly?: boolean;
   layers: Layer[];
@@ -103,8 +117,11 @@ export type LayerType =
   | "html-after";
 
 export interface Layer {
+  /** Stable canonical ID used by assets and host diagnostics. */
+  id: string;
   name: string;
   type: LayerType;
+  source?: SourceMetadata;
   inlineSvg: boolean;
   visible: boolean;
   opacity: number;
@@ -226,7 +243,7 @@ export interface Color {
 }
 
 export interface FontMapping {
-  aifont: string;
+  sourceFont: string;
   family: string;
   weight?: string;
   style?: string;
@@ -245,8 +262,9 @@ export interface Asset {
   mimeType: string;
   width: number;
   height: number;
-  artboardName: string;
-  layerName?: string;
+  artboardId: string;
+  layerId?: string;
+  source?: SourceMetadata;
   exportParams: {
     format: string;
     scale: number;

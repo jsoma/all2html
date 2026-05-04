@@ -1,5 +1,5 @@
-import { makeKeyword } from "../emitters/shared/css.js";
 import type { EmitterReadyArtboard, EmitterReadyDocument } from "../ir/types.js";
+import { makeKeyword } from "./identifiers.js";
 
 export interface ArtboardGroup {
   name: string;
@@ -20,17 +20,20 @@ export function groupArtboards(doc: EmitterReadyDocument): ArtboardGroup[] {
     const groups = new Map<string, EmitterReadyArtboard[]>();
     for (const ab of doc.artboards) {
       const baseName = ab.name;
-      if (!groups.has(baseName)) {
-        groups.set(baseName, []);
-      }
-      groups.get(baseName)!.push(ab);
+      const artboards = groups.get(baseName) ?? [];
+      artboards.push(ab);
+      groups.set(baseName, artboards);
     }
 
     const result: ArtboardGroup[] = [];
+    const usedSlugs = new Map<string, number>();
     groups.forEach((artboards, name) => {
+      const baseSlug = `${slug}-${makeKeyword(name, "artboard")}`;
+      const nextCount = (usedSlugs.get(baseSlug) ?? 0) + 1;
+      usedSlugs.set(baseSlug, nextCount);
       result.push({
         name,
-        slug: slug + "-" + makeKeyword(name),
+        slug: nextCount === 1 ? baseSlug : `${baseSlug}-${nextCount}`,
         artboards: artboards.sort((a, b) => a.width - b.width),
       });
     });

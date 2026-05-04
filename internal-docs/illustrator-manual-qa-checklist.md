@@ -71,6 +71,8 @@ If export fails or the panel state looks wrong, capture diagnostics from the she
 pnpm diagnostics:illustrator
 ```
 
+These checks do not require a human to click through Illustrator. On macOS, use AppleScript/System Events to open fixtures and show `Window > Extensions > all2html`, then use the CEP debug endpoint from `CLAUDE.md` (`localhost:8870`) to reload the panel, inspect controls, trigger button clicks, and verify panel text/output. This is the preferred smoke path when validating panel UI changes locally.
+
 ## Settings Precedence Verification
 
 Use `settings-precedence` with its sibling `all2html.config.json`.

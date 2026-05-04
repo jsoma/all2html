@@ -9,6 +9,7 @@
     type EditedKeys,
     type FieldSources,
   } from "../provenance";
+  import { getSettingHelp } from "../setting-help.js";
 
   interface Props {
     settings: PanelSettings;
@@ -47,6 +48,10 @@
   function badgeTitleFor(key: PanelSettingKey): string | undefined {
     return getFieldBadgeTitle(fieldSources, key, isLocked(key), editedKeys.includes(key));
   }
+
+  function helpFor(key: PanelSettingKey) {
+    return getSettingHelp(key);
+  }
 </script>
 
 <div class="section">
@@ -69,6 +74,8 @@
     locked={isLocked("imageFormat")}
     badge={badgeFor("imageFormat")}
     badgeTitle={badgeTitleFor("imageFormat")}
+    helpId="imageFormat"
+    help={helpFor("imageFormat")}
     {onchange}
   />
 
@@ -117,6 +124,8 @@
     locked={isLocked("use2xImages")}
     badge={badgeFor("use2xImages")}
     badgeTitle={badgeTitleFor("use2xImages")}
+    helpId="use2xImages"
+    help={helpFor("use2xImages")}
     {onchange}
   />
 </div>

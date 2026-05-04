@@ -1,9 +1,4 @@
 {
-  "generator": {
-    "tool": "test",
-    "toolVersion": "1.0",
-    "pluginVersion": "0.1.0"
-  },
   "settings": {
     "namespace": "g-",
     "responsiveness": "dynamic"
@@ -12,11 +7,8 @@
   "artboards": [
     {
       "name": "mobile",
-      "originalName": "mobile",
       "width": 320,
       "height": 500,
-      "actualWidth": 320,
-      "actualHeight": 500,
       "responsiveness": "dynamic",
       "layers": [
         {
@@ -64,17 +56,26 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:mobile:layer:layer1",
+          "source": {
+            "tool": "test",
+            "name": "Layer1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:mobile",
+      "source": {
+        "tool": "test",
+        "name": "mobile",
+        "width": 320,
+        "height": 500
+      }
     },
     {
       "name": "desktop",
-      "originalName": "desktop",
       "width": 1000,
       "height": 600,
-      "actualWidth": 1000,
-      "actualHeight": 600,
       "responsiveness": "dynamic",
       "layers": [
         {
@@ -122,9 +123,21 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:desktop:layer:layer1",
+          "source": {
+            "tool": "test",
+            "name": "Layer1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:desktop",
+      "source": {
+        "tool": "test",
+        "name": "desktop",
+        "width": 1000,
+        "height": 600
+      }
     }
   ],
   "customBlocks": [],
@@ -132,5 +145,10 @@
   "metadata": {
     "slug": "dynamic-responsive-test"
   },
-  "irVersion": "0.0.0"
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "adapterVersion": "0.1.0"
+  }
 }

@@ -1,10 +1,13 @@
 {
   "name": "@all2html/panel",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit",
+    "check:svelte": "svelte-check --tsconfig ./tsconfig.json",
+    "check:jsx": "tsc -p tsconfig.jsx.json --noEmit",
     "build": "rimraf dist/* && tsc -p tsconfig.build.json && vite build --watch false",
     "zxp": "rimraf dist/* && tsc -p tsconfig.build.json && cross-env ZXP_PACKAGE=true vite build --watch false",
     "zip": "rimraf dist/* && tsc -p tsconfig.build.json && cross-env ZIP_PACKAGE=true vite build --watch false",

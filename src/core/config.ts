@@ -2,60 +2,38 @@ import { type ParseError, parse as parseJsonc, printParseErrorCode } from "jsonc
 import { z } from "zod";
 import type { EmitterConfig } from "../emitters/types.js";
 import { EmitterConfigSchema } from "../emitters/types.js";
+import { SettingsSchema } from "../ir/schema.js";
 import type { FontMapping, Settings } from "../ir/types.js";
 
-const ConfigFontMappingSchema = z.object({
-  aifont: z.string().min(1),
-  family: z.string().min(1),
-  weight: z.string().optional(),
-  style: z.string().optional(),
-  vshift: z.string().optional(),
-});
-
-const ConfigImageFormatSchema = z.enum(["auto", "png", "png24", "jpg", "svg"]);
-
-const ConfigSettingsSchema = z
+const ConfigFontMappingSchema = z
   .object({
-    imageFormat: z.array(ConfigImageFormatSchema),
-    writeImageFiles: z.boolean(),
-    pngTransparent: z.boolean(),
-    pngNumberOfColors: z.number().int().min(1).max(256),
-    jpgQuality: z.number().int().min(0).max(100),
-    use2xImages: z.boolean(),
-    cacheBustToken: z.number().int().positive().nullable(),
-    namespace: z.string(),
-    projectName: z.string(),
-    output: z.enum(["one-file", "multiple-files"]),
-    htmlOutputPath: z.string(),
-    htmlOutputExtension: z.string(),
-    imageOutputPath: z.string(),
-    imageSourcePath: z.string(),
-    responsiveness: z.enum(["fixed", "dynamic"]),
-    textResponsiveness: z.enum(["fixed", "dynamic"]),
-    maxWidth: z.number().positive().nullable(),
-    centerHtmlOutput: z.boolean(),
-    renderTextAs: z.enum(["html", "image"]),
-    renderRotatedSkewedTextAs: z.enum(["html", "image"]),
-    testingMode: z.boolean(),
-    includeResizerCss: z.boolean(),
-    includeResizerWidths: z.boolean(),
-    responsiveImageMode: z.enum(["img-src", "css-var"]),
-    useLazyLoader: z.boolean(),
-    inlineSvg: z.boolean(),
-    svgIdPrefix: z.string(),
-    svgEmbedImages: z.boolean(),
-    clickableLink: z.string(),
-    createPromoImage: z.boolean(),
-    promoImageWidth: z.number().int().positive(),
-    localPreviewTemplate: z.string(),
+    sourceFont: z.string().min(1).optional(),
+    aifont: z.string().min(1).optional(),
+    family: z.string().min(1),
+    weight: z.string().optional(),
+    style: z.string().optional(),
+    vshift: z.string().optional(),
   })
-  .partial();
+  .refine((font) => font.sourceFont || font.aifont, {
+    path: ["sourceFont"],
+    message: "sourceFont is required",
+  })
+  .transform(({ aifont, sourceFont, ...font }): FontMapping => {
+    const normalizedSourceFont = sourceFont ?? aifont;
+    if (!normalizedSourceFont) {
+      throw new Error("sourceFont is required");
+    }
+    return {
+      sourceFont: normalizedSourceFont,
+      ...font,
+    };
+  });
 
 export const All2HtmlConfigSchema = z
   .object({
     fonts: z.array(ConfigFontMappingSchema).optional(),
-    settings: ConfigSettingsSchema.optional(),
-    emit: EmitterConfigSchema,
+    settings: SettingsSchema.optional(),
+    emit: EmitterConfigSchema.optional().default({}),
   })
   .strict();
 

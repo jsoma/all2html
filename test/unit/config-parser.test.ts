@@ -8,10 +8,11 @@ describe("config parser", () => {
         // comment
         "settings": {
           "imageFormat": ["jpg"],
-          "pngTransparent": false
+          "pngTransparent": false,
+          "googleFonts": "import"
         },
         "fonts": [
-          { "aifont": "ArialMT", "family": "Arial, sans-serif", "weight": "400" }
+          { "sourceFont": "ArialMT", "family": "Arial, sans-serif", "weight": "400" }
         ],
         "emit": {
           "react": { "typescript": true }
@@ -21,7 +22,8 @@ describe("config parser", () => {
     );
 
     expect(getConfigSettings(config)?.imageFormat).toEqual(["jpg"]);
-    expect(config.fonts?.[0].aifont).toBe("ArialMT");
+    expect(getConfigSettings(config)?.googleFonts).toBe("import");
+    expect(config.fonts?.[0].sourceFont).toBe("ArialMT");
     expect(getEmitterConfig(config)?.react?.typescript).toBe(true);
   });
 
@@ -29,5 +31,33 @@ describe("config parser", () => {
     expect(() =>
       parseConfigText(`{ "emit": { "react": { "typescript": "nope" } } }`, "bad.json"),
     ).toThrow(/Invalid config file "bad\.json"/);
+  });
+
+  it("allows settings-only config files", () => {
+    const config = parseConfigText(
+      `{
+        "settings": { "googleFonts": "link" }
+      }`,
+      "settings-only.json",
+    );
+
+    expect(config.emit).toEqual({});
+    expect(config.settings?.googleFonts).toBe("link");
+  });
+
+  it("normalizes legacy aifont config entries to sourceFont", () => {
+    const config = parseConfigText(
+      `{
+        "fonts": [
+          { "aifont": "HelveticaNeue-Bold", "family": "'Helvetica Neue', sans-serif" }
+        ],
+        "emit": {}
+      }`,
+      "legacy-fonts.json",
+    );
+
+    expect(config.fonts).toEqual([
+      { sourceFont: "HelveticaNeue-Bold", family: "'Helvetica Neue', sans-serif" },
+    ]);
   });
 });

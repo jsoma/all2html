@@ -11,10 +11,11 @@ type DocumentChangeCallback = (doc: DocumentInfo | null) => void;
 
 function getDocumentWatchKey(info: DocumentInfo | null): string | null {
   if (!info) return null;
+  const settingsBlockSignature = info.settingsBlockSignature || "no-settings-block";
   if (info.path) {
-    return `saved:${info.path}`;
+    return `saved:${info.path}:${settingsBlockSignature}`;
   }
-  return `unsaved:${info.name}`;
+  return `unsaved:${info.name}:${settingsBlockSignature}`;
 }
 
 /**

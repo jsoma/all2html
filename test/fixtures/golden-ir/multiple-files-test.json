@@ -1,10 +1,5 @@
 {
-  "irVersion": "0.0.0",
-  "generator": {
-    "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "pluginVersion": "0.1.0"
-  },
+  "irVersion": "0.1.0",
   "settings": {
     "imageFormat": ["png"],
     "output": "multiple-files",
@@ -19,11 +14,8 @@
   "artboards": [
     {
       "name": "Artboard_1",
-      "originalName": "Artboard_1",
       "width": 600,
       "height": 472,
-      "actualWidth": 600,
-      "actualHeight": 472,
       "layers": [
         {
           "name": "Layers",
@@ -92,7 +84,12 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:artboard-1:layer:layers",
+          "source": {
+            "tool": "illustrator",
+            "name": "Layers"
+          }
         },
         {
           "name": "600 map",
@@ -100,17 +97,26 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:artboard-1:layer:x-600-map",
+          "source": {
+            "tool": "illustrator",
+            "name": "600 map"
+          }
         }
-      ]
+      ],
+      "id": "artboard:artboard-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard_1",
+        "width": 600,
+        "height": 472
+      }
     },
     {
       "name": "Artboard_1",
-      "originalName": "Artboard_1",
       "width": 300,
       "height": 600,
-      "actualWidth": 300,
-      "actualHeight": 600,
       "layers": [
         {
           "name": "Layers",
@@ -179,7 +185,12 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:artboard-1-2:layer:layers",
+          "source": {
+            "tool": "illustrator",
+            "name": "Layers"
+          }
         },
         {
           "name": "600 map",
@@ -187,17 +198,26 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:artboard-1-2:layer:x-600-map",
+          "source": {
+            "tool": "illustrator",
+            "name": "600 map"
+          }
         }
-      ]
+      ],
+      "id": "artboard:artboard-1-2",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard_1",
+        "width": 300,
+        "height": 600
+      }
     },
     {
       "name": "Artboard_2",
-      "originalName": "Artboard_2",
       "width": 600,
       "height": 472,
-      "actualWidth": 600,
-      "actualHeight": 472,
       "layers": [
         {
           "name": "Layers",
@@ -266,7 +286,12 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:artboard-2:layer:layers",
+          "source": {
+            "tool": "illustrator",
+            "name": "Layers"
+          }
         },
         {
           "name": "600 map",
@@ -274,17 +299,26 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:artboard-2:layer:x-600-map",
+          "source": {
+            "tool": "illustrator",
+            "name": "600 map"
+          }
         }
-      ]
+      ],
+      "id": "artboard:artboard-2",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard_2",
+        "width": 600,
+        "height": 472
+      }
     },
     {
       "name": "Artboard_2",
-      "originalName": "Artboard_2",
       "width": 450,
       "height": 450,
-      "actualWidth": 450,
-      "actualHeight": 450,
       "layers": [
         {
           "name": "Layers",
@@ -353,7 +387,12 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:artboard-2-2:layer:layers",
+          "source": {
+            "tool": "illustrator",
+            "name": "Layers"
+          }
         },
         {
           "name": "600 map",
@@ -361,17 +400,26 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:artboard-2-2:layer:x-600-map",
+          "source": {
+            "tool": "illustrator",
+            "name": "600 map"
+          }
         }
-      ]
+      ],
+      "id": "artboard:artboard-2-2",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard_2",
+        "width": 450,
+        "height": 450
+      }
     },
     {
       "name": "Artboard_2",
-      "originalName": "Artboard_2",
       "width": 300,
       "height": 600,
-      "actualWidth": 300,
-      "actualHeight": 600,
       "layers": [
         {
           "name": "Layers",
@@ -440,7 +488,12 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:artboard-2-3:layer:layers",
+          "source": {
+            "tool": "illustrator",
+            "name": "Layers"
+          }
         },
         {
           "name": "600 map",
@@ -448,9 +501,21 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:artboard-2-3:layer:x-600-map",
+          "source": {
+            "tool": "illustrator",
+            "name": "600 map"
+          }
         }
-      ]
+      ],
+      "id": "artboard:artboard-2-3",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard_2",
+        "width": 300,
+        "height": 600
+      }
     }
   ],
   "customBlocks": [],
@@ -461,13 +526,17 @@
       "mimeType": "image/png",
       "width": 600,
       "height": 1200,
-      "artboardName": "Artboard_1",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 60,
         "colors": 128
+      },
+      "artboardId": "artboard:artboard-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard_1"
       }
     },
     "multiple-files-test-artboard-2": {
@@ -476,13 +545,17 @@
       "mimeType": "image/png",
       "width": 600,
       "height": 1200,
-      "artboardName": "Artboard_2",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 60,
         "colors": 128
+      },
+      "artboardId": "artboard:artboard-2",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard_2"
       }
     }
   },
@@ -494,5 +567,10 @@
     "notes": "",
     "sources": "",
     "credit": "By ai2html"
+  },
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "adapterVersion": "0.1.0"
   }
 }

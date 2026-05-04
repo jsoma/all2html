@@ -4,7 +4,7 @@ Emitters take an `EmitterReadyDocument` and produce output in a specific format.
 
 ## Registry (`registry.ts`)
 
-All emitters are registered in a static `Record<string, EmitterDescriptor>`. Each descriptor has `emitAll(doc, groups)` returning `{ files: EmitFile[], warnings }`. The CLI uses `getEmitter(format)` for dispatch — no if/else chain. `perGroup()` helper handles the group loop for group-aware emitters (HTML, Svelte, React). Standalone ignores groups and always produces one file. Uses `Record` not `Map` (ES5 safe). Extensions are normalized (leading dot ensured).
+Emitters are registered in an internal `Map` through `registerEmitter`. Built-ins use the same path as future internal emitters. Each descriptor has `emitAll(doc, groups)` returning `{ files: EmitFile[], warnings }`. The CLI uses `getEmitter(format)` for dispatch — no if/else chain. `perGroup()` helper handles the group loop for group-aware emitters (HTML, Svelte, React). Standalone ignores groups and always produces one file. Extensions are normalized (leading dot ensured).
 Common emitter options must be wired end-to-end through the registry; don't leave typed options as dead config.
 
 ## HTML emitter (`html.ts`)
@@ -39,7 +39,7 @@ Full HTML document. Supports `local_preview_template` setting via the template s
 
 - `css.ts` — All CSS generation. Container queries, artboard styles (with `aspect-ratio` for dynamic), text style classes. Scoped to `#{ns}{slug}-box`.
 - `hast-helpers.ts` — `h()`, `raw()`, `commentNode()`, `escapeAttr()`, `escapeHtml()`.
-- `assets.ts` — `resolveAssetPath()` (static), `tokenizedAssetPath()` (with `%%ASSET_PATH%%`), `replaceAssetPathToken()`.
+- `assets.ts` — Asset indexing by canonical `artboardId`/`layerId`, `resolveAssetPath()` (static), `tokenizedAssetPath()` (with `%%ASSET_PATH%%`), `replaceAssetPathToken()`.
 - `options.ts` — Applies shared emitter options (`allowUnsafeHtml`, `positionMode`) before rendering.
 - `replaceable-nodes.ts` — Extracts snippets and bindings from EmitterReadyDocument. Accepts `{ allowUnsafeHtml }` option to gate `binding.allowHtml`.
 
@@ -56,7 +56,7 @@ Full HTML document. Supports `local_preview_template` setting via the template s
 - Always use `escapeAttr()` for attribute values, `escapeHtml()` for text content
 - CSS properties output in alphabetical order for determinism
 - Use `raw()` only for intentionally unescaped content (custom blocks, pre-escaped text)
-- Pre-index assets with `buildAssetIndex()` for O(1) lookups — don't use `Object.values().find()` in loops
+- Pre-index assets with `buildScopedAssetIndex()` for O(1) canonical ID lookups — don't use `Object.values().find()` in loops
 - Grouped output must use the same effective slug for DOM IDs and generated CSS selectors
 - Shape elements use `EmitterReadyShapeElement` type — no `as any`
 - Escape video URLs with `escapeAttr()` in string emitter

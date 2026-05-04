@@ -20,7 +20,12 @@
             "type": "text",
             "id": "figma-news-nested-eyebrow",
             "kind": "area",
-            "position": { "x": 60, "y": 244, "width": 320, "height": 16 },
+            "position": {
+              "x": 60,
+              "y": 244,
+              "width": 320,
+              "height": 16
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -37,7 +42,11 @@
                     "fontName": "Inter-SemiBold",
                     "fontPostScriptName": "Inter-SemiBold",
                     "fontSize": 12,
-                    "color": { "r": 163, "g": 95, "b": 67 },
+                    "color": {
+                      "r": 163,
+                      "g": 95,
+                      "b": 67
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -50,7 +59,12 @@
             "type": "text",
             "id": "figma-news-nested-headline",
             "kind": "area",
-            "position": { "x": 60, "y": 274, "width": 360, "height": 102 },
+            "position": {
+              "x": 60,
+              "y": 274,
+              "width": 360,
+              "height": 102
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -67,7 +81,11 @@
                     "fontName": "Inter-Bold",
                     "fontPostScriptName": "Inter-Bold",
                     "fontSize": 28,
-                    "color": { "r": 22, "g": 27, "b": 32 },
+                    "color": {
+                      "r": 22,
+                      "g": 27,
+                      "b": 32
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -80,7 +98,12 @@
             "type": "text",
             "id": "figma-news-nested-body-a",
             "kind": "area",
-            "position": { "x": 60, "y": 390, "width": 360, "height": 72 },
+            "position": {
+              "x": 60,
+              "y": 390,
+              "width": 360,
+              "height": 72
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -97,7 +120,11 @@
                     "fontName": "Inter-Regular",
                     "fontPostScriptName": "Inter-Regular",
                     "fontSize": 16,
-                    "color": { "r": 64, "g": 70, "b": 80 },
+                    "color": {
+                      "r": 64,
+                      "g": 70,
+                      "b": 80
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -110,7 +137,12 @@
             "type": "text",
             "id": "figma-news-nested-body-b",
             "kind": "area",
-            "position": { "x": 60, "y": 472, "width": 360, "height": 44 },
+            "position": {
+              "x": 60,
+              "y": 472,
+              "width": 360,
+              "height": 44
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -127,7 +159,11 @@
                     "fontName": "Inter-Medium",
                     "fontPostScriptName": "Inter-Medium",
                     "fontSize": 15,
-                    "color": { "r": 36, "g": 95, "b": 134 },
+                    "color": {
+                      "r": 36,
+                      "g": 95,
+                      "b": 134
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -137,18 +173,29 @@
                     "fontName": "Inter-Medium",
                     "fontPostScriptName": "Inter-Medium",
                     "fontSize": 15,
-                    "color": { "r": 36, "g": 95, "b": 134 },
+                    "color": {
+                      "r": 36,
+                      "g": 95,
+                      "b": 134
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal",
-                    "hyperlink": { "href": "https://example.com/service-guide", "target": "_blank" }
+                    "hyperlink": {
+                      "href": "https://example.com/service-guide",
+                      "target": "_blank"
+                    }
                   },
                   {
                     "text": " for neighborhood-by-neighborhood changes.",
                     "fontName": "Inter-Medium",
                     "fontPostScriptName": "Inter-Medium",
                     "fontSize": 15,
-                    "color": { "r": 36, "g": 95, "b": 134 },
+                    "color": {
+                      "r": 36,
+                      "g": 95,
+                      "b": 134
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -161,7 +208,12 @@
             "type": "text",
             "id": "figma-news-nested-sidebar-title",
             "kind": "area",
-            "position": { "x": 486, "y": 296, "width": 184, "height": 18 },
+            "position": {
+              "x": 486,
+              "y": 296,
+              "width": 184,
+              "height": 18
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -178,7 +230,11 @@
                     "fontName": "Inter-SemiBold",
                     "fontPostScriptName": "Inter-SemiBold",
                     "fontSize": 14,
-                    "color": { "r": 159, "g": 215, "b": 224 },
+                    "color": {
+                      "r": 159,
+                      "g": 215,
+                      "b": 224
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -191,7 +247,12 @@
             "type": "text",
             "id": "figma-news-nested-sidebar-list",
             "kind": "area",
-            "position": { "x": 486, "y": 324, "width": 184, "height": 60 },
+            "position": {
+              "x": 486,
+              "y": 324,
+              "width": 184,
+              "height": 60
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -208,7 +269,11 @@
                     "fontName": "Inter-Regular",
                     "fontPostScriptName": "Inter-Regular",
                     "fontSize": 14,
-                    "color": { "r": 255, "g": 255, "b": 255 },
+                    "color": {
+                      "r": 255,
+                      "g": 255,
+                      "b": 255
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -227,7 +292,11 @@
                     "fontName": "Inter-Regular",
                     "fontPostScriptName": "Inter-Regular",
                     "fontSize": 14,
-                    "color": { "r": 255, "g": 255, "b": 255 },
+                    "color": {
+                      "r": 255,
+                      "g": 255,
+                      "b": 255
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -246,7 +315,11 @@
                     "fontName": "Inter-Regular",
                     "fontPostScriptName": "Inter-Regular",
                     "fontSize": 14,
-                    "color": { "r": 255, "g": 255, "b": 255 },
+                    "color": {
+                      "r": 255,
+                      "g": 255,
+                      "b": 255
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -265,8 +338,16 @@
         "mimeType": "image/png",
         "width": 720,
         "height": 520,
-        "artboardName": "news-story-nested",
-        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+        "exportParams": {
+          "format": "png",
+          "scale": 1,
+          "transparent": false
+        },
+        "artboardId": "figma:figma-news-nested",
+        "source": {
+          "tool": "figma",
+          "name": "news-story-nested"
+        }
       }
     ]
   }

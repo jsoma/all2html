@@ -9,7 +9,9 @@ The IR is the contract between input plugins and the core. Plugins produce it, t
 
 ## Rules
 
-- `Document.irVersion` is required (`"0.0.0"` for pre-release). Will be used for forward/backward compatibility.
+- `Document.irVersion` is required (`"0.1.0"` for the current pre-release IR). The schema currently accepts only the current version.
+- `Document.source` is required and identifies the source tool/adapter. Source-native names and IDs belong in `source`, not in ad-hoc top-level fields.
+- `Artboard.id` and `Layer.id` are required stable canonical IDs. Assets reference these through `artboardId` and `layerId`.
 - `Document.settings` is `Partial<Settings>` (exporter may only set some). After `resolveSettings`, it becomes full `Settings` on `ResolvedDocument`.
 - `Document.settings` uses canonical camelCase keys from `Settings` (`clickableLink`, `htmlOutputPath`, `inlineSvg`, etc.). Tool-native snake_case belongs only inside plugin-side parsing, never in emitted IR JSON.
 - `renderAs` on TextElement uses `"html" | "image"` (not "htmlText"). Optional `renderAsReason` explains why (rotation, warp, pathText, imageOnly, setting).
@@ -18,6 +20,7 @@ The IR is the contract between input plugins and the core. Plugins produce it, t
 - Plugins must import and target these canonical IR types/schemas directly. Do not define shadow IR contracts in plugin code.
 - The Figma plugin foundation imports `SettingsSchema`, `MetadataSchema`, and `FontMappingSchema` directly from `schema.ts` for config validation. Keep those schemas canonical and shared rather than cloning plugin-local variants.
 - Accessibility metadata belongs in `Document.metadata` (`altText`, `imageAltText`, `ariaRole`), not in `Document.settings`.
+- Font mappings use `sourceFont` as the canonical source-tool key. Keep `aifont` only in explicit compatibility adapters.
 
 ## Unit conventions
 
@@ -30,6 +33,10 @@ The IR is the contract between input plugins and the core. Plugins produce it, t
 
 - `Paragraph.text` must equal concatenation of `runs[].text` (Zod refine).
 - `Asset` record keys must equal `asset.id`.
+- `Asset.artboardId` and `Asset.layerId` refer to canonical IDs, not source-tool display names.
+- Duplicate artboard IDs are invalid.
+- Duplicate layer IDs inside one artboard are invalid.
+- Assets that reference unknown artboard/layer IDs are invalid.
 - `Asset.exportParams.format` is enum: `"png" | "png24" | "jpg" | "svg"`.
 - `Paragraph.direction` is optional: `"ltr" | "rtl"` (defaults to "ltr" when omitted).
 - `Metadata.lang` is optional: BCP 47 language tag (e.g., "en", "ja").

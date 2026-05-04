@@ -53,6 +53,18 @@ export function installPolyfills(): void {
     };
   }
 
+  if (typeof Array.prototype.indexOf === "undefined") {
+    (Array.prototype as any).indexOf = function (searchElement: any, fromIndex?: number) {
+      var len = this.length;
+      var i = fromIndex || 0;
+      if (i < 0) i = Math.max(0, len + i);
+      for (; i < len; i++) {
+        if (this[i] === searchElement) return i;
+      }
+      return -1;
+    };
+  }
+
   if (typeof Array.prototype.find === "undefined") {
     (Array.prototype as any).find = function (predicate: any, thisArg?: any) {
       for (var i = 0; i < this.length; i++) {
@@ -122,6 +134,14 @@ export function installPolyfills(): void {
         }
       }
       return target;
+    };
+  }
+
+  // --- Number methods ---
+
+  if (typeof (Number as any).isNaN === "undefined") {
+    (Number as any).isNaN = function (value: any) {
+      return typeof value === "number" && isNaN(value);
     };
   }
 

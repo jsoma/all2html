@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { processDocument } from "../../src/core/pipeline.js";
 import { emitHTML } from "../../src/emitters/html.js";
+import type { Asset } from "../../src/ir/types.js";
 import { loadAndValidateIR } from "../../src/ir/validate.js";
 
 const goldenDir = resolve(import.meta.dirname, "../fixtures/golden-ir");
@@ -21,7 +22,7 @@ describe("golden IR from Illustrator exporter", () => {
       });
 
       it("processes through pipeline without errors", () => {
-        const { document: doc, warnings } = processDocument(raw);
+        const { document: doc } = processDocument(raw);
         expect(doc.artboards.length).toBeGreaterThan(0);
         // Warnings are okay (missing fonts, etc.) but should not crash
       });
@@ -45,9 +46,9 @@ describe("golden IR from Illustrator exporter", () => {
 
       it("has valid asset references", () => {
         expect(Object.keys(raw.assets).length).toBeGreaterThan(0);
-        for (const [, asset] of Object.entries(raw.assets) as [string, any][]) {
+        for (const asset of Object.values(raw.assets as Record<string, Asset>)) {
           expect(asset.path).toBeTruthy();
-          expect(asset.artboardName).toBeTruthy();
+          expect(asset.artboardId).toBeTruthy();
           expect(asset.width).toBeGreaterThan(0);
           expect(asset.height).toBeGreaterThan(0);
         }

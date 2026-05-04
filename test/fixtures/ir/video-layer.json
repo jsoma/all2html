@@ -1,9 +1,4 @@
 {
-  "generator": {
-    "tool": "test",
-    "toolVersion": "1.0",
-    "pluginVersion": "0.1.0"
-  },
   "settings": {
     "namespace": "g-"
   },
@@ -11,11 +6,8 @@
   "artboards": [
     {
       "name": "desktop",
-      "originalName": "desktop",
       "width": 800,
       "height": 450,
-      "actualWidth": 800,
-      "actualHeight": 450,
       "layers": [
         {
           "name": "default",
@@ -62,7 +54,12 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:desktop:layer:default",
+          "source": {
+            "tool": "test",
+            "name": "default"
+          }
         },
         {
           "name": "bg-video",
@@ -75,9 +72,21 @@
               "type": "video",
               "url": "https://example.com/video.mp4"
             }
-          ]
+          ],
+          "id": "artboard:desktop:layer:bg-video",
+          "source": {
+            "tool": "test",
+            "name": "bg-video"
+          }
         }
-      ]
+      ],
+      "id": "artboard:desktop",
+      "source": {
+        "tool": "test",
+        "name": "desktop",
+        "width": 800,
+        "height": 450
+      }
     }
   ],
   "customBlocks": [],
@@ -85,5 +94,10 @@
   "metadata": {
     "slug": "video-test"
   },
-  "irVersion": "0.0.0"
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "adapterVersion": "0.1.0"
+  }
 }

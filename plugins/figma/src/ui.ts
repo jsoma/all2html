@@ -54,6 +54,7 @@ export function createInitialDirectControls(): FigmaDirectControls {
     centerHtmlOutput: defaultSettings.centerHtmlOutput,
     renderTextAs: defaultSettings.renderTextAs,
     renderRotatedSkewedTextAs: defaultSettings.renderRotatedSkewedTextAs,
+    googleFonts: defaultSettings.googleFonts,
     responsiveImageMode: defaultSettings.responsiveImageMode,
   };
 }
@@ -187,6 +188,7 @@ export function directControlsFromConfig(config: FigmaPluginConfig): FigmaDirect
     renderTextAs: config.settings?.renderTextAs ?? defaultSettings.renderTextAs,
     renderRotatedSkewedTextAs:
       config.settings?.renderRotatedSkewedTextAs ?? defaultSettings.renderRotatedSkewedTextAs,
+    googleFonts: config.settings?.googleFonts ?? defaultSettings.googleFonts,
     responsiveImageMode: config.settings?.responsiveImageMode ?? defaultSettings.responsiveImageMode,
   };
 }
@@ -199,6 +201,7 @@ export function detectPresetFromControls(controls: FigmaDirectControls): FigmaPr
     centerHtmlOutput: controls.centerHtmlOutput,
     renderTextAs: controls.renderTextAs,
     renderRotatedSkewedTextAs: controls.renderRotatedSkewedTextAs,
+    googleFonts: controls.googleFonts,
     responsiveImageMode: controls.responsiveImageMode,
   };
   const presets: Exclude<FigmaPresetId, "custom">[] = [
@@ -215,6 +218,7 @@ export function detectPresetFromControls(controls: FigmaDirectControls): FigmaPr
       centerHtmlOutput: presetControls.centerHtmlOutput,
       renderTextAs: presetControls.renderTextAs,
       renderRotatedSkewedTextAs: presetControls.renderRotatedSkewedTextAs,
+      googleFonts: presetControls.googleFonts,
       responsiveImageMode: presetControls.responsiveImageMode,
     };
     if (JSON.stringify(presetComparable) === JSON.stringify(presetComparableTarget)) {
@@ -253,6 +257,7 @@ export function applyDirectControlsToConfig(
     controls.renderRotatedSkewedTextAs,
     defaultSettings.renderRotatedSkewedTextAs,
   );
+  setOptionalValue(settings, "googleFonts", controls.googleFonts, defaultSettings.googleFonts);
   setOptionalValue(
     settings,
     "responsiveImageMode",

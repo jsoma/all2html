@@ -1,9 +1,4 @@
 {
-  "generator": {
-    "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "pluginVersion": "0.1.0"
-  },
   "settings": {
     "settings_version": "0.106.0",
     "image_format": "auto",
@@ -26,11 +21,8 @@
   "artboards": [
     {
       "name": "Artboard 3",
-      "originalName": "Artboard 3",
       "width": 780,
       "height": 490,
-      "actualWidth": 780,
-      "actualHeight": 490,
       "layers": [
         {
           "name": "interactions",
@@ -38,7 +30,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:artboard-3:layer:interactions",
+          "source": {
+            "tool": "illustrator",
+            "name": "interactions"
+          }
         },
         {
           "name": "Layer 1",
@@ -737,17 +734,26 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:artboard-3:layer:layer-1",
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:artboard-3",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 3",
+        "width": 780,
+        "height": 490
+      }
     },
     {
       "name": "Artboard 4",
-      "originalName": "Artboard 4",
       "width": 435,
       "height": 497,
-      "actualWidth": 435,
-      "actualHeight": 497,
       "layers": [
         {
           "name": "interactions",
@@ -755,7 +761,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:artboard-4:layer:interactions",
+          "source": {
+            "tool": "illustrator",
+            "name": "interactions"
+          }
         },
         {
           "name": "Layer 1",
@@ -1454,9 +1465,21 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:artboard-4:layer:layer-1",
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:artboard-4",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 4",
+        "width": 435,
+        "height": 497
+      }
     }
   ],
   "customBlocks": [
@@ -1472,13 +1495,17 @@
       "mimeType": "image/png",
       "width": 1560,
       "height": 980,
-      "artboardName": "Artboard 3",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 60,
         "colors": 128
+      },
+      "artboardId": "artboard:artboard-3",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 3"
       }
     },
     "countries-artboard-4": {
@@ -1487,13 +1514,17 @@
       "mimeType": "image/png",
       "width": 870,
       "height": 994,
-      "artboardName": "Artboard 4",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 60,
         "colors": 128
+      },
+      "artboardId": "artboard:artboard-4",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 4"
       }
     },
     "countries-artboard-3-interactions": {
@@ -1502,11 +1533,15 @@
       "mimeType": "image/svg+xml",
       "width": 780,
       "height": 490,
-      "artboardName": "Artboard 3",
-      "layerName": "interactions",
       "exportParams": {
         "format": "svg",
         "scale": 1
+      },
+      "artboardId": "artboard:artboard-3",
+      "layerId": "artboard:artboard-3:layer:interactions",
+      "source": {
+        "tool": "illustrator",
+        "name": "interactions"
       }
     },
     "countries-artboard-4-interactions": {
@@ -1515,11 +1550,15 @@
       "mimeType": "image/svg+xml",
       "width": 435,
       "height": 497,
-      "artboardName": "Artboard 4",
-      "layerName": "interactions",
       "exportParams": {
         "format": "svg",
         "scale": 1
+      },
+      "artboardId": "artboard:artboard-4",
+      "layerId": "artboard:artboard-4:layer:interactions",
+      "source": {
+        "tool": "illustrator",
+        "name": "interactions"
       }
     }
   },
@@ -1532,5 +1571,10 @@
     "sources": "",
     "credit": ""
   },
-  "irVersion": "0.0.0"
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "adapterVersion": "0.1.0"
+  }
 }

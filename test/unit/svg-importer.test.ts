@@ -64,6 +64,38 @@ describe("SVG importer", () => {
     expect(emitted.files[0].output).toContain("Desktop");
   });
 
+  it("keeps artboard IDs unique for same-named SVGs in different folders", async () => {
+    const result = await importSVGFiles(
+      [
+        {
+          path: "a/card.svg",
+          content:
+            '<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="200" fill="#ddd"/></svg>',
+        },
+        {
+          path: "b/card.svg",
+          content:
+            '<svg width="400" height="200" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="200" fill="#eee"/></svg>',
+        },
+      ],
+      {
+        entrypointPaths: ["a/card.svg", "b/card.svg"],
+        slug: "cards",
+      },
+    );
+
+    expect(result.document.artboards.map((artboard) => artboard.id)).toEqual([
+      "artboard:a-card",
+      "artboard:b-card",
+    ]);
+    expect(new Set(result.document.artboards.map((artboard) => artboard.id)).size).toBe(2);
+    expect(
+      Object.values(result.document.assets)
+        .map((asset) => asset.artboardId)
+        .sort(),
+    ).toEqual(["artboard:a-card", "artboard:b-card"]);
+  });
+
   it("fails when responsive variants resolve to duplicate widths", async () => {
     await expect(
       importSVGFiles(
@@ -106,7 +138,7 @@ describe("SVG importer", () => {
     expect(result.document.artboards[0].layers).toHaveLength(0);
     const pngAsset = result.assetFiles.find((asset) => asset.path.endsWith(".png"));
     expect(pngAsset).toBeDefined();
-    expect(pngAsset!.mimeType).toBe("image/png");
+    expect(pngAsset?.mimeType).toBe("image/png");
   });
 
   it("recovers text inside translated parent groups at the correct position", async () => {

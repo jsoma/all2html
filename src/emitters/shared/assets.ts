@@ -7,81 +7,29 @@ export interface ScopedAssetIndex {
   byArtboardLayer: Record<string, Asset>;
 }
 
-function makeArtboardScopedKey(
-  artboard: Pick<EmitterReadyArtboard, "name" | "originalName" | "width" | "height">,
-): string {
-  return `${artboard.name}\u0000${artboard.originalName}\u0000${artboard.width}\u0000${artboard.height}`;
-}
-
-function resolveScopedArtboardKey(
-  assetArtboardName: string,
-  artboardsByName: Record<string, string[]>,
-  artboardsByOriginalName: Record<string, string[]>,
-  cursors: Record<string, number>,
-  cursorKey: string,
-): string | undefined {
-  const originalMatches = artboardsByOriginalName[assetArtboardName];
-  if (originalMatches?.length === 1) {
-    return originalMatches[0];
-  }
-
-  const nameMatches = artboardsByName[assetArtboardName];
-  const matches = nameMatches?.length ? nameMatches : originalMatches;
-  if (!matches?.length) {
-    return undefined;
-  }
-  if (matches.length === 1) {
-    return matches[0];
-  }
-
-  const idx = cursors[cursorKey] ?? 0;
-  cursors[cursorKey] = idx + 1;
-  return matches[Math.min(idx, matches.length - 1)];
+function makeArtboardScopedKey(artboard: Pick<EmitterReadyArtboard, "id">): string {
+  return artboard.id;
 }
 
 export function buildScopedAssetIndex(
-  artboards: readonly Pick<EmitterReadyArtboard, "name" | "originalName" | "width" | "height">[],
+  artboards: readonly Pick<EmitterReadyArtboard, "id">[],
   assets: Record<string, Asset>,
 ): ScopedAssetIndex {
   const byArtboard: Record<string, Asset> = {};
   const byArtboardLayer: Record<string, Asset> = {};
-  const artboardsByName: Record<string, string[]> = {};
-  const artboardsByOriginalName: Record<string, string[]> = {};
-
+  const artboardIds: Record<string, true> = {};
   for (const artboard of artboards) {
-    const key = makeArtboardScopedKey(artboard);
-    if (!artboardsByName[artboard.name]) {
-      artboardsByName[artboard.name] = [];
-    }
-    artboardsByName[artboard.name].push(key);
-    if (artboard.originalName) {
-      if (!artboardsByOriginalName[artboard.originalName]) {
-        artboardsByOriginalName[artboard.originalName] = [];
-      }
-      artboardsByOriginalName[artboard.originalName].push(key);
-    }
+    artboardIds[`$${artboard.id}`] = true;
   }
 
-  const artboardCursors: Record<string, number> = {};
-  const layerCursors: Record<string, number> = {};
-
   for (const asset of Object.values(assets)) {
-    const cursorKey = asset.layerName
-      ? `${asset.artboardName}\u0000${asset.layerName}`
-      : asset.artboardName;
-    const scopedKey = resolveScopedArtboardKey(
-      asset.artboardName,
-      artboardsByName,
-      artboardsByOriginalName,
-      asset.layerName ? layerCursors : artboardCursors,
-      cursorKey,
-    );
-    if (!scopedKey) continue;
+    if (!artboardIds[`$${asset.artboardId}`]) continue;
+    const scopedKey = asset.artboardId;
 
-    if (!asset.layerName) {
+    if (!asset.layerId) {
       byArtboard[scopedKey] = asset;
     } else {
-      byArtboardLayer[`${scopedKey}:${asset.layerName}`] = asset;
+      byArtboardLayer[`${scopedKey}:${asset.layerId}`] = asset;
     }
   }
 
@@ -90,17 +38,17 @@ export function buildScopedAssetIndex(
 
 export function getScopedArtboardAsset(
   assetIdx: ScopedAssetIndex,
-  artboard: Pick<EmitterReadyArtboard, "name" | "originalName" | "width" | "height">,
+  artboard: Pick<EmitterReadyArtboard, "id">,
 ): Asset | undefined {
   return assetIdx.byArtboard[makeArtboardScopedKey(artboard)];
 }
 
 export function getScopedLayerAsset(
   assetIdx: ScopedAssetIndex,
-  artboard: Pick<EmitterReadyArtboard, "name" | "originalName" | "width" | "height">,
-  layerName: string,
+  artboard: Pick<EmitterReadyArtboard, "id">,
+  layerId: string,
 ): Asset | undefined {
-  return assetIdx.byArtboardLayer[`${makeArtboardScopedKey(artboard)}:${layerName}`];
+  return assetIdx.byArtboardLayer[`${makeArtboardScopedKey(artboard)}:${layerId}`];
 }
 
 /**

@@ -1,10 +1,5 @@
 {
-  "irVersion": "0.0.0",
-  "generator": {
-    "tool": "svg",
-    "toolVersion": "1.0",
-    "pluginVersion": "0.1.0"
-  },
+  "irVersion": "0.1.0",
   "settings": {
     "imageFormat": [
       "auto"
@@ -43,32 +38,29 @@
   },
   "fonts": [
     {
-      "aifont": "Georgia__400__normal",
       "family": "Georgia",
       "weight": "400",
-      "style": "normal"
+      "style": "normal",
+      "sourceFont": "Georgia__400__normal"
     },
     {
-      "aifont": "Arial__700__normal",
       "family": "Arial",
       "weight": "700",
-      "style": "normal"
+      "style": "normal",
+      "sourceFont": "Arial__700__normal"
     },
     {
-      "aifont": "Arial__400__normal",
       "family": "Arial",
       "weight": "400",
-      "style": "normal"
+      "style": "normal",
+      "sourceFont": "Arial__400__normal"
     }
   ],
   "artboards": [
     {
       "name": "card",
-      "originalName": "card--640",
       "width": 640,
       "height": 360,
-      "actualWidth": 640,
-      "actualHeight": 360,
       "responsiveness": "fixed",
       "layers": [
         {
@@ -195,17 +187,26 @@
               ],
               "renderAs": "html"
             }
-          ]
+          ],
+          "id": "artboard:card-640:layer:content",
+          "source": {
+            "tool": "svg",
+            "name": "content"
+          }
         }
-      ]
+      ],
+      "id": "artboard:card-640",
+      "source": {
+        "tool": "svg",
+        "name": "card--640",
+        "width": 640,
+        "height": 360
+      }
     },
     {
       "name": "card",
-      "originalName": "card--960",
       "width": 960,
       "height": 540,
-      "actualWidth": 960,
-      "actualHeight": 540,
       "responsiveness": "fixed",
       "layers": [
         {
@@ -332,9 +333,21 @@
               ],
               "renderAs": "html"
             }
-          ]
+          ],
+          "id": "artboard:card-960:layer:content",
+          "source": {
+            "tool": "svg",
+            "name": "content"
+          }
         }
-      ]
+      ],
+      "id": "artboard:card-960",
+      "source": {
+        "tool": "svg",
+        "name": "card--960",
+        "width": 960,
+        "height": 540
+      }
     }
   ],
   "customBlocks": [],
@@ -345,12 +358,16 @@
       "mimeType": "image/png",
       "width": 1280,
       "height": 720,
-      "artboardName": "card",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "colors": 128
+      },
+      "artboardId": "artboard:card-640",
+      "source": {
+        "tool": "svg",
+        "name": "card"
       }
     },
     "card-960.png": {
@@ -359,16 +376,25 @@
       "mimeType": "image/png",
       "width": 1920,
       "height": 1080,
-      "artboardName": "card",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "colors": 128
+      },
+      "artboardId": "artboard:card-960",
+      "source": {
+        "tool": "svg",
+        "name": "card"
       }
     }
   },
   "metadata": {
     "slug": "responsive-svg"
+  },
+  "source": {
+    "tool": "svg",
+    "toolVersion": "1.0",
+    "adapterVersion": "0.1.0"
   }
 }

@@ -3,7 +3,7 @@
  * Figma-specific extraction stays here; the output is canonical IR data.
  */
 
-import type { CharacterRun, Paragraph } from "../../../../src/ir/types.js";
+import type { CharacterRun, FontMapping, Paragraph } from "../../../../src/ir/types.js";
 import type { ExtractedTextRun } from "../types.js";
 
 export interface FigmaTextSegment {
@@ -22,6 +22,69 @@ export interface FigmaTextSegment {
 
 function toChannel(value: number): number {
   return Math.round(value * 255);
+}
+
+function cssQuote(value: string): string {
+  return `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`;
+}
+
+function cssFontFamily(family: string): string {
+  return /^[A-Za-z_][A-Za-z0-9_-]*$/.test(family) ? family : cssQuote(family);
+}
+
+function inferFontWeight(style: string): string {
+  const numeric = style.match(/\b([1-9]00)\b/);
+  if (numeric) {
+    return numeric[1];
+  }
+
+  const normalized = style.toLowerCase().replace(/[\s_-]+/g, "");
+  if (normalized.includes("thin") || normalized.includes("hairline")) return "100";
+  if (normalized.includes("extralight") || normalized.includes("ultralight")) return "200";
+  if (normalized.includes("light")) return "300";
+  if (
+    normalized.includes("regular") ||
+    normalized.includes("normal") ||
+    normalized.includes("book")
+  ) {
+    return "400";
+  }
+  if (normalized.includes("medium")) return "500";
+  if (normalized.includes("semibold") || normalized.includes("demibold")) return "600";
+  if (normalized.includes("extrabold") || normalized.includes("ultrabold")) return "800";
+  if (normalized.includes("black") || normalized.includes("heavy")) return "900";
+  if (normalized.includes("bold")) return "700";
+  return "400";
+}
+
+function inferFontStyle(style: string): string {
+  const normalized = style.toLowerCase();
+  return normalized.includes("italic") || normalized.includes("oblique") ? "italic" : "";
+}
+
+export function figmaFontSourceName(fontName: FigmaTextSegment["fontName"]): string {
+  return `${fontName.family}-${fontName.style.replace(/\s+/g, "")}`;
+}
+
+export function figmaFontToMapping(fontName: FigmaTextSegment["fontName"]): FontMapping {
+  return {
+    sourceFont: figmaFontSourceName(fontName),
+    family: `${cssFontFamily(fontName.family)},system-ui,sans-serif`,
+    weight: inferFontWeight(fontName.style),
+    style: inferFontStyle(fontName.style),
+  };
+}
+
+export function figmaSourceFontToMapping(sourceFont: string): FontMapping | null {
+  const separatorIndex = sourceFont.lastIndexOf("-");
+  if (separatorIndex <= 0 || separatorIndex === sourceFont.length - 1) {
+    return null;
+  }
+
+  return figmaFontToMapping({
+    family: sourceFont.slice(0, separatorIndex),
+    style: sourceFont.slice(separatorIndex + 1),
+  });
 }
 
 export function segmentToRun(segment: FigmaTextSegment): ExtractedTextRun {
@@ -54,7 +117,7 @@ export function segmentToRun(segment: FigmaTextSegment): ExtractedTextRun {
     hyperlink = { href: segment.hyperlink.value, target: "_blank" };
   }
 
-  const fontPostScriptName = `${segment.fontName.family}-${segment.fontName.style.replace(/\s+/g, "")}`;
+  const fontPostScriptName = figmaFontSourceName(segment.fontName);
 
   return {
     start: segment.start,

@@ -40,6 +40,7 @@
     outputRoot: "",
     videoTemplate: "",
     posterTemplate: "",
+    googleFonts: "none",
   });
   let fonts = $state<FontEntry[]>([]);
   let lastResult = $state<AeRunResult | null>(null);
@@ -62,6 +63,9 @@
       outputRoot: emptyToUndefined(settings.outputRoot),
       videoTemplate: emptyToUndefined(settings.videoTemplate),
       posterTemplate: emptyToUndefined(settings.posterTemplate),
+      googleFonts: settings.googleFonts === "import" || settings.googleFonts === "link"
+        ? settings.googleFonts
+        : "none",
     };
   }
 
@@ -108,6 +112,7 @@
           outputRoot: resolved.settings.outputRoot || "",
           videoTemplate: resolved.settings.videoTemplate || "",
           posterTemplate: resolved.settings.posterTemplate || "",
+          googleFonts: resolved.settings.googleFonts || "none",
         };
 
         await refreshTemplates(selectedCompId);
@@ -119,6 +124,7 @@
           outputRoot: "",
           videoTemplate: "",
           posterTemplate: "",
+          googleFonts: "none",
         };
         fonts = [];
         outputTemplates = [];
@@ -130,6 +136,10 @@
 
   async function detectMissingFonts(currentFonts: FontEntry[]): Promise<string[]> {
     return getAeMissingFonts(currentFonts, settings.targetCompId ?? null);
+  }
+
+  function handleFontsChange(): void {
+    lastResult = null;
   }
 
   function handleCompChange(): void {
@@ -372,6 +382,12 @@
 
       <FontMapper
         bind:fonts
+        onchange={handleFontsChange}
+        googleFonts={settings.googleFonts ?? "none"}
+        ongooglefontschange={(value) => {
+          settings.googleFonts = value;
+          handleFontsChange();
+        }}
         ondetectmissing={detectMissingFonts}
         sourceLabel="AE Font"
       />

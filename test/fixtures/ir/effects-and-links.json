@@ -1,9 +1,4 @@
 {
-  "generator": {
-    "tool": "test",
-    "toolVersion": "1.0",
-    "pluginVersion": "0.1.0"
-  },
   "settings": {
     "namespace": "g-",
     "responsiveness": "fixed",
@@ -13,11 +8,8 @@
   "artboards": [
     {
       "name": "desktop",
-      "originalName": "desktop",
       "width": 1200,
       "height": 800,
-      "actualWidth": 1200,
-      "actualHeight": 800,
       "layers": [
         {
           "name": "Layer1",
@@ -242,9 +234,21 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:desktop:layer:layer1",
+          "source": {
+            "tool": "test",
+            "name": "Layer1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:desktop",
+      "source": {
+        "tool": "test",
+        "name": "desktop",
+        "width": 1200,
+        "height": 800
+      }
     }
   ],
   "customBlocks": [],
@@ -252,5 +256,10 @@
   "metadata": {
     "slug": "effects-test"
   },
-  "irVersion": "0.0.0"
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "adapterVersion": "0.1.0"
+  }
 }

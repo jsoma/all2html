@@ -26,8 +26,16 @@
         "mimeType": "image/png",
         "width": 800,
         "height": 450,
-        "artboardName": "photo:800:image",
-        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+        "exportParams": {
+          "format": "png",
+          "scale": 1,
+          "transparent": false
+        },
+        "artboardId": "figma:figma-frame-image",
+        "source": {
+          "tool": "figma",
+          "name": "photo:800:image"
+        }
       }
     ]
   }

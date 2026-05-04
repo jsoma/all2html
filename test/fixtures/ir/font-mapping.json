@@ -1,32 +1,24 @@
 {
-  "generator": {
-    "tool": "test",
-    "toolVersion": "1.0",
-    "pluginVersion": "0.1.0"
-  },
   "settings": {
     "namespace": "g-"
   },
   "fonts": [
     {
-      "aifont": "MyCustomFont-Regular",
       "family": "'My Custom Font', sans-serif",
-      "weight": "400"
+      "weight": "400",
+      "sourceFont": "MyCustomFont-Regular"
     },
     {
-      "aifont": "MyCustomFont-Bold",
       "family": "'My Custom Font', sans-serif",
-      "weight": "700"
+      "weight": "700",
+      "sourceFont": "MyCustomFont-Bold"
     }
   ],
   "artboards": [
     {
       "name": "desktop",
-      "originalName": "desktop",
       "width": 600,
       "height": 400,
-      "actualWidth": 600,
-      "actualHeight": 400,
       "layers": [
         {
           "name": "Layer1",
@@ -149,9 +141,21 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:desktop:layer:layer1",
+          "source": {
+            "tool": "test",
+            "name": "Layer1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:desktop",
+      "source": {
+        "tool": "test",
+        "name": "desktop",
+        "width": 600,
+        "height": 400
+      }
     }
   ],
   "customBlocks": [],
@@ -159,5 +163,10 @@
   "metadata": {
     "slug": "font-mapping-test"
   },
-  "irVersion": "0.0.0"
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "adapterVersion": "0.1.0"
+  }
 }

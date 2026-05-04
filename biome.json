@@ -29,12 +29,18 @@
     "includes": [
       "src/**",
       "test/**",
+      "plugins/figma/src/export.ts",
+      "plugins/illustrator/panel/src/js/setting-help.ts",
+      "plugins/illustrator/panel/src/shared/types.ts",
+      "plugins/illustrator/panel/src/jsx/extendscript-globals.d.ts",
       "*.ts",
       "*.json",
       "!.mcp.json",
       "!src/extendscript/polyfills.ts",
       "!src/emitters/html-string.ts",
-      "!plugins"
+      "!test/visual/fixture-output",
+      "!test/visual/__screenshots__",
+      "!plugins/illustrator/panel/src/js/lib"
     ]
   }
 }

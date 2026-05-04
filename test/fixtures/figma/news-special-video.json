@@ -34,7 +34,12 @@
             "type": "text",
             "id": "figma-news-special-video-headline",
             "kind": "area",
-            "position": { "x": 34, "y": 286, "width": 420, "height": 72 },
+            "position": {
+              "x": 34,
+              "y": 286,
+              "width": 420,
+              "height": 72
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -51,7 +56,11 @@
                     "fontName": "Inter-Bold",
                     "fontPostScriptName": "Inter-Bold",
                     "fontSize": 28,
-                    "color": { "r": 24, "g": 31, "b": 41 },
+                    "color": {
+                      "r": 24,
+                      "g": 31,
+                      "b": 41
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -70,8 +79,16 @@
         "mimeType": "image/png",
         "width": 720,
         "height": 420,
-        "artboardName": "news-special-video",
-        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+        "exportParams": {
+          "format": "png",
+          "scale": 1,
+          "transparent": false
+        },
+        "artboardId": "figma:figma-news-special-video",
+        "source": {
+          "tool": "figma",
+          "name": "news-special-video"
+        }
       }
     ]
   }

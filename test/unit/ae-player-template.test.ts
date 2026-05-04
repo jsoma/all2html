@@ -17,6 +17,8 @@ function assertScopedEmbedContract(template: string): void {
   expect(template).not.toMatch(/<body[\s>]/i);
 
   expect(template).toContain("data-all2html-ae");
+  expect(template).toContain("__GOOGLE_FONT_LINKS__");
+  expect(template).toContain("__GOOGLE_FONT_IMPORT__");
   expect(template).toContain('data-ae-role="video"');
   expect(template).toContain('data-ae-role="model"');
 

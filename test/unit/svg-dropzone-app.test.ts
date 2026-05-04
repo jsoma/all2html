@@ -2,6 +2,16 @@
 
 import { describe, expect, it, vi } from "vitest";
 import { mountSvgDropzoneApp } from "../../apps/svg-dropzone/src/app.js";
+import { convertLoadedSvgFilesInBrowser } from "../../src/browser.js";
+import { processDocument } from "../../src/core/pipeline.js";
+import { CURRENT_IR_VERSION, type Document } from "../../src/ir/types.js";
+import { createOutputBundle } from "../../src/output-bundle.js";
+
+type SvgDropzoneDependencies = Required<NonNullable<Parameters<typeof mountSvgDropzoneApp>[1]>>;
+type LoadedFiles = Awaited<ReturnType<SvgDropzoneDependencies["loadFiles"]>>;
+type ParseConfigResult = ReturnType<SvgDropzoneDependencies["parseConfig"]>;
+type ImportFilesResult = Awaited<ReturnType<SvgDropzoneDependencies["importFiles"]>>;
+type BuildBundleOptions = Parameters<SvgDropzoneDependencies["buildBundle"]>[0];
 
 function assignFiles(input: HTMLInputElement, files: File[]): void {
   Object.defineProperty(input, "files", {
@@ -10,28 +20,111 @@ function assignFiles(input: HTMLInputElement, files: File[]): void {
   });
 }
 
+function requireElement<T extends Element>(root: ParentNode, selector: string): T {
+  const element = root.querySelector<T>(selector);
+  if (!element) {
+    throw new Error(`Missing element: ${selector}`);
+  }
+  return element;
+}
+
+function emptyConfig(): ParseConfigResult {
+  return { emit: {}, settings: {}, fonts: [] };
+}
+
+function createLoadedFiles(): LoadedFiles {
+  return {
+    slug: "story",
+    entrypointPaths: ["story.svg"],
+    files: [{ path: "story.svg", content: "<svg />", mimeType: "image/svg+xml" }],
+  };
+}
+
+function createDocument(artboardNames: string[] = ["story"]): Document {
+  return {
+    irVersion: CURRENT_IR_VERSION,
+    source: { tool: "svg", toolVersion: "1.0", adapterVersion: "0.1.0" },
+    settings: {
+      projectName: "story",
+      output: "one-file",
+      imageSourcePath: "",
+      imageOutputPath: "",
+      htmlOutputPath: "",
+    },
+    fonts: [],
+    artboards: artboardNames.map((name) => ({
+      id: `artboard:${name}`,
+      name,
+      width: 320,
+      height: 180,
+      source: { tool: "svg", id: `${name}.svg`, name: `${name}.svg`, width: 320, height: 180 },
+      layers: [],
+    })),
+    customBlocks: [],
+    assets: {},
+    metadata: { slug: "story" },
+  };
+}
+
+function createImportResult({
+  artboardNames = ["story"],
+  assetFiles = [],
+  warnings = [],
+}: {
+  artboardNames?: string[];
+  assetFiles?: ImportFilesResult["assetFiles"];
+  warnings?: string[];
+} = {}): ImportFilesResult {
+  return {
+    document: createDocument(artboardNames),
+    assetFiles,
+    warnings,
+  };
+}
+
+function createPreviewBundle(options: BuildBundleOptions) {
+  const emittedFile = options.emittedFiles[0];
+  if (!emittedFile) {
+    throw new Error("Missing emitted file");
+  }
+  return createOutputBundle(options);
+}
+
+function createUnusedDependencies(): SvgDropzoneDependencies {
+  return {
+    async createRasterizer() {
+      throw new Error("not used");
+    },
+    async loadFiles() {
+      throw new Error("not used");
+    },
+    parseConfig: emptyConfig,
+    async importFiles() {
+      throw new Error("not used");
+    },
+    process: processDocument,
+    emitter() {
+      throw new Error("not used");
+    },
+    buildBundle() {
+      return createOutputBundle({ irDocument: createDocument(), emittedFiles: [], assetFiles: [] });
+    },
+    convert: convertLoadedSvgFilesInBrowser,
+    zipBundle() {
+      return new Uint8Array();
+    },
+    download: vi.fn(),
+  };
+}
+
 describe("svg dropzone app", () => {
   it("tracks drag/drop file selection", async () => {
     const root = document.createElement("div");
     document.body.append(root);
 
-    mountSvgDropzoneApp(root, {
-      async createRasterizer() {
-        throw new Error("not used");
-      },
-      async loadFiles() {
-        throw new Error("not used");
-      },
-      parseConfig: vi.fn() as any,
-      importFiles: vi.fn() as any,
-      process: vi.fn() as any,
-      emitter: vi.fn() as any,
-      buildBundle: vi.fn() as any,
-      zipBundle: vi.fn() as any,
-      download: vi.fn(),
-    });
+    mountSvgDropzoneApp(root, createUnusedDependencies());
 
-    const dropzone = root.querySelector<HTMLElement>("[data-dropzone]")!;
+    const dropzone = requireElement<HTMLElement>(root, "[data-dropzone]");
     const dropEvent = new Event("drop", { bubbles: true, cancelable: true });
     Object.defineProperty(dropEvent, "dataTransfer", {
       configurable: true,
@@ -64,63 +157,21 @@ describe("svg dropzone app", () => {
       },
       async loadFiles(files) {
         expect(Array.from(files)).toHaveLength(1);
-        return {
-          slug: "story",
-          entrypointPaths: ["story.svg"],
-          files: [{ path: "story.svg", content: "<svg />", mimeType: "image/svg+xml" }],
-        };
+        return createLoadedFiles();
       },
       parseConfig() {
         return { emit: { react: { typescript: true } } };
       },
       async importFiles() {
-        return {
-          document: {
-            irVersion: "0.0.0",
-            generator: { tool: "svg", toolVersion: "1.0", pluginVersion: "0.1.0" },
-            settings: {
-              projectName: "story",
-              output: "one-file",
-              imageSourcePath: "",
-              imageOutputPath: "",
-              htmlOutputPath: "",
-            },
-            fonts: [],
-            artboards: [
-              {
-                name: "story",
-                originalName: "story.svg",
-                width: 320,
-                height: 180,
-                actualWidth: 320,
-                actualHeight: 180,
-                layers: [],
-              },
-            ],
-            customBlocks: [],
-            assets: {},
-            metadata: { slug: "story" },
-          },
+        return createImportResult({
+          artboardNames: ["story", "story-2"],
           assetFiles: [
             { path: "story.png", bytes: Uint8Array.from([1, 2, 3]), mimeType: "image/png" },
           ],
           warnings: ["import warning"],
-        };
+        });
       },
-      process() {
-        return {
-          document: {
-            settings: {
-              projectName: "story",
-              imageOutputPath: "",
-            },
-            metadata: { slug: "story" },
-            artboards: [{ name: "story" }, { name: "story-2" }],
-          } as any,
-          groups: [{ slug: "story", artboards: [] }] as any,
-          warnings: ["render warning"],
-        };
-      },
+      process: processDocument,
       emitter(format) {
         return {
           name: format,
@@ -142,22 +193,7 @@ describe("svg dropzone app", () => {
         };
       },
       buildBundle(options) {
-        return {
-          files: [
-            {
-              path: "ir.json",
-              bytes: new TextEncoder().encode("{}"),
-              mimeType: "application/json",
-              text: "{}",
-            },
-            {
-              path: `${options.emittedFiles[0].slug}${options.emittedFiles[0].extension}`,
-              bytes: new TextEncoder().encode(options.emittedFiles[0].output),
-              mimeType: "text/html",
-              text: options.emittedFiles[0].output,
-            },
-          ],
-        };
+        return createPreviewBundle(options);
       },
       zipBundle() {
         return new Uint8Array([1, 2, 3]);
@@ -165,11 +201,11 @@ describe("svg dropzone app", () => {
       download,
     });
 
-    const fileInput = root.querySelector<HTMLInputElement>("[data-file-input]")!;
+    const fileInput = requireElement<HTMLInputElement>(root, "[data-file-input]");
     assignFiles(fileInput, [new File(["<svg />"], "story.svg", { type: "image/svg+xml" })]);
     fileInput.dispatchEvent(new Event("change"));
 
-    const configInput = root.querySelector<HTMLInputElement>("[data-config-input]")!;
+    const configInput = requireElement<HTMLInputElement>(root, "[data-config-input]");
     assignFiles(configInput, [
       new File(['{"emit":{"react":{"typescript":true}}}'], "config.json", {
         type: "application/json",
@@ -177,7 +213,7 @@ describe("svg dropzone app", () => {
     ]);
     configInput.dispatchEvent(new Event("change"));
 
-    root.querySelector<HTMLButtonElement>("[data-generate]")!.click();
+    requireElement<HTMLButtonElement>(root, "[data-generate]").click();
     await new Promise((resolve) => setTimeout(resolve, 0));
     await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -185,7 +221,7 @@ describe("svg dropzone app", () => {
     expect(root.querySelector("[data-warnings]")?.textContent).toContain("Import: import warning");
     expect(root.querySelector<HTMLIFrameElement>("iframe")?.srcdoc).toContain("preview");
 
-    root.querySelector<HTMLButtonElement>("[data-download]")!.click();
+    requireElement<HTMLButtonElement>(root, "[data-download]").click();
     expect(download).toHaveBeenCalled();
     document.body.innerHTML = "";
   });
@@ -207,49 +243,13 @@ describe("svg dropzone app", () => {
         };
       },
       async loadFiles() {
-        return {
-          slug: "story",
-          entrypointPaths: ["story.svg"],
-          files: [{ path: "story.svg", content: "<svg />" }],
-        };
+        return createLoadedFiles();
       },
-      parseConfig: (text, source) => ({ emit: {}, settings: {}, fonts: [] }) as any,
+      parseConfig: emptyConfig,
       async importFiles() {
-        return {
-          document: {
-            irVersion: "0.0.0",
-            generator: { tool: "svg", toolVersion: "1.0", pluginVersion: "0.1.0" },
-            settings: {
-              projectName: "story",
-              output: "one-file",
-              imageSourcePath: "",
-              imageOutputPath: "",
-              htmlOutputPath: "",
-            },
-            fonts: [],
-            artboards: [],
-            customBlocks: [],
-            assets: {},
-            metadata: { slug: "story" },
-          },
-          assetFiles: [],
-          warnings: [],
-        };
+        return createImportResult();
       },
-      process() {
-        return {
-          document: {
-            settings: {
-              projectName: "story",
-              imageOutputPath: "",
-            },
-            metadata: { slug: "story" },
-            artboards: [],
-          } as any,
-          groups: [{ slug: "story", artboards: [] }] as any,
-          warnings: [],
-        };
-      },
+      process: processDocument,
       emitter(format) {
         return {
           name: format,
@@ -264,33 +264,18 @@ describe("svg dropzone app", () => {
         };
       },
       buildBundle(options) {
-        return {
-          files: [
-            {
-              path: "ir.json",
-              bytes: new TextEncoder().encode("{}"),
-              mimeType: "application/json",
-              text: "{}",
-            },
-            {
-              path: "story.jsx",
-              bytes: new TextEncoder().encode(options.emittedFiles[0].output),
-              mimeType: "text/plain",
-              text: options.emittedFiles[0].output,
-            },
-          ],
-        };
+        return createPreviewBundle(options);
       },
       zipBundle: () => new Uint8Array([1]),
       download: vi.fn(),
     });
 
-    const formatSelect = root.querySelector<HTMLSelectElement>("[data-format]")!;
+    const formatSelect = requireElement<HTMLSelectElement>(root, "[data-format]");
     formatSelect.value = "react";
-    const fileInput = root.querySelector<HTMLInputElement>("[data-file-input]")!;
+    const fileInput = requireElement<HTMLInputElement>(root, "[data-file-input]");
     assignFiles(fileInput, [new File(["<svg />"], "story.svg", { type: "image/svg+xml" })]);
     fileInput.dispatchEvent(new Event("change"));
-    root.querySelector<HTMLButtonElement>("[data-generate]")!.click();
+    requireElement<HTMLButtonElement>(root, "[data-generate]").click();
     await new Promise((resolve) => setTimeout(resolve, 0));
     await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -324,49 +309,13 @@ describe("svg dropzone app", () => {
         };
       },
       async loadFiles() {
-        return {
-          slug: "story",
-          entrypointPaths: ["story.svg"],
-          files: [{ path: "story.svg", content: "<svg />", mimeType: "image/svg+xml" }],
-        };
+        return createLoadedFiles();
       },
       parseConfig,
       async importFiles() {
-        return {
-          document: {
-            irVersion: "0.0.0",
-            generator: { tool: "svg", toolVersion: "1.0", pluginVersion: "0.1.0" },
-            settings: {
-              projectName: "story",
-              output: "one-file",
-              imageSourcePath: "",
-              imageOutputPath: "",
-              htmlOutputPath: "",
-            },
-            fonts: [],
-            artboards: [],
-            customBlocks: [],
-            assets: {},
-            metadata: { slug: "story" },
-          },
-          assetFiles: [],
-          warnings: [],
-        };
+        return createImportResult();
       },
-      process() {
-        return {
-          document: {
-            settings: {
-              projectName: "story",
-              imageOutputPath: "",
-            },
-            metadata: { slug: "story" },
-            artboards: [],
-          } as any,
-          groups: [{ slug: "story", artboards: [] }] as any,
-          warnings: [],
-        };
-      },
+      process: processDocument,
       emitter() {
         return {
           name: "html",
@@ -379,44 +328,29 @@ describe("svg dropzone app", () => {
         };
       },
       buildBundle(options) {
-        return {
-          files: [
-            {
-              path: "ir.json",
-              bytes: new TextEncoder().encode("{}"),
-              mimeType: "application/json",
-              text: "{}",
-            },
-            {
-              path: `${options.emittedFiles[0].slug}${options.emittedFiles[0].extension}`,
-              bytes: new TextEncoder().encode(options.emittedFiles[0].output),
-              mimeType: "text/html",
-              text: options.emittedFiles[0].output,
-            },
-          ],
-        };
+        return createPreviewBundle(options);
       },
       zipBundle: () => new Uint8Array([1]),
       download: vi.fn(),
     });
 
-    const fileInput = root.querySelector<HTMLInputElement>("[data-file-input]")!;
+    const fileInput = requireElement<HTMLInputElement>(root, "[data-file-input]");
     assignFiles(fileInput, [new File(["<svg />"], "story.svg", { type: "image/svg+xml" })]);
     fileInput.dispatchEvent(new Event("change"));
 
-    const configInput = root.querySelector<HTMLInputElement>("[data-config-input]")!;
+    const configInput = requireElement<HTMLInputElement>(root, "[data-config-input]");
     assignFiles(configInput, [
       new File(['{"emit":{}}'], "config.json", { type: "application/json" }),
     ]);
     configInput.dispatchEvent(new Event("change"));
 
-    root.querySelector<HTMLButtonElement>("[data-generate]")!.click();
+    requireElement<HTMLButtonElement>(root, "[data-generate]").click();
     await new Promise((resolve) => setTimeout(resolve, 0));
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(root.querySelector<HTMLIFrameElement>("iframe")?.srcdoc).toContain("preview");
 
-    root.querySelector<HTMLButtonElement>("[data-generate]")!.click();
+    requireElement<HTMLButtonElement>(root, "[data-generate]").click();
     await new Promise((resolve) => setTimeout(resolve, 0));
     await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -445,49 +379,13 @@ describe("svg dropzone app", () => {
         };
       },
       async loadFiles() {
-        return {
-          slug: "story",
-          entrypointPaths: ["story.svg"],
-          files: [{ path: "story.svg", content: "<svg />", mimeType: "image/svg+xml" }],
-        };
+        return createLoadedFiles();
       },
-      parseConfig: () => ({ emit: {}, settings: {}, fonts: [] }) as any,
+      parseConfig: emptyConfig,
       async importFiles() {
-        return {
-          document: {
-            irVersion: "0.0.0",
-            generator: { tool: "svg", toolVersion: "1.0", pluginVersion: "0.1.0" },
-            settings: {
-              projectName: "story",
-              output: "one-file",
-              imageSourcePath: "",
-              imageOutputPath: "",
-              htmlOutputPath: "",
-            },
-            fonts: [],
-            artboards: [],
-            customBlocks: [],
-            assets: {},
-            metadata: { slug: "story" },
-          },
-          assetFiles: [],
-          warnings: [],
-        };
+        return createImportResult();
       },
-      process() {
-        return {
-          document: {
-            settings: {
-              projectName: "story",
-              imageOutputPath: "",
-            },
-            metadata: { slug: "story" },
-            artboards: [],
-          } as any,
-          groups: [{ slug: "story", artboards: [] }] as any,
-          warnings: [],
-        };
-      },
+      process: processDocument,
       emitter() {
         return {
           name: "html",
@@ -499,16 +397,22 @@ describe("svg dropzone app", () => {
           },
         };
       },
-      buildBundle: vi.fn() as any,
+      buildBundle() {
+        return createOutputBundle({
+          irDocument: createDocument(),
+          emittedFiles: [],
+          assetFiles: [],
+        });
+      },
       zipBundle: () => new Uint8Array([1]),
       download: vi.fn(),
     });
 
-    const fileInput = root.querySelector<HTMLInputElement>("[data-file-input]")!;
+    const fileInput = requireElement<HTMLInputElement>(root, "[data-file-input]");
     assignFiles(fileInput, [new File(["<svg />"], "story.svg", { type: "image/svg+xml" })]);
     fileInput.dispatchEvent(new Event("change"));
 
-    root.querySelector<HTMLButtonElement>("[data-generate]")!.click();
+    requireElement<HTMLButtonElement>(root, "[data-generate]").click();
     await new Promise((resolve) => setTimeout(resolve, 0));
     await new Promise((resolve) => setTimeout(resolve, 0));
 

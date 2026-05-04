@@ -1,23 +1,58 @@
 <script lang="ts">
   import type { RunResult } from "../../shared/types";
   import { openFolder } from "../bridge";
-  import RunResultRow from "../components/RunResult.svelte";
   import { openResultFolder } from "../panel-controller";
 
   interface Props {
     isRunning: boolean;
     result: RunResult | null;
+    outputPath?: string | null;
+    onreview?: () => void;
     onrun: () => void;
   }
 
-  let { isRunning, result, onrun }: Props = $props();
+  let { isRunning, result, outputPath = null, onreview, onrun }: Props = $props();
+
+  const warningCount = $derived.by(() =>
+    result?.warnings
+      ? Object.values(result.warnings).reduce((sum, items) => sum + items.length, 0)
+      : 0,
+  );
+
+  const hasError = $derived.by(() => !!result && !result.success);
+  const hasWarnings = $derived.by(() => !!result?.success && warningCount > 0);
+
+  const alertMessage = $derived.by(() => {
+    if (!result) return "";
+    if (!result.success) {
+      return String(result.error || "Export failed").split("\n")[0].trim();
+    }
+    return `${warningCount} warning${warningCount !== 1 ? "s" : ""} from last export`;
+  });
 
   function handleOpenFolder(): void {
-    openResultFolder(result?.outputPath, openFolder);
+    openResultFolder(outputPath, openFolder);
   }
 </script>
 
-<div class="section">
+<div class="run-action-bar">
+  {#if hasError || hasWarnings}
+    <div class="run-alert-strip" class:error={hasError} class:warning={hasWarnings}>
+      <div class="run-alert-copy">
+        <strong>{hasError ? "Export failed" : "Warnings"}</strong>
+        <span>{alertMessage}</span>
+      </div>
+      <div class="run-alert-actions">
+        {#if onreview}
+          <button class="run-link-button" type="button" onclick={onreview}>Review</button>
+        {/if}
+        {#if outputPath}
+          <button class="run-link-button" type="button" onclick={handleOpenFolder}>Open folder</button>
+        {/if}
+      </div>
+    </div>
+  {/if}
+
   <button class="btn-primary" disabled={isRunning} onclick={onrun}>
     {#if isRunning}
       <span class="spinner"></span> Running...
@@ -25,17 +60,4 @@
       Run all2html
     {/if}
   </button>
-
-  {#if result}
-    {#if result.success}
-      <RunResultRow
-        success={true}
-        message={`${result.artboardCount} artboard${result.artboardCount !== 1 ? "s" : ""}, ${result.elapsed}`}
-        outputPath={result.outputPath}
-        onopenfolder={handleOpenFolder}
-      />
-    {:else}
-      <RunResultRow success={false} message={result.error || "Export failed"} />
-    {/if}
-  {/if}
 </div>

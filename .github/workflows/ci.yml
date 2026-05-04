@@ -38,8 +38,20 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      - name: Run lint
+        run: pnpm lint
+
       - name: Run typecheck
         run: pnpm run typecheck
+
+      - name: Run panel typecheck
+        run: pnpm run typecheck:panel
+
+      - name: Run panel Svelte check
+        run: pnpm run typecheck:panel:svelte
+
+      - name: Run panel hostscript check
+        run: pnpm run typecheck:panel:jsx
 
       - name: Build Illustrator bundle
         run: pnpm build:illustrator

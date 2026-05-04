@@ -3,6 +3,8 @@
  * These define the JSON payloads that cross the evalTS bridge.
  */
 
+import { getSettingDefault } from "../../../../../src/ir/settings-definitions.js";
+
 /** Settings as the panel UI understands them. camelCase, all optional (sparse). */
 export interface PanelSettings {
   // Essential
@@ -30,6 +32,7 @@ export interface PanelSettings {
 
   // Advanced - rendering
   renderRotatedSkewedTextAs?: "html" | "image";
+  googleFonts?: "none" | "import" | "link";
   testingMode?: boolean;
 
   // Advanced - CSS/features
@@ -67,7 +70,7 @@ export interface FontEntry {
   sourceFont?: string;
   /**
    * Legacy Illustrator compatibility alias.
-   * Keep it while the core IR/config shape still uses `aifont`.
+   * Keep it only at panel/host boundaries for older saved panel state.
    */
   aifont?: string;
   family: string;
@@ -144,6 +147,11 @@ export interface DocumentInfo {
   path: string;
   saved: boolean;
   artboardCount: number;
+  /**
+   * Fingerprint of the current ai2html-settings text block contents.
+   * Changes when the block is added, removed, or edited inside the same document.
+   */
+  settingsBlockSignature?: string | null;
 }
 
 export interface AeCompInfo {
@@ -170,6 +178,7 @@ export interface AePanelSettings {
   outputRoot?: string;
   videoTemplate?: string;
   posterTemplate?: string;
+  googleFonts?: "none" | "import" | "link";
 }
 
 export interface AeConfigData {
@@ -234,6 +243,7 @@ export const panelDefaults: Required<
     | "textResponsiveness"
     | "centerHtmlOutput"
     | "renderRotatedSkewedTextAs"
+    | "googleFonts"
     | "testingMode"
     | "includeResizerCss"
     | "includeResizerWidths"
@@ -243,28 +253,29 @@ export const panelDefaults: Required<
     | "pngTransparent"
   >
 > = {
-  output: "one-file",
-  imageFormat: "auto",
-  jpgQuality: 85,
-  pngNumberOfColors: 128,
-  use2xImages: true,
-  responsiveness: "fixed",
-  renderTextAs: "html",
-  htmlOutputPath: "all2html-output/",
-  imageOutputPath: "all2html-output/",
-  namespace: "g-",
-  projectName: "",
-  htmlOutputExtension: ".html",
-  imageSourcePath: "",
-  writeImageFiles: true,
-  textResponsiveness: "dynamic",
-  centerHtmlOutput: true,
-  renderRotatedSkewedTextAs: "html",
-  testingMode: false,
-  includeResizerCss: true,
-  includeResizerWidths: true,
-  inlineSvg: false,
-  svgIdPrefix: "",
-  svgEmbedImages: false,
-  pngTransparent: false,
+  output: getSettingDefault("output"),
+  imageFormat: getSettingDefault("imageFormat")[0] ?? "auto",
+  jpgQuality: getSettingDefault("jpgQuality"),
+  pngNumberOfColors: getSettingDefault("pngNumberOfColors"),
+  use2xImages: getSettingDefault("use2xImages"),
+  responsiveness: getSettingDefault("responsiveness"),
+  renderTextAs: getSettingDefault("renderTextAs"),
+  htmlOutputPath: getSettingDefault("htmlOutputPath"),
+  imageOutputPath: getSettingDefault("imageOutputPath"),
+  namespace: getSettingDefault("namespace"),
+  projectName: getSettingDefault("projectName"),
+  htmlOutputExtension: getSettingDefault("htmlOutputExtension"),
+  imageSourcePath: getSettingDefault("imageSourcePath"),
+  writeImageFiles: getSettingDefault("writeImageFiles"),
+  textResponsiveness: getSettingDefault("textResponsiveness"),
+  centerHtmlOutput: getSettingDefault("centerHtmlOutput"),
+  renderRotatedSkewedTextAs: getSettingDefault("renderRotatedSkewedTextAs"),
+  googleFonts: getSettingDefault("googleFonts"),
+  testingMode: getSettingDefault("testingMode"),
+  includeResizerCss: getSettingDefault("includeResizerCss"),
+  includeResizerWidths: getSettingDefault("includeResizerWidths"),
+  inlineSvg: getSettingDefault("inlineSvg"),
+  svgIdPrefix: getSettingDefault("svgIdPrefix"),
+  svgEmbedImages: getSettingDefault("svgEmbedImages"),
+  pngTransparent: getSettingDefault("pngTransparent"),
 };

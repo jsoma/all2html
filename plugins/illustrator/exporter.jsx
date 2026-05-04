@@ -66,6 +66,21 @@ function makeKeyword(name) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+function makeStableId(prefix, name, index) {
+  var keyword = makeKeyword(String(name || ""));
+  if (!keyword) keyword = "item";
+  return prefix + ":" + keyword + "-" + index;
+}
+
+function makeAssetName(parts) {
+  var tokens = [];
+  for (var i = 0; i < parts.length; i++) {
+    var token = makeKeyword(String(parts[i] || ""));
+    if (token) tokens.push(token);
+  }
+  return tokens.length ? tokens.join("-") : "asset";
+}
+
 function boundsIntersect(a, b) {
   // Both in AI format: [left, top, right, bottom] (top > bottom because Y is up)
   return !(a[2] < b[0] || a[0] > b[2] || a[1] < b[3] || a[3] > b[1]);
@@ -301,10 +316,16 @@ function extractArtboards(doc) {
     var actualHeight = Math.round(rect[1] - rect[3]); // top - bottom (top > bottom)
 
     var artboardObj = {
+      id: makeStableId("illustrator:artboard", rawName, i + 1),
       name: parsed.name,
-      originalName: rawName,
       width: parsed.settings.width || actualWidth,
       height: actualHeight,
+      source: {
+        tool: "illustrator",
+        name: rawName,
+        width: actualWidth,
+        height: actualHeight
+      },
       actualWidth: actualWidth,
       actualHeight: actualHeight,
       _aiIndex: i,
@@ -352,6 +373,10 @@ function extractLayers(doc) {
     layers.push({
       name: trim(parsedName),
       type: layerType,
+      source: {
+        tool: "illustrator",
+        name: layer.name
+      },
       inlineSvg: inlineSvg,
       visible: layer.visible,
       opacity: layer.opacity || 100,
@@ -768,15 +793,26 @@ function extractLayerContent(doc, artboard, layers, settings, assets) {
           if (layer.inlineSvg && svgResult.content) {
             layer.elements.push({ type: "rawHtml", content: svgResult.content });
           } else if (svgResult.path) {
-            var svgAssetId = slug + "-" + makeKeyword(artboard.name) + "-" + makeKeyword(layer.name);
+            var svgAssetId = makeAssetName([
+              slug,
+              artboard.source && artboard.source.name ? artboard.source.name : artboard.name,
+              layer.name
+            ]);
+            if (assets[svgAssetId]) {
+              svgAssetId = makeAssetName([svgAssetId, layer.id]);
+            }
             assets[svgAssetId] = {
               id: svgAssetId,
               path: svgAssetId + ".svg",
               mimeType: "image/svg+xml",
               width: artboard.actualWidth,
               height: artboard.actualHeight,
-              artboardName: artboard.name,
-              layerName: layer.name,
+              artboardId: artboard.id,
+              layerId: layer.id,
+              source: {
+                tool: "illustrator",
+                name: layer.name
+              },
               exportParams: { format: "svg", scale: 1 }
             };
           }
@@ -789,7 +825,14 @@ function extractLayerContent(doc, artboard, layers, settings, assets) {
     // PNG layers: export as transparent PNG
     if (layer.type === "png") {
       try {
-        var pngAssetId = slug + "-" + makeKeyword(artboard.name) + "-" + makeKeyword(layer.name);
+        var pngAssetId = makeAssetName([
+          slug,
+          artboard.source && artboard.source.name ? artboard.source.name : artboard.name,
+          layer.name
+        ]);
+        if (assets[pngAssetId]) {
+          pngAssetId = makeAssetName([pngAssetId, layer.id]);
+        }
         exportPngLayer(doc, aiLayer, artboard, pngAssetId, settings);
         assets[pngAssetId] = {
           id: pngAssetId,
@@ -797,8 +840,12 @@ function extractLayerContent(doc, artboard, layers, settings, assets) {
           mimeType: "image/png",
           width: artboard.actualWidth * (settings.use2xImages ? 2 : 1),
           height: artboard.actualHeight * (settings.use2xImages ? 2 : 1),
-          artboardName: artboard.name,
-          layerName: layer.name,
+          artboardId: artboard.id,
+          layerId: layer.id,
+          source: {
+            tool: "illustrator",
+            name: layer.name
+          },
           exportParams: { format: "png", scale: settings.use2xImages ? 2 : 1, transparent: true }
         };
       } catch(e) {
@@ -1146,7 +1193,13 @@ function exportImages(doc, artboards, settings) {
       warn("Large " + format.toUpperCase() + " export for '" + ab.name + "' (" + pxW + "\u00d7" + pxH + " = " + Math.round(pxCount / 1000000) + "MP). Consider disabling 2x or reducing artboard size.");
     }
 
-    var imageName = slug + "-" + makeKeyword(ab.name);
+    var imageName = makeAssetName([
+      slug,
+      ab.source && ab.source.name ? ab.source.name : ab.name
+    ]);
+    if (assets[imageName]) {
+      imageName = makeAssetName([imageName, ab._aiIndex + 1]);
+    }
     var exportPath = outputPath + imageName;
 
     exportArtboardImage(doc, exportPath, format, settings);
@@ -1170,7 +1223,11 @@ function exportImages(doc, artboards, settings) {
       mimeType: format === "jpg" ? "image/jpeg" : "image/png",
       width: ab.actualWidth * (settings.use2xImages ? 2 : 1),
       height: ab.actualHeight * (settings.use2xImages ? 2 : 1),
-      artboardName: ab.name,
+      artboardId: ab.id,
+      source: {
+        tool: "illustrator",
+        name: ab.source && ab.source.name ? ab.source.name : ab.name
+      },
       exportParams: {
         format: format,
         scale: settings.use2xImages ? 2 : 1,
@@ -1373,6 +1430,11 @@ function buildCanonicalIrSettings(docSettings) {
   var rotatedText = readStringSetting(docSettings, "render_rotated_skewed_text_as");
   if (rotatedText) settings.renderRotatedSkewedTextAs = rotatedText;
 
+  var googleFonts = readStringSetting(docSettings, "google_fonts");
+  if (googleFonts === "none" || googleFonts === "import" || googleFonts === "link") {
+    settings.googleFonts = googleFonts;
+  }
+
   var namespace = readStringSetting(docSettings, "namespace");
   if (namespace) settings.namespace = namespace;
 
@@ -1437,6 +1499,28 @@ function buildCanonicalIrSettings(docSettings) {
   return settings;
 }
 
+function getFontSourceKey(font) {
+  return font && (font.sourceFont || font.aifont) ? String(font.sourceFont || font.aifont) : "";
+}
+
+function normalizeFontEntries(fonts) {
+  var normalized = [];
+  for (var i = 0; i < fonts.length; i++) {
+    var font = fonts[i];
+    var sourceFont = getFontSourceKey(font);
+    if (!sourceFont) continue;
+    var next = {
+      sourceFont: sourceFont,
+      family: font.family || sourceFont
+    };
+    if (font.weight !== undefined) next.weight = font.weight;
+    if (font.style !== undefined) next.style = font.style;
+    if (font.vshift !== undefined) next.vshift = font.vshift;
+    normalized.push(next);
+  }
+  return normalized;
+}
+
 function runExporter() {
   // Reset global state (ExtendScript may persist globals across runs)
   warnings = [];
@@ -1494,9 +1578,10 @@ function runExporter() {
       if (panelFonts && panelFonts.length > 0) {
         for (var fi = 0; fi < panelFonts.length; fi++) {
           var pf = panelFonts[fi];
+          var pfSource = getFontSourceKey(pf);
           var fontFound = false;
           for (var ci = 0; ci < configFile.fonts.length; ci++) {
-            if (configFile.fonts[ci].aifont === pf.aifont) {
+            if (getFontSourceKey(configFile.fonts[ci]) === pfSource) {
               configFile.fonts[ci] = pf;
               fontFound = true;
               break;
@@ -1576,8 +1661,10 @@ function runExporter() {
     artboards[i].layers = [];
     for (var j = 0; j < layers.length; j++) {
       artboards[i].layers.push({
+        id: artboards[i].id + ":layer:" + makeKeyword(layers[j].name || layers[j].type) + "-" + (j + 1),
         name: layers[j].name,
         type: layers[j].type,
+        source: layers[j].source,
         inlineSvg: layers[j].inlineSvg,
         visible: layers[j].visible,
         opacity: layers[j].opacity,
@@ -1609,12 +1696,11 @@ function runExporter() {
   for (var i = 0; i < artboards.length; i++) {
     var ab = artboards[i];
     var clean = {
+      id: ab.id,
       name: ab.name,
-      originalName: ab.originalName,
       width: ab.width,
       height: ab.height,
-      actualWidth: ab.actualWidth,
-      actualHeight: ab.actualHeight,
+      source: ab.source,
       layers: ab.layers
     };
     if (ab.responsiveness) clean.responsiveness = ab.responsiveness;
@@ -1623,14 +1709,14 @@ function runExporter() {
   }
 
   var irDoc = {
-    irVersion: "0.0.0",
-    generator: {
+    irVersion: "0.1.0",
+    source: {
       tool: "illustrator",
       toolVersion: app.version,
-      pluginVersion: "0.1.0"
+      adapterVersion: "0.1.0"
     },
     settings: canonicalIrSettings,
-    fonts: configFile.fonts || [],
+    fonts: normalizeFontEntries(configFile.fonts || []),
     artboards: cleanArtboards,
     customBlocks: customBlocks,
     assets: assets,
@@ -1660,7 +1746,7 @@ function runExporter() {
   // Call core to generate HTML
   span = logSpan("processAndEmit");
   var result = All2Html.processAndEmit(irDoc, {
-    fonts: configFile.fonts || []
+    fonts: normalizeFontEntries(configFile.fonts || [])
   });
   for (var w = 0; w < result.warnings.length; w++) {
     warnings.push(result.warnings[w]);

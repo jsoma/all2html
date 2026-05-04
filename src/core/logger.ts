@@ -91,12 +91,7 @@ export function createCollectingLogger(): ObservableLogger & {
 } {
   const events: StructuredEvent[] = [];
 
-  function emit(
-    level: StructuredEvent["level"],
-    msg: string,
-    data?: LogData,
-    durationMs?: number,
-  ) {
+  function emit(level: StructuredEvent["level"], msg: string, data?: LogData, durationMs?: number) {
     events.push({ level, msg, data, timestamp: Date.now(), durationMs });
   }
 

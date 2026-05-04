@@ -55,7 +55,7 @@ You can import a single SVG, a folder of SVGs, or a ZIP of SVGs and render them 
 - [Install](install.md) is the main entry point and download guide.
 - [Options](options/illustrator.md) breaks down the workflow and settings per surface.
 - [Examples](examples/index.md) gives you real source files and outputs to inspect.
-- [How It Works](how-it-works/index.md) explains the IR, pipeline, responsiveness, and special layers.
+- [How It Works](how-it-works/index.md) explains the IR, pipeline, adapter model, responsiveness, and special layers.
 - [Reference](reference/settings.md) is the technical documentation for settings, formats, and schema shape.
 - [Troubleshooting](troubleshooting.md) covers the common failure modes.
 

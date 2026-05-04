@@ -20,7 +20,12 @@
             "type": "text",
             "id": "figma-news-mixed-warning-headline",
             "kind": "area",
-            "position": { "x": 32, "y": 228, "width": 560, "height": 72 },
+            "position": {
+              "x": 32,
+              "y": 228,
+              "width": 560,
+              "height": 72
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -37,7 +42,11 @@
                     "fontName": "Inter-Bold",
                     "fontPostScriptName": "Inter-Bold",
                     "fontSize": 30,
-                    "color": { "r": 23, "g": 26, "b": 31 },
+                    "color": {
+                      "r": 23,
+                      "g": 26,
+                      "b": 31
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -50,7 +59,12 @@
             "type": "text",
             "id": "figma-news-mixed-warning-body",
             "kind": "area",
-            "position": { "x": 32, "y": 316, "width": 520, "height": 48 },
+            "position": {
+              "x": 32,
+              "y": 316,
+              "width": 520,
+              "height": 48
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -67,7 +81,11 @@
                     "fontName": "Inter-Regular",
                     "fontPostScriptName": "Inter-Regular",
                     "fontSize": 16,
-                    "color": { "r": 64, "g": 70, "b": 80 },
+                    "color": {
+                      "r": 64,
+                      "g": 70,
+                      "b": 80
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -80,7 +98,12 @@
             "type": "text",
             "id": "figma-news-mixed-warning-link",
             "kind": "area",
-            "position": { "x": 568, "y": 316, "width": 136, "height": 44 },
+            "position": {
+              "x": 568,
+              "y": 316,
+              "width": 136,
+              "height": 44
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -97,7 +120,11 @@
                     "fontName": "Inter-Medium",
                     "fontPostScriptName": "Inter-Medium",
                     "fontSize": 15,
-                    "color": { "r": 28, "g": 81, "b": 117 },
+                    "color": {
+                      "r": 28,
+                      "g": 81,
+                      "b": 117
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -116,8 +143,16 @@
         "mimeType": "image/png",
         "width": 760,
         "height": 460,
-        "artboardName": "news-story-mixed-warning",
-        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+        "exportParams": {
+          "format": "png",
+          "scale": 1,
+          "transparent": false
+        },
+        "artboardId": "figma:figma-news-mixed-warning",
+        "source": {
+          "tool": "figma",
+          "name": "news-story-mixed-warning"
+        }
       }
     ]
   }

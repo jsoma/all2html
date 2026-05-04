@@ -1,58 +1,63 @@
 import type { FontMapping } from "../ir/types.js";
 
 const builtinFonts: FontMapping[] = [
-  { aifont: "ArialMT", family: "arial,helvetica,sans-serif", weight: "", style: "" },
-  { aifont: "Arial-BoldMT", family: "arial,helvetica,sans-serif", weight: "700", style: "" },
-  { aifont: "Arial-ItalicMT", family: "arial,helvetica,sans-serif", weight: "", style: "italic" },
+  { sourceFont: "ArialMT", family: "arial,helvetica,sans-serif", weight: "", style: "" },
+  { sourceFont: "Arial-BoldMT", family: "arial,helvetica,sans-serif", weight: "700", style: "" },
   {
-    aifont: "Arial-BoldItalicMT",
+    sourceFont: "Arial-ItalicMT",
+    family: "arial,helvetica,sans-serif",
+    weight: "",
+    style: "italic",
+  },
+  {
+    sourceFont: "Arial-BoldItalicMT",
     family: "arial,helvetica,sans-serif",
     weight: "700",
     style: "italic",
   },
-  { aifont: "Georgia", family: "georgia,'times new roman',times,serif", weight: "", style: "" },
+  { sourceFont: "Georgia", family: "georgia,'times new roman',times,serif", weight: "", style: "" },
   {
-    aifont: "Georgia-Bold",
+    sourceFont: "Georgia-Bold",
     family: "georgia,'times new roman',times,serif",
     weight: "700",
     style: "",
   },
   {
-    aifont: "Georgia-Italic",
+    sourceFont: "Georgia-Italic",
     family: "georgia,'times new roman',times,serif",
     weight: "",
     style: "italic",
   },
   {
-    aifont: "Georgia-BoldItalic",
+    sourceFont: "Georgia-BoldItalic",
     family: "georgia,'times new roman',times,serif",
     weight: "700",
     style: "italic",
   },
-  { aifont: "Inter-Regular", family: "Inter,system-ui,sans-serif", weight: "400", style: "" },
-  { aifont: "Inter-Medium", family: "Inter,system-ui,sans-serif", weight: "500", style: "" },
-  { aifont: "Inter-SemiBold", family: "Inter,system-ui,sans-serif", weight: "600", style: "" },
-  { aifont: "Inter-Bold", family: "Inter,system-ui,sans-serif", weight: "700", style: "" },
+  { sourceFont: "Inter-Regular", family: "Inter,system-ui,sans-serif", weight: "400", style: "" },
+  { sourceFont: "Inter-Medium", family: "Inter,system-ui,sans-serif", weight: "500", style: "" },
+  { sourceFont: "Inter-SemiBold", family: "Inter,system-ui,sans-serif", weight: "600", style: "" },
+  { sourceFont: "Inter-Bold", family: "Inter,system-ui,sans-serif", weight: "700", style: "" },
   {
-    aifont: "Inter-Italic",
+    sourceFont: "Inter-Italic",
     family: "Inter,system-ui,sans-serif",
     weight: "400",
     style: "italic",
   },
   {
-    aifont: "Inter-MediumItalic",
+    sourceFont: "Inter-MediumItalic",
     family: "Inter,system-ui,sans-serif",
     weight: "500",
     style: "italic",
   },
   {
-    aifont: "Inter-SemiBoldItalic",
+    sourceFont: "Inter-SemiBoldItalic",
     family: "Inter,system-ui,sans-serif",
     weight: "600",
     style: "italic",
   },
   {
-    aifont: "Inter-BoldItalic",
+    sourceFont: "Inter-BoldItalic",
     family: "Inter,system-ui,sans-serif",
     weight: "700",
     style: "italic",
@@ -71,11 +76,13 @@ export interface FontLookupResult {
   matched: boolean;
 }
 
-export function createFontMap(customFonts: FontMapping[]): (aifont: string) => FontLookupResult {
+export function createFontMap(
+  customFonts: FontMapping[],
+): (sourceFont: string) => FontLookupResult {
   // Merge builtin + custom (custom overrides builtin)
   const table: FontMapping[] = [...builtinFonts];
   for (const font of customFonts) {
-    const idx = table.findIndex((f) => f.aifont === font.aifont);
+    const idx = table.findIndex((f) => f.sourceFont === font.sourceFont);
     if (idx >= 0) {
       table[idx] = font;
     } else {
@@ -83,8 +90,8 @@ export function createFontMap(customFonts: FontMapping[]): (aifont: string) => F
     }
   }
 
-  return function lookupFont(aifont: string): FontLookupResult {
-    const entry = table.find((f) => f.aifont === aifont);
+  return function lookupFont(sourceFont: string): FontLookupResult {
+    const entry = table.find((f) => f.sourceFont === sourceFont);
     if (entry) {
       return {
         info: {
@@ -98,12 +105,12 @@ export function createFontMap(customFonts: FontMapping[]): (aifont: string) => F
     }
 
     // Heuristic fallback
-    const lower = aifont.toLowerCase();
+    const lower = sourceFont.toLowerCase();
     const isItalic = lower.includes("italic") || lower.includes("oblique");
     const isBold = lower.includes("bold");
     return {
       info: {
-        family: aifont.replace(/-/g, " "),
+        family: sourceFont.replace(/-/g, " "),
         weight: isBold ? "700" : "500",
         style: isItalic ? "italic" : "",
       },

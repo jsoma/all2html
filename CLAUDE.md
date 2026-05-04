@@ -26,29 +26,36 @@ Clean-room reimplementation of ai2html as a plugin-based system. Exporters produ
 
 ## Architecture
 
-**Pipeline:** IR JSON → `loadAndValidateIR` → `resolveSettings` → `computeBreakpoints` → `computeStyles` → `deduplicateStyles` → `computePositions` → `groupArtboards` → emitter
+**Pipeline:** IR JSON → `loadAndValidateIR` → `resolveSettings` → `computeBreakpoints` → `computeStyles` → `deduplicateStyles` → `computePositions` → `groupArtboards` → emitter → optional output bundle
 
 Each transform takes a phase-typed document and returns the next phase:
 `Document` → `ResolvedDocument` → `StyledDocument` → `DeduplicatedDocument` → `EmitterReadyDocument`
 
 **Boundary rule:** Input plugins (e.g. ExtendScript) extract data the design tool knows. The core handles everything tool-agnostic (CSS, positions, breakpoints, HTML).
 
+**IR rule:** `Document.irVersion` is currently `"0.1.0"`. Documents must include `source`, artboards/layers must include stable IDs, assets must reference those IDs via `artboardId`/`layerId`, and font mappings use `sourceFont`.
+
 **Figma rule:** `plugins/figma/` must target the canonical IR directly. Selected top-level frames are the only v1 export roots. Same-base-name frames form responsive groups; duplicate widths in one group are a hard error.
+
+**Output bundle rule:** Shared bundles include `ir.json`, emitted output files, extracted assets, and `manifest.json`. The manifest is the machine-readable inventory and must match the serialized bundle contents.
 
 **Bundling:** The core compiles to an ES5 IIFE that runs inside Illustrator's ExtendScript runtime. The assembled `dist/all2html.js` is one self-contained file (json2 polyfill + ES5 polyfills + core bundle + exporter). No Node.js required.
 
 ## Key Conventions
 
-- IR documents must include `irVersion` (currently `"0.0.0"` pre-release)
+- IR documents must include `irVersion` (currently `"0.1.0"` pre-release)
+- IR documents must include `source`; source-native names/IDs belong under `source`, not ad-hoc top-level fields
+- Artboard/layer IDs must be stable and unique inside the document. File importers should include enough path/source context to avoid basename collisions.
 - All positions in IR are absolute pixels, top-left origin, per-artboard coordinate space
 - IR `letterSpacing` is in em units (CSS-ready). Exporters convert from tool-native (e.g., AI tracking / 1000)
 - IR `opacity` fields are 0-100 scale (Illustrator convention). Core converts to CSS 0-1
-- Asset record keys must equal `asset.id`. Paths are relative to IR file directory
+- Asset record keys must equal `asset.id`. Asset `artboardId`/`layerId` references must point at real canonical IDs. Paths are relative to IR file directory
+- Font mappings use `sourceFont`; keep legacy names like `aifont` only in explicit compatibility adapters/panel state
 - `metadata` accepts arbitrary extra keys (JSON-serializable values). The core pipeline must never read or branch on non-typed metadata keys — they are passthrough for emitters/consumers only.
 - Plugins must target the canonical IR types/schemas in `src/ir/`. Do not define shadow IR contracts inside plugin directories.
 - Figma plugin config is JSONC stored as document-local plugin data. Keep it thin: canonical `settings`, `metadata`, `fonts`, and `customBlocks` only.
 - Figma plugin persistence: shared config lives in `figma.root` plugin data; local convenience state (currently output format, preset, and disclosure state) lives in `figma.clientStorage`.
-- Figma plugin delivery is ZIP-first: export `ir.json`, emitted HTML/standalone files, and any extracted asset bytes together. Do not add a Figma-only render path.
+- Figma plugin delivery is ZIP-first: export `ir.json`, `manifest.json`, emitted HTML/standalone files, and any extracted asset bytes together. Do not add a Figma-only render path.
 - Figma plugin runtime: export only selected top-level frames, clone them into a temporary export tree, detach nested instances, disable auto layout, hide extracted text before background raster export, and clean up temp nodes on all paths.
 - Figma plugin UX rule: direct controls are primary, Advanced JSONC is secondary, and both must edit the same canonical config object.
 - Figma plugin support rule: do not claim Figma support until the hardening corpus, repeated live exports, and typical-newsroom-file UX bar are actually met.
@@ -71,6 +78,8 @@ Each transform takes a phase-typed document and returns the next phase:
 - Use the `ObservableLogger` interface for pipeline observability — pass via `options.logger` to `processDocument()`. Default is `noopLogger` (zero overhead). Use `createConsoleLogger()` for CLI verbose mode, `createCollectingLogger()` for tests.
 - In hast emitter: do NOT call `escapeAttr()`/`escapeHtml()` on values passed to `h()` — hast auto-escapes. Only escape inside `raw()` nodes.
 - Emitter registry (`src/emitters/registry.ts`): all emitters return `{ files: EmitFile[], warnings }` via `emitAll(doc, groups)`. CLI uses `getEmitter(format)` — no if/else dispatch.
+- Importer/emitter registries are internal extension seams for now. Use `registerImporter`, `registerEmitter`, and browser-safe `registerBrowserEmitter`; do not add public third-party plugin loading yet.
+- Browser apps should use `src/browser.ts` orchestration helpers such as `convertLoadedSvgFilesInBrowser` instead of duplicating import/process/emit/bundle logic.
 - `allowUnsafeHtml` emitter option: when `false`, suppresses `binding.allowHtml` on tagged text. Defaults to `true` (ai2html parity).
 - `positionMode` emitter option: `"percentage"` converts remaining absolute text widths/anchor margins to percentage-based CSS transforms at emit time. Defaults to `"absolute"`.
 - Real Illustrator hardening fixtures are tracked in `test/fixtures/illustrator-fixtures.ts`. Keep the registry, `data/all2html-output/<fixture>/`, `test/fixtures/golden-ir/<fixture>.json`, and visual baselines aligned.

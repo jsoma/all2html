@@ -17,6 +17,7 @@ execFileSync("pnpm", ["exec", "tsc", "-p", "tsconfig.extendscript.json", "--outD
 
 const bundle = await rollup({
   input: resolve(tempDir, "extendscript/index.js"),
+  context: "this",
 });
 
 await bundle.write({

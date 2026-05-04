@@ -43,7 +43,12 @@
             "type": "text",
             "id": "figma-news-special-mixed-headline-640",
             "kind": "area",
-            "position": { "x": 36, "y": 250, "width": 360, "height": 82 },
+            "position": {
+              "x": 36,
+              "y": 250,
+              "width": 360,
+              "height": 82
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -60,7 +65,11 @@
                     "fontName": "Inter-Bold",
                     "fontPostScriptName": "Inter-Bold",
                     "fontSize": 30,
-                    "color": { "r": 24, "g": 31, "b": 41 },
+                    "color": {
+                      "r": 24,
+                      "g": 31,
+                      "b": 41
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -79,8 +88,16 @@
         "mimeType": "image/png",
         "width": 640,
         "height": 420,
-        "artboardName": "news-special-mixed:640",
-        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+        "exportParams": {
+          "format": "png",
+          "scale": 1,
+          "transparent": false
+        },
+        "artboardId": "figma:figma-news-special-mixed-640",
+        "source": {
+          "tool": "figma",
+          "name": "news-special-mixed:640"
+        }
       },
       {
         "id": "png-news-special-mixed-route-highlight-640",
@@ -88,9 +105,17 @@
         "mimeType": "image/png",
         "width": 640,
         "height": 420,
-        "artboardName": "news-special-mixed:640",
-        "layerName": "route-highlight",
-        "exportParams": { "format": "png", "scale": 1, "transparent": true }
+        "exportParams": {
+          "format": "png",
+          "scale": 1,
+          "transparent": true
+        },
+        "artboardId": "figma:figma-news-special-mixed-640",
+        "layerId": "figma:figma-news-special-mixed-640:layer:figma-news-special-mixed-overlay-640",
+        "source": {
+          "tool": "figma",
+          "name": "route-highlight"
+        }
       }
     ]
   },
@@ -138,7 +163,12 @@
             "type": "text",
             "id": "figma-news-special-mixed-headline-960",
             "kind": "area",
-            "position": { "x": 54, "y": 268, "width": 500, "height": 88 },
+            "position": {
+              "x": 54,
+              "y": 268,
+              "width": 500,
+              "height": 88
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -155,7 +185,11 @@
                     "fontName": "Inter-Bold",
                     "fontPostScriptName": "Inter-Bold",
                     "fontSize": 34,
-                    "color": { "r": 24, "g": 31, "b": 41 },
+                    "color": {
+                      "r": 24,
+                      "g": 31,
+                      "b": 41
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -174,8 +208,16 @@
         "mimeType": "image/png",
         "width": 960,
         "height": 440,
-        "artboardName": "news-special-mixed:960",
-        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+        "exportParams": {
+          "format": "png",
+          "scale": 1,
+          "transparent": false
+        },
+        "artboardId": "figma:figma-news-special-mixed-960",
+        "source": {
+          "tool": "figma",
+          "name": "news-special-mixed:960"
+        }
       },
       {
         "id": "png-news-special-mixed-route-highlight-960",
@@ -183,9 +225,17 @@
         "mimeType": "image/png",
         "width": 960,
         "height": 440,
-        "artboardName": "news-special-mixed:960",
-        "layerName": "route-highlight",
-        "exportParams": { "format": "png", "scale": 1, "transparent": true }
+        "exportParams": {
+          "format": "png",
+          "scale": 1,
+          "transparent": true
+        },
+        "artboardId": "figma:figma-news-special-mixed-960",
+        "layerId": "figma:figma-news-special-mixed-960:layer:figma-news-special-mixed-overlay-960",
+        "source": {
+          "tool": "figma",
+          "name": "route-highlight"
+        }
       }
     ]
   }

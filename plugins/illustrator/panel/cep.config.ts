@@ -1,7 +1,7 @@
 import type { CEP_Config } from "vite-cep-plugin";
 
 const config: CEP_Config = {
-  version: "0.1.0",
+  version: "0.1.1",
   id: "com.all2html.panel",
   displayName: "all2html",
   symlink: "local",
@@ -22,6 +22,10 @@ const config: CEP_Config = {
   parameters: ["--v=0", "--enable-nodejs", "--mixed-context"],
   width: 300,
   height: 400,
+  minWidth: 300,
+  minHeight: 400,
+  maxWidth: 720,
+  maxHeight: 1000,
   panels: [
     {
       mainPath: "./main/index.html",
@@ -30,6 +34,10 @@ const config: CEP_Config = {
       autoVisible: true,
       width: 300,
       height: 400,
+      minWidth: 300,
+      minHeight: 400,
+      maxWidth: 720,
+      maxHeight: 1000,
     },
   ],
   build: {

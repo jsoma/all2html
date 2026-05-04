@@ -40,7 +40,7 @@ async function runPanelTask<TResult>(
 
   try {
     await options.beforeRun?.();
-    var result = await options.run();
+    const result = await options.run();
     options.setResult(result);
     await options.afterSuccess?.(result);
   } catch (e) {
@@ -60,4 +60,25 @@ function openResultFolder(
   });
 }
 
-export { openResultFolder, reloadWatchedHostState, runPanelTask };
+function resolveResultOutputPath(
+  resultOutputPath: string | null | undefined,
+  documentPath: string | null | undefined,
+  configuredOutputPath: string | null | undefined,
+): string | null {
+  const explicit = String(resultOutputPath || "").trim();
+  if (explicit) return explicit;
+
+  const basePath = String(documentPath || "").trim().replace(/[\\/]+$/, "");
+  const fallback = String(configuredOutputPath || "").trim();
+  if (!basePath || !fallback) return null;
+
+  // Preserve explicit absolute paths and user-home shorthand.
+  if (/^(~[/\\]?|[A-Za-z]:[\\/]|\/)/.test(fallback)) {
+    return fallback;
+  }
+
+  const separator = basePath.includes("\\") ? "\\" : "/";
+  return `${basePath}${separator}${fallback.replace(/^[/\\]+/, "")}`;
+}
+
+export { openResultFolder, reloadWatchedHostState, resolveResultOutputPath, runPanelTask };

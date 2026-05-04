@@ -1,20 +1,12 @@
 {
-  "irVersion": "0.0.0",
-  "generator": {
-    "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "pluginVersion": "0.1.0"
-  },
+  "irVersion": "0.1.0",
   "settings": {},
   "fonts": [],
   "artboards": [
     {
       "name": "desktop",
-      "originalName": "desktop",
       "width": 720,
       "height": 460,
-      "actualWidth": 720,
-      "actualHeight": 460,
       "layers": [
         {
           "name": "content",
@@ -99,9 +91,21 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:desktop:layer:content",
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          }
         }
-      ]
+      ],
+      "id": "artboard:desktop",
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop",
+        "width": 720,
+        "height": 460
+      }
     }
   ],
   "customBlocks": [],
@@ -112,13 +116,17 @@
       "mimeType": "image/png",
       "width": 1440,
       "height": 920,
-      "artboardName": "desktop",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
+      },
+      "artboardId": "artboard:desktop",
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop"
       }
     }
   },
@@ -130,5 +138,10 @@
     "notes": "",
     "sources": "",
     "credit": ""
+  },
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "adapterVersion": "0.1.0"
   }
 }

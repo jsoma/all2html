@@ -43,12 +43,40 @@ export interface BrowserPipelineResult {
 }
 
 export interface BrowserEmitterDescriptor {
-  name: "html" | "standalone" | "svelte" | "react";
+  name: string;
   emitAll: (
     doc: EmitterReadyDocument,
     groups: ArtboardGroup[],
     emitterConfig?: EmitterConfig,
   ) => EmitResult;
+}
+
+export interface BrowserSvgConversionOptions {
+  loaded: LoadedSVGImportFiles;
+  format: string;
+  formatLabel?: string;
+  slug?: string;
+  parsedConfig?: All2HtmlConfig;
+  rasterizer: SvgRasterizer;
+  importFiles?: typeof importSVGFilesWithRasterizer;
+  process?: typeof processDocumentInBrowser;
+  emitter?: typeof getBrowserEmitter;
+  buildBundle?: typeof createOutputBundle;
+}
+
+export interface BrowserSvgConversionResult {
+  loaded: LoadedSVGImportFiles;
+  slug: string;
+  format: string;
+  irDocument: Awaited<ReturnType<typeof importSVGFilesWithRasterizer>>["document"];
+  bundle: OutputBundle;
+  emittedPath: string;
+  importWarnings: string[];
+  renderWarnings: string[];
+  artboardCount: number;
+  groupCount: number;
+  assetCount: number;
+  filePaths: string[];
 }
 
 export function processDocumentInBrowser(
@@ -67,12 +95,85 @@ export function processDocumentInBrowser(
   });
 }
 
-const browserEmitters = createBuiltinEmitters(emitStandaloneBrowser);
+export async function convertLoadedSvgFilesInBrowser(
+  options: BrowserSvgConversionOptions,
+): Promise<BrowserSvgConversionResult> {
+  const slug = options.slug?.trim() || options.loaded.slug;
+  const importFiles = options.importFiles ?? importSVGFilesWithRasterizer;
+  const process = options.process ?? processDocumentInBrowser;
+  const emitter = options.emitter ?? getBrowserEmitter;
+  const buildBundle = options.buildBundle ?? createOutputBundle;
 
-export function getBrowserEmitter(
-  name: "html" | "standalone" | "svelte" | "react",
-): BrowserEmitterDescriptor {
-  return browserEmitters[name] as BrowserEmitterDescriptor;
+  const imported = await importFiles(options.loaded.files, {
+    slug,
+    entrypointPaths: options.loaded.entrypointPaths,
+    settings: options.parsedConfig?.settings,
+    rasterizer: options.rasterizer,
+  });
+  const processed = process(imported.document, {
+    inlineConfig: options.parsedConfig,
+  });
+  const emitterConfig = getEmitterConfig(options.parsedConfig);
+  const emitResult = emitter(options.format).emitAll(
+    processed.document,
+    processed.groups,
+    emitterConfig,
+  );
+  if (emitResult.files.length === 0) {
+    throw new Error(`No ${options.formatLabel ?? options.format} files were emitted.`);
+  }
+  const renderWarnings = [...processed.warnings, ...emitResult.warnings];
+  const bundle = buildBundle({
+    irDocument: imported.document,
+    emittedFiles: emitResult.files,
+    assetFiles: imported.assetFiles,
+    assetRoot: processed.document.settings.imageOutputPath || "",
+    emittedFormat: options.format,
+    warnings: [...imported.warnings, ...renderWarnings],
+  });
+
+  return {
+    loaded: options.loaded,
+    slug,
+    format: options.format,
+    irDocument: imported.document,
+    bundle,
+    emittedPath: `${emitResult.files[0].slug}${emitResult.files[0].extension}`,
+    importWarnings: imported.warnings,
+    renderWarnings,
+    artboardCount: processed.document.artboards.length,
+    groupCount: processed.groups.length,
+    assetCount: imported.assetFiles.length,
+    filePaths: emitResult.files.map((file) => `${file.slug}${file.extension}`),
+  };
+}
+
+const browserEmitters = createBuiltinEmitters(emitStandaloneBrowser);
+const browserEmitterRegistry = new Map<string, BrowserEmitterDescriptor>(
+  Object.entries(browserEmitters).map(([name, emitter]) => [
+    name,
+    emitter as BrowserEmitterDescriptor,
+  ]),
+);
+
+export function registerBrowserEmitter(emitter: BrowserEmitterDescriptor): void {
+  if (!emitter.name) {
+    throw new Error("Browser emitter name is required.");
+  }
+  browserEmitterRegistry.set(emitter.name, emitter);
+}
+
+export function getBrowserEmitter(name: string): BrowserEmitterDescriptor {
+  const emitter = browserEmitterRegistry.get(name);
+  if (!emitter) {
+    const available = Array.from(browserEmitterRegistry.keys()).sort().join(", ");
+    throw new Error(`Unknown browser format: "${name}". Available: ${available}`);
+  }
+  return emitter;
+}
+
+export function getAvailableBrowserFormats(): string[] {
+  return Array.from(browserEmitterRegistry.keys()).sort((a, b) => a.localeCompare(b));
 }
 
 export {

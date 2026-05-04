@@ -5,6 +5,7 @@ The Figma plugin should feel usable to newsroom designers, not just developers. 
 ## Rules
 
 - Do not define local IR document/artboard interfaces. Import canonical types from `src/ir/`.
+- Build canonical artboard/layer IDs through `src/ir-ids.ts`; do not hand-roll IDs in extraction/export code.
 - Selection contract is strict: selected top-level frames only.
 - Same base frame name = responsive group. Duplicate widths inside a group are an error, not a fallback case.
 - Keep Figma-specific details in extraction metadata only. Do not add Figma-only fields to public IR without a proven cross-tool need.
@@ -14,7 +15,7 @@ The Figma plugin should feel usable to newsroom designers, not just developers. 
 - Advanced JSONC is a secondary view onto the same canonical config, not a separate model.
 - Invalid JSONC must block save/export with actionable copy.
 - Warnings are product UX. Do not hide them behind counts or console-only output.
-- ZIP delivery is the plugin boundary. The core still only thinks in IR documents and emitted files.
+- ZIP delivery is the plugin boundary. Bundles include `ir.json`, `manifest.json`, emitted files, and extracted assets. The core still only thinks in IR documents and emitted files until bundle assembly.
 - Do not add a Figma-only HTML renderer. All Figma output must pass through `processDocument()` and the existing emitters.
 - The runnable plugin path uses a browser-safe pipeline chain (`loadAndValidateIR` → `resolveSettingsPure` → core transforms) instead of the Node CLI entrypoint.
 - Do not call Figma “supported” in user-facing docs until the live hardening corpus and typical-newsroom-file QA bar are actually satisfied.

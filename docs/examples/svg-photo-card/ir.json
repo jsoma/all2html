@@ -1,10 +1,5 @@
 {
-  "irVersion": "0.0.0",
-  "generator": {
-    "tool": "svg",
-    "toolVersion": "1.0",
-    "pluginVersion": "0.1.0"
-  },
+  "irVersion": "0.1.0",
   "settings": {
     "imageFormat": [
       "auto"
@@ -43,26 +38,23 @@
   },
   "fonts": [
     {
-      "aifont": "Arial__400__normal",
       "family": "Arial",
       "weight": "400",
-      "style": "normal"
+      "style": "normal",
+      "sourceFont": "Arial__400__normal"
     },
     {
-      "aifont": "Arial__700__normal",
       "family": "Arial",
       "weight": "700",
-      "style": "normal"
+      "style": "normal",
+      "sourceFont": "Arial__700__normal"
     }
   ],
   "artboards": [
     {
       "name": "photo-card",
-      "originalName": "photo-card",
       "width": 720,
       "height": 480,
-      "actualWidth": 720,
-      "actualHeight": 480,
       "layers": [
         {
           "name": "content",
@@ -188,9 +180,21 @@
               ],
               "renderAs": "html"
             }
-          ]
+          ],
+          "id": "artboard:photo-card:layer:content",
+          "source": {
+            "tool": "svg",
+            "name": "content"
+          }
         }
-      ]
+      ],
+      "id": "artboard:photo-card",
+      "source": {
+        "tool": "svg",
+        "name": "photo-card",
+        "width": 720,
+        "height": 480
+      }
     }
   ],
   "customBlocks": [],
@@ -201,15 +205,24 @@
       "mimeType": "image/jpeg",
       "width": 1440,
       "height": 960,
-      "artboardName": "photo-card",
       "exportParams": {
         "format": "jpg",
         "scale": 2,
         "quality": 85
+      },
+      "artboardId": "artboard:photo-card",
+      "source": {
+        "tool": "svg",
+        "name": "photo-card"
       }
     }
   },
   "metadata": {
     "slug": "photo-card"
+  },
+  "source": {
+    "tool": "svg",
+    "toolVersion": "1.0",
+    "adapterVersion": "0.1.0"
   }
 }

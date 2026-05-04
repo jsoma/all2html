@@ -13,8 +13,14 @@ export function emitStandaloneBrowser(
   options?: EmitterOptions,
 ): EmitStandaloneResult {
   const { html: fragment, warnings } = emitHTML(doc, undefined, options);
+  const resultWarnings = [...warnings];
+
+  if (doc.settings.localPreviewTemplate) {
+    resultWarnings.push("Browser standalone export ignores localPreviewTemplate.");
+  }
+
   return {
     html: renderDefaultStandaloneHTML(doc, fragment),
-    warnings,
+    warnings: resultWarnings,
   };
 }

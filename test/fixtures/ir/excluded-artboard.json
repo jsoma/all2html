@@ -1,9 +1,4 @@
 {
-  "generator": {
-    "tool": "test",
-    "toolVersion": "1.0",
-    "pluginVersion": "0.1.0"
-  },
   "settings": {
     "namespace": "g-"
   },
@@ -11,11 +6,8 @@
   "artboards": [
     {
       "name": "visible",
-      "originalName": "visible",
       "width": 600,
       "height": 400,
-      "actualWidth": 600,
-      "actualHeight": 400,
       "layers": [
         {
           "name": "Layer1",
@@ -62,9 +54,21 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:visible:layer:layer1",
+          "source": {
+            "tool": "test",
+            "name": "Layer1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:visible",
+      "source": {
+        "tool": "test",
+        "name": "visible",
+        "width": 600,
+        "height": 400
+      }
     }
   ],
   "customBlocks": [],
@@ -72,5 +76,10 @@
   "metadata": {
     "slug": "excluded-artboard-test"
   },
-  "irVersion": "0.0.0"
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "adapterVersion": "0.1.0"
+  }
 }

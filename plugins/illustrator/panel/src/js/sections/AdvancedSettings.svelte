@@ -10,6 +10,7 @@
     type EditedKeys,
     type FieldSources,
   } from "../provenance";
+  import { getSettingHelp } from "../setting-help.js";
 
   interface Props {
     settings: PanelSettings;
@@ -60,6 +61,10 @@
 
   function badgeTitleFor(key: PanelSettingKey): string | undefined {
     return getFieldBadgeTitle(fieldSources, key, isLocked(key), editedKeys.includes(key));
+  }
+
+  function helpFor(key: PanelSettingKey) {
+    return getSettingHelp(key);
   }
 </script>
 
@@ -141,6 +146,8 @@
     locked={isLocked("textResponsiveness")}
     badge={badgeFor("textResponsiveness")}
     badgeTitle={badgeTitleFor("textResponsiveness")}
+    helpId="textResponsiveness"
+    help={helpFor("textResponsiveness")}
     {onchange}
   />
 
@@ -215,6 +222,8 @@
     locked={isLocked("includeResizerCss")}
     badge={badgeFor("includeResizerCss")}
     badgeTitle={badgeTitleFor("includeResizerCss")}
+    helpId="includeResizerCss"
+    help={helpFor("includeResizerCss")}
     {onchange}
   />
 
@@ -241,6 +250,8 @@
     locked={isLocked("inlineSvg")}
     badge={badgeFor("inlineSvg")}
     badgeTitle={badgeTitleFor("inlineSvg")}
+    helpId="inlineSvg"
+    help={helpFor("inlineSvg")}
     {onchange}
   />
 
@@ -268,6 +279,8 @@
     locked={isLocked("svgEmbedImages")}
     badge={badgeFor("svgEmbedImages")}
     badgeTitle={badgeTitleFor("svgEmbedImages")}
+    helpId="svgEmbedImages"
+    help={helpFor("svgEmbedImages")}
     {onchange}
   />
 

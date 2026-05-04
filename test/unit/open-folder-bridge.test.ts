@@ -10,27 +10,33 @@ import { openFolder as openIllustratorFolder } from "../../plugins/illustrator/p
 import { evalTS } from "../../plugins/illustrator/panel/src/js/lib/utils/bolt.js";
 
 const evalTSMock = vi.mocked(evalTS);
-const originalDocument = (globalThis as any).document;
-const originalRequire = (globalThis as any).require;
+type TestGlobal = {
+  document?: unknown;
+  require?: (moduleName: string) => unknown;
+};
+
+const testGlobal = globalThis as unknown as TestGlobal;
+const originalDocument = testGlobal.document;
+const originalRequire = testGlobal.require;
 
 describe("open folder bridges", () => {
   beforeEach(() => {
     evalTSMock.mockReset();
-    delete (globalThis as any).document;
-    delete (globalThis as any).require;
+    delete testGlobal.document;
+    delete testGlobal.require;
   });
 
   afterEach(() => {
     if (originalDocument === undefined) {
-      delete (globalThis as any).document;
+      delete testGlobal.document;
     } else {
-      (globalThis as any).document = originalDocument;
+      testGlobal.document = originalDocument;
     }
 
     if (originalRequire === undefined) {
-      delete (globalThis as any).require;
+      delete testGlobal.require;
     } else {
-      (globalThis as any).require = originalRequire;
+      testGlobal.require = originalRequire;
     }
   });
 
@@ -59,8 +65,8 @@ describe("open folder bridges", () => {
         callback(null);
       },
     );
-    (globalThis as any).document = {};
-    (globalThis as any).require = vi.fn((moduleName: string) => {
+    testGlobal.document = {};
+    testGlobal.require = vi.fn((moduleName: string) => {
       if (moduleName === "fs") {
         return { existsSync: vi.fn(() => true) };
       }
@@ -88,8 +94,8 @@ describe("open folder bridges", () => {
         callback(null);
       },
     );
-    (globalThis as any).document = {};
-    (globalThis as any).require = vi.fn((moduleName: string) => {
+    testGlobal.document = {};
+    testGlobal.require = vi.fn((moduleName: string) => {
       if (moduleName === "fs") {
         return { existsSync: vi.fn(() => true) };
       }

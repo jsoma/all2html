@@ -1,9 +1,4 @@
 {
-  "generator": {
-    "tool": "test",
-    "toolVersion": "1.0",
-    "pluginVersion": "0.1.0"
-  },
   "settings": {
     "namespace": "g-"
   },
@@ -11,11 +6,8 @@
   "artboards": [
     {
       "name": "desktop",
-      "originalName": "desktop",
       "width": 800,
       "height": 600,
-      "actualWidth": 800,
-      "actualHeight": 600,
       "layers": [
         {
           "name": "Layer1",
@@ -328,9 +320,21 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:desktop:layer:layer1",
+          "source": {
+            "tool": "test",
+            "name": "Layer1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:desktop",
+      "source": {
+        "tool": "test",
+        "name": "desktop",
+        "width": 800,
+        "height": 600
+      }
     }
   ],
   "customBlocks": [],
@@ -338,5 +342,10 @@
   "metadata": {
     "slug": "style-dedup-test"
   },
-  "irVersion": "0.0.0"
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "adapterVersion": "0.1.0"
+  }
 }

@@ -28,7 +28,10 @@ A component-oriented output for teams that want to integrate the result into a R
 Most export surfaces also involve:
 
 - `ir.json`
+- `manifest.json`
 - raster backgrounds or extracted assets
 - emitted output files
 
 That bundle shape is what makes the examples gallery and source/output samples practical.
+
+See [Bundle Manifest](bundle-manifest.md) for the machine-readable bundle inventory.

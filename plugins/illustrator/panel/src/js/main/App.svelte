@@ -7,7 +7,12 @@
     type ResolvedSettings,
   } from "../persistence";
   import PanelShell from "../components/PanelShell.svelte";
-  import { getEditedKeys, type FieldSources } from "../provenance";
+  import {
+    getEditedKeys,
+    getFieldBadge,
+    getFieldBadgeTitle,
+    type FieldSources,
+  } from "../provenance";
   import { panelToExporterSettings } from "../adapter";
   import { getMissingFonts, saveXmpSettings, runExport } from "../bridge";
   import { reloadWatchedHostState, runPanelTask } from "../panel-controller";
@@ -26,7 +31,8 @@
   import OutputSettings from "../sections/OutputSettings.svelte";
   import AdvancedSettings from "../sections/AdvancedSettings.svelte";
   import FontMapper from "../sections/FontMapper.svelte";
-  import DiagnosticsPanel from "../sections/DiagnosticsPanel.svelte";
+  import RunOutputSection from "../sections/RunOutputSection.svelte";
+  import { resolveResultOutputPath as resolveRunOutputPath } from "../panel-controller";
 
   import "../styles/panel.css";
 
@@ -40,6 +46,8 @@
   let fieldSources = $state<FieldSources>({});
   let inheritedSettings = $state<PanelSettings>({});
   let dirty = $state(false);
+  let lastRunAnchor = $state<HTMLDivElement | null>(null);
+  let autoReviewedRunKey = $state<string | null>(null);
 
   const SCHEMA_VERSION = "1.0.0";
 
@@ -132,6 +140,10 @@
     saveAppDefaults(editableSettings(settings), fonts);
   }
 
+  function reviewLastRun(): void {
+    lastRunAnchor?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   const lockedCount = $derived(documentControlledKeys.length);
   const editedKeys = $derived(getEditedKeys(settings, inheritedSettings, documentControlledKeys));
   const editedCount = $derived(editedKeys.length);
@@ -141,7 +153,6 @@
       return "doc + defaults";
     }
     switch (settingsSource) {
-      case "document": return "doc XMP";
       case "document-xmp": return "doc XMP";
       case "config-file": return "config file";
       case "app-defaults": return "defaults";
@@ -159,6 +170,33 @@
       else if (source === "app-defaults") labels.add("defaults");
     }
     return Array.from(labels).sort().join(" + ");
+  });
+
+  const resolvedResultOutputPath = $derived(
+    resolveRunOutputPath(lastResult?.outputPath, docInfo?.path, settings.htmlOutputPath),
+  );
+  const resultWarningCount = $derived.by(() =>
+    lastResult?.warnings
+      ? Object.values(lastResult.warnings).reduce((sum, items) => sum + items.length, 0)
+      : 0,
+  );
+  const reviewableRunKey = $derived.by(() => {
+    if (!lastResult) return null;
+    return [
+      lastResult.success ? "success" : "error",
+      lastResult.slug || "",
+      lastResult.error || "",
+      lastResult.elapsed || "",
+      String(resultWarningCount),
+    ].join("|");
+  });
+
+  $effect(() => {
+    if (!lastRunAnchor || !lastResult || !reviewableRunKey) return;
+    if (lastResult.success && resultWarningCount === 0) return;
+    if (autoReviewedRunKey === reviewableRunKey) return;
+    autoReviewedRunKey = reviewableRunKey;
+    reviewLastRun();
   });
 
   onMount(() => {
@@ -188,7 +226,30 @@
       <ImageSettings bind:settings onchange={markDirty} {documentControlledKeys} {fieldSources} {editedKeys} />
       <OutputSettings bind:settings onchange={markDirty} {documentControlledKeys} {fieldSources} {editedKeys} />
 
-      <FontMapper bind:fonts onchange={markDirty} ondetectmissing={getMissingFonts} />
+      <FontMapper
+        bind:fonts
+        onchange={markDirty}
+        googleFonts={settings.googleFonts ?? "none"}
+        googleFontsDisabled={documentControlledKeys.includes("googleFonts")}
+        googleFontsLocked={documentControlledKeys.includes("googleFonts")}
+        googleFontsBadge={getFieldBadge(
+          fieldSources,
+          "googleFonts",
+          documentControlledKeys.includes("googleFonts"),
+          editedKeys.includes("googleFonts"),
+        )}
+        googleFontsBadgeTitle={getFieldBadgeTitle(
+          fieldSources,
+          "googleFonts",
+          documentControlledKeys.includes("googleFonts"),
+          editedKeys.includes("googleFonts"),
+        )}
+        ongooglefontschange={(value) => {
+          settings.googleFonts = value;
+          markDirty();
+        }}
+        ondetectmissing={getMissingFonts}
+      />
       <AdvancedSettings bind:settings onchange={markDirty} {documentControlledKeys} {fieldSources} {editedKeys} />
 
       <div class="section" style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px">
@@ -211,15 +272,24 @@
           {/if}
         </span>
       </div>
+
+      {#if lastResult}
+        <div bind:this={lastRunAnchor}>
+          <RunOutputSection result={lastResult} outputPath={resolvedResultOutputPath} />
+        </div>
+      {/if}
     {/if}
   {/snippet}
 
   {#snippet footer()}
     {#if docInfo}
-      <RunButton {isRunning} result={lastResult} onrun={handleRun} />
-      {#if lastResult}
-        <DiagnosticsPanel result={lastResult} />
-      {/if}
+      <RunButton
+        {isRunning}
+        result={lastResult}
+        outputPath={resolvedResultOutputPath}
+        onreview={reviewLastRun}
+        onrun={handleRun}
+      />
     {/if}
   {/snippet}
 </PanelShell>

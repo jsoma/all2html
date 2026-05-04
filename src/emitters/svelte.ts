@@ -1,5 +1,6 @@
 import type { EmitterReadyDocument } from "../ir/types.js";
 import { type EmitGroupOptions, emitHTML } from "./html.js";
+import { buildGoogleFontsUrl, stripGoogleFontsLinkTags } from "./shared/google-fonts.js";
 import type { SvelteEmitterOptions } from "./types.js";
 
 export interface EmitSvelteResult {
@@ -25,10 +26,23 @@ export function emitSvelte(
   // Extract <style> block and move to Svelte <style>
   const styleMatch = fragment.match(/<style[^>]*>([\s\S]*?)<\/style>/);
   const css = styleMatch ? styleMatch[1] : "";
-  const htmlWithoutStyle = fragment.replace(/<style[^>]*>[\s\S]*?<\/style>\s*/, "");
+  const htmlWithoutStyle = stripGoogleFontsLinkTags(
+    fragment.replace(/<style[^>]*>[\s\S]*?<\/style>\s*/, ""),
+  );
 
   // Remove HTML comments (not valid in Svelte template)
   const tokenizedHtml = htmlWithoutStyle.replace(/<!--[\s\S]*?-->/g, "").trim();
+  const googleFontsHref =
+    tokenizedDoc.settings.googleFonts === "link" ? buildGoogleFontsUrl(tokenizedDoc.fonts) : null;
+  const fontHead = googleFontsHref
+    ? `<svelte:head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="${escapeHtmlAttr(googleFontsHref)}">
+</svelte:head>
+
+`
+    : "";
 
   const svelte = `<script>
   let { assetsPath = ".", class: className = "" } = $props();
@@ -42,7 +56,7 @@ export function emitSvelte(
   }
 </script>
 
-<div class={className}>
+${fontHead}<div class={className}>
   {@html resolveHtml(\`${escapeTemplateLiteral(tokenizedHtml)}\`)}
 </div>
 
@@ -56,4 +70,12 @@ ${css}
 
 function escapeTemplateLiteral(str: string): string {
   return str.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$/g, "\\$");
+}
+
+function escapeHtmlAttr(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }

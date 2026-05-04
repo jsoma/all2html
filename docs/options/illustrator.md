@@ -56,6 +56,7 @@ Illustrator supports much of the classic ai2html-style setting surface. The high
 - `jpg_quality`
 - `png_number_of_colors`
 - `use_2x_images_if_possible`
+- `google_fonts`
 
 You can set them in:
 
@@ -88,13 +89,17 @@ Font mapping is done through `all2html.config.json` or the panel UI. The common 
 {
   "fonts": [
     {
-      "aifont": "HelveticaNeue-Bold",
+      "sourceFont": "HelveticaNeue-Bold",
       "family": "'Helvetica Neue', sans-serif",
       "weight": "700"
     }
   ]
 }
 ```
+
+Older config files that use `aifont` still load, but new docs and generated config use `sourceFont`.
+
+The panel also has a `Google Fonts` control. It writes the canonical `googleFonts` setting through config/panel state and the Illustrator `google_fonts` setting through `ai2html-settings`. Leave it `Off` for self-hosted or private fonts. Choose `CSS @import` to put a Google Fonts request at the top of generated CSS, or `Link tag` when the host page should receive preconnect and stylesheet links.
 
 ## What Illustrator Is Best For
 

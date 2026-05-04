@@ -47,6 +47,8 @@ pnpm build:svg-dropzone
 
 The browser app is fully client-side and accepts drag-and-drop SVG or ZIP input.
 
+Optional JSON/JSONC config can set shared settings such as `googleFonts`. Font loading follows the same modes as the other exporters: `none`, `import`, or `link`.
+
 ## Naming Rules
 
 Responsive grouping is driven by filenames. Preferred examples:

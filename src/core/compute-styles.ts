@@ -102,7 +102,7 @@ function computeRunStyle(
   // vshift for point text
   if (element.kind === "point" && info.vshift) {
     const pct = parseFloat(info.vshift);
-    if (!isNaN(pct) && pct !== 0) {
+    if (!Number.isNaN(pct) && pct !== 0) {
       const px = round((run.fontSize * pct) / 100);
       style.top = `${px}px`;
       style.position = "relative";

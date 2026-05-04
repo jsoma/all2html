@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { makeFigmaArtboardId } from "../../plugins/figma/src/ir-ids.js";
 import { exportExtractedFrames, summarizeSelection } from "../../plugins/figma/src/main.js";
 import type { ExtractedFrame, SelectionNodeLike } from "../../plugins/figma/src/types.js";
 import { processDocument } from "../../src/core/pipeline.js";
@@ -6,10 +7,12 @@ import { getEmitter } from "../../src/emitters/registry.js";
 import { loadAndValidateIR } from "../../src/ir/validate.js";
 
 function makeFrame(overrides: Partial<ExtractedFrame> = {}): ExtractedFrame {
+  const sourceNodeId = overrides.sourceNodeId ?? "frame-1";
+  const originalName = overrides.originalName ?? "story:640:dynamic";
   return {
-    sourceNodeId: "frame-1",
+    sourceNodeId,
     name: "story",
-    originalName: "story:640:dynamic",
+    originalName,
     width: 640,
     height: 360,
     actualWidth: 640,
@@ -60,12 +63,12 @@ function makeFrame(overrides: Partial<ExtractedFrame> = {}): ExtractedFrame {
     ],
     assets: [
       {
-        id: `asset-${overrides.sourceNodeId ?? "frame-1"}`,
-        path: `all2html-output/${overrides.sourceNodeId ?? "frame-1"}.png`,
+        id: `asset-${sourceNodeId}`,
+        path: `all2html-output/${sourceNodeId}.png`,
         mimeType: "image/png",
         width: overrides.width ?? 640,
         height: 360,
-        artboardName: overrides.originalName ?? "story:640:dynamic",
+        artboardId: makeFigmaArtboardId({ sourceNodeId, originalName }),
         exportParams: { format: "png", scale: 1, transparent: false },
         bytes: new TextEncoder().encode("png"),
       },
@@ -91,7 +94,10 @@ describe("Figma canonical plugin pipeline", () => {
               mimeType: "image/png",
               width: 1024,
               height: 360,
-              artboardName: "story:1024:dynamic",
+              artboardId: makeFigmaArtboardId({
+                sourceNodeId: "frame-2",
+                originalName: "story:1024:dynamic",
+              }),
               exportParams: { format: "png", scale: 1, transparent: false },
               bytes: new TextEncoder().encode("png"),
             },
@@ -110,7 +116,7 @@ describe("Figma canonical plugin pipeline", () => {
     );
 
     const doc = loadAndValidateIR(result.ir);
-    expect(doc.generator.tool).toBe("figma");
+    expect(doc.source.tool).toBe("figma");
     expect(doc.metadata.headline).toBe("Figma Story");
 
     const { document, groups } = processDocument(result.ir);

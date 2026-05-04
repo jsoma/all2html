@@ -25,6 +25,10 @@ function usage() {
 `);
 }
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 function emitAndWrite(
   doc: EmitterReadyDocument,
   groups: ArtboardGroup[],
@@ -63,8 +67,8 @@ async function main() {
       const raw = JSON.parse(readFileSync(resolve(irPath), "utf-8"));
       loadAndValidateIR(raw);
       console.log("Valid IR document.");
-    } catch (err: any) {
-      console.error(err.message);
+    } catch (err: unknown) {
+      console.error(getErrorMessage(err));
       process.exit(1);
     }
     return;
@@ -108,8 +112,8 @@ async function main() {
 
       mkdirSync(resolve(outputDir), { recursive: true });
       emitAndWrite(doc, groups, format, outputDir, emitterConfig);
-    } catch (err: any) {
-      console.error(`Error: ${err.message}`);
+    } catch (err: unknown) {
+      console.error(`Error: ${getErrorMessage(err)}`);
       process.exit(1);
     }
     return;
@@ -186,6 +190,8 @@ async function main() {
         emittedFiles: emitResult.files,
         assetFiles: imported.assetFiles,
         assetRoot: doc.settings.imageOutputPath || "",
+        emittedFormat: format,
+        warnings: [...imported.warnings, ...warnings, ...emitResult.warnings],
       });
       const emittedPaths = new Set(emitResult.files.map((file) => `${file.slug}${file.extension}`));
       for (const file of bundle.files) {
@@ -197,8 +203,8 @@ async function main() {
         writeFileSync(outPath, file.bytes);
         console.log(`Written: ${outPath}`);
       }
-    } catch (err: any) {
-      console.error(`Error: ${err.message}`);
+    } catch (err: unknown) {
+      console.error(`Error: ${getErrorMessage(err)}`);
       process.exit(1);
     }
     return;
@@ -240,8 +246,8 @@ async function main() {
         const emitResult = emitAndWrite(doc, groups, format, outputDir, emitterConfig);
         const totalWarnings = warnings.length + emitResult.warnings.length;
         console.log(`Rebuilt (${totalWarnings} warnings)`);
-      } catch (err: any) {
-        console.error(`Rebuild error: ${err.message}`);
+      } catch (err: unknown) {
+        console.error(`Rebuild error: ${getErrorMessage(err)}`);
       }
     }
 

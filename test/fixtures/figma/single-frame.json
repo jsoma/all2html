@@ -20,7 +20,12 @@
             "type": "text",
             "id": "figma-text-1",
             "kind": "point",
-            "position": { "x": 24, "y": 32, "width": 320, "height": 32 },
+            "position": {
+              "x": 24,
+              "y": 32,
+              "width": 320,
+              "height": 32
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -37,7 +42,11 @@
                     "fontName": "Inter-Regular",
                     "fontPostScriptName": "Inter-Regular",
                     "fontSize": 24,
-                    "color": { "r": 0, "g": 0, "b": 0 },
+                    "color": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -56,8 +65,16 @@
         "mimeType": "image/png",
         "width": 640,
         "height": 360,
-        "artboardName": "story:640",
-        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+        "exportParams": {
+          "format": "png",
+          "scale": 1,
+          "transparent": false
+        },
+        "artboardId": "figma:figma-frame-1",
+        "source": {
+          "tool": "figma",
+          "name": "story:640"
+        }
       }
     ]
   }

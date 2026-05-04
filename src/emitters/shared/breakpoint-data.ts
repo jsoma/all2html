@@ -1,5 +1,5 @@
 import type { EmitterReadyDocument } from "../../ir/types.js";
-import { makeKeyword } from "./css.js";
+import { makeArtboardKey } from "./css.js";
 
 export interface BreakpointEntry {
   artboardId: string;
@@ -20,7 +20,7 @@ export function extractBreakpointData(doc: EmitterReadyDocument): BreakpointEntr
   return [...doc.artboards]
     .sort((a, b) => a.breakpoint.minWidth - b.breakpoint.minWidth)
     .map((ab) => ({
-      artboardId: `${ns}${slug}-${makeKeyword(ab.name)}`,
+      artboardId: `${ns}${slug}-${makeArtboardKey(ab, doc.artboards)}`,
       artboardName: ab.name,
       minWidth: ab.breakpoint.minWidth,
       maxWidth:

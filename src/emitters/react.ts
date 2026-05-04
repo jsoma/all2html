@@ -1,5 +1,6 @@
 import type { EmitterReadyDocument } from "../ir/types.js";
 import { type EmitGroupOptions, emitHTML } from "./html.js";
+import { buildGoogleFontsUrl, stripGoogleFontsLinkTags } from "./shared/google-fonts.js";
 import type { ReactEmitterOptions } from "./types.js";
 
 export interface EmitReactResult {
@@ -27,10 +28,14 @@ export function emitReact(
   // Extract <style> block
   const styleMatch = fragment.match(/<style[^>]*>([\s\S]*?)<\/style>/);
   const css = styleMatch ? styleMatch[1] : "";
-  const htmlWithoutStyle = fragment.replace(/<style[^>]*>[\s\S]*?<\/style>\s*/, "");
+  const htmlWithoutStyle = stripGoogleFontsLinkTags(
+    fragment.replace(/<style[^>]*>[\s\S]*?<\/style>\s*/, ""),
+  );
 
   // Remove HTML comments
   const tokenizedHtml = htmlWithoutStyle.replace(/<!--[\s\S]*?-->/g, "").trim();
+  const googleFontsHref =
+    tokenizedDoc.settings.googleFonts === "link" ? buildGoogleFontsUrl(tokenizedDoc.fonts) : null;
 
   // Generate component name from slug (must be valid JS identifier)
   let componentName = slug
@@ -38,7 +43,7 @@ export function emitReact(
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join("");
   // Prefix if starts with a number (e.g. "2024ElectionMap" → "Graphic2024ElectionMap")
-  if (/^\d/.test(componentName)) componentName = "Graphic" + componentName;
+  if (/^\d/.test(componentName)) componentName = `Graphic${componentName}`;
 
   const escapedCSS = escapeTemplateLiteral(css);
   const escapedHTML = escapeTemplateLiteral(tokenizedHtml);
@@ -57,6 +62,7 @@ interface ${componentName}Props {
 const ASSET_TOKEN = "${ASSETS_TOKEN}";
 const cssText = \`${escapedCSS}\`;
 const htmlTemplate = \`${escapedHTML}\`;
+const googleFontsHref = ${googleFontsHref ? JSON.stringify(googleFontsHref) : "null"};
 
 export default function ${componentName}({ assetsPath = ".", className = "" }: ${componentName}Props): JSX.Element {
   const safePath = assetsPath.replace(/\\/+$/, "");
@@ -67,6 +73,13 @@ export default function ${componentName}({ assetsPath = ".", className = "" }: $
 
   return (
     <div className={className}>
+      {googleFontsHref ? (
+        <>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+          <link rel="stylesheet" href={googleFontsHref} />
+        </>
+      ) : null}
       <style dangerouslySetInnerHTML={{ __html: cssText }} />
       <div dangerouslySetInnerHTML={{ __html: html }} />
     </div>
@@ -79,6 +92,7 @@ export default function ${componentName}({ assetsPath = ".", className = "" }: $
 const ASSET_TOKEN = "${ASSETS_TOKEN}";
 const cssText = \`${escapedCSS}\`;
 const htmlTemplate = \`${escapedHTML}\`;
+const googleFontsHref = ${googleFontsHref ? JSON.stringify(googleFontsHref) : "null"};
 
 export default function ${componentName}({ assetsPath = ".", className = "" }) {
   const safePath = assetsPath.replace(/\\/+$/, "");
@@ -89,6 +103,13 @@ export default function ${componentName}({ assetsPath = ".", className = "" }) {
 
   return (
     <div className={className}>
+      {googleFontsHref ? (
+        <>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+          <link rel="stylesheet" href={googleFontsHref} />
+        </>
+      ) : null}
       <style dangerouslySetInnerHTML={{ __html: cssText }} />
       <div dangerouslySetInnerHTML={{ __html: html }} />
     </div>

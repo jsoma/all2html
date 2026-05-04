@@ -18,6 +18,7 @@ import {
   toCssUrlValue,
 } from "./shared/assets.js";
 import { generateCSS, makeArtboardKey, makeKeyword, useCssVarImages } from "./shared/css.js";
+import { renderGoogleFontsLinkTags } from "./shared/google-fonts.js";
 import { commentNode, escapeHtml, h, raw } from "./shared/hast-helpers.js";
 import { applyEmitterOptions } from "./shared/options.js";
 import type { EmitterOptions } from "./types.js";
@@ -141,8 +142,8 @@ function scopeArtboards(
   artboards?: EmitterReadyArtboard[],
 ): EmitterReadyArtboard[] {
   if (!artboards) return doc.artboards;
-  const keys = new Set(artboards.map((ab) => `${ab.name}\u0000${ab.width}\u0000${ab.height}`));
-  return doc.artboards.filter((ab) => keys.has(`${ab.name}\u0000${ab.width}\u0000${ab.height}`));
+  const ids = new Set(artboards.map((ab) => ab.id));
+  return doc.artboards.filter((ab) => ids.has(ab.id));
 }
 
 function renderArtboard(
@@ -230,7 +231,7 @@ function renderArtboard(
   for (const layer of ab.layers) {
     switch (layer.type) {
       case "png": {
-        const pngAsset = getScopedLayerAsset(assetIdx, ab, layer.name);
+        const pngAsset = getScopedLayerAsset(assetIdx, ab, layer.id);
         if (pngAsset) {
           const pngSrc = resolveAssetPath(pngAsset, settings);
           abChildren.push(
@@ -253,7 +254,7 @@ function renderArtboard(
             }
           }
         } else {
-          const svgAsset = getScopedLayerAsset(assetIdx, ab, layer.name);
+          const svgAsset = getScopedLayerAsset(assetIdx, ab, layer.id);
           if (svgAsset) {
             const svgSrc = resolveAssetPath(svgAsset, settings);
             abChildren.push(
@@ -405,6 +406,14 @@ export function emitHTML(
   rootChildren.push(commentNode(`source: ${slug}`));
   rootChildren.push(raw("\n"));
 
+  if (settings.googleFonts === "link") {
+    const fontLinks = renderGoogleFontsLinkTags(scopedDoc.fonts);
+    if (fontLinks) {
+      rootChildren.push(raw(fontLinks));
+      rootChildren.push(raw("\n"));
+    }
+  }
+
   // Style block
   rootChildren.push(h("style", { media: "screen,print" }, [raw(`\n${css}\n`)]));
   rootChildren.push(raw("\n"));
@@ -474,7 +483,7 @@ export function emitHTML(
   for (const ab of sortedAbs) {
     target.push(
       commentNode(`Artboard: ${ab.name}`),
-      renderArtboard(ab, resolvedDoc, ns, slug, assetIdx, cssVarMode),
+      renderArtboard(ab, scopedDoc, ns, slug, assetIdx, cssVarMode),
     );
   }
 

@@ -1,5 +1,5 @@
 import { parseSync, stringify } from "svgson";
-import { makeKeyword } from "../../emitters/shared/css.js";
+import { makeKeyword } from "../../core/identifiers.js";
 import { defaultSettings } from "../../ir/defaults.js";
 import type {
   Artboard,
@@ -12,6 +12,7 @@ import type {
   Settings,
   TextElement,
 } from "../../ir/types.js";
+import { CURRENT_IR_VERSION } from "../../ir/types.js";
 import type { ImportedAssetFile, ImportedFile, ImportOptions, ImportResult } from "../types.js";
 import { encodeRasterImage, type SvgRasterizer } from "./rasterizer.js";
 
@@ -107,6 +108,16 @@ function stripExtension(path: string): string {
   const file = basenamePosix(path);
   const index = file.lastIndexOf(".");
   return index >= 0 ? file.slice(0, index) : file;
+}
+
+function stripPathExtension(path: string): string {
+  const normalized = normalizeImportPath(path);
+  const slashIndex = normalized.lastIndexOf("/");
+  const extensionIndex = normalized.lastIndexOf(".");
+  if (extensionIndex > slashIndex) {
+    return normalized.slice(0, extensionIndex);
+  }
+  return normalized;
 }
 
 function joinPosix(base: string, relativePath: string): string {
@@ -400,7 +411,7 @@ function createFontMapping(
 
   if (!state.fonts.has(fontName)) {
     state.fonts.set(fontName, {
-      aifont: fontName,
+      sourceFont: fontName,
       family,
       weight,
       style,
@@ -1003,6 +1014,8 @@ async function parseSvgFile(
   }
 
   const dimensions = parseSvgDimensions(root);
+  const artboardId = `artboard:${makeKeyword(stripPathExtension(file.path), "artboard")}`;
+  const contentLayerId = `${artboardId}:layer:content`;
   const shouldRecoverText = !naming.imageOnly && settings.renderTextAs !== "image";
   const extractedText = shouldRecoverText
     ? collectRecoverableText(
@@ -1070,7 +1083,12 @@ async function parseSvgFile(
       mimeType: rasterized.mimeType,
       width: rasterized.width,
       height: rasterized.height,
-      artboardName: naming.artboardName,
+      artboardId,
+      source: {
+        tool: "svg",
+        id: file.path,
+        name: naming.originalName,
+      },
       exportParams: {
         format: extensionForMimeType(rasterized.mimeType) as "png" | "jpg",
         scale: settings.use2xImages ? 2 : 1,
@@ -1088,8 +1106,14 @@ async function parseSvgFile(
   const layers = [];
   if (extractedText.length > 0) {
     layers.push({
+      id: contentLayerId,
       name: "content",
       type: "default" as const,
+      source: {
+        tool: "svg",
+        id: `${file.path}#content`,
+        name: "content",
+      },
       inlineSvg: false,
       visible: true,
       opacity: 100,
@@ -1103,12 +1127,17 @@ async function parseSvgFile(
 
   return {
     artboard: {
+      id: artboardId,
       name: naming.artboardName,
-      originalName: naming.originalName,
       width: dimensions.width,
       height: dimensions.height,
-      actualWidth: dimensions.width,
-      actualHeight: dimensions.height,
+      source: {
+        tool: "svg",
+        id: file.path,
+        name: naming.originalName,
+        width: dimensions.width,
+        height: dimensions.height,
+      },
       responsiveness: naming.responsiveness,
       imageOnly: naming.imageOnly,
       layers,
@@ -1220,11 +1249,11 @@ export async function importSVGFilesWithRasterizer(
 
   const slug = deriveSlug(entrypointPaths, options);
   const document: Document = {
-    irVersion: "0.0.0",
-    generator: {
+    irVersion: CURRENT_IR_VERSION,
+    source: {
       tool: "svg",
       toolVersion: "1.0",
-      pluginVersion: "0.1.0",
+      adapterVersion: "0.1.0",
     },
     settings: {
       ...importSettings,

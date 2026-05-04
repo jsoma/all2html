@@ -33,5 +33,6 @@ That keeps the output logic shared even when the source tools are very different
 
 - [Canonical IR](canonical-ir.md)
 - [Pipeline](pipeline.md)
+- [Adapters And Extension Points](adapters.md)
 - [Responsive Output](responsive-output.md)
 - [Special Layers](special-layers.md)

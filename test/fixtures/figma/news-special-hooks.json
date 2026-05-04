@@ -34,7 +34,12 @@
             "type": "text",
             "id": "figma-news-special-hooks-headline",
             "kind": "area",
-            "position": { "x": 36, "y": 226, "width": 420, "height": 80 },
+            "position": {
+              "x": 36,
+              "y": 226,
+              "width": 420,
+              "height": 80
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -51,7 +56,11 @@
                     "fontName": "Inter-Bold",
                     "fontPostScriptName": "Inter-Bold",
                     "fontSize": 29,
-                    "color": { "r": 24, "g": 31, "b": 41 },
+                    "color": {
+                      "r": 24,
+                      "g": 31,
+                      "b": 41
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -84,8 +93,16 @@
         "mimeType": "image/png",
         "width": 700,
         "height": 400,
-        "artboardName": "news-special-hooks",
-        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+        "exportParams": {
+          "format": "png",
+          "scale": 1,
+          "transparent": false
+        },
+        "artboardId": "figma:figma-news-special-hooks",
+        "source": {
+          "tool": "figma",
+          "name": "news-special-hooks"
+        }
       }
     ]
   }

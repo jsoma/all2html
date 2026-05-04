@@ -20,7 +20,12 @@
             "type": "text",
             "id": "figma-news-single-kicker",
             "kind": "area",
-            "position": { "x": 32, "y": 272, "width": 180, "height": 16 },
+            "position": {
+              "x": 32,
+              "y": 272,
+              "width": 180,
+              "height": 16
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -37,7 +42,11 @@
                     "fontName": "Inter-SemiBold",
                     "fontPostScriptName": "Inter-SemiBold",
                     "fontSize": 12,
-                    "color": { "r": 196, "g": 111, "b": 82 },
+                    "color": {
+                      "r": 196,
+                      "g": 111,
+                      "b": 82
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -50,7 +59,12 @@
             "type": "text",
             "id": "figma-news-single-headline",
             "kind": "area",
-            "position": { "x": 32, "y": 292, "width": 500, "height": 72 },
+            "position": {
+              "x": 32,
+              "y": 292,
+              "width": 500,
+              "height": 72
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -67,7 +81,11 @@
                     "fontName": "Inter-Bold",
                     "fontPostScriptName": "Inter-Bold",
                     "fontSize": 30,
-                    "color": { "r": 20, "g": 24, "b": 31 },
+                    "color": {
+                      "r": 20,
+                      "g": 24,
+                      "b": 31
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -80,7 +98,12 @@
             "type": "text",
             "id": "figma-news-single-deck",
             "kind": "area",
-            "position": { "x": 32, "y": 376, "width": 520, "height": 48 },
+            "position": {
+              "x": 32,
+              "y": 376,
+              "width": 520,
+              "height": 48
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -97,7 +120,11 @@
                     "fontName": "Inter-Regular",
                     "fontPostScriptName": "Inter-Regular",
                     "fontSize": 16,
-                    "color": { "r": 63, "g": 70, "b": 80 },
+                    "color": {
+                      "r": 63,
+                      "g": 70,
+                      "b": 80
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -107,11 +134,18 @@
                     "fontName": "Inter-Regular",
                     "fontPostScriptName": "Inter-Regular",
                     "fontSize": 16,
-                    "color": { "r": 36, "g": 95, "b": 134 },
+                    "color": {
+                      "r": 36,
+                      "g": 95,
+                      "b": 134
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal",
-                    "hyperlink": { "href": "https://example.com/transit-plan", "target": "_blank" }
+                    "hyperlink": {
+                      "href": "https://example.com/transit-plan",
+                      "target": "_blank"
+                    }
                   }
                 ]
               }
@@ -127,8 +161,16 @@
         "mimeType": "image/png",
         "width": 640,
         "height": 420,
-        "artboardName": "news-story-single",
-        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+        "exportParams": {
+          "format": "png",
+          "scale": 1,
+          "transparent": false
+        },
+        "artboardId": "figma:figma-news-single",
+        "source": {
+          "tool": "figma",
+          "name": "news-story-single"
+        }
       }
     ]
   }

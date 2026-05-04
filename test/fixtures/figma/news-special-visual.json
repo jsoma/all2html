@@ -52,7 +52,12 @@
             "type": "text",
             "id": "figma-news-special-visual-kicker",
             "kind": "area",
-            "position": { "x": 36, "y": 234, "width": 200, "height": 18 },
+            "position": {
+              "x": 36,
+              "y": 234,
+              "width": 200,
+              "height": 18
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -69,7 +74,11 @@
                     "fontName": "Inter-SemiBold",
                     "fontPostScriptName": "Inter-SemiBold",
                     "fontSize": 12,
-                    "color": { "r": 38, "g": 95, "b": 129 },
+                    "color": {
+                      "r": 38,
+                      "g": 95,
+                      "b": 129
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -82,7 +91,12 @@
             "type": "text",
             "id": "figma-news-special-visual-headline",
             "kind": "area",
-            "position": { "x": 36, "y": 258, "width": 360, "height": 82 },
+            "position": {
+              "x": 36,
+              "y": 258,
+              "width": 360,
+              "height": 82
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -99,7 +113,11 @@
                     "fontName": "Inter-Bold",
                     "fontPostScriptName": "Inter-Bold",
                     "fontSize": 30,
-                    "color": { "r": 24, "g": 31, "b": 41 },
+                    "color": {
+                      "r": 24,
+                      "g": 31,
+                      "b": 41
+                    },
                     "letterSpacing": 0,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -118,8 +136,16 @@
         "mimeType": "image/png",
         "width": 720,
         "height": 420,
-        "artboardName": "news-special-visual",
-        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+        "exportParams": {
+          "format": "png",
+          "scale": 1,
+          "transparent": false
+        },
+        "artboardId": "figma:figma-news-special-visual",
+        "source": {
+          "tool": "figma",
+          "name": "news-special-visual"
+        }
       },
       {
         "id": "png-news-special-visual-storm-track",
@@ -127,9 +153,17 @@
         "mimeType": "image/png",
         "width": 720,
         "height": 420,
-        "artboardName": "news-special-visual",
-        "layerName": "storm-track",
-        "exportParams": { "format": "png", "scale": 1, "transparent": true }
+        "exportParams": {
+          "format": "png",
+          "scale": 1,
+          "transparent": true
+        },
+        "artboardId": "figma:figma-news-special-visual",
+        "layerId": "figma:figma-news-special-visual:layer:figma-news-special-visual-overlay",
+        "source": {
+          "tool": "figma",
+          "name": "storm-track"
+        }
       },
       {
         "id": "svg-news-special-visual-cone-map",
@@ -137,9 +171,17 @@
         "mimeType": "image/svg+xml",
         "width": 720,
         "height": 420,
-        "artboardName": "news-special-visual",
-        "layerName": "cone-map",
-        "exportParams": { "format": "svg", "scale": 1, "transparent": true }
+        "exportParams": {
+          "format": "svg",
+          "scale": 1,
+          "transparent": true
+        },
+        "artboardId": "figma:figma-news-special-visual",
+        "layerId": "figma:figma-news-special-visual:layer:figma-news-special-visual-svg",
+        "source": {
+          "tool": "figma",
+          "name": "cone-map"
+        }
       }
     ]
   }

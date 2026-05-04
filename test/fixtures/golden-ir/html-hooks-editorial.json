@@ -1,20 +1,12 @@
 {
-  "irVersion": "0.0.0",
-  "generator": {
-    "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "pluginVersion": "0.1.0"
-  },
+  "irVersion": "0.1.0",
   "settings": {},
   "fonts": [],
   "artboards": [
     {
       "name": "desktop",
-      "originalName": "desktop",
       "width": 760,
       "height": 520,
-      "actualWidth": 760,
-      "actualHeight": 520,
       "layers": [
         {
           "name": "footer-hook",
@@ -27,7 +19,12 @@
               "type": "rawHtml",
               "content": "<div data-hook=\"layer-after\">Layer after hook</div>"
             }
-          ]
+          ],
+          "id": "artboard:desktop:layer:footer-hook",
+          "source": {
+            "tool": "illustrator",
+            "name": "footer-hook"
+          }
         },
         {
           "name": "blank-layer-hook",
@@ -35,7 +32,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:desktop:layer:blank-layer-hook",
+          "source": {
+            "tool": "illustrator",
+            "name": "blank-layer-hook"
+          }
         },
         {
           "name": "deck-hook",
@@ -48,7 +50,12 @@
               "type": "rawHtml",
               "content": "<div data-hook=\"layer-before\">Layer before hook</div>"
             }
-          ]
+          ],
+          "id": "artboard:desktop:layer:deck-hook",
+          "source": {
+            "tool": "illustrator",
+            "name": "deck-hook"
+          }
         },
         {
           "name": "content",
@@ -171,9 +178,21 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:desktop:layer:content",
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          }
         }
-      ]
+      ],
+      "id": "artboard:desktop",
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop",
+        "width": 760,
+        "height": 520
+      }
     }
   ],
   "customBlocks": [
@@ -193,13 +212,17 @@
       "mimeType": "image/png",
       "width": 1520,
       "height": 1040,
-      "artboardName": "desktop",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
+      },
+      "artboardId": "artboard:desktop",
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop"
       }
     }
   },
@@ -211,5 +234,10 @@
     "notes": "",
     "sources": "",
     "credit": ""
+  },
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "adapterVersion": "0.1.0"
   }
 }

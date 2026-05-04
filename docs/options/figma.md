@@ -43,6 +43,7 @@ The current plugin UI exports:
 The plugin downloads a ZIP that includes:
 
 - `ir.json`
+- `manifest.json`
 - emitted output files
 - extracted assets
 
@@ -59,6 +60,8 @@ This is deliberate. It makes the export surface explicit instead of guessing.
 ## Config And Special Layers
 
 The plugin keeps shared config in `figma.root` plugin data and local convenience state in `figma.clientStorage`.
+
+The settings UI includes `Google Fonts` with `Off`, `CSS @import`, and `Link tag` modes. Figma text fonts are inferred into canonical font mappings automatically, and explicit config mappings still override the inferred mapping for the same `sourceFont`.
 
 Top-level tagged child nodes inside a selected frame can define special layers with the Illustrator-aligned naming contract:
 

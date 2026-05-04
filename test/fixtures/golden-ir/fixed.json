@@ -1,9 +1,4 @@
 {
-  "generator": {
-    "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "pluginVersion": "0.1.0"
-  },
   "settings": {
     "settings_version": "0.106.0",
     "image_format": "auto",
@@ -25,11 +20,8 @@
   "artboards": [
     {
       "name": "Artboard 1",
-      "originalName": "Artboard 1",
       "width": 859,
       "height": 475,
-      "actualWidth": 859,
-      "actualHeight": 475,
       "layers": [
         {
           "name": "Layer 1",
@@ -380,17 +372,26 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:artboard-1:layer:layer-1",
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:artboard-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 1",
+        "width": 859,
+        "height": 475
+      }
     },
     {
       "name": "Artboard 3",
-      "originalName": "Artboard 3",
       "width": 730,
       "height": 420,
-      "actualWidth": 730,
-      "actualHeight": 420,
       "layers": [
         {
           "name": "Layer 1",
@@ -785,9 +786,21 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:artboard-3:layer:layer-1",
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:artboard-3",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 3",
+        "width": 730,
+        "height": 420
+      }
     }
   ],
   "customBlocks": [],
@@ -798,13 +811,17 @@
       "mimeType": "image/png",
       "width": 1718,
       "height": 950,
-      "artboardName": "Artboard 1",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 60,
         "colors": 128
+      },
+      "artboardId": "artboard:artboard-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 1"
       }
     },
     "fixed-artboard-3": {
@@ -813,13 +830,17 @@
       "mimeType": "image/png",
       "width": 1460,
       "height": 840,
-      "artboardName": "Artboard 3",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 60,
         "colors": 128
+      },
+      "artboardId": "artboard:artboard-3",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 3"
       }
     }
   },
@@ -832,5 +853,10 @@
     "sources": "",
     "credit": ""
   },
-  "irVersion": "0.0.0"
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "adapterVersion": "0.1.0"
+  }
 }

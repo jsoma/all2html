@@ -14,6 +14,7 @@ describe("panelToExporterSettings", () => {
       use2xImages: true,
       renderTextAs: "html",
       htmlOutputPath: "output/",
+      googleFonts: "import",
       maxWidth: 600,
     };
     const result = panelToExporterSettings(panel);
@@ -22,6 +23,7 @@ describe("panelToExporterSettings", () => {
     expect(result).toHaveProperty("use_2x_images_if_possible", "true");
     expect(result).toHaveProperty("render_text_as", "html");
     expect(result).toHaveProperty("html_output_path", "output/");
+    expect(result).toHaveProperty("google_fonts", "import");
     expect(result).toHaveProperty("max_width", "600");
     // No camelCase keys should remain
     expect(result).not.toHaveProperty("imageFormat");
@@ -38,15 +40,15 @@ describe("panelToExporterSettings", () => {
       namespace: "g-",
     };
     const result = panelToExporterSettings(panel);
-    for (const [key, value] of Object.entries(result)) {
+    for (const value of Object.values(result)) {
       expect(typeof value).toBe("string");
     }
-    expect(result["jpg_quality"]).toBe("80");
-    expect(result["png_number_of_colors"]).toBe("256");
-    expect(result["use_2x_images_if_possible"]).toBe("false");
-    expect(result["testing_mode"]).toBe("true");
-    expect(result["center_html_output"]).toBe("false");
-    expect(result["namespace"]).toBe("g-");
+    expect(result.jpg_quality).toBe("80");
+    expect(result.png_number_of_colors).toBe("256");
+    expect(result.use_2x_images_if_possible).toBe("false");
+    expect(result.testing_mode).toBe("true");
+    expect(result.center_html_output).toBe("false");
+    expect(result.namespace).toBe("g-");
   });
 
   it("excludes undefined and null values", () => {
@@ -93,6 +95,7 @@ describe("exporterToPanelSettings", () => {
       use_2x_images_if_possible: "true",
       render_text_as: "html",
       html_output_path: "output/",
+      google_fonts: "link",
       max_width: "600",
     };
     const result = exporterToPanelSettings(exporter);
@@ -101,7 +104,20 @@ describe("exporterToPanelSettings", () => {
     expect(result.use2xImages).toBe(true);
     expect(result.renderTextAs).toBe("html");
     expect(result.htmlOutputPath).toBe("output/");
+    expect(result.googleFonts).toBe("link");
     expect(result.maxWidth).toBe(600);
+  });
+
+  it("accepts canonical camelCase settings when reading config", () => {
+    const result = exporterToPanelSettings({
+      googleFonts: "link",
+      renderTextAs: "image",
+      htmlOutputPath: "dist/",
+    });
+
+    expect(result.googleFonts).toBe("link");
+    expect(result.renderTextAs).toBe("image");
+    expect(result.htmlOutputPath).toBe("dist/");
   });
 
   it("converts string 'true'/'false' to booleans", () => {
@@ -189,6 +205,7 @@ describe("round-trip: panel → exporter → panel", () => {
       responsiveness: "dynamic",
       renderTextAs: "html",
       htmlOutputPath: "output/",
+      googleFonts: "link",
       namespace: "g-",
       maxWidth: 600,
       testingMode: false,
@@ -206,6 +223,7 @@ describe("round-trip: panel → exporter → panel", () => {
     expect(roundTripped.responsiveness).toBe(original.responsiveness);
     expect(roundTripped.renderTextAs).toBe(original.renderTextAs);
     expect(roundTripped.htmlOutputPath).toBe(original.htmlOutputPath);
+    expect(roundTripped.googleFonts).toBe(original.googleFonts);
     expect(roundTripped.namespace).toBe(original.namespace);
     expect(roundTripped.maxWidth).toBe(original.maxWidth);
     expect(roundTripped.testingMode).toBe(original.testingMode);

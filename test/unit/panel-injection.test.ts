@@ -92,9 +92,9 @@ describe("panel settings injection — merge priority", () => {
       },
     );
 
-    expect(docSettings["image_format"]).toBe("jpg");
-    expect(docSettings["responsiveness"]).toBe("fixed");
-    expect(docSettings["jpg_quality"]).toBe("80");
+    expect(docSettings.image_format).toBe("jpg");
+    expect(docSettings.responsiveness).toBe("fixed");
+    expect(docSettings.jpg_quality).toBe("80");
   });
 
   it("panel settings override config file settings when text block is absent", () => {
@@ -113,10 +113,10 @@ describe("panel settings injection — merge priority", () => {
       },
     );
 
-    expect(docSettings["output"]).toBe("one-file");
-    expect(docSettings["image_format"]).toBe("png");
-    expect(docSettings["max_width"]).toBe("600");
-    expect(docSettings["jpg_quality"]).toBe("80");
+    expect(docSettings.output).toBe("one-file");
+    expect(docSettings.image_format).toBe("png");
+    expect(docSettings.max_width).toBe("600");
+    expect(docSettings.jpg_quality).toBe("80");
   });
 
   it("panel provides values for keys not in text block or config", () => {
@@ -134,11 +134,11 @@ describe("panel settings injection — merge priority", () => {
       },
     );
 
-    expect(docSettings["output"]).toBe("one-file");
-    expect(docSettings["image_format"]).toBe("jpg");
-    expect(docSettings["testing_mode"]).toBe("true");
-    expect(docSettings["namespace"]).toBe("custom-");
-    expect(docSettings["center_html_output"]).toBe("true");
+    expect(docSettings.output).toBe("one-file");
+    expect(docSettings.image_format).toBe("jpg");
+    expect(docSettings.testing_mode).toBe("true");
+    expect(docSettings.namespace).toBe("custom-");
+    expect(docSettings.center_html_output).toBe("true");
   });
 
   it("full priority chain: text block > panel > config", () => {
@@ -154,7 +154,7 @@ describe("panel settings injection — merge priority", () => {
       },
     );
 
-    expect(docSettings["image_format"]).toBe("from-text-block");
+    expect(docSettings.image_format).toBe("from-text-block");
   });
 
   it("panel wins over config when text block is absent", () => {
@@ -168,7 +168,7 @@ describe("panel settings injection — merge priority", () => {
       },
     );
 
-    expect(docSettings["image_format"]).toBe("from-panel");
+    expect(docSettings.image_format).toBe("from-panel");
   });
 
   it("panel wins when both text block and config are absent for a key", () => {
@@ -184,7 +184,7 @@ describe("panel settings injection — merge priority", () => {
       },
     );
 
-    expect(docSettings["jpg_quality"]).toBe("90");
+    expect(docSettings.jpg_quality).toBe("90");
   });
 
   it("empty panel settings produce no changes", () => {

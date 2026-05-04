@@ -1,9 +1,4 @@
 {
-  "generator": {
-    "tool": "illustrator",
-    "toolVersion": "29.8.5",
-    "pluginVersion": "0.1.0"
-  },
   "settings": {
     "settings_version": "0.121.1",
     "image_format": "auto",
@@ -27,11 +22,8 @@
   "artboards": [
     {
       "name": "full",
-      "originalName": "full",
       "width": 700,
       "height": 425,
-      "actualWidth": 700,
-      "actualHeight": 425,
       "layers": [
         {
           "name": "Layer 1",
@@ -129,17 +121,26 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:full:layer:layer-1",
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:full",
+      "source": {
+        "tool": "illustrator",
+        "name": "full",
+        "width": 700,
+        "height": 425
+      }
     },
     {
       "name": "medium",
-      "originalName": "medium",
       "width": 490,
       "height": 350,
-      "actualWidth": 490,
-      "actualHeight": 350,
       "layers": [
         {
           "name": "Layer 1",
@@ -186,17 +187,26 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:medium:layer:layer-1",
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:medium",
+      "source": {
+        "tool": "illustrator",
+        "name": "medium",
+        "width": 490,
+        "height": 350
+      }
     },
     {
       "name": "mobile",
-      "originalName": "mobile",
       "width": 375,
       "height": 471,
-      "actualWidth": 375,
-      "actualHeight": 471,
       "layers": [
         {
           "name": "Layer 1",
@@ -294,9 +304,21 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:mobile:layer:layer-1",
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:mobile",
+      "source": {
+        "tool": "illustrator",
+        "name": "mobile",
+        "width": 375,
+        "height": 471
+      }
     }
   ],
   "customBlocks": [],
@@ -307,13 +329,17 @@
       "mimeType": "image/png",
       "width": 1400,
       "height": 850,
-      "artboardName": "full",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 80,
         "colors": 128
+      },
+      "artboardId": "artboard:full",
+      "source": {
+        "tool": "illustrator",
+        "name": "full"
       }
     },
     "template-medium": {
@@ -322,13 +348,17 @@
       "mimeType": "image/png",
       "width": 980,
       "height": 700,
-      "artboardName": "medium",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 80,
         "colors": 128
+      },
+      "artboardId": "artboard:medium",
+      "source": {
+        "tool": "illustrator",
+        "name": "medium"
       }
     },
     "template-mobile": {
@@ -337,13 +367,17 @@
       "mimeType": "image/png",
       "width": 750,
       "height": 942,
-      "artboardName": "mobile",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 80,
         "colors": 128
+      },
+      "artboardId": "artboard:mobile",
+      "source": {
+        "tool": "illustrator",
+        "name": "mobile"
       }
     }
   },
@@ -356,5 +390,10 @@
     "sources": "",
     "credit": ""
   },
-  "irVersion": "0.0.0"
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "29.8.5",
+    "adapterVersion": "0.1.0"
+  }
 }

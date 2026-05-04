@@ -48,7 +48,11 @@ function createRunnerEnv(existingPaths: string[]): ExportRunnerEnv & {
       if (!files.has(path)) {
         files.set(path, createMockFile(path, existingPaths.includes(path)));
       }
-      return files.get(path)!;
+      const file = files.get(path);
+      if (!file) {
+        throw new Error(`Missing mock file: ${path}`);
+      }
+      return file;
     },
     evalFile: vi.fn(),
     getCurrentScriptPath: () => "/extension/jsx/hostscript.js",

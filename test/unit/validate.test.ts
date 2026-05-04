@@ -44,6 +44,22 @@ describe("loadAndValidateIR", () => {
     expect(() => loadAndValidateIR(invalid)).toThrow(IRValidationError);
   });
 
+  it("rejects duplicate artboard IDs", () => {
+    const invalid = loadFixture("multi-artboard-responsive.json");
+    invalid.artboards[1].id = invalid.artboards[0].id;
+    expect(() => loadAndValidateIR(invalid)).toThrow(/Duplicate artboard id/);
+  });
+
+  it("rejects assets that reference missing artboards or layers", () => {
+    const invalidArtboard = loadFixture("single-artboard-basic.json");
+    invalidArtboard.assets[Object.keys(invalidArtboard.assets)[0]].artboardId = "missing";
+    expect(() => loadAndValidateIR(invalidArtboard)).toThrow(/unknown artboard id/);
+
+    const invalidLayer = loadFixture("single-artboard-basic.json");
+    invalidLayer.assets[Object.keys(invalidLayer.assets)[0]].layerId = "missing";
+    expect(() => loadAndValidateIR(invalidLayer)).toThrow(/unknown layer id/);
+  });
+
   it("accepts arbitrary metadata fields as passthrough", () => {
     const input = loadFixture("single-artboard-basic.json");
     input.metadata.headline = "My Big Story";

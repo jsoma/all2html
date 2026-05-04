@@ -33,6 +33,28 @@ describe("multiple-files output mode", () => {
     expect(map?.artboards[0].width).toBe(800);
   });
 
+  it("keeps group slugs unique after sanitizing names", () => {
+    const raw = loadFixture("multiple-files-output.json");
+    raw.artboards[0].name = "Hero!";
+    raw.artboards[0].source.name = "Hero!";
+    raw.artboards[1].name = "Hero";
+    raw.artboards[1].source.name = "Hero";
+
+    const { groups } = processDocument(raw);
+
+    expect(groups.map((group) => group.slug).sort()).toEqual([
+      "multi-file-test-hero",
+      "multi-file-test-hero-2",
+    ]);
+
+    const { document: doc } = processDocument(raw);
+    const result = getEmitter("html").emitAll(doc, groups);
+    const hero2Html = result.files.find((file) => file.slug === "multi-file-test-hero-2")?.output;
+
+    expect(hero2Html).toContain('id="g-multi-file-test-hero-2-hero"');
+    expect(hero2Html).toContain("#g-multi-file-test-hero-2-hero");
+  });
+
   it("emits separate HTML per group", () => {
     const raw = loadFixture("multiple-files-output.json");
     const { document: doc, groups } = processDocument(raw);
@@ -47,8 +69,8 @@ describe("multiple-files output mode", () => {
 
     expect(outputs).toHaveLength(2);
 
-    const chartHtml = outputs.find((o) => o.name === "chart")!.html;
-    const mapHtml = outputs.find((o) => o.name === "map")!.html;
+    const chartHtml = outputs.find((o) => o.name === "chart")?.html;
+    const mapHtml = outputs.find((o) => o.name === "map")?.html;
 
     // Chart HTML contains chart content, not map content
     expect(chartHtml).toContain("Chart Title");
@@ -66,8 +88,8 @@ describe("multiple-files output mode", () => {
     const { document: doc, groups } = processDocument(raw);
     const result = getEmitter("html").emitAll(doc, groups);
 
-    const chartHtml = result.files.find((file) => file.slug === "multi-file-test-chart")!.output;
-    const mapHtml = result.files.find((file) => file.slug === "multi-file-test-map")!.output;
+    const chartHtml = result.files.find((file) => file.slug === "multi-file-test-chart")?.output;
+    const mapHtml = result.files.find((file) => file.slug === "multi-file-test-map")?.output;
 
     expect(chartHtml).toContain('id="g-multi-file-test-chart-box"');
     expect(chartHtml).toContain("#g-multi-file-test-chart-box");

@@ -27,8 +27,8 @@ describe("Text effects", () => {
 
     const shadowEffect = ab.effectStyleClasses.find((e) => e.css.includes("text-shadow"));
     expect(shadowEffect).toBeDefined();
-    expect(shadowEffect!.css).toContain("text-shadow: 2px 4px 3px");
-    expect(shadowEffect!.css).toContain("rgba(0,0,0,0.50)");
+    expect(shadowEffect?.css).toContain("text-shadow: 2px 4px 3px");
+    expect(shadowEffect?.css).toContain("rgba(0,0,0,0.50)");
   });
 
   it("generates filter CSS for blur effects", () => {
@@ -37,7 +37,7 @@ describe("Text effects", () => {
 
     const blurEffect = ab.effectStyleClasses.find((e) => e.css.includes("filter"));
     expect(blurEffect).toBeDefined();
-    expect(blurEffect!.css).toContain("filter: blur(4px)");
+    expect(blurEffect?.css).toContain("filter: blur(4px)");
   });
 
   it("shares effect class between elements with same effect", () => {

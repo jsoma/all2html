@@ -1,9 +1,4 @@
 {
-  "generator": {
-    "tool": "test",
-    "toolVersion": "1.0",
-    "pluginVersion": "0.1.0"
-  },
   "settings": {
     "namespace": "g-",
     "responsiveness": "dynamic"
@@ -12,11 +7,8 @@
   "artboards": [
     {
       "name": "main",
-      "originalName": "main",
       "width": 600,
       "height": 400,
-      "actualWidth": 600,
-      "actualHeight": 400,
       "layers": [
         {
           "name": "Layer1",
@@ -147,9 +139,21 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:main:layer:layer1",
+          "source": {
+            "tool": "test",
+            "name": "Layer1"
+          }
         }
-      ]
+      ],
+      "id": "artboard:main",
+      "source": {
+        "tool": "test",
+        "name": "main",
+        "width": 600,
+        "height": 400
+      }
     }
   ],
   "customBlocks": [],
@@ -157,5 +161,10 @@
   "metadata": {
     "slug": "tagged-text-test"
   },
-  "irVersion": "0.0.0"
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "adapterVersion": "0.1.0"
+  }
 }

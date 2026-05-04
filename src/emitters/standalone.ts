@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { resolve } from "node:path";
 import { applyTemplate } from "../core/template.js";
 import type { EmitterReadyDocument } from "../ir/types.js";
 import { emitHTML } from "./html.js";
@@ -9,6 +9,10 @@ import type { EmitterOptions } from "./types.js";
 export interface EmitStandaloneResult {
   html: string;
   warnings: string[];
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 export function emitStandalone(
@@ -37,8 +41,8 @@ export function emitStandalone(
 
       const html = applyTemplate(template, replacements);
       return { html, warnings };
-    } catch (err: any) {
-      warnings.push(`Template error: ${err.message}. Falling back to default.`);
+    } catch (err: unknown) {
+      warnings.push(`Template error: ${getErrorMessage(err)}. Falling back to default.`);
     }
   }
 

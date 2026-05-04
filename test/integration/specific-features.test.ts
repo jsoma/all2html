@@ -128,7 +128,7 @@ describe("style deduplication", () => {
     // Base style should be the body text (most common by char count)
     const baseStyleMatch = html.match(/#g-style-dedup-test-desktop p \{([^}]+)\}/);
     expect(baseStyleMatch).toBeTruthy();
-    expect(baseStyleMatch![1]).toContain("font-size: 14px");
+    expect(baseStyleMatch?.[1]).toContain("font-size: 14px");
   });
 });
 

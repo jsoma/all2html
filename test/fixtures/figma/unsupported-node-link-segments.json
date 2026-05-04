@@ -3,13 +3,34 @@
     "characters": "Related package",
     "start": 0,
     "end": 15,
-    "fontName": { "family": "Inter", "style": "Regular" },
+    "fontName": {
+      "family": "Inter",
+      "style": "Regular"
+    },
     "fontSize": 16,
-    "letterSpacing": { "value": 0, "unit": "PIXELS" },
-    "lineHeight": { "value": 24, "unit": "PIXELS" },
-    "fills": [{ "type": "SOLID", "color": { "r": 0, "g": 0, "b": 0 } }],
+    "letterSpacing": {
+      "value": 0,
+      "unit": "PIXELS"
+    },
+    "lineHeight": {
+      "value": 24,
+      "unit": "PIXELS"
+    },
+    "fills": [
+      {
+        "type": "SOLID",
+        "color": {
+          "r": 0,
+          "g": 0,
+          "b": 0
+        }
+      }
+    ],
     "textCase": "ORIGINAL",
     "textDecoration": "NONE",
-    "hyperlink": { "type": "NODE", "value": "12:34" }
+    "hyperlink": {
+      "type": "NODE",
+      "value": "12:34"
+    }
   }
 ]

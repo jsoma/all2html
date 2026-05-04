@@ -27,6 +27,7 @@ const KEY_MAP: Record<string, string> = {
   maxWidth: "max_width",
   centerHtmlOutput: "center_html_output",
   renderRotatedSkewedTextAs: "render_rotated_skewed_text_as",
+  googleFonts: "google_fonts",
   testingMode: "testing_mode",
   includeResizerCss: "include_resizer_css",
   includeResizerWidths: "include_resizer_widths",
@@ -80,7 +81,7 @@ export function exporterToPanelSettings(
   const panel: Record<string, unknown> = {};
 
   for (const [exporterKey, value] of Object.entries(exporter)) {
-    const panelKey = REVERSE_KEY_MAP[exporterKey];
+    const panelKey = REVERSE_KEY_MAP[exporterKey] ?? (exporterKey in KEY_MAP ? exporterKey : "");
     if (panelKey && value !== undefined) {
       // Parse known types
       if (typeof value === "string") {

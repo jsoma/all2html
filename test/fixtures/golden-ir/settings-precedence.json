@@ -1,10 +1,5 @@
 {
-  "irVersion": "0.0.0",
-  "generator": {
-    "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "pluginVersion": "0.1.0"
-  },
+  "irVersion": "0.1.0",
   "settings": {
     "imageFormat": ["png"],
     "output": "one-file",
@@ -15,11 +10,8 @@
   "artboards": [
     {
       "name": "desktop",
-      "originalName": "desktop",
       "width": 640,
       "height": 420,
-      "actualWidth": 640,
-      "actualHeight": 420,
       "layers": [
         {
           "name": "content",
@@ -104,9 +96,21 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:desktop:layer:content",
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          }
         }
-      ]
+      ],
+      "id": "artboard:desktop",
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop",
+        "width": 640,
+        "height": 420
+      }
     }
   ],
   "customBlocks": [],
@@ -117,13 +121,17 @@
       "mimeType": "image/png",
       "width": 1280,
       "height": 840,
-      "artboardName": "desktop",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
+      },
+      "artboardId": "artboard:desktop",
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop"
       }
     }
   },
@@ -135,5 +143,10 @@
     "notes": "",
     "sources": "",
     "credit": ""
+  },
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "adapterVersion": "0.1.0"
   }
 }

@@ -20,7 +20,12 @@
             "type": "text",
             "id": "figma-nested-text",
             "kind": "point",
-            "position": { "x": 188, "y": 142, "width": 260, "height": 32 },
+            "position": {
+              "x": 188,
+              "y": 142,
+              "width": 260,
+              "height": 32
+            },
             "opacity": 100,
             "valign": "top",
             "renderAs": "html",
@@ -37,7 +42,11 @@
                     "fontName": "Inter-Medium",
                     "fontPostScriptName": "Inter-Medium",
                     "fontSize": 24,
-                    "color": { "r": 20, "g": 20, "b": 20 },
+                    "color": {
+                      "r": 20,
+                      "g": 20,
+                      "b": 20
+                    },
                     "letterSpacing": 0.02,
                     "capitalization": "normal",
                     "baselineShift": "normal"
@@ -56,8 +65,16 @@
         "mimeType": "image/png",
         "width": 720,
         "height": 405,
-        "artboardName": "nested:720",
-        "exportParams": { "format": "png", "scale": 1, "transparent": false }
+        "exportParams": {
+          "format": "png",
+          "scale": 1,
+          "transparent": false
+        },
+        "artboardId": "figma:figma-frame-nested",
+        "source": {
+          "tool": "figma",
+          "name": "nested:720"
+        }
       }
     ]
   }

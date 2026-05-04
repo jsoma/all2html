@@ -1,10 +1,5 @@
 {
-  "irVersion": "0.0.0",
-  "generator": {
-    "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "pluginVersion": "0.1.0"
-  },
+  "irVersion": "0.1.0",
   "settings": {
     "imageFormat": ["svg"],
     "output": "one-file",
@@ -17,11 +12,8 @@
   "artboards": [
     {
       "name": "Artboard 1",
-      "originalName": "Artboard 1",
       "width": 460,
       "height": 460,
-      "actualWidth": 460,
-      "actualHeight": 460,
       "layers": [
         {
           "name": "Fig1",
@@ -106,7 +98,12 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:artboard-1:layer:fig1",
+          "source": {
+            "tool": "illustrator",
+            "name": "Fig1"
+          }
         },
         {
           "name": "Fig2",
@@ -114,7 +111,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:artboard-1:layer:fig2",
+          "source": {
+            "tool": "illustrator",
+            "name": "Fig2"
+          }
         },
         {
           "name": "Fig5",
@@ -122,7 +124,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:artboard-1:layer:fig5",
+          "source": {
+            "tool": "illustrator",
+            "name": "Fig5"
+          }
         },
         {
           "name": "Fig3",
@@ -130,7 +137,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:artboard-1:layer:fig3",
+          "source": {
+            "tool": "illustrator",
+            "name": "Fig3"
+          }
         },
         {
           "name": "Fig4",
@@ -138,9 +150,21 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:artboard-1:layer:fig4",
+          "source": {
+            "tool": "illustrator",
+            "name": "Fig4"
+          }
         }
-      ]
+      ],
+      "id": "artboard:artboard-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 1",
+        "width": 460,
+        "height": 460
+      }
     }
   ],
   "customBlocks": [],
@@ -151,13 +175,17 @@
       "mimeType": "image/png",
       "width": 920,
       "height": 920,
-      "artboardName": "Artboard 1",
       "exportParams": {
         "format": "svg",
         "scale": 2,
         "transparent": false,
         "quality": 60,
         "colors": 128
+      },
+      "artboardId": "artboard:artboard-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 1"
       }
     }
   },
@@ -169,5 +197,10 @@
     "notes": "",
     "sources": "",
     "credit": "By The New York Times"
+  },
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "30.3.0",
+    "adapterVersion": "0.1.0"
   }
 }

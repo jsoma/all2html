@@ -48,7 +48,7 @@ function cleanId(id: string): string {
   cleaned = cleaned.replace(/^-+|-+$/g, "");
   // Fallback for empty IDs
   if (!cleaned) {
-    cleaned = "item-" + ++emptyIdCounter;
+    cleaned = `item-${++emptyIdCounter}`;
   }
   return cleaned;
 }
@@ -124,7 +124,7 @@ export function postprocessSVG(
   // STEP 2: Clean IDs and add data-name attributes
   const idMap = new Map<string, string>();
 
-  svg = svg.replace(/\bid="([^"]+)"/g, (match, originalId: string) => {
+  svg = svg.replace(/\bid="([^"]+)"/g, (_match, originalId: string) => {
     const cleaned = cleanId(originalId);
     let finalId = prefix + cleaned;
 

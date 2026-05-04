@@ -1,9 +1,4 @@
 {
-  "generator": {
-    "tool": "illustrator",
-    "toolVersion": "29.8.5",
-    "pluginVersion": "0.1.0"
-  },
   "settings": {
     "settings_version": "0.56",
     "image_format": "png",
@@ -27,11 +22,8 @@
   "artboards": [
     {
       "name": "mobile",
-      "originalName": "mobile",
       "width": 300,
       "height": 400,
-      "actualWidth": 300,
-      "actualHeight": 400,
       "layers": [
         {
           "name": "Layer 3",
@@ -192,7 +184,12 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:mobile:layer:layer-3",
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 3"
+          }
         },
         {
           "name": "area text",
@@ -200,7 +197,12 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:mobile:layer:area-text",
+          "source": {
+            "tool": "illustrator",
+            "name": "area text"
+          }
         },
         {
           "name": "background",
@@ -208,9 +210,21 @@
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [],
+          "id": "artboard:mobile:layer:background",
+          "source": {
+            "tool": "illustrator",
+            "name": "background"
+          }
         }
-      ]
+      ],
+      "id": "artboard:mobile",
+      "source": {
+        "tool": "illustrator",
+        "name": "mobile",
+        "width": 300,
+        "height": 400
+      }
     }
   ],
   "customBlocks": [],
@@ -221,13 +235,17 @@
       "mimeType": "image/png",
       "width": 600,
       "height": 800,
-      "artboardName": "mobile",
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 60,
         "colors": 128
+      },
+      "artboardId": "artboard:mobile",
+      "source": {
+        "tool": "illustrator",
+        "name": "mobile"
       }
     }
   },
@@ -240,5 +258,10 @@
     "sources": "Source: Name goes here.",
     "credit": "By ai2html"
   },
-  "irVersion": "0.0.0"
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "29.8.5",
+    "adapterVersion": "0.1.0"
+  }
 }

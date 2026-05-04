@@ -1,4 +1,8 @@
 <script lang="ts">
+  import type { PanelSettingKey } from "../../shared/types";
+  import FieldHelp from "./FieldHelp.svelte";
+  import type { SettingHelpEntry } from "../setting-help.js";
+
   interface Props {
     label: string;
     value: number;
@@ -11,6 +15,8 @@
     locked?: boolean;
     badge?: string;
     badgeTitle?: string;
+    helpId?: PanelSettingKey;
+    help?: SettingHelpEntry;
   }
 
   let {
@@ -25,17 +31,13 @@
     locked = false,
     badge = "",
     badgeTitle,
+    helpId,
+    help,
   }: Props = $props();
 </script>
 
-<div class="field" class:field-locked={locked}>
-  <span class="field-label">
-    {label}
-    {#if badge}
-      <span class="field-badge" title={badgeTitle}>{badge}</span>
-    {/if}
-  </span>
-  <div class="field-control">
+<FieldHelp {label} {locked} {badge} {badgeTitle} {helpId} {help}>
+  {#snippet children()}
     <div class="slider-wrapper">
       <input
         type="range"
@@ -49,5 +51,5 @@
       />
       <span class="slider-value">{value}{suffix}</span>
     </div>
-  </div>
-</div>
+  {/snippet}
+</FieldHelp>

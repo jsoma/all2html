@@ -1,9 +1,4 @@
 {
-  "generator": {
-    "tool": "test",
-    "toolVersion": "1.0",
-    "pluginVersion": "0.1.0"
-  },
   "settings": {
     "namespace": "g-"
   },
@@ -11,11 +6,8 @@
   "artboards": [
     {
       "name": "desktop",
-      "originalName": "desktop",
       "width": 800,
       "height": 600,
-      "actualWidth": 800,
-      "actualHeight": 600,
       "layers": [
         {
           "name": "default",
@@ -62,7 +54,12 @@
                 }
               ]
             }
-          ]
+          ],
+          "id": "artboard:desktop:layer:default",
+          "source": {
+            "tool": "test",
+            "name": "default"
+          }
         },
         {
           "name": "shapes",
@@ -105,9 +102,21 @@
               },
               "opacity": 100
             }
-          ]
+          ],
+          "id": "artboard:desktop:layer:shapes",
+          "source": {
+            "tool": "test",
+            "name": "shapes"
+          }
         }
-      ]
+      ],
+      "id": "artboard:desktop",
+      "source": {
+        "tool": "test",
+        "name": "desktop",
+        "width": 800,
+        "height": 600
+      }
     }
   ],
   "customBlocks": [],
@@ -115,5 +124,10 @@
   "metadata": {
     "slug": "div-layer-test"
   },
-  "irVersion": "0.0.0"
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "adapterVersion": "0.1.0"
+  }
 }

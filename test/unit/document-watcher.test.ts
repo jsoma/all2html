@@ -87,6 +87,32 @@ describe("document watcher", () => {
     expect(callback).toHaveBeenCalledWith(doc);
   });
 
+  it("fires again when ai2html-settings changes inside the same active document", async () => {
+    const initial: DocumentInfo = {
+      name: "story.ai",
+      path: "/tmp/story.ai",
+      saved: true,
+      artboardCount: 3,
+      settingsBlockSignature: "12:aaa",
+    };
+    const updated: DocumentInfo = {
+      ...initial,
+      settingsBlockSignature: null,
+    };
+    const callback = vi.fn();
+
+    getDocumentInfoMock.mockResolvedValueOnce(initial).mockResolvedValue(updated);
+
+    startWatching(callback, 1000);
+    await flushWatcher();
+    await vi.advanceTimersByTimeAsync(1000);
+    await flushWatcher();
+
+    expect(callback).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenNthCalledWith(1, initial);
+    expect(callback).toHaveBeenNthCalledWith(2, updated);
+  });
+
   it("treats different unsaved documents as separate active documents", async () => {
     const first: DocumentInfo = {
       name: "Untitled-1",

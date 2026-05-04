@@ -78,6 +78,7 @@ export interface ExtractedFrame extends FrameInfo {
   actualWidth: number;
   actualHeight: number;
   layers: ExtractedLayer[];
+  fonts?: FontMapping[];
   assets?: ExtractedAsset[];
   metadata?: Record<string, JsonValue>;
 }
@@ -135,6 +136,7 @@ export interface FigmaDirectControls {
   centerHtmlOutput: boolean;
   renderTextAs: "html" | "image";
   renderRotatedSkewedTextAs: "html" | "image";
+  googleFonts: Settings["googleFonts"];
   responsiveImageMode: "img-src" | "css-var";
 }
 

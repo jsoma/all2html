@@ -20,7 +20,7 @@ export { emitHTML } from "./emitters/html.js";
 export { emitHTMLString } from "./emitters/html-string.js";
 export { emitReact } from "./emitters/react.js";
 export type { EmitFile, EmitResult, EmitterDescriptor } from "./emitters/registry.js";
-export { getAvailableFormats, getEmitter } from "./emitters/registry.js";
+export { getAvailableFormats, getEmitter, registerEmitter } from "./emitters/registry.js";
 export { emitStandalone } from "./emitters/standalone.js";
 export { emitSvelte } from "./emitters/svelte.js";
 export type {
@@ -29,7 +29,7 @@ export type {
   ReactEmitterOptions,
   SvelteEmitterOptions,
 } from "./emitters/types.js";
-export { getAvailableImporters, getImporter } from "./importers/registry.js";
+export { getAvailableImporters, getImporter, registerImporter } from "./importers/registry.js";
 export { loadSVGImportFilesFromBrowser } from "./importers/svg/browser.js";
 export {
   importSVGFiles,
@@ -77,11 +77,13 @@ export type {
   Settings,
   ShapeElement,
   SnippetElement,
+  SourceMetadata,
   StyleClassEntry,
   StyledDocument,
   TextElement,
   VideoElement,
 } from "./ir/types.js";
+export { CURRENT_IR_VERSION } from "./ir/types.js";
 export { loadAndValidateIR } from "./ir/validate.js";
 export {
   bundleToZipBytes,
@@ -89,4 +91,6 @@ export {
   getBundleFile,
   type OutputBundle,
   type OutputBundleFile,
+  type OutputBundleManifest,
+  type OutputBundleManifestFile,
 } from "./output-bundle.js";
