@@ -47,9 +47,9 @@ describe("all2html watch", () => {
     writeFileSync(configPath, JSON.stringify({ emit: { react: { typescript: false } } }, null, 2));
 
     const child = spawn(
-      "pnpm",
+      process.execPath,
       [
-        "exec",
+        "--import",
         "tsx",
         "src/cli/index.ts",
         "watch",

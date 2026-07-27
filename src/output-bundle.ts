@@ -1,4 +1,5 @@
 import { strToU8, zipSync } from "fflate";
+import { type ArtifactEntryPath, artifactEntryPath } from "./core/artifact-path.js";
 import type { EmitFile } from "./emitters/registry.js";
 import type { ImportedAssetFile } from "./importers/types.js";
 import type { Document, SourceMetadata } from "./ir/types.js";
@@ -50,13 +51,18 @@ export function createOutputBundle(options: OutputBundleOptions): OutputBundle {
       "application/json",
     ),
   ];
-  const assetRoot = safeBundlePath(
-    options.assetRoot || "",
-    'the image output directory ("imageOutputPath")',
-  );
+  const assetRoot = options.assetRoot
+    ? artifactEntryPath(
+        options.assetRoot,
+        'to build an output bundle with the image output directory ("imageOutputPath")',
+      )
+    : "";
 
   for (const asset of options.assetFiles) {
-    const assetPath = safeBundlePath(asset.path, `the asset path "${asset.path}"`);
+    const assetPath = artifactEntryPath(
+      asset.path,
+      `to build an output bundle with the asset path "${asset.path}"`,
+    );
     filesWithoutManifest.push({
       path: joinBundlePath(assetRoot, assetPath),
       bytes: asset.bytes,
@@ -65,9 +71,9 @@ export function createOutputBundle(options: OutputBundleOptions): OutputBundle {
   }
 
   for (const emitted of options.emittedFiles) {
-    const relativePath = safeBundlePath(
+    const relativePath = artifactEntryPath(
       `${emitted.slug}${emitted.extension}`,
-      `the emitted file name "${emitted.slug}${emitted.extension}"`,
+      `to build an output bundle with the emitted file name "${emitted.slug}${emitted.extension}"`,
     );
     const mimeType = relativePath.endsWith(".html")
       ? "text/html"
@@ -79,6 +85,7 @@ export function createOutputBundle(options: OutputBundleOptions): OutputBundle {
     filesWithoutManifest.push(createTextBundleFile(relativePath, emitted.output, mimeType));
   }
 
+  assertUniqueBundlePaths(filesWithoutManifest);
   const sortedFiles = filesWithoutManifest.sort((a, b) => a.path.localeCompare(b.path));
   const { manifest, manifestFile } = createManifestFile(createManifest(options, sortedFiles));
 
@@ -92,7 +99,14 @@ function createManifest(
   options: OutputBundleOptions,
   files: readonly OutputBundleFile[],
 ): OutputBundleManifest {
-  const emittedPaths = new Set(options.emittedFiles.map((file) => `${file.slug}${file.extension}`));
+  const emittedPaths: Set<string> = new Set(
+    options.emittedFiles.map((file) =>
+      artifactEntryPath(
+        `${file.slug}${file.extension}`,
+        `to build an output bundle with the emitted file name "${file.slug}${file.extension}"`,
+      ),
+    ),
+  );
   const slug = options.irDocument.settings.projectName || options.irDocument.metadata.slug;
   return {
     schemaVersion: "0.1.0",
@@ -158,7 +172,7 @@ export function bundleToZipBytes(bundle: OutputBundle): Uint8Array {
 
 function createTextBundleFile(path: string, text: string, mimeType: string): OutputBundleFile {
   return {
-    path: safeBundlePath(path, `the bundle entry "${path}"`),
+    path: artifactEntryPath(path, `to build an output bundle with the entry "${path}"`),
     bytes: strToU8(text),
     mimeType,
     text,
@@ -239,42 +253,26 @@ function normalizeBundlePath(path: string): string {
  *      exits 1 — so this is an actionable message, not a crash.
  */
 export function assertSafeBundleEntryPath(path: string): string {
-  return safeBundlePath(path, `the bundle entry "${path}"`);
+  return artifactEntryPath(path, `to build an output bundle with the entry "${path}"`);
 }
 
-function safeBundlePath(path: string, describe: string): string {
-  const problem = describeUnsafeBundlePath(path);
-  if (problem !== undefined) {
-    throw new Error(
-      `Refusing to build an output bundle: ${describe} ${problem}. ` +
-        "Bundle entry paths become ZIP entry names, so a name that escapes the bundle root " +
-        "would write outside the folder the file is extracted into.",
-    );
-  }
-  return normalizeBundlePath(path);
-}
-
-function describeUnsafeBundlePath(path: string): string | undefined {
-  // NUL included: a name one consumer truncates and another does not is how the
-  // path that was checked stops being the path that gets written. Scanned rather
-  // than matched because a control character in a regex literal is itself a lint
-  // error, and a suppression here would read as an exception to the rule.
-  for (let i = 0; i < path.length; i++) {
-    const code = path.charCodeAt(i);
-    if (code <= 0x1f || code === 0x7f) return "contains a control character";
-  }
-  const slashed = path.replace(/\\/g, "/");
-  if (/^[A-Za-z]:/.test(slashed)) return "starts with a drive-letter prefix";
-  const segments = normalizeBundlePath(path).split("/");
-  for (let i = 0; i < segments.length; i++) {
-    if (segments[i] === "..") return 'contains a ".." segment, which escapes the bundle root';
-    if (segments[i] === ".") return 'contains a "." segment';
-  }
-  return undefined;
-}
-
-function joinBundlePath(base: string, relativePath: string): string {
+function joinBundlePath(base: string, relativePath: ArtifactEntryPath): string {
   const normalizedRelative = normalizeBundlePath(relativePath);
   if (!base) return normalizedRelative;
   return `${base}/${normalizedRelative}`.replace(/\/+/g, "/");
+}
+
+function assertUniqueBundlePaths(files: readonly OutputBundleFile[]): void {
+  const owners = new Map<string, string>();
+  owners.set("manifest.json", "the generated manifest");
+  for (const file of files) {
+    const owner = file.path === "ir.json" ? "the canonical IR" : `the entry "${file.path}"`;
+    const existing = owners.get(file.path);
+    if (existing !== undefined) {
+      throw new Error(
+        `Refusing to build an output bundle: ${owner} collides with ${existing} at "${file.path}". Bundle entry paths must be unique.`,
+      );
+    }
+    owners.set(file.path, owner);
+  }
 }

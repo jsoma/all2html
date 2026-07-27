@@ -1,11 +1,13 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { relativeOutputDirectory } from "../../src/core/artifact-path.js";
 import { processAndEmit } from "../../src/extendscript/index.js";
 import { SAFE_SETTING_IDENTIFIER_RE } from "../../src/ir/schema.js";
 import {
   SAFE_SETTING_IDENTIFIER_RE as DEFINITIONS_RE,
   getSettingDefault,
+  isValidSettingValue,
   SAFE_IDENTIFIER_SETTING_KEYS,
 } from "../../src/ir/settings-definitions.js";
 import type { Document } from "../../src/ir/types.js";
@@ -70,6 +72,25 @@ describe("the ExtendScript path rejects unsafe identifier settings (no Zod runs 
     expect(result.html).not.toContain(INJECTION);
     // And the default took its place, so the graphic still renders.
     expect(result.html).toContain(`class="${getSettingDefault("namespace")}artboard"`);
+  });
+
+  it("applies every constraint in the settings table, not only identifier constraints", () => {
+    const result = processAndEmit(
+      loadDoc({
+        output: "not-a-mode",
+        jpgQuality: 999,
+        imageFormat: ["png", "not-a-format"],
+      } as unknown as Partial<Document["settings"]>),
+    );
+
+    expect(result.structuredWarnings.filter((w) => w.code === "setting:invalid-value")).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ setting: "output" }),
+        expect.objectContaining({ setting: "jpgQuality" }),
+        expect.objectContaining({ setting: "imageFormat" }),
+      ]),
+    );
+    expect(result.files).toHaveLength(1);
   });
 
   it("applies the same guard to projectName", () => {
@@ -179,26 +200,32 @@ describe("the ir.json exporter.jsx persists is canonical", () => {
     warnings: string[];
   }
 
-  const buildCanonicalSettings = new Function(
+  const runCanonicalSettings = new Function(
     "docSettings",
+    "All2Html",
     [
       "var warnings = [];",
       "function warn(message) { warnings.push(message); }",
       extract(/function hasOwn\(obj, key\) \{[\s\S]*?\n\}/),
       extract(/function makeKeyword\(name\) \{[\s\S]*?\n\}/),
-      extract(/var SAFE_SETTING_IDENTIFIER = .*;/),
-      extract(/function isSafeSettingIdentifier\(value\) \{[\s\S]*?\n\}/),
       extract(/function readBoolSetting\(obj, key\) \{[\s\S]*?\n\}/),
       extract(/function readIntSetting\(obj, key\) \{[\s\S]*?\n\}/),
       extract(/function readNullableIntSetting\(obj, key\) \{[\s\S]*?\n\}/),
       extract(/function readStringSetting\(obj, key\) \{[\s\S]*?\n\}/),
       extract(/function buildCanonicalIrSettings\(docSettings\) \{[\s\S]*?\n\}/),
-      extract(/function sanitizeCanonicalIdentifierSettings\(settings\) \{[\s\S]*?\n\}/),
+      extract(/function sanitizeCanonicalSettings\(settings\) \{[\s\S]*?\n\}/),
       "var settings = buildCanonicalIrSettings(docSettings);",
-      "sanitizeCanonicalIdentifierSettings(settings);",
+      "sanitizeCanonicalSettings(settings);",
       "return { settings: settings, warnings: warnings };",
     ].join("\n"),
-  ) as (docSettings: Record<string, string>) => CanonicalBuild;
+  ) as (
+    docSettings: Record<string, string>,
+    core: { isValidSettingValue: typeof isValidSettingValue },
+  ) => CanonicalBuild;
+
+  function buildCanonicalSettings(docSettings: Record<string, string>): CanonicalBuild {
+    return runCanonicalSettings(docSettings, { isValidSettingValue });
+  }
 
   /** The document the exporter would write, assembled the way `runExporter` does. */
   function persistedDocument(docSettings: Record<string, string>): {
@@ -268,9 +295,81 @@ describe("the ir.json exporter.jsx persists is canonical", () => {
     expect(warnings).toEqual([]);
   });
 
+  it("drops every invalid setting kind before writing ir.json", () => {
+    const { doc, warnings } = persistedDocument({
+      output: "not-a-mode",
+      jpg_quality: "999",
+      image_format: "png,not-a-format",
+    });
+
+    const validated = loadAndValidateIR(doc);
+    expect(validated.settings.output).toBeUndefined();
+    expect(validated.settings.jpgQuality).toBeUndefined();
+    expect(validated.settings.imageFormat).toBeUndefined();
+    expect(warnings).toHaveLength(3);
+  });
+
   it("rejects the document the exporter used to write, so this test can fail", () => {
     // The pre-fix behavior, spelled out: the raw value straight into settings.
     const doc = { ...loadDoc(), settings: { projectName: "../../pwn" } };
     expect(() => loadAndValidateIR(doc)).toThrow();
+  });
+});
+
+/**
+ * The exporter's own output directory, executed out of the shipped `.jsx`.
+ *
+ * `relativeOutputDirectory` rejecting traversal is proven in
+ * `artifact-path.test.ts`, and the bundle re-exporting it is proven in
+ * `surface-entrypoints.test.ts` — but neither notices if `exporter.jsx` stops
+ * *calling* it. Deleting that one call left both green while
+ * `html_output_path: "../../outside"` wrote above the document directory again.
+ * So this runs the real `resolveDocumentOutputPath` against the real
+ * constructor: remove the call and the traversal case stops throwing.
+ */
+describe("the Illustrator output directory is constructed, not concatenated", () => {
+  const exporterSource = readFileSync(
+    resolve(import.meta.dirname, "../../plugins/illustrator/exporter.jsx"),
+    "utf-8",
+  );
+
+  const match = exporterSource.match(
+    /function resolveDocumentOutputPath\(docSettings, docPath\) \{[\s\S]*?\n\}/,
+  );
+  if (!match) throw new Error("Could not find resolveDocumentOutputPath in exporter.jsx");
+
+  const resolveOutputPath = new Function(
+    "docSettings",
+    "docPath",
+    "All2Html",
+    `${match[0]}\nreturn resolveDocumentOutputPath(docSettings, docPath);`,
+  ) as (
+    docSettings: Record<string, unknown>,
+    docPath: string,
+    core: { relativeOutputDirectory: (value: string) => string },
+  ) => string;
+
+  const core = { relativeOutputDirectory };
+
+  it("refuses a traversing html_output_path", () => {
+    expect(() => resolveOutputPath({ html_output_path: "../../outside" }, "/docs/", core)).toThrow(
+      /Artifact paths must stay inside/,
+    );
+  });
+
+  it("refuses a traversing image_output_path fallback", () => {
+    expect(() => resolveOutputPath({ image_output_path: "../evil" }, "/docs/", core)).toThrow(
+      /Artifact paths must stay inside/,
+    );
+  });
+
+  it("contains a leading slash under the document directory", () => {
+    expect(resolveOutputPath({ html_output_path: "/all2html-output/" }, "/docs/", core)).toBe(
+      "/docs/all2html-output/",
+    );
+  });
+
+  it("still produces the default directory with one trailing slash", () => {
+    expect(resolveOutputPath({}, "/docs/", core)).toBe("/docs/all2html-output/");
   });
 });

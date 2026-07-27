@@ -17,9 +17,9 @@ describe("all2html import svg CLI", () => {
       );
 
       const result = spawnSync(
-        "pnpm",
+        process.execPath,
         [
-          "exec",
+          "--import",
           "tsx",
           "src/cli/index.ts",
           "import",

@@ -20,9 +20,9 @@ describe("all2html import svg emitters", () => {
         );
 
         const result = spawnSync(
-          "pnpm",
+          process.execPath,
           [
-            "exec",
+            "--import",
             "tsx",
             "src/cli/index.ts",
             "import",

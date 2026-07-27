@@ -2,6 +2,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { artifactAssetBase } from "../core/artifact-path.js";
 import { parseConfigText } from "../core/config.js";
 import type { ArtboardGroup } from "../core/group-artboards.js";
 import { createConsoleLogger, noopLogger } from "../core/logger.js";
@@ -54,7 +55,7 @@ function emitAndWrite(
   const result = emitter.emitAll(
     doc,
     groups,
-    withAssetBase(emitterConfig, doc.settings.imageOutputPath || ""),
+    withAssetBase(emitterConfig, artifactAssetBase(doc.settings.imageOutputPath || "")),
   );
   reportWarnings(result.structuredWarnings);
   const absOutputDir = resolve(outputDir);
@@ -224,7 +225,7 @@ async function main() {
         irDocument: imported.document,
         emittedFiles: emitResult.files,
         assetFiles: imported.assetFiles,
-        assetRoot: doc.settings.imageOutputPath || "",
+        assetRoot: artifactAssetBase(doc.settings.imageOutputPath || ""),
         emittedFormat: format,
         warnings: [...imported.warnings, ...warnings, ...emitResult.warnings],
       });

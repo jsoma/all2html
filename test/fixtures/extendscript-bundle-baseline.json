@@ -4,7 +4,7 @@
     "core": {
       "artifact": "dist/extendscript/all2html-core.js",
       "build": "build:extendscript",
-      "bytes": 121121,
+      "bytes": 124675,
       "recordedAt": "2026-07-27",
       "growthTolerance": 0.05,
       "history": [
@@ -51,13 +51,17 @@
         {
           "bytes": 121121,
           "reason": "121121 B. Second Codex review round, measured per change by stash-and-rebuild: output-extension.ts +1,224 B (htmlOutputExtension restricted to a filename suffix -- '/../../outside.txt' previously normalized to './../../outside.txt' and resolved above the -o directory) and compute-breakpoints.ts +1,363 B (duplicate widths inside one responsive group are now a hard error on every surface, not a sort-order guess)."
+        },
+        {
+          "bytes": 124675,
+          "reason": "124675 B. Contract-cleanup review: +3,554 B for two categorical boundaries. artifact-path.ts supplies the ES3-safe constructor used by Illustrator output directories and bundle entry paths, closing the remaining html_output_path traversal and normalizing asset directory separators. isValidSettingValue derives the Zod-free Illustrator settings boundary from SETTING_DEFINITIONS, replacing the identifier-only mirror so enum, array and numeric range constraints are enforced before ir.json persistence and after settings precedence."
         }
       ]
     },
     "assembled": {
       "artifact": "dist/all2html.js",
       "build": "build:illustrator",
-      "bytes": 213611,
+      "bytes": 217105,
       "recordedAt": "2026-07-27",
       "growthTolerance": 0.05,
       "history": [
@@ -96,6 +100,14 @@
         {
           "bytes": 213611,
           "reason": "213611 B. The core carry above, plus exporter.jsx: canonical identifier settings are sanitized before ir.json is written, so the persisted IR no longer fails our own schema validation. Comment-heavy -- exporter.jsx is concatenated verbatim, so roughly 2.5 KB of the delta is the two rationale comments."
+        },
+        {
+          "bytes": 216586,
+          "reason": "216586 B. Contract-cleanup review: +2,975 B net. Carries the core's +3,554 B artifact-path and complete settings-definition validator boundaries, offset in exporter.jsx by deleting its local safe-identifier regex/helper and replacing its identifier-only persistence sanitizer with the shared validator call. The remaining exporter addition routes html_output_path through the shared relative-directory constructor before any write."
+        },
+        {
+          "bytes": 217105,
+          "reason": "217105 B. +519 B: the Illustrator output directory moved into a named resolveDocumentOutputPath so a test can execute the real function out of the shipped .jsx. relativeOutputDirectory rejecting traversal was already proven, and the bundle re-exporting it was already proven, but nothing pinned that exporter.jsx still calls it -- deleting that one call left the whole suite green while html_output_path ../../outside escaped the document directory again. Removing it now fails three tests."
         }
       ]
     },

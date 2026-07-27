@@ -24,6 +24,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -56,15 +57,21 @@ function packedFilePaths(): string[] {
   // them. The file list is unaffected, because globalSetup has already produced
   // the same `dist/` a real pack would. That `prepack` exists at all is
   // asserted separately, from the manifest.
-  const raw = execFileSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], {
-    cwd: rootDir,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"],
-  });
-  const jsonStart = raw.indexOf("[");
-  expect(jsonStart, `npm pack emitted no JSON:\n${raw.slice(0, 500)}`).toBeGreaterThanOrEqual(0);
-  const parsed = JSON.parse(raw.slice(jsonStart)) as Array<{ files?: Array<{ path: string }> }>;
-  return (parsed[0]?.files ?? []).map((file) => file.path);
+  const npmCache = mkdtempSync(join(tmpdir(), "all2html-npm-cache-"));
+  try {
+    const raw = execFileSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], {
+      cwd: rootDir,
+      encoding: "utf8",
+      env: { ...process.env, NPM_CONFIG_CACHE: npmCache },
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    const jsonStart = raw.indexOf("[");
+    expect(jsonStart, `npm pack emitted no JSON:\n${raw.slice(0, 500)}`).toBeGreaterThanOrEqual(0);
+    const parsed = JSON.parse(raw.slice(jsonStart)) as Array<{ files?: Array<{ path: string }> }>;
+    return (parsed[0]?.files ?? []).map((file) => file.path);
+  } finally {
+    rmSync(npmCache, { recursive: true, force: true });
+  }
 }
 
 /** Every path the manifest promises a consumer can resolve. */

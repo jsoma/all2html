@@ -1,3 +1,4 @@
+import { artifactAssetBase } from "./core/artifact-path.js";
 import type { SurfaceContext } from "./core/capabilities.js";
 import { type All2HtmlConfig, getEmitterConfig, parseConfigText } from "./core/config.js";
 import type { ArtboardGroup } from "./core/group-artboards.js";
@@ -145,7 +146,7 @@ export async function convertLoadedSvgFilesInBrowser(
   // asset at `assetRoot + asset.path`, so the path from an emitted file to an
   // asset *is* `assetRoot`. One value, read once, handed to both sides — the
   // emitted `src` and the bundle layout cannot disagree.
-  const assetRoot = processed.document.settings.imageOutputPath || "";
+  const assetRoot = artifactAssetBase(processed.document.settings.imageOutputPath || "");
   const emitResult = emitter(options.format).emitAll(
     processed.document,
     processed.groups,

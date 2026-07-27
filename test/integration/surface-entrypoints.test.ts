@@ -211,6 +211,17 @@ describe("Illustrator entry point (ExtendScript bundle processAndEmit)", () => {
     expect(imageSrcs(result.html)).toEqual(["test-desktop.png"]);
   });
 
+  it("exports the shared output-directory constructor and refuses traversal", () => {
+    const core = loadExtendScriptBundle() as ReturnType<typeof loadExtendScriptBundle> & {
+      relativeOutputDirectory: (path: string) => string;
+    };
+
+    expect(core.relativeOutputDirectory("nested/output")).toBe("nested/output/");
+    expect(() => core.relativeOutputDirectory("../../outside")).toThrow(
+      /Artifact paths must stay inside/,
+    );
+  });
+
   /**
    * The user's own prefix still wins, verbatim. That is ai2html's split:
    * `image_output_path` is where the files go, `image_source_path` is what goes
@@ -233,8 +244,18 @@ describe("Illustrator entry point (ExtendScript bundle processAndEmit)", () => {
 describe("CLI entry point (src/cli/index.ts render)", () => {
   function runCli(irPath: string, outputDir: string, format: string) {
     return spawnSync(
-      "pnpm",
-      ["exec", "tsx", "src/cli/index.ts", "render", irPath, "-o", outputDir, "--format", format],
+      process.execPath,
+      [
+        "--import",
+        "tsx",
+        "src/cli/index.ts",
+        "render",
+        irPath,
+        "-o",
+        outputDir,
+        "--format",
+        format,
+      ],
       { cwd: rootDir, encoding: "utf-8" },
     );
   }
@@ -409,6 +430,16 @@ describe("browser entry point (convertLoadedSvgFilesInBrowser)", () => {
     for (const src of srcs) {
       expect(result.bundle.files.map((file) => file.path)).toContain(src);
     }
+  });
+
+  it("constructs the same asset path when imageOutputPath omits its trailing slash", async () => {
+    const result = await convertWithAsset({ imageOutputPath: "img/nested" });
+
+    const emitted = result.bundle.files.find((file) => file.path === result.emittedPath);
+    expect(imageSrcs(new TextDecoder().decode(emitted?.bytes))).toEqual([
+      "img/nested/test-desktop.png",
+    ]);
+    expect(result.bundle.files.map((file) => file.path)).toContain("img/nested/test-desktop.png");
   });
 
   /**

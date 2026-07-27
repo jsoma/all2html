@@ -364,7 +364,9 @@ describe("declarations match what the code actually does", () => {
     // One read, two applications: `assetBase` puts it in the emitted `src`,
     // `assetRoot` puts it in the ZIP layout. Both have to come from this value
     // or the HTML references entries the ZIP does not contain.
-    expect(exportSource).toContain('const assetRoot = document.settings.imageOutputPath || ""');
+    expect(exportSource).toContain(
+      'const assetRoot = artifactAssetBase(document.settings.imageOutputPath || "")',
+    );
     expect(exportSource).toContain("withAssetBase(options.emit, assetRoot)");
     expect(exportSource).toContain("assetRoot,");
     expect(getSurfaceCapabilities("figma").settings.imageOutputPath).toBeUndefined();

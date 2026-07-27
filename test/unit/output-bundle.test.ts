@@ -128,6 +128,45 @@ describe("bundle entry paths cannot escape the bundle root", () => {
     ).toThrow(/Refusing to build an output bundle/);
   });
 
+  it.each([
+    "ir.json",
+    "manifest.json",
+  ])("refuses an asset that collides with the reserved %s entry", (path) => {
+    expect(() =>
+      createOutputBundle(
+        makeBundleOptions({
+          assetRoot: "",
+          assetFiles: [{ path, bytes: Uint8Array.from([9]), mimeType: "application/octet-stream" }],
+        }),
+      ),
+    ).toThrow(/collides.*Bundle entry paths must be unique/);
+  });
+
+  it("refuses distinct emitted names that normalize to one entry", () => {
+    expect(() =>
+      createOutputBundle(
+        makeBundleOptions({
+          emittedFiles: [
+            { slug: "nested//sample", extension: ".html", output: "one" },
+            { slug: "nested/sample", extension: ".html", output: "two" },
+          ],
+        }),
+      ),
+    ).toThrow(/collides.*Bundle entry paths must be unique/);
+  });
+
+  it("classifies an emitted entry by its constructed path, not its raw spelling", () => {
+    const bundle = createOutputBundle(
+      makeBundleOptions({
+        emittedFiles: [{ slug: "/sample", extension: ".html", output: "sample" }],
+      }),
+    );
+
+    expect(bundle.manifest.files).toContainEqual(
+      expect.objectContaining({ path: "sample.html", role: "emitted" }),
+    );
+  });
+
   /**
    * `imageOutputPath` is also the `<img src>` prefix, where `/all2html-output/`
    * is an ordinary site-root URL — `test/fixtures/golden-ir/multiple-files-test.json`

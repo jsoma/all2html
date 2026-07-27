@@ -142,3 +142,59 @@ export function getSettingDefault<K extends keyof Settings>(key: K): Settings[K]
   const value = definition.defaultValue;
   return (isArrayValue(value) ? [...value] : value) as Settings[K];
 }
+
+function isFiniteNumber(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    value > Number.NEGATIVE_INFINITY &&
+    value < Number.POSITIVE_INFINITY
+  );
+}
+
+function isDeclaredValue(value: unknown, values: readonly string[] | undefined): boolean {
+  if (typeof value !== "string" || !values) return false;
+  for (let i = 0; i < values.length; i++) {
+    if (values[i] === value) return true;
+  }
+  return false;
+}
+
+/**
+ * Zod-free runtime validation generated from the same setting definitions as
+ * `SettingsSchema`. Illustrator calls this before persisting IR and the
+ * ExtendScript core calls it again after settings precedence is resolved.
+ */
+export function isValidSettingValue(key: string, value: unknown): boolean {
+  const definition = getSettingDefinition(key);
+  if (!definition) return false;
+
+  switch (definition.kind) {
+    case "boolean":
+      return typeof value === "boolean";
+    case "string":
+      return typeof value === "string";
+    case "string-safe":
+      return typeof value === "string" && (value === "" || SAFE_SETTING_IDENTIFIER_RE.test(value));
+    case "enum":
+      return isDeclaredValue(value, definition.values);
+    case "enum-array":
+      if (!isArrayValue(value)) return false;
+      for (let i = 0; i < value.length; i++) {
+        if (!isDeclaredValue(value[i], definition.values)) return false;
+      }
+      return true;
+    case "integer":
+      return (
+        isFiniteNumber(value) &&
+        Math.floor(value) === value &&
+        (definition.min === undefined || value >= definition.min) &&
+        (definition.max === undefined || value <= definition.max)
+      );
+    case "positive-integer":
+      return isFiniteNumber(value) && Math.floor(value) === value && value > 0;
+    case "positive-integer-nullable":
+      return value === null || (isFiniteNumber(value) && Math.floor(value) === value && value > 0);
+    case "positive-number-nullable":
+      return value === null || (isFiniteNumber(value) && value > 0);
+  }
+}

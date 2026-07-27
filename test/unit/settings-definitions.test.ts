@@ -6,6 +6,7 @@ import {
   createDefaultSettings,
   getSettingDefault,
   getSettingDefinition,
+  isValidSettingValue,
   SETTING_DEFINITIONS,
 } from "../../src/ir/settings-definitions.js";
 
@@ -26,6 +27,38 @@ describe("settings definitions", () => {
 
     expect(first).toEqual(["auto"]);
     expect(first).not.toBe(second);
+  });
+
+  it("keeps the Zod and Zod-free validators equivalent for every setting", () => {
+    const candidates: unknown[] = [
+      null,
+      true,
+      false,
+      "",
+      "safe-name",
+      "g-}body{display:none}",
+      -1,
+      0,
+      1,
+      1.5,
+      100,
+      999,
+      [],
+      ["auto"],
+      ["png", "jpg"],
+      ["not-declared"],
+      {},
+    ];
+
+    for (const definition of SETTING_DEFINITIONS) {
+      for (const value of candidates) {
+        const zodAccepts = SettingsSchema.safeParse({ [definition.key]: value }).success;
+        expect(
+          isValidSettingValue(definition.key, value),
+          `${definition.key} disagrees with Zod for ${JSON.stringify(value)}`,
+        ).toBe(zodAccepts);
+      }
+    }
   });
 
   it("keeps panel help copy in a sibling module, keyed by real settings", () => {

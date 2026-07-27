@@ -5,6 +5,7 @@
  */
 
 import { assertUsableArtboardDimensions } from "../core/artboard-dimensions.js";
+import { relativeOutputDirectory } from "../core/artifact-path.js";
 import { checkSurfaceCapabilities, illustratorCapabilities } from "../core/capabilities.js";
 import { computeBreakpoints } from "../core/compute-breakpoints.js";
 import { computePositions } from "../core/compute-positions.js";
@@ -19,8 +20,9 @@ import { emitHTMLString } from "../emitters/html-string.js";
 import { defaultSettings } from "../ir/defaults.js";
 import {
   getSettingDefault,
-  SAFE_IDENTIFIER_SETTING_KEYS,
+  isValidSettingValue,
   SAFE_SETTING_IDENTIFIER_RE,
+  SETTING_DEFINITIONS,
 } from "../ir/settings-definitions.js";
 import type { Document, FontMapping, Settings } from "../ir/types.js";
 import { installPolyfills } from "./polyfills.js";
@@ -114,14 +116,12 @@ function phase(name: string): void {
 }
 
 /**
- * `namespace`, `projectName` and `svgIdPrefix` reach CSS selectors and ids
- * **unescaped** (`src/emitters/shared/css.ts` concatenates `settings.namespace`
- * straight into every rule), so a value such as `g-}body{display:none}.` injects
- * arbitrary CSS. Zod rejects that at the `string-safe` boundary — but the
- * production Illustrator surface never runs Zod: `exporter.jsx` copies the value
- * out of the `ai2html-settings` text block directly into `settings`. Every
- * Zod-free caller enters through this bundle, so the check belongs here rather
- * than in one exporter.
+ * The production Illustrator surface cannot ship Zod, so resolved settings
+ * used to receive only whichever individual guards had been added after a bug:
+ * safe identifiers, then extensions, while enum and range constraints remained
+ * unenforced. `isValidSettingValue` derives every constraint from the same
+ * SETTING_DEFINITIONS table that builds SettingsSchema, so a new setting kind
+ * cannot silently become another unguarded ExtendScript input.
  *
  * A rejected value falls back to its declared default instead of aborting: the
  * desk gets the graphic plus a named warning, not a dead export.
@@ -131,25 +131,18 @@ function phase(name: string): void {
  * line earlier and nothing else holds a reference. A clone here costs `__assign`
  * twice in a bundle that is measured in bytes.
  */
-function sanitizeIdentifierSettings(settings: Settings, warnings: StructuredWarning[]): void {
-  for (let i = 0; i < SAFE_IDENTIFIER_SETTING_KEYS.length; i++) {
-    const key = SAFE_IDENTIFIER_SETTING_KEYS[i];
+function sanitizeSettings(settings: Settings, warnings: StructuredWarning[]): void {
+  for (let i = 0; i < SETTING_DEFINITIONS.length; i++) {
+    const key = SETTING_DEFINITIONS[i].key;
     const value = settings[key];
-    if (typeof value !== "string") continue;
-    if (value === "" || SAFE_SETTING_IDENTIFIER_RE.test(value)) continue;
+    if (isValidSettingValue(key, value)) continue;
     const fallback = getSettingDefault(key);
-    settings[key] = fallback;
+    settings[key] = fallback as never;
     warnings.push(
       createWarning(
         "setting:invalid-value",
         "setting",
-        'Setting "' +
-          key +
-          '" must be a CSS-safe identifier (letters, digits, "_", "-"); "' +
-          value +
-          '" is not. Using "' +
-          fallback +
-          '" instead.',
+        `Setting "${key}" has an invalid value. Using "${fallback}" instead.`,
         { setting: key, surface: "illustrator" },
       ),
     );
@@ -160,7 +153,7 @@ function sanitizeIdentifierSettings(settings: Settings, warnings: StructuredWarn
  * The slug is a filename component, so an unsafe value is a path traversal at
  * the exporter's write site, not just a CSS-selector problem. Illustrator now
  * keyword-cases it at the source; this is the backstop for every other Zod-free
- * producer, and it runs after `sanitizeIdentifierSettings` because clearing an
+ * producer, and it runs after `sanitizeSettings` because clearing an
  * invalid `projectName` is exactly what makes grouping fall through to here.
  */
 function sanitizeDocumentSlug(
@@ -204,9 +197,14 @@ export function processAndEmit(
 
   const resolved = resolveSettingsPure(irDoc, config);
   phase("resolveSettingsPure");
+  // JSON sentinels are contract violations, not ordinary invalid settings.
+  // Check before fallback normalization so Infinity/NaN/undefined cannot be
+  // silently converted into defaults.
+  assertJsonPure(resolved, "resolveSettings");
+  phase("assertJsonPure:resolved");
   // Before any transform reads them: there is no Zod on this path, so a
   // metacharacter in `namespace`/`projectName` would be concatenated into CSS.
-  sanitizeIdentifierSettings(resolved.settings, warnings);
+  sanitizeSettings(resolved.settings, warnings);
   // metadata.slug is not a setting, but groupArtboards falls back to it when
   // projectName is absent or was just cleared above — and the slug is
   // concatenated into output file paths. Sanitizing only the setting left
@@ -222,8 +220,6 @@ export function processAndEmit(
     warnings,
     "illustrator",
   );
-  assertJsonPure(resolved, "resolveSettings");
-  phase("assertJsonPure:resolved");
   // Illustrator declares what it honors like every other surface; anything the
   // user set that the exporter will not act on warns here (SPEC 12.5).
   const capabilityWarnings = checkSurfaceCapabilities(illustratorCapabilities, resolved.settings, {
@@ -297,4 +293,4 @@ export function processAndEmit(
   };
 }
 
-export { defaultSettings };
+export { defaultSettings, isValidSettingValue, relativeOutputDirectory };

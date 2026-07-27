@@ -94,19 +94,27 @@ function trim(s) {
   return s.replace(/^[\s\uFEFF\xA0\x03]+|[\s\uFEFF\xA0\x03]+$/g, "");
 }
 
-function makeKeyword(name) {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+/**
+ * The document's output directory, as one relative path under the .ai file.
+ *
+ * A named function so a test can execute the *real* one out of this file: the
+ * shared constructor rejecting traversal proves nothing if this call site stops
+ * calling it, and a source-level grep would not notice either. See
+ * `test/unit/extendscript-setting-safety.test.ts`.
+ */
+function resolveDocumentOutputPath(docSettings, docPath) {
+  var rawOutputPath = docSettings.html_output_path || docSettings.image_output_path || "all2html-output/";
+  // Construct a relative filesystem directory at the boundary. This shared
+  // rule rejects traversal, drive prefixes and controls, contains leading
+  // slashes under the document directory, and returns one trailing slash.
+  rawOutputPath = All2Html.relativeOutputDirectory(String(rawOutputPath));
+  var outputPath = docPath + rawOutputPath;
+  if (outputPath.charAt(outputPath.length - 1) !== "/") outputPath += "/";
+  return outputPath;
 }
 
-// The rule src/ir/settings-definitions.ts declares for the `string-safe`
-// settings (projectName, namespace, svgIdPrefix), which reach CSS selectors and
-// generated ids unescaped. Restated here because ExtendScript cannot import the
-// TypeScript module and because the check has to run *before* ir.json is
-// written — see sanitizeCanonicalIdentifierSettings.
-var SAFE_SETTING_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_-]*$/;
-
-function isSafeSettingIdentifier(value) {
-  return SAFE_SETTING_IDENTIFIER.test(value);
+function makeKeyword(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
 function makeStableId(prefix, name, index) {
@@ -1636,37 +1644,33 @@ function buildCanonicalIrSettings(docSettings) {
 /**
  * Makes the canonical settings bag safe to *persist*, not just safe to render.
  *
- * ir.json is written before All2Html.processAndEmit() runs, so the core's own
- * sanitizeIdentifierSettings only ever repaired its in-memory copy. The file on
+ * ir.json is written before All2Html.processAndEmit() runs, so the core
+ * sanitizer only ever repaired its in-memory copy. The file on
  * disk kept whatever the ai2html-settings text block said — a project_name of
  * "../../pwn" was written verbatim — which made ir.json a document we produced
  * ourselves and loadAndValidateIR rejects. That is the contract break; the
  * emitted HTML was already safe.
  *
- * project_name gets one repair attempt rather than being dropped, because its
- * keyword form is already the effective value: the slug below runs makeKeyword
- * on the same string and metadata.slug carries the result, so persisting the
- * keyword form changes no emitted byte. namespace and svg_id_prefix have no such
- * shadow — keyword-casing "g-}body{display:none}." into a plausible-looking CSS
- * prefix would silently honor a value the desk did not type — so an unusable one
- * is dropped and the declared default applies, which is exactly what the core
- * did with it.
+ * project_name gets one repair attempt because its keyword form is already the
+ * emitted slug. Every resulting value then crosses the shared
+ * SETTING_DEFINITIONS-derived boundary; invalid identifiers, enums, arrays and
+ * numeric ranges are removed so the declared default applies.
  */
-function sanitizeCanonicalIdentifierSettings(settings) {
-  var keys = ["projectName", "namespace", "svgIdPrefix"];
-  for (var i = 0; i < keys.length; i++) {
-    var key = keys[i];
-    var raw = settings[key];
-    if (raw === undefined || raw === "") continue;
-    var value = key === "projectName" ? makeKeyword(String(raw)) : String(raw);
-    if (value !== "" && isSafeSettingIdentifier(value)) {
-      settings[key] = value;
-      continue;
+function sanitizeCanonicalSettings(settings) {
+  if (settings.projectName !== undefined && settings.projectName !== "") {
+    var rawProjectName = settings.projectName;
+    settings.projectName = makeKeyword(String(rawProjectName));
+    if (settings.projectName === "") {
+      delete settings.projectName;
+      warn('Setting "projectName" has an invalid value "' + rawProjectName + '". Using the default instead.', "setting:invalid-value", "setting");
     }
+  }
+  for (var key in settings) {
+    if (!settings.hasOwnProperty(key)) continue;
+    if (All2Html.isValidSettingValue(key, settings[key])) continue;
+    var raw = settings[key];
     delete settings[key];
-    var message = 'Setting "' + key + '" must be a CSS-safe identifier (letters, digits, "_", "-"); "' +
-      raw + '" is not. Using the default instead.';
-    warn(message, "setting:invalid-value", "setting");
+    warn('Setting "' + key + '" has an invalid value "' + raw + '". Using the default instead.', "setting:invalid-value", "setting");
   }
 }
 
@@ -1800,11 +1804,7 @@ function runExporter() {
   // metadata.slug, which is this value — it has to be safe at the source.
   var slug = makeKeyword(docSettings.project_name || docName);
   if (!slug) slug = makeKeyword(docName) || "graphic";
-  var rawOutputPath = docSettings.html_output_path || docSettings.image_output_path || "all2html-output/";
-  // Strip leading slash — output path is relative to document
-  if (rawOutputPath.charAt(0) === "/") rawOutputPath = rawOutputPath.substring(1);
-  var outputPath = docPath + rawOutputPath;
-  if (outputPath.charAt(outputPath.length - 1) !== "/") outputPath += "/";
+  var outputPath = resolveDocumentOutputPath(docSettings, docPath);
 
   var settings = {
     projectName: slug,
@@ -1825,7 +1825,7 @@ function runExporter() {
   var canonicalIrSettings = buildCanonicalIrSettings(docSettings);
   // Before irDoc is built, because irDoc is written to disk below and has to
   // satisfy the canonical schema on its own.
-  sanitizeCanonicalIdentifierSettings(canonicalIrSettings);
+  sanitizeCanonicalSettings(canonicalIrSettings);
 
   if (settings.imageFormat && settings.imageFormat.length > 1) {
     warn("Multiple image formats specified; currently only the first is used: " + settings.imageFormat[0], "setting:multiple-image-formats", "setting");

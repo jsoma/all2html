@@ -5,6 +5,7 @@ import {
   getBrowserEmitter,
   processDocumentInBrowser,
 } from "../../../src/browser.js";
+import { artifactAssetBase } from "../../../src/core/artifact-path.js";
 import { type EmitterConfig, withAssetBase } from "../../../src/emitters/types.js";
 import type { ImportedAssetFile } from "../../../src/importers/types.js";
 import type { Document } from "../../../src/ir/types.js";
@@ -59,7 +60,7 @@ export function buildExportBundle(
   // `createOutputBundle` below writes the emitted files at the ZIP root and the
   // assets at `assetRoot + asset.path`, so the path from an emitted file to an
   // asset is exactly `assetRoot`. Stated once, used by both sides.
-  const assetRoot = document.settings.imageOutputPath || "";
+  const assetRoot = artifactAssetBase(document.settings.imageOutputPath || "");
   const emitted = getBrowserEmitter(options.format).emitAll(
     document,
     groups,
