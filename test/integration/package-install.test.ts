@@ -49,14 +49,18 @@ const INSTALL_TIME_SCRIPTS = ["preinstall", "install", "postinstall", "prepare"]
 const PREPUBLISH_SCRIPTS = ["prepack", "prepare"];
 
 function packedFilePaths(): string[] {
-  const raw = execFileSync("npm", ["pack", "--dry-run", "--json"], {
+  // `--ignore-scripts` is not a shortcut, it is required: `prepack` runs
+  // `pnpm build`, whose first step is `clean:dist`. Letting it run here would
+  // delete `dist/all2html.js` and the ExtendScript bundles out from under every
+  // other test in the run — globalSetup builds those once and nothing rebuilds
+  // them. The file list is unaffected, because globalSetup has already produced
+  // the same `dist/` a real pack would. That `prepack` exists at all is
+  // asserted separately, from the manifest.
+  const raw = execFileSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], {
     cwd: rootDir,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"],
   });
-  // `prepack` runs the build, and its output lands on stdout ahead of the JSON
-  // — which is the point: this probe must see what a real pack produces, not
-  // what `--ignore-scripts` would leave behind.
   const jsonStart = raw.indexOf("[");
   expect(jsonStart, `npm pack emitted no JSON:\n${raw.slice(0, 500)}`).toBeGreaterThanOrEqual(0);
   const parsed = JSON.parse(raw.slice(jsonStart)) as Array<{ files?: Array<{ path: string }> }>;

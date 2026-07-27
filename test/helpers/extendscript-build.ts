@@ -58,6 +58,7 @@ const PANEL_INPUTS = [
 
 /** Inputs per build script, and the builds each one transitively runs. */
 const BUILDS: Record<string, { inputs: string[]; alsoRuns: string[] }> = {
+  build: { inputs: ["src", "tsconfig.build.json"], alsoRuns: [] },
   "build:extendscript": { inputs: CORE_INPUTS, alsoRuns: [] },
   "build:illustrator": { inputs: ILLUSTRATOR_INPUTS, alsoRuns: ["build:extendscript"] },
   "build:after-effects": { inputs: AFTER_EFFECTS_INPUTS, alsoRuns: ["build:extendscript"] },
@@ -160,22 +161,11 @@ function isStale(artifactPath: string, build: string): boolean {
   return artifactMtime < newestMtime(BUILDS[build].inputs);
 }
 
-/**
- * Returns the absolute path to `relativePath`, running `build` first when the
- * artifact is missing or older than the build's inputs.
- */
-export function ensureFreshArtifact(relativePath: string, build: string): string {
-  const full = resolve(repoRoot, relativePath);
-  if (!BUILDS[build]) throw new Error(`Unknown build script: ${build}`);
-  if (verified.has(full)) return full;
+function runBuild(build: string): void {
   const previousFailure = failures.get(build);
   if (previousFailure) throw previousFailure;
-
   try {
     withBuildLock(() => {
-      // Re-checked under the lock: another worker may have just built this, and
-      // holding the lock also keeps us from reading a half-written artifact.
-      if (!isStale(full, build)) return;
       if (ranBuilds.has(build)) return; // already built once — do not loop
       execFileSync(pnpm, [build], { cwd: repoRoot, stdio: "inherit", env: buildEnv() });
       ranBuilds.add(build);
@@ -185,6 +175,74 @@ export function ensureFreshArtifact(relativePath: string, build: string): string
     const failure = error instanceof Error ? error : new Error(String(error));
     failures.set(build, failure);
     throw failure;
+  }
+}
+
+/**
+ * Every artifact the suite inspects, and the build that produces it.
+ *
+ * `build:panel` transitively runs the other three, so ordering matters only in
+ * that it must come last — otherwise it would rewrite artifacts the earlier
+ * builds just produced.
+ */
+const SUITE_ARTIFACTS: Array<{ artifact: string; build: string }> = [
+  // `pnpm build` first, and never after: its `clean:dist` step wipes `dist/`,
+  // including the two ExtendScript bundles and the assembled plugin. That is
+  // the documented ordering in CLAUDE.md, and the reason the package tests pack
+  // with `--ignore-scripts`.
+  { artifact: "dist/index.js", build: "build" },
+  { artifact: "dist/cli/index.js", build: "build" },
+  { artifact: "dist/extendscript/all2html-core.js", build: "build:extendscript" },
+  { artifact: "dist/extendscript/all2html-ae-core.js", build: "build:extendscript" },
+  { artifact: "dist/all2html.js", build: "build:illustrator" },
+  { artifact: "dist/after-effects/all2html-ae.jsx", build: "build:after-effects" },
+  { artifact: "plugins/illustrator/panel/dist/cep/jsx/all2html.js", build: "build:panel" },
+];
+
+/**
+ * Brings every suite artifact up to date. Called once from `globalSetup`,
+ * before any worker exists, so no test ever reads an artifact another worker is
+ * rewriting.
+ */
+export function buildArtifacts(): void {
+  const needed: string[] = [];
+  for (const { artifact, build } of SUITE_ARTIFACTS) {
+    if (!isStale(resolve(repoRoot, artifact), build)) continue;
+    if (needed.indexOf(build) === -1) needed.push(build);
+  }
+  // `build:panel` subsumes the bundle builds; running both would rebuild twice.
+  // `build` is never subsumed and must lead, because it clears `dist/`.
+  const bundles = needed.filter((name) => name !== "build");
+  const collapsed = bundles.indexOf("build:panel") === -1 ? bundles : ["build:panel"];
+  const order = needed.indexOf("build") === -1 ? collapsed : ["build", ...collapsed];
+  for (const build of order) runBuild(build);
+}
+
+/**
+ * Returns the absolute path to `relativePath`.
+ *
+ * Freshness is `globalSetup`'s job, and deliberately **not** re-checked here.
+ * Two reasons. A worker that rebuilds can rewrite `dist/` while another worker
+ * is reading it — the lock never covered that, because the read happens after
+ * the lock is released, and the truncated read surfaces as a size-budget
+ * failure that looks like a real finding. And re-deriving staleness per worker
+ * is unreliable anyway: the builds touch paths that are themselves build
+ * inputs, so an artifact can read as stale moments after being rebuilt.
+ *
+ * One evaluation, before any worker exists, is both correct and cheap. This
+ * side only asserts the artifact is actually there.
+ */
+export function ensureFreshArtifact(relativePath: string, build: string): string {
+  const full = resolve(repoRoot, relativePath);
+  if (!BUILDS[build]) throw new Error(`Unknown build script: ${build}`);
+  if (verified.has(full)) return full;
+
+  if (!existsSync(full)) {
+    throw new Error(
+      `${relativePath} does not exist. Tests do not build on demand; globalSetup ` +
+        `(test/global-setup.ts) builds every artifact first. Add it to SUITE_ARTIFACTS ` +
+        `in test/helpers/extendscript-build.ts if it is missing from that list.`,
+    );
   }
 
   verified.add(full);

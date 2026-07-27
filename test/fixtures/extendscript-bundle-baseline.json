@@ -4,7 +4,7 @@
     "core": {
       "artifact": "dist/extendscript/all2html-core.js",
       "build": "build:extendscript",
-      "bytes": 118534,
+      "bytes": 121121,
       "recordedAt": "2026-07-27",
       "growthTolerance": 0.05,
       "history": [
@@ -47,13 +47,17 @@
         {
           "bytes": 118534,
           "reason": "118534 B. Codex review fixes, measured per change by stash-and-rebuild: capabilities.ts +1,249 B (producedByFormat, so htmlOutputExtension is checked against what each format actually writes instead of against the global default), compute-breakpoints.ts +641 B (ranges computed per artboard group, retiring the empty data-min-width=600/data-max-width=599 range across output files), group-artboards.ts +218 B (artboardGroupKey exported so the two phases cannot drift), json-purity.ts ~+400 B (rejects undefined/Map/Set by class, enforcing the documented contract rather than only non-finite numbers), plus the sanitizeDocumentSlug backstop and the widened font-family control-character guard."
+        },
+        {
+          "bytes": 121121,
+          "reason": "121121 B. Second Codex review round, measured per change by stash-and-rebuild: output-extension.ts +1,224 B (htmlOutputExtension restricted to a filename suffix -- '/../../outside.txt' previously normalized to './../../outside.txt' and resolved above the -o directory) and compute-breakpoints.ts +1,363 B (duplicate widths inside one responsive group are now a hard error on every surface, not a sort-order guess)."
         }
       ]
     },
     "assembled": {
       "artifact": "dist/all2html.js",
       "build": "build:illustrator",
-      "bytes": 208143,
+      "bytes": 213611,
       "recordedAt": "2026-07-27",
       "growthTolerance": 0.05,
       "history": [
@@ -88,19 +92,27 @@
         {
           "bytes": 208143,
           "reason": "208143 B. The 3,777 B core carry above, plus exporter.jsx: project_name is now keyword-cased at the source (a project_name of ../../pwn was a path traversal at the write site, since grouping falls back to metadata.slug)."
+        },
+        {
+          "bytes": 213611,
+          "reason": "213611 B. The core carry above, plus exporter.jsx: canonical identifier settings are sanitized before ir.json is written, so the persisted IR no longer fails our own schema validation. Comment-heavy -- exporter.jsx is concatenated verbatim, so roughly 2.5 KB of the delta is the two rationale comments."
         }
       ]
     },
     "afterEffects": {
       "artifact": "dist/after-effects/all2html-ae.jsx",
       "build": "build:after-effects",
-      "bytes": 78771,
+      "bytes": 79342,
       "recordedAt": "2026-07-27",
       "growthTolerance": 0.05,
       "history": [
         {
           "bytes": 78771,
           "reason": "First recorded baseline for the After Effects script, recorded in the commit that gave that surface the ExtendScript bundle slot (D13). It was 68,916 B before, and unguarded: it was a single hand-written .jsx plus two embedded strings, so there was nothing a budget could have been tracking. It now concatenates json2 (as a string), the player template (as a string), dist/extendscript/all2html-ae-core.js and exporter.jsx, and the bundle is the part that can grow without anyone deciding to spend it. Attribution of the +9,855 B (+14.3%), which sums exactly: +13,518 B for dist/extendscript/all2html-ae-core.js (5,962 B ES5 polyfills, 6,319 B emitters/shared/google-fonts.ts, 577 B emitters/shared/escape.ts plus IIFE scaffolding, all rolled up from the new src/extendscript/ae-index.ts entry); -3,901 B of hand-copied ES5 deleted from exporter.jsx (192 lines: the whole google-fonts fork from stripWrappingQuotes through buildGoogleFontsUrl, plus escapeHtmlAttr and escapeInlineJson, net of the ~20-line requireCore accessor added in their place); +238 B of assembly scaffolding (the provenance header and the two section separators in scripts/package-after-effects.mjs). The 13,518 B was paid deliberately: the alternative, loading the existing core bundle, measured 115,090 B, because it would have pulled the entire IR pipeline into a surface that constructs no IR. A separate rollup entry exporting helpers only is 8.5x smaller, and src/extendscript/ae-index.ts documents why. The polyfills are the largest single item in it and are not optional: google-fonts.ts uses Array.prototype.map/indexOf, String.prototype.trim and Number.isNaN, none of which ExtendScript's ES3 runtime has."
+        },
+        {
+          "bytes": 79342,
+          "reason": "79342 B. escapeInlineJson now escapes every '<' as \\u003c, not just '</': JSON containing '<!--<script>' put the tokenizer into script-data-double-escaped state and the player template's real closing tag was read as text, swallowing the player. Offset slightly by dropping the dead data-all2html-google-fonts marker."
         }
       ]
     }
