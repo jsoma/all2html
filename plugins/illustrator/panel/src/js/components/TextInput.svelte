@@ -14,6 +14,7 @@
     badgeTitle?: string;
     helpId?: PanelSettingKey;
     help?: SettingHelpEntry;
+    note?: string;
   }
 
   let {
@@ -27,18 +28,16 @@
     badgeTitle,
     helpId,
     help,
+    note,
   }: Props = $props();
+
+  const title = $derived(
+    locked ? "Controlled by ai2html-settings in the document" : note || undefined,
+  );
 </script>
 
-<FieldHelp {label} {locked} {badge} {badgeTitle} {helpId} {help}>
+<FieldHelp {label} {locked} {badge} {badgeTitle} {helpId} {help} {note}>
   {#snippet children()}
-    <input
-      type="text"
-      bind:value
-      {placeholder}
-      onchange={onchange}
-      {disabled}
-      title={locked ? "Controlled by ai2html-settings in the document" : undefined}
-    />
+    <input type="text" bind:value {placeholder} onchange={onchange} {disabled} {title} />
   {/snippet}
 </FieldHelp>

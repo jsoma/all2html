@@ -1,4 +1,5 @@
 import { defaultSettings } from "../../../src/ir/defaults.js";
+import { type FigmaCapabilityContext, isValueRequestable } from "./capability.js";
 import { parsePluginConfig } from "./config.js";
 import type {
   FigmaDirectControls,
@@ -174,6 +175,55 @@ export function getPresetControls(preset: Exclude<FigmaPresetId, "custom">): Fig
     default:
       return controls;
   }
+}
+
+/**
+ * The direct controls that are canonical settings (as opposed to metadata), so
+ * a preset can be checked against the surface declaration without restating it.
+ */
+const PRESET_GATED_SETTINGS = [
+  "output",
+  "responsiveness",
+  "imageFormat",
+  "centerHtmlOutput",
+  "renderTextAs",
+  "renderRotatedSkewedTextAs",
+  "googleFonts",
+  "responsiveImageMode",
+] as const;
+
+type PresetGatedSetting = (typeof PRESET_GATED_SETTINGS)[number];
+
+/**
+ * The settings a preset would change to a value this surface will not produce.
+ *
+ * A preset is a bundle of requests, so it is gated by the same rule as the
+ * controls it drives: `image-only-graphic` asks for 8-bit PNG and image text
+ * fallback, none of which the Figma runtime does. A preset value that already
+ * equals the default is not a request, so it is never counted.
+ */
+export function presetUnsupportedSettings(
+  preset: Exclude<FigmaPresetId, "custom">,
+  context: FigmaCapabilityContext = {},
+): PresetGatedSetting[] {
+  const presetControls = getPresetControls(preset);
+  const defaults = createInitialDirectControls();
+  const unsupported: PresetGatedSetting[] = [];
+  for (const key of PRESET_GATED_SETTINGS) {
+    const value = String(presetControls[key]);
+    if (value === String(defaults[key])) continue;
+    if (!isValueRequestable(key, value, context)) unsupported.push(key);
+  }
+  return unsupported;
+}
+
+/** True when every setting the preset changes is one this surface honors. */
+export function isPresetRequestable(
+  preset: FigmaPresetId,
+  context: FigmaCapabilityContext = {},
+): boolean {
+  if (preset === "custom") return true;
+  return presetUnsupportedSettings(preset, context).length === 0;
 }
 
 export function directControlsFromConfig(config: FigmaPluginConfig): FigmaDirectControls {

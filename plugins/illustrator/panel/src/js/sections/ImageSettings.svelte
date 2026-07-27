@@ -10,6 +10,7 @@
     type FieldSources,
   } from "../provenance";
   import { getSettingHelp } from "../setting-help.js";
+  import { capabilityNote, gateOptions, isControlDisabledByCapability } from "../capability.js";
 
   interface Props {
     settings: PanelSettings;
@@ -52,6 +53,16 @@
   function helpFor(key: PanelSettingKey) {
     return getSettingHelp(key);
   }
+
+  // Illustrator rasterizes 8-bit PNG for everything but jpg, so png24 and svg
+  // are shown disabled rather than removed — a stored value still displays.
+  const imageFormatOptions = gateOptions("imageFormat", [
+    { value: "auto", label: "Auto" },
+    { value: "png", label: "PNG (8-bit)" },
+    { value: "png24", label: "PNG (24-bit)" },
+    { value: "jpg", label: "JPEG" },
+    { value: "svg", label: "SVG" },
+  ]);
 </script>
 
 <div class="section">
@@ -63,19 +74,14 @@
       () => imageFormat,
       (v) => { settings.imageFormat = v as PanelSettings["imageFormat"]; onchange(); }
     }
-    options={[
-      { value: "auto", label: "Auto" },
-      { value: "png", label: "PNG (8-bit)" },
-      { value: "png24", label: "PNG (24-bit)" },
-      { value: "jpg", label: "JPEG" },
-      { value: "svg", label: "SVG" },
-    ]}
-    disabled={isLocked("imageFormat")}
+    options={imageFormatOptions}
+    disabled={isLocked("imageFormat") || isControlDisabledByCapability("imageFormat")}
     locked={isLocked("imageFormat")}
     badge={badgeFor("imageFormat")}
     badgeTitle={badgeTitleFor("imageFormat")}
     helpId="imageFormat"
     help={helpFor("imageFormat")}
+    note={capabilityNote("imageFormat")}
     {onchange}
   />
 

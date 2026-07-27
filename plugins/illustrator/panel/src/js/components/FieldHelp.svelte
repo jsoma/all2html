@@ -18,6 +18,11 @@
     badgeTitle?: string;
     checkbox?: boolean;
     wrapperTitle?: string;
+    /**
+     * Capability note: what this surface does instead of what the control asks
+     * for. Rendered under the field so a gated control explains itself.
+     */
+    note?: string;
     children: Snippet;
   }
 
@@ -30,6 +35,7 @@
     badgeTitle,
     checkbox = false,
     wrapperTitle,
+    note,
     children,
   }: Props = $props();
 
@@ -135,6 +141,10 @@
       </div>
     {/if}
   </div>
+
+  {#if note}
+    <p class="field-capability-note">{note}</p>
+  {/if}
 
   {#if isOpen && help && helpId}
     <div class="field-help-card" id={`field-help-card-${helpId}`}>

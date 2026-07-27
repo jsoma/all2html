@@ -1,11 +1,6 @@
 /// <reference lib="dom" />
 
-import type {
-  FigmaDirectControls,
-  FigmaOutputFormat,
-  SandboxToUiMessage,
-  UiToSandboxMessage,
-} from "./types.js";
+import type { FigmaDirectControls, SandboxToUiMessage, UiToSandboxMessage } from "./types.js";
 import {
   applyDirectControlsToConfig,
   buildLocalUiState,
@@ -25,6 +20,7 @@ import {
   serializePluginConfig,
   shouldShowReadyStatus,
 } from "./ui.js";
+import { applyCapabilityGating } from "./ui-capability-dom.js";
 
 declare global {
   interface Window {
@@ -385,9 +381,13 @@ export function bootstrapUi(): void {
   renderExportNotice(elements, state.exportSummary);
   renderStatus(elements.statusEl, "Loading selection and shared config...");
   syncButtons(elements, state);
+  applyCapabilityGating(document, state.format);
 
   elements.formatEl.addEventListener("change", () => {
     state.format = elements.formatEl.value === "standalone" ? "standalone" : "html";
+    // `output` is honored by the html emitter and discarded by standalone, so
+    // the layout control is gated by the format that is actually selected.
+    applyCapabilityGating(document, state.format);
     persistLocalUiState(state);
   });
 
@@ -545,6 +545,7 @@ export function bootstrapUi(): void {
           updateConfigFromControls(elements, state);
         }
         elements.configEl.value = state.configText;
+        applyCapabilityGating(document, state.format);
         renderValidation(elements, state);
         syncButtons(elements, state);
         renderExportNotice(elements, state.exportSummary);

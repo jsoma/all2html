@@ -8,6 +8,7 @@
     type FieldSources,
   } from "../provenance";
   import { getSettingHelp } from "../setting-help.js";
+  import { capabilityNote, gateOptions, isControlDisabledByCapability } from "../capability.js";
 
   interface Props {
     settings: PanelSettings;
@@ -45,6 +46,11 @@
   function helpFor(key: PanelSettingKey) {
     return getSettingHelp(key);
   }
+
+  const outputOptions = gateOptions("output", [
+    { value: "one-file", label: "Single file" },
+    { value: "multiple-files", label: "Per artboard" },
+  ]);
 </script>
 
 <div class="section">
@@ -94,16 +100,14 @@
       () => output,
       (v) => { settings.output = v as "one-file" | "multiple-files"; onchange(); }
     }
-    options={[
-      { value: "one-file", label: "Single file" },
-      { value: "multiple-files", label: "Per artboard" },
-    ]}
-    disabled={isLocked("output")}
+    options={outputOptions}
+    disabled={isLocked("output") || isControlDisabledByCapability("output")}
     locked={isLocked("output")}
     badge={badgeFor("output")}
     badgeTitle={badgeTitleFor("output")}
     helpId="output"
     help={helpFor("output")}
+    note={capabilityNote("output")}
     {onchange}
   />
 </div>

@@ -11,6 +11,7 @@
     type FieldSources,
   } from "../provenance";
   import { getSettingHelp } from "../setting-help.js";
+  import { capabilityNote, isControlDisabledByCapability } from "../capability.js";
 
   interface Props {
     settings: PanelSettings;
@@ -246,12 +247,13 @@
       () => settings.inlineSvg ?? false,
       (v) => { settings.inlineSvg = v; onchange(); }
     }
-    disabled={isLocked("inlineSvg")}
+    disabled={isLocked("inlineSvg") || isControlDisabledByCapability("inlineSvg")}
     locked={isLocked("inlineSvg")}
     badge={badgeFor("inlineSvg")}
     badgeTitle={badgeTitleFor("inlineSvg")}
     helpId="inlineSvg"
     help={helpFor("inlineSvg")}
+    note={capabilityNote("inlineSvg")}
     {onchange}
   />
 
@@ -262,10 +264,11 @@
       (v) => { settings.svgIdPrefix = v; onchange(); }
     }
     placeholder="(none)"
-    disabled={isLocked("svgIdPrefix")}
+    disabled={isLocked("svgIdPrefix") || isControlDisabledByCapability("svgIdPrefix")}
     locked={isLocked("svgIdPrefix")}
     badge={badgeFor("svgIdPrefix")}
     badgeTitle={badgeTitleFor("svgIdPrefix")}
+    note={capabilityNote("svgIdPrefix")}
     {onchange}
   />
 

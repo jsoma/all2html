@@ -248,6 +248,13 @@ body {
   color: var(--warning);
 }
 
+.field-capability-note {
+  margin: 0 0 6px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--warning);
+}
+
 .field-help-button {
   width: 15px;
   height: 15px;
