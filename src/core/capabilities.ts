@@ -60,6 +60,11 @@ export interface SettingSupport {
    * silent so ordinary exports are not told about a problem their document does
    * not have. The entry still exists so the capability tables and the generated
    * support matrix record the gap.
+   *
+   * **No declaration currently uses this.** Its one occupant was `useLazyLoader`
+   * (honored for images, dead for video), which was fixed rather than declared.
+   * The field is kept as a deliberate seam — see D25's corollary in
+   * `internal-docs/product-decisions.md`. Do not delete it as unreferenced.
    */
   warnedByEmitter?: string;
   /**
@@ -343,11 +348,12 @@ export const figmaCapabilities: SurfaceCapabilities = {
       status: "unsupported",
       note: "Figma delivers a ZIP whose layout is fixed by the bundle manifest.",
     },
-    // Footnote 7 — the value moves the <img src> prefix but not the ZIP layout.
-    imageOutputPath: {
-      status: "partial",
-      note: "Changing this moves the <img src> prefix but not the asset paths inside the ZIP, so the HTML stops resolving against the bundle.",
-    },
+    // Matrix footnote 7 is retired: `imageOutputPath` used to move the <img src>
+    // prefix without moving the ZIP layout, so any non-default value produced
+    // HTML that pointed outside its own bundle. `plugins/figma/src/export.ts`
+    // now passes `assetRoot: document.settings.imageOutputPath || ""` into
+    // `createOutputBundle`, so the emitted `src` and the ZIP entry are built
+    // from the same value. No entry — Figma's `defaultStatus` is "honored".
     // D13 — runtime-extract.ts:191 hardcodes renderAs:"html".
     renderTextAs: {
       status: "unsupported",
@@ -400,11 +406,11 @@ export const figmaFeatures: SurfaceFeatures = {
   "tag:png": { status: "honored", note: "" },
   "tag:symbol": {
     status: "unsupported",
-    note: "Parsed then rejected by the Figma extractor.",
+    note: "Recognized only to warn. The tag is ignored and the layer exports as ordinary artwork.",
   },
   "tag:div": {
     status: "unsupported",
-    note: "Parsed then rejected by the Figma extractor.",
+    note: "Recognized only to warn. The tag is ignored and the layer exports as ordinary artwork.",
   },
   "tag:video": { status: "honored", note: "" },
   "tag:html-hooks": { status: "honored", note: "" },

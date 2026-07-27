@@ -291,8 +291,11 @@ describe("DEAD settings now warn", () => {
   });
 
   it("covers the 29 DEAD cells still recorded in the capability matrix", () => {
-    // 30 when the matrix was transcribed; D10 (illustrator/output) was fixed
-    // rather than declared.
+    // 31 when the matrix was transcribed. Two were fixed rather than declared:
+    // D10 (illustrator/output) and D31 (useLazyLoader on video). The number is
+    // stated in three places that must agree — this assertion, the header of
+    // `internal-docs/capability-matrix.md`, and the Known Broken bullet in the
+    // root `CLAUDE.md`.
     expect(DEAD_CELLS).toHaveLength(29);
   });
 });
@@ -315,6 +318,24 @@ describe("declarations match what the code actually does", () => {
         path: "render",
         format: "html",
       }).filter((warning) => warning.setting === "output"),
+    ).toEqual([]);
+  });
+
+  it("Figma honors imageOutputPath, because the ZIP layout uses the same value as the src", () => {
+    // Matrix footnote 7, inverted. The declaration used to say `partial`: the
+    // setting moved the emitted `<img src>` prefix while the bundle was built
+    // with no `assetRoot`, so any non-default value produced HTML pointing
+    // outside its own ZIP. Both halves are asserted — the wiring and the absence
+    // of a declaration — because either could go stale without the other.
+    const exportSource = readFileSync(join(repoRoot, "plugins/figma/src/export.ts"), "utf-8");
+    expect(exportSource).toContain("assetRoot: document.settings.imageOutputPath");
+    expect(getSurfaceCapabilities("figma").settings.imageOutputPath).toBeUndefined();
+    expect(
+      checkCapabilitiesForSurface(settingsWith("imageOutputPath", "assets/"), {
+        surface: "figma",
+        path: "render",
+        format: "html",
+      }).filter((warning) => warning.setting === "imageOutputPath"),
     ).toEqual([]);
   });
 

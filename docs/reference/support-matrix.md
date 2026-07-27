@@ -62,10 +62,10 @@ Tagged layers become overlays or HTML hooks instead of being baked into the back
 - **Inline SVG layer · Browser converter** — Read from the IR; the SVG importer never produces one.
 - **PNG overlay layer · all2html CLI** — Read from the IR; the SVG importer never produces one.
 - **PNG overlay layer · Browser converter** — Read from the IR; the SVG importer never produces one.
-- **Symbol layer · Figma plugin** — Parsed then rejected by the Figma extractor.
+- **Symbol layer · Figma plugin** — Recognized only to warn. The tag is ignored and the layer exports as ordinary artwork.
 - **Symbol layer · all2html CLI** — Read from the IR; the SVG importer never produces one.
 - **Symbol layer · Browser converter** — Read from the IR; the SVG importer never produces one.
-- **Div layer · Figma plugin** — Parsed then rejected by the Figma extractor.
+- **Div layer · Figma plugin** — Recognized only to warn. The tag is ignored and the layer exports as ordinary artwork.
 - **Div layer · all2html CLI** — Read from the IR; the SVG importer never produces one.
 - **Div layer · Browser converter** — Read from the IR; the SVG importer never produces one.
 - **Video layer · all2html CLI** — Read from the IR; the SVG importer never produces one.

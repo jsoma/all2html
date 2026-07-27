@@ -11,9 +11,9 @@ Cell vocabulary:
 
 Columns: **IL** = Illustrator script/panel · **AE** = After Effects · **FIG** = Figma plugin · **CLI/SVG** = Node CLI + browser dropzone.
 
-> **31 DEAD cells recorded; 30 still dead.** Every one is a place where a user sets something, the export succeeds, and nothing happens. D10 (`output` on Illustrator) is the first one closed rather than declared: `group-artboards.ts` is ES3-safe now, `src/extendscript/index.ts` calls it, and `exporter.jsx` writes one file per group. This is the single largest source of user-visible wrongness in the product, and it is the reason SPEC §12.5 (capability declarations) leads the contract work.
+> **31 DEAD cells recorded; 29 still dead.** Every one is a place where a user sets something, the export succeeds, and nothing happens. Two are closed rather than declared: **D10** (`output` on Illustrator) — `group-artboards.ts` is ES3-safe now, `src/extendscript/index.ts` calls it, and `exporter.jsx` writes one file per group — and **D31** (`useLazyLoader` on video), which `src/emitters/shared/lazy-video.ts` fixed by shipping the loader on all four formats. Matrix footnote 7 (Figma `imageOutputPath`) closed in the same pass and was never a numbered cell. This is still the single largest source of user-visible wrongness in the product, and it is the reason SPEC §12.5 (capability declarations) leads the contract work.
 >
-> **STATUS: seeded into code.** D1–D30 minus D10 (fixed, see its row) are declared in `src/core/capabilities.ts` and warn at export time with the `setting:unsupported` code; D31 (`useLazyLoader`) is content-dependent and warns from the emitter instead (see below). `test/unit/capabilities.test.ts` transcribes the table below (by D-id) and fails if any of them stops warning; it also re-derives the "zero readers" claims for `writeImageFiles`, `inlineSvg`, `svgIdPrefix` and `createPromoImage` from the source tree, so the matrix cannot silently drift from the code. Changing a cell here means changing the declaration.
+> **STATUS: seeded into code.** D1–D30 minus D10 are declared in `src/core/capabilities.ts` and warn at export time with the `setting:unsupported` code. `test/unit/capabilities.test.ts` transcribes the table below (by D-id), asserts the list is exactly 29 entries long, and fails if any of them stops warning; it also re-derives the "zero readers" claims for `writeImageFiles`, `inlineSvg`, `svgIdPrefix` and `createPromoImage` from the source tree, so the matrix cannot silently drift from the code. The count appears in three places — this header, that assertion, and the Known Broken bullet in the root `CLAUDE.md` — and all three must move together. Changing a cell here means changing the declaration.
 >
 > **The public docs are generated from the declarations.** `docs/reference/settings.md` and `docs/reference/support-matrix.md` are emitted by `scripts/generate-settings-docs.ts` from `SETTING_DEFINITIONS`, `SURFACE_CAPABILITIES`, and `SURFACE_FEATURES` — never hand-edited. `pnpm check:generated-docs` runs in CI and fails when the committed pages no longer match the declarations, so changing a cell here changes the declaration, and changing the declaration changes the public page in the same commit.
 >
@@ -52,7 +52,7 @@ Columns: **IL** = Illustrator script/panel · **AE** = After Effects · **FIG** 
 | 23 | `includeResizerCss` | yes `css.ts:31` | no | yes³ | yes |
 | 24 | `includeResizerWidths` | yes `html-string.ts:211` | no | yes³ | yes |
 | 25 | `responsiveImageMode` | **no** [N1] | no | yes `css.ts:30` | yes |
-| 26 | `useLazyLoader` | **DEAD for video** [D31] | no | **DEAD for video** [D31] | **DEAD for video** [D31] |
+| 26 | `useLazyLoader` | yes⁸ | no | yes⁸ | yes⁸ |
 | 27 | `inlineSvg` (setting) | **DEAD** [D16] | no | **DEAD** [D17] | **DEAD** [D18] |
 | 28 | `svgIdPrefix` | **DEAD** [D19] | no | **DEAD** [D20] | **DEAD** [D21] |
 | 29 | `svgEmbedImages` | yes `exporter.jsx:1003` | no | **DEAD** [D22] | **DEAD** [D23] |
@@ -66,18 +66,18 @@ Columns: **IL** = Illustrator script/panel · **AE** = After Effects · **FIG** 
 1. Honored only on `import svg` (`import-core.ts:1071`). The value `svg` is explicitly rejected with a warning and downgraded to png (`import-core.ts:949`) — an honest refusal, not a dead cell. `render <ir.json>` never rasterizes, so the key is inert there.
 2. Same: honored on `import svg`, inert on `render`.
 3. Accepted only via Advanced JSONC (`plugins/figma/src/config.ts:9` → canonical `SettingsSchema`); no dedicated UI control. Honored because the core pipeline reads it.
-4. Honored for `html` (and `svelte`/`react` on CLI) via `registry-shared.ts:98`. **Silently collapses to one file for `standalone`** — `registry-shared.ts:82` discards `groups`. Verified: `multiple-files-test` → html 2 files, svelte 2, react 2, **standalone 1**.
+4. Honored for every format the surface can emit. `standalone` used to collapse to one file because its registry entry discarded `groups`; it now runs through the same `perGroup()` helper as html/svelte/react (`registry-shared.ts:93`).
 5. `html` only; svelte/react force their own extensions, standalone hardcodes `.html`.
 6. Only a *fallback* for the whole output dir. Images always go to `settings.outputPath` (`exporter.jsx:1176`), so it cannot relocate images independently of HTML.
-7. Acts on the `<img src>` prefix, but `plugins/figma/src/export.ts:46` omits `assetRoot` while Figma asset paths are hardcoded `all2html-output/…` — any non-default value desyncs the HTML from the ZIP layout.
-8. Split verdict, and the earlier `yes⁸` was optimistic transcription. Images get native `loading="lazy"`, which works. Videos get `data-src` and no `src`, and **no loader script is emitted anywhere in `src/`** (`html.ts:310`, `html-string.ts:335`; zero hits for `IntersectionObserver` / `lazyload` / `loadImages`), so a lazily-loaded video never plays. See D31.
+7. **Fixed.** Was: the value moved the `<img src>` prefix while `plugins/figma/src/export.ts` omitted `assetRoot`, so any non-default value desynced the HTML from the ZIP layout. `export.ts:68` now passes `assetRoot: document.settings.imageOutputPath || ""` into `createOutputBundle`, so the emitted `src` and the ZIP entry are derived from one value. The `partial` declaration is deleted — Figma's `defaultStatus` is `honored`. Pinned by `test/unit/figma-plugin.test.ts` ("keeps HTML src paths and ZIP entries in sync").
+8. Images get native `loading="lazy"`. Videos used to get `data-src` and no `src` with no loader anywhere in `src/`, which is D31; `src/emitters/shared/lazy-video.ts` now ships the loader on all four formats — a `<script>` for html/standalone, a lifecycle effect for svelte/react — so the setting is honored end to end.
 9. Read from the raw snake_case `docSettings.promo_image_width`, not the canonical setting. Reachable via text block / config file only; the panel cannot set it.
 
 ### DEAD-cell evidence
 
 | ID | Accepted at | Not honored — proof |
 |---|---|---|
-| D1 | `exporter.jsx:1418`; panel select offering all 5 values `ImageSettings.svelte:63` | `exporter.jsx:1120-1137` — only branch is `if (format === "jpg") … else PNG8`. Artifact: `mask-test/ir.json` has `"imageFormat":["svg"]` → output is `PNG image data, 8-bit colormap` while `exportParams.format` records `"svg"`. |
+| D1 | `exporter.jsx:1418`; panel select at `ImageSettings.svelte:59` — it still lists all 5 values, but `gateOptions()` (`panel/src/js/capability.ts:110`) now renders `png24` and `svg` disabled and labelled "not supported", so a stored value displays without being newly selectable | `exporter.jsx:1120-1137` — only branch is `if (format === "jpg") … else PNG8`. Artifact: `mask-test/ir.json` has `"imageFormat":["svg"]` → output is `PNG image data, 8-bit colormap` while `exportParams.format` records `"svg"`. |
 | D2 | `ui.html:371` (auto/png/png24/jpg/svg) | `runtime-extract.ts:674,567,538,525` — all formats hardcoded. Zero readers of `settings.imageFormat` in `src/emitters` or `src/core`. What it hardcodes is `exportAsync({format:"PNG"})`, i.e. full-color PNG with alpha, so `auto` and `png24` are honored by accident and only `png` (8-bit), `jpg` and `svg` are dead. |
 | D3 | `exporter.jsx:1484`; `adapter.ts:25` | Zero readers in `src/`. `exporter.jsx:1687` calls `exportImages` unconditionally. |
 | D4 | `config.ts:9` | Zero readers; assets always written to ZIP. |
@@ -93,13 +93,13 @@ Columns: **IL** = Illustrator script/panel · **AE** = After Effects · **FIG** 
 | D24–D27 | `config.ts:9` / `ir.json` | Zero implementation references outside the type and definition files. |
 | D28 | `exporter.jsx:1465` | Only consumer is `standalone.ts:26`; `src/extendscript/index.ts:12` imports only `emitHTMLString` and never touches the registry, so standalone is unreachable from Illustrator. |
 | D29–D30 | `config.ts:9` / dropzone upload | `standalone-browser.ts:18` reads the value only to warn and discard it. |
-| D31 | Default `true` (`settings-definitions.ts`), every surface | `html.ts:310` / `html-string.ts:335` emit `data-src` with no `src`; zero hits for `IntersectionObserver`, `lazyload`, or `loadImages` in `src/`. Verified on `test/fixtures/ir/video-layer.json`: `<video … data-src="…">` with no `src`. Images are unaffected — they get native `loading="lazy"`. |
+| D31 | Default `true` (`settings-definitions.ts`), every surface | **Fixed.** Was: the video arm emitted `data-src` with no `src` and zero hits for `IntersectionObserver` / `lazyload` / `loadImages` existed in `src/`, so a lazily-loaded video never played. Now `src/emitters/shared/lazy-video.ts` is the single source for the loader — html/standalone get an `IntersectionObserver` `<script>`, svelte/react get the equivalent lifecycle effect — and the `warnedByEmitter` declaration is deleted along with the per-layer warning. Images were never affected (native `loading="lazy"`). |
 
 **Asset records are part of the claim.** D1's evidence is an `exportParams.format` recording `svg` over PNG8 bytes — a surface describing its own output wrongly. Figma had the same defect in the other direction: `runtime-extract.ts` stamped `{format:"png", scale:1, transparent:false}` on bytes that are full-color PNG with alpha, contradicting the declaration added beside it. The record now names what `exportAsync({format:"PNG"})` actually produces — `png24`, `scale:1`, `transparent:true` — and `test/unit/figma-runtime.test.ts` asserts the record and `figmaCapabilities` agree on all three, so the two cannot drift apart again. An `exportParams` that misdescribes its bytes is a declaration defect, not a cosmetic one: it is the only machine-readable statement of what a downstream consumer received.
 
 **Declaration note.** `imageFormat` on Illustrator is declared `partial` rather than `unsupported`, because `jpg` *is* honored (`exporter.jsx:1126`); only `png24` and `svg` fall back to 8-bit PNG, and only those warn. `imageFormat` on Figma is `partial` for the same reason: `runtime-extract.ts:567,674` exports full-color PNG with alpha, which is exactly `png24`, so `auto` and `png24` land where the user asked and `png` (8-bit), `jpg` and `svg` warn. Warning about a value the surface does produce is the same defect as staying silent about one it does not. Likewise the CLI's rasterization settings are declared `partial` with `paths: ["import"]`, so they warn on `render` and stay silent on `import svg` — footnotes 1 and 2, made executable. `localPreviewTemplate` (D30) is the one place the browser dropzone genuinely diverges from the Node CLI, so `browser` is its own declaration rather than an alias of `cli`.
 
-**Content-dependent cells warn from the emitter.** D31 (`useLazyLoader`) is honored for images and dead for video, and which one a document hits is a property of the document, not of the settings. The declaration records it as `partial` with `warnedByEmitter: "video:lazy-src-no-loader"`, the settings checker skips it, and both HTML emitters warn per video layer at the point the broken markup is written (`src/emitters/shared/lazy-video.ts`, single-sourced so the two emitters cannot drift). Warning from the checker instead would fire on every export ever made — including the image-only ones, where the claim would simply be false.
+**Content-dependent cells warn from the emitter — currently a seam with no occupant.** `SettingSupport.warnedByEmitter` exists for the case where a setting is honored for some document content and dead for other content, which a settings-only check cannot decide. D31 (`useLazyLoader`: honored for images, dead for video) was the one live user, and it was fixed rather than declared, so **no declaration carries the field today**. The field and the checker's `continue` on it are kept deliberately: the shape of the problem recurs, and re-deriving it under time pressure is how content-dependent gaps get mis-declared as blanket `unsupported` — which would fire on every export ever made, including the ones that are not broken. See D25's corollary in `product-decisions.md`.
 
 **[N1]** `responsiveImageMode` on Illustrator is `no`, not `DEAD`: absent from `buildCanonicalIrSettings` and from the panel key map, so nothing can set it. The core falls back to the default `"img-src"`.
 
@@ -116,22 +116,23 @@ Columns: **IL** = Illustrator script/panel · **AE** = After Effects · **FIG** 
 | Tag `:svg` | yes | no | yes | yes (render) / no (import) |
 | Tag inline SVG | yes — `:svg,inline` **or** `:inline` | no | yes — `:svg:inline` **only** | yes (render) / no (import) |
 | Tag `:png` | yes | no | yes | yes (render) / no (import) |
-| Tag `:symbol` | yes | no | **DEAD** — parsed then rejected `runtime-extract.ts:433` | yes (render) / no (import) |
-| Tag `:div` | yes¹¹ | no | **DEAD** — same | yes (render) / no (import) |
+| Tag `:symbol` | yes | no | no — recognized only to warn¹³ | yes (render) / no (import) |
+| Tag `:div` | yes¹¹ | no | no — same¹³ | yes (render) / no (import) |
 | Tag `:video` | yes | no | yes | yes (render) / no (import) |
 | Tag `:html-before` / `:html-after` | yes | no | yes | yes (render) / no (import) |
 | Responsive grouping | yes | no | yes | yes |
-| `output: multiple-files` | yes (html) [D10 fixed] | no | yes (html) / **DEAD** (standalone) | yes (html/svelte/react) / **DEAD** (standalone) |
+| `output: multiple-files` | yes (html) [D10 fixed] | no | yes (html + standalone) | yes (all four formats) |
 | 2x / retina raster | yes | no | **DEAD at default** [D9] | yes (import) / n/a (render) |
 | Text effects (shadow / blur) | no¹² | no | no | yes if in IR — **no producer** |
 | Hyperlinks on text runs | yes | no | yes (URL only; node-level links dropped with warning) | yes |
 | Custom blocks (css/js/html) | yes — `all2html-` and `ai2html-` both match; `all2html-` wins key-by-key on settings/text | no | yes, **Advanced JSONC only**, no UI control | yes if in IR / no on SVG import |
 | Promo image | yes | no | **DEAD** [D24] | **DEAD** [D25] |
-| Lazy loading | images yes / **video DEAD** [D31] | no | images yes / **video DEAD** [D31] | images yes / **video DEAD** [D31] |
+| Lazy loading | images + video yes [D31 fixed] | no | images + video yes | images + video yes |
 
 10. AE writes HTML, but through no core emitter: `exporter.jsx:1132` splices three literal tokens into its own `player-template.html`. It emits a bespoke `stage/media/layers` model, **not** `ir.json`. `grep -c All2Html` = 0.
 11. Code path exists but no tracked fixture contains a `:div` layer — code-verified only.
 12. No exporter or importer ever populates `TextElement.effects`.
+13. Not DEAD: `UNSUPPORTED_TOKENS` in `extract/layers.ts:33` recognizes the tag solely in order to report it (`unsupportedLayerTokenWarning`, `runtime-extract.ts:70`). The tag is ignored and the layer exports as ordinary artwork, so the user is told what happened instead of the parser claiming a layer type the runtime refuses three files later.
 
 ### Tag syntax divergence (exact)
 
@@ -148,7 +149,7 @@ These are unwired features, not dead code. Per decision D16, each needs either a
 1. **Text effects → `g-effect{N}` classes.** Fully implemented (`deduplicate-styles.ts:45-64`, applied at `css.ts:156`). **Zero producers** — `TextElement.effects` is never set by any exporter or importer. The only IR carrying it is a hand-written fixture.
 2. ~~**`src/core/svg-postprocess.ts`** entire.~~ **Resolved by deletion (D16).** Zero importers repo-wide; its `options.idPrefix` was the only implementation that would have satisfied `svgIdPrefix` (D19–D21). Deleted with its test rather than wired: nothing on any surface asked for it, and the `unsupported` declarations are what stop the setting from silently no-opping. Re-implementing means writing prefixing into the emitter that mints the ids and flipping the four declarations in the same change.
 3. **SnippetElement rendering.** Emitters render `data-replaceable` nodes, but no surface emits an element of that type. (Consistent with the v1.1 deferral.)
-4. **The `emit` config block** — `fitMode`, `positionMode: "percentage"`, `allowUnsafeHtml: false`, React `typescript` — reachable **only** through a config file passed to the Node CLI or dropzone. Illustrator calls `emitHTMLString(ready)` with no options; Figma calls `emitAll(document, groups)` with no third argument.
+4. **The `emit` config block** — `fitMode`, `positionMode: "percentage"`, `allowUnsafeHtml: false`, React `typescript`. **Figma reaches it now**: `plugins/figma/src/config.ts:25` parses `emit` with the canonical `EmitterConfigSchema` — the same schema the CLI reads, not a plugin-local shape — and `export.ts` forwards it as the third argument to `emitAll`. **Illustrator still does not**: `src/extendscript/index.ts:214` calls `emitHTMLString(ready, { artboards, slug })` with no emitter options, so the block is unreachable from the production surface.
 5. **`emitHTML` vs `emitHTMLString` reachability.** Illustrator is the sole consumer of the string emitter; CLI, browser, and Figma all use the hast emitter. Any capability added only to the registry path is structurally unreachable from Illustrator.
 
 ---
@@ -156,5 +157,6 @@ These are unwired features, not dead code. Per decision D16, each needs either a
 ## Caveats
 
 - No live-tool verification (Illustrator/AE/Figma were not launched). Cells marked `yes` that are honored *inside the core* are proven by code trace plus tracked `data/all2html-output/*/ir.json` artifacts. The four highest-stakes claims — `imageFormat:svg`, `output:multiple-files`, `htmlOutputPath` on CLI, `htmlOutputExtension` on CLI — were each verified against a real artifact or a real CLI run.
+- **`data/all2html-output/multiple-files-test/` predates the D10 fix and still holds one `.html`.** It is evidence of the bug, not of current behavior: regenerating it needs a live Illustrator session (`pnpm exec tsx scripts/export-illustrator-fixtures.ts --golden multiple-files-test`). The fix is instead pinned by `test/integration/surface-entrypoints.test.ts`, which drives the shipped bundle. Do not cite the saved output as proof of D10 either way until it is re-exported.
 - `:div` on Illustrator and the `ai2html-js` custom block are code-verified only; no tracked fixture exercises them.
 - Several tracked `ir.json` files carry raw snake_case settings (`countries`, `fixed`, `template`, `text-cleanup`, `sample-ai-file`) that predate the camelCase rule and are silently ignored by `resolveSettingsPure`. Not used as evidence for any cell.

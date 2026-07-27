@@ -308,7 +308,11 @@ Two consequences accepted deliberately:
 1. **Some settings now warn on more exports, including untouched ones.** Three Figma cells warn on every export. That is correct: the export really is not what the settings say. The noise budget is pinned per surface in `test/unit/capabilities.test.ts`, so adding a standing warning is a reviewed change and not a drift.
 2. **A value the surface does produce never warns**, even when the declaration says `unsupported`. `imageFormat: ["png24"]` on Figma is honored in fact — Figma exports full-color alpha PNG — so warning about it would be the same defect in the other direction.
 
-**Corollary — content-dependent gaps warn from the emitter, not the checker.** `useLazyLoader` is honored for images (native `loading="lazy"`) and dead for video (`data-src`, no `src`, no loader script anywhere). Which case a document hits is a property of the document, and the settings checker cannot see documents. The declaration records it with `warnedByEmitter`, and both HTML emitters warn per video layer from one shared call site. Warning from the checker would have fired on every export ever made, most of which contain no video and are not broken.
+**Corollary — content-dependent gaps warn from the emitter, not the checker.** Some settings are honored for one kind of document content and dead for another, and which case a document hits is a property of the document, which the settings checker cannot see. Such a setting is declared with `warnedByEmitter`: the checker skips it and the emitter that writes the harmful output warns at that call site. Declaring it blanket `unsupported` instead would fire on every export ever made, most of which are not broken.
+
+The worked example was `useLazyLoader` — honored for images (native `loading="lazy"`), dead for video (`data-src`, no `src`, no loader script anywhere). It is now **historical**: `src/emitters/shared/lazy-video.ts` ships the loader on all four formats, so the declaration and the per-layer warning are both gone.
+
+**`warnedByEmitter` therefore currently has no live entry, and stays anyway.** It is a deliberate unused seam, not dead code to be swept: the field, its JSDoc, and the checker's `continue` on it are the written-down form of this corollary. Deleting it would mean the next content-dependent gap gets re-reasoned from scratch under time pressure, and the cheap wrong answer — blanket `unsupported` — is exactly the noise this decision rejects. Do not remove it because a lint or a coverage sweep reports it unreferenced.
 
 ---
 
