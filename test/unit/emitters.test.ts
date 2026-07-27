@@ -4,6 +4,8 @@ import { join, resolve } from "node:path";
 import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 import { processDocument } from "../../src/core/pipeline.js";
+import type { StructuredWarning } from "../../src/core/warnings.js";
+import { emitHTML } from "../../src/emitters/html.js";
 import { emitReact } from "../../src/emitters/react.js";
 import { emitStandalone, emitStandaloneGroup } from "../../src/emitters/standalone.js";
 import { emitSvelte } from "../../src/emitters/svelte.js";
@@ -199,6 +201,12 @@ describe("Standalone emitter", () => {
  * into a file on disk. Those values used to be spliced in verbatim, so a
  * headline carrying markup became live markup in the emitted page — the one
  * metadata path in the product that did not escape.
+ *
+ * The escape is now chosen from the grammar position the slot occupies, decided
+ * by an HTML tokenizer run over the template, and the positions no escape can
+ * make safe are refused with a warning. `test/unit/template.test.ts` specifies
+ * that classification directly; these cases drive it through the real emitter
+ * with a real file on disk, which is the path the defect shipped on.
  */
 describe("Standalone emitter: local preview template substitution", () => {
   const payload = `<img src=x onerror=alert(1)>`;
@@ -217,16 +225,19 @@ describe("Standalone emitter: local preview template substitution", () => {
     }
   }
 
+  const unsafeSlots = (warnings: readonly StructuredWarning[]) =>
+    warnings.filter((w) => w.code === "emit:template-unsafe-slot");
+
   it("escapes a metadata value into inert text instead of live markup", () => {
     const { html, structuredWarnings } = renderWithTemplate("<h1>{{headline}}</h1>", {
       headline: payload,
     });
 
-    // The template was applied, not silently skipped.
+    // The template was applied, not silently skipped, and text position is safe.
     expect(structuredWarnings.some((w) => w.code === "emit:template-error")).toBe(false);
-    // Escaped for every position a slot can occupy, unquoted attribute included,
-    // so the inner spaces and `=` are encoded too — see `test/unit/template.test.ts`.
-    expect(html).toContain("<h1>&lt;img&#32;src&#61;x&#32;onerror&#61;alert(1)&gt;</h1>");
+    expect(unsafeSlots(structuredWarnings)).toHaveLength(0);
+    // The text grammar needs `&` and `<`; a bare `>` cannot start a tag.
+    expect(html).toContain("<h1>&lt;img src=x onerror=alert(1)></h1>");
     expect(html).not.toContain(payload);
 
     const document = new JSDOM(html).window.document;
@@ -235,30 +246,93 @@ describe("Standalone emitter: local preview template substitution", () => {
   });
 
   it("escapes a metadata value substituted into an attribute", () => {
-    const { html } = renderWithTemplate('<meta name="x" content="{{headline}}">', {
-      headline: `" onload="alert(1)`,
-    });
+    const { html, structuredWarnings } = renderWithTemplate(
+      '<meta name="x" content="{{headline}}">',
+      { headline: `" onload="alert(1)` },
+    );
+    expect(unsafeSlots(structuredWarnings)).toHaveLength(0);
     const document = new JSDOM(html).window.document;
     const meta = document.querySelector('meta[name="x"]');
     expect(meta?.getAttribute("content")).toBe(`" onload="alert(1)`);
     expect(meta?.hasAttribute("onload")).toBe(false);
   });
 
+  /**
+   * The reviewer's repro for the hole in the previous universal escape table:
+   * CR was left out of it because "the parser normalizes CR to LF before
+   * tokenizing" — but that normalization happens *after* substitution, so the
+   * CR survived the escape and became the attribute separator the table existed
+   * to remove. This produced a live `onmouseover` handler.
+   */
+  it("refuses an unquoted-attribute slot instead of emitting an event handler", () => {
+    const { html, warnings, structuredWarnings } = renderWithTemplate(
+      "<div data-t={{headline}}>x</div>",
+      { headline: "x\ronmouseover=alert(1)" },
+    );
+
+    const rejected = unsafeSlots(structuredWarnings);
+    expect(rejected).toHaveLength(1);
+    expect(rejected[0].message).toContain("{{headline}}");
+    expect(rejected[0].message).toMatch(/unquoted attribute value/);
+    expect(rejected[0].setting).toBe("localPreviewTemplate");
+    // The plain-string projection carries it too — that is what the CLI and the
+    // manifest read.
+    expect(warnings).toContain(rejected[0].message);
+
+    expect(html).toContain("<div data-t={{headline}}>");
+    expect(html).not.toContain("\r");
+    const div = new JSDOM(html).window.document.querySelector("div");
+    expect(div?.hasAttribute("onmouseover")).toBe(false);
+    expect(div?.attributes).toHaveLength(1);
+  });
+
+  it("refuses attribute-name, tag-name, script and style slots", () => {
+    const cases: [string, RegExp][] = [
+      ["<div {{headline}}>x</div>", /attribute name/],
+      ["<{{headline}}>x</div>", /tag name/],
+      ["<script>var t = {{headline}};</script>", /<script> raw text/],
+      ["<style>.a { content: {{headline}}; }</style>", /<style> raw text/],
+    ];
+    for (const [template, position] of cases) {
+      const { html, structuredWarnings } = renderWithTemplate(template, {
+        headline: `x onmouseover=alert(1)`,
+      });
+      const rejected = unsafeSlots(structuredWarnings);
+      expect(rejected, template).toHaveLength(1);
+      expect(rejected[0].category, template).toBe("template");
+      expect(rejected[0].message, template).toMatch(position);
+      // Left unsubstituted: the emitted bytes are the author's own.
+      expect(html, template).toContain("{{headline}}");
+      expect(html, template).not.toContain("onmouseover=alert(1)");
+    }
+  });
+
   it("leaves the emitted HTML fragment raw — the partial is markup, not text", () => {
-    const { html } = renderWithTemplate("<body>{{ai2htmlPartial}}</body>", {});
+    const { html, structuredWarnings } = renderWithTemplate("<body>{{ai2htmlPartial}}</body>", {});
     // The fragment reaches the page as markup, and its own escaping is not
     // applied a second time.
+    expect(unsafeSlots(structuredWarnings)).toHaveLength(0);
     expect(html).toContain("Headline Text Here");
     expect(html).not.toContain("&lt;div");
     const document = new JSDOM(html).window.document;
     expect(document.querySelectorAll("[id^='g-']").length).toBeGreaterThan(0);
   });
 
+  it("emits the raw partial byte-for-byte, under both slot names", () => {
+    const ai = renderWithTemplate("<body>{{ai2htmlPartial}}</body>", {}).html;
+    const all = renderWithTemplate("<body>{{all2htmlPartial}}</body>", {}).html;
+    expect(ai).toBe(all);
+
+    // The exact bytes are the HTML emitter's own output, spliced into the
+    // template's text position with nothing added or removed.
+    const doc = loadAndProcess("single-artboard-basic.json");
+    const fragment = emitHTML(doc, undefined, undefined).html;
+    expect(ai).toBe(`<body>${fragment}</body>`);
+  });
+
   it("renders an ampersand in metadata as itself, not as a double-escaped entity", () => {
     const { html } = renderWithTemplate("<p>{{credit}}</p>", { credit: "Smith & Sons" });
-    expect(html).toContain("<p>Smith&#32;&amp;&#32;Sons</p>");
-    // The point of the test: `&` yields one entity, not `&amp;amp;`. The `&#32;`
-    // around it is the unquoted-attribute-safe escape and decodes to a space.
+    expect(html).toContain("<p>Smith &amp; Sons</p>");
     expect(new JSDOM(html).window.document.querySelector("p")?.textContent).toBe("Smith & Sons");
   });
 });

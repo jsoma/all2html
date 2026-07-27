@@ -65,9 +65,9 @@ export function emitStandaloneGroup(
 
       // Build replacements from settings + metadata. These are user text — a
       // headline, a credit line — and land in an arbitrary position in someone
-      // else's template, so they go in raw and `applyTemplate` escapes them.
-      // The emitted fragment is the one value that IS markup, so it is the one
-      // value marked raw.
+      // else's template, so they go in raw and `applyTemplate` escapes them for
+      // whichever position its tokenizer finds them in. The emitted fragment is
+      // the one value that IS markup, so it is the one value marked raw.
       const replacements: Record<string, TemplateValue> = {};
       for (const [key, value] of Object.entries(settings)) {
         if (typeof value === "string") replacements[key] = value;
@@ -78,7 +78,15 @@ export function emitStandaloneGroup(
       replacements.ai2htmlPartial = rawTemplateValue(fragment);
       replacements.all2htmlPartial = rawTemplateValue(fragment);
 
-      const html = applyTemplate(template, replacements);
+      // `applyTemplate` classifies every slot by the grammar position it lands
+      // in and refuses the ones no escape can make safe (attribute name, tag
+      // name, unquoted attribute value, `script`/`style` raw text). Those come
+      // back as warnings and must reach the caller's result — a slot that was
+      // silently dropped is exactly the report an author needs to fix the file.
+      const { output: html, warnings: templateWarnings } = applyTemplate(template, replacements, {
+        setting: "localPreviewTemplate",
+      });
+      for (const warning of templateWarnings) warnings.push(warning);
       return { html, warnings: warningMessages(warnings), structuredWarnings: warnings };
     } catch (err: unknown) {
       warnings.push(
