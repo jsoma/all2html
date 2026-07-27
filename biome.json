@@ -42,7 +42,6 @@
       "!src/extendscript/polyfills.ts",
       "!src/emitters/html-string.ts",
 
-      "!test/visual/fixture-output",
       "!test/visual/__screenshots__",
 
       "!plugins/illustrator/panel/src/js/lib",
