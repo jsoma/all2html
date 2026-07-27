@@ -1,0 +1,605 @@
+/**
+ * The one HTML emitter (SPEC §12.6 / decision D23).
+ *
+ * This module builds a tree of plain, JSON-serializable nodes
+ * (`shared/html-node.ts`) and knows nothing about how they are rendered.
+ * `html.ts` and `html-string.ts` are now thin named entry points onto it.
+ * `shared/to-hast.ts` adapts the same tree to hast, but only in-repo — see that
+ * file's header; it is the serializer's parity oracle, not a published seam.
+ *
+ * **Builders pass RAW values.** Every escaping decision belongs to the
+ * serializer, which picks the grammar from the node's position in the tree.
+ * There is no `escapeAttr`/`escapeHtml` call anywhere in this file, and there
+ * must not be one: pre-escaping here would double-escape at emit time.
+ *
+ * ES3-safe: this module ships inside the ExtendScript bundle.
+ */
+
+import {
+  createWarning,
+  pushUniqueStructuredWarning,
+  type StructuredWarning,
+  warningMessages,
+} from "../core/warnings.js";
+import type {
+  ComputedPosition,
+  EmitterReadyArtboard,
+  EmitterReadyDocument,
+  EmitterReadyTextElement,
+} from "../ir/types.js";
+import {
+  buildScopedAssetIndex,
+  getScopedArtboardAsset,
+  getScopedLayerAsset,
+  resolveAssetPath,
+  type ScopedAssetIndex,
+  toCssUrlValue,
+} from "./shared/assets.js";
+import { generateCSS, makeArtboardKey, makeKeyword, useCssVarImages } from "./shared/css.js";
+import { isSafeUrl, unsafeUrlWarning } from "./shared/escape.js";
+import { renderGoogleFontsLinkTags } from "./shared/google-fonts.js";
+import {
+  comment,
+  el,
+  type HtmlAttrs,
+  type HtmlNode,
+  raw,
+  serializeHtml,
+  text,
+} from "./shared/html-node.js";
+import { lazyVideoWarning } from "./shared/lazy-video.js";
+import { applyEmitterOptions } from "./shared/options.js";
+import type { EmitterOptions } from "./types.js";
+
+/** Stable code for a hyperlink or clickable-link URL rejected by the scheme allowlist. */
+const UNSAFE_URL_CODE = "emit:unsafe-url";
+
+export interface EmitHTMLResult {
+  html: string;
+  /** Plain-string projection of `structuredWarnings`, for consumers that want text. */
+  warnings: string[];
+  structuredWarnings: StructuredWarning[];
+}
+
+export interface EmitHTMLTreeResult {
+  /** The serializable node tree. Render with `serializeHtml()` or `toHast()`. */
+  nodes: HtmlNode[];
+  structuredWarnings: StructuredWarning[];
+}
+
+export interface EmitGroupOptions {
+  /** Override which artboards to include */
+  artboards?: EmitterReadyArtboard[];
+  /** Override the slug used for IDs and naming */
+  slug?: string;
+}
+
+function positionToStyleString(pos: ComputedPosition): string {
+  const parts: string[] = [];
+  if (pos.top) parts.push("top:" + pos.top);
+  if (pos.bottom) parts.push("bottom:" + pos.bottom);
+  if (pos.left) parts.push("left:" + pos.left);
+  if (pos.right) parts.push("right:" + pos.right);
+  if (pos.marginTop) parts.push("margin-top:" + pos.marginTop);
+  if (pos.marginLeft) parts.push("margin-left:" + pos.marginLeft);
+  parts.push("width:" + pos.width);
+  if (pos.transform) parts.push("transform:" + pos.transform);
+  if (pos.transformOrigin) parts.push("transform-origin:" + pos.transformOrigin);
+  return parts.join(";");
+}
+
+function renderTextElement(
+  element: EmitterReadyTextElement,
+  ns: string,
+  layerName: string,
+  warnings: StructuredWarning[],
+): HtmlNode {
+  const style = positionToStyleString(element.computedPosition);
+
+  const classes = [ns + makeKeyword(layerName), ns + "aiAbs"];
+  if (element.kind === "point") {
+    classes.push(ns + "aiPointText");
+  }
+  if (element.effectClassName) {
+    classes.push(element.effectClassName);
+  }
+
+  // Area text path styling
+  const extraStyle: string[] = [];
+  if (element.areaFill) {
+    const c = element.areaFill;
+    extraStyle.push("background-color:rgb(" + c.r + "," + c.g + "," + c.b + ")");
+    extraStyle.push("padding:6px 6px 6px 7px");
+  }
+  if (element.areaBorder) {
+    const c = element.areaBorder.color;
+    extraStyle.push("border:1px solid rgb(" + c.r + "," + c.g + "," + c.b + ")");
+    if (!element.areaFill) extraStyle.push("padding:6px 6px 6px 7px");
+  }
+
+  const fullStyle = [style].concat(extraStyle).filter(Boolean).join(";");
+
+  const paragraphs: HtmlNode[] = [];
+  for (let pi = 0; pi < element.paragraphs.length; pi++) {
+    const para = element.paragraphs[pi];
+    const paraClassName = element.paragraphClassNames[pi];
+    const paraAttrs: HtmlAttrs = paraClassName ? [["class", paraClassName]] : [];
+
+    // Empty paragraph. `&nbsp;` is deliberate markup, not text content — a text
+    // node would escape the ampersand.
+    if (!para.text || para.text === "\r" || para.text === "\n") {
+      paragraphs.push(el("p", paraAttrs, [raw("&nbsp;")]));
+      continue;
+    }
+
+    const runs: HtmlNode[] = [];
+    for (let ri = 0; ri < para.runs.length; ri++) {
+      const run = para.runs[ri];
+      const runClassName = element.runClassNames[pi] ? element.runClassNames[pi][ri] : null;
+
+      let runNode: HtmlNode = text(run.text);
+      if (runClassName) {
+        runNode = el("span", [["class", runClassName]], [runNode]);
+      }
+
+      if (run.hyperlink) {
+        if (isSafeUrl(run.hyperlink.href)) {
+          const linkAttrs: HtmlAttrs = [["href", run.hyperlink.href]];
+          if (run.hyperlink.target) linkAttrs.push(["target", run.hyperlink.target]);
+          runNode = el("a", linkAttrs, [runNode]);
+        } else {
+          // Drop the anchor rather than emit an unusable one; the run text stays.
+          pushUniqueStructuredWarning(
+            warnings,
+            createWarning(
+              UNSAFE_URL_CODE,
+              "markup",
+              unsafeUrlWarning("text hyperlink", run.hyperlink.href),
+            ),
+          );
+        }
+      }
+
+      runs.push(runNode);
+    }
+
+    paragraphs.push(el("p", paraAttrs, runs));
+  }
+
+  const attrs: HtmlAttrs = [
+    ["id", element.id],
+    ["class", classes.join(" ")],
+    ["style", fullStyle],
+  ];
+
+  // Mark bound text elements for framework emitter overlay rendering
+  if (element.binding) {
+    attrs.push(["data-replaceable", "binding"]);
+    attrs.push(["data-binding-path", element.binding.path]);
+    if (element.binding.allowHtml) {
+      attrs.push(["data-binding-html", "true"]);
+    }
+  }
+
+  return el("div", attrs, paragraphs);
+}
+
+function scopeArtboards(
+  doc: EmitterReadyDocument,
+  artboards?: EmitterReadyArtboard[],
+): EmitterReadyArtboard[] {
+  if (!artboards) return doc.artboards;
+  const ids: Record<string, true> = {};
+  for (const ab of artboards) {
+    ids[ab.id] = true;
+  }
+  // NOT `Object.hasOwn` — ExtendScript is ES3 and has neither it nor a polyfill
+  // for it. `biome check --write` will "fix" this back; do not let it.
+  // biome-ignore lint/suspicious/noPrototypeBuiltins: ES3 host, see above
+  return doc.artboards.filter((ab) => Object.prototype.hasOwnProperty.call(ids, ab.id));
+}
+
+function renderArtboard(
+  ab: EmitterReadyArtboard,
+  doc: EmitterReadyDocument,
+  ns: string,
+  slug: string,
+  assetIdx: ScopedAssetIndex,
+  cssVarImages: boolean,
+  warnings: StructuredWarning[],
+): HtmlNode {
+  const settings = doc.settings;
+  const abId = ns + slug + "-" + makeArtboardKey(ab, doc.artboards);
+  const responsiveness = ab.responsiveness ?? settings.responsiveness;
+  const bp = ab.breakpoint;
+
+  const abStyleParts: string[] = [];
+  if (responsiveness === "dynamic") {
+    if (bp.widthRangeMin > 0) abStyleParts.push("min-width:" + bp.widthRangeMin + "px");
+    if (bp.widthRangeMax !== undefined) abStyleParts.push("max-width:" + bp.widthRangeMax + "px");
+  } else {
+    abStyleParts.push("width:" + ab.width + "px");
+    abStyleParts.push("height:" + ab.height + "px");
+  }
+
+  const abAttrs: HtmlAttrs = [
+    ["id", abId],
+    ["class", ns + "artboard"],
+    ["style", abStyleParts.join(";")],
+    ["data-aspect-ratio", (ab.width / ab.height).toFixed(3)],
+  ];
+
+  if (settings.includeResizerWidths) {
+    abAttrs.push(["data-min-width", String(bp.minWidth)]);
+    if (bp.maxWidth !== undefined) {
+      abAttrs.push(["data-max-width", String(bp.maxWidth)]);
+    }
+  }
+
+  const children: HtmlNode[] = [];
+
+  // Spacer div for dynamic artboards
+  if (responsiveness === "dynamic") {
+    const paddingPct = ((ab.height / ab.width) * 100).toFixed(4);
+    children.push(el("div", [["style", "padding:0 0 " + paddingPct + "% 0"]]));
+  }
+
+  // Background image
+  const bgAsset = getScopedArtboardAsset(assetIdx, ab);
+  if (bgAsset) {
+    if (cssVarImages) {
+      // CSS custom property mode: use <div> with background-image via CSS var
+      children.push(
+        el("div", [
+          ["id", abId + "-img"],
+          ["class", ns + "aiImg"],
+          ["role", "img"],
+          ["aria-label", doc.metadata.imageAltText || ab.name],
+        ]),
+      );
+    } else {
+      const imgAttrs: HtmlAttrs = [
+        ["id", abId + "-img"],
+        ["class", ns + "aiImg"],
+        ["alt", doc.metadata.imageAltText || ""],
+        ["src", resolveAssetPath(bgAsset, settings)],
+      ];
+      if (settings.useLazyLoader) {
+        imgAttrs.push(["loading", "lazy"]);
+      }
+      children.push(el("img", imgAttrs));
+    }
+  }
+
+  // html-before layers
+  for (const layer of ab.layers) {
+    if (layer.type !== "html-before") continue;
+    for (const element of layer.elements) {
+      if (element.type === "rawHtml") children.push(raw(element.content));
+    }
+  }
+
+  // Render non-hook layers in the preserved layer order from the canonical artboard.
+  for (const layer of ab.layers) {
+    switch (layer.type) {
+      case "png": {
+        const pngAsset = getScopedLayerAsset(assetIdx, ab, layer.id);
+        if (pngAsset) {
+          children.push(
+            el("img", [
+              ["class", ns + "aiImg"],
+              ["alt", ""],
+              ["src", resolveAssetPath(pngAsset, settings)],
+              [
+                "style",
+                layer.opacity < 100 ? "opacity:" + (layer.opacity / 100).toFixed(2) : undefined,
+              ],
+            ]),
+          );
+        }
+        break;
+      }
+      case "svg": {
+        if (layer.inlineSvg) {
+          for (const element of layer.elements) {
+            if (element.type === "rawHtml") children.push(raw(element.content));
+          }
+        } else {
+          const svgAsset = getScopedLayerAsset(assetIdx, ab, layer.id);
+          if (svgAsset) {
+            children.push(
+              el("img", [
+                ["class", ns + "aiImg"],
+                ["alt", ""],
+                ["src", resolveAssetPath(svgAsset, settings)],
+                [
+                  "style",
+                  layer.opacity < 100 ? "opacity:" + (layer.opacity / 100).toFixed(2) : undefined,
+                ],
+              ]),
+            );
+          }
+        }
+        break;
+      }
+      case "video":
+        for (const element of layer.elements) {
+          if (element.type === "video") {
+            if (settings.useLazyLoader) {
+              pushUniqueStructuredWarning(
+                warnings,
+                lazyVideoWarning(layer.name, { artboardId: ab.id, layerId: layer.id }),
+              );
+            }
+            children.push(
+              el("video", [
+                ["autoplay", true],
+                ["muted", true],
+                ["loop", true],
+                ["playsinline", true],
+                ["style", "top:0;width:100%;object-fit:contain;position:absolute"],
+                [settings.useLazyLoader ? "data-src" : "src", element.url],
+              ]),
+            );
+          }
+        }
+        break;
+      case "symbol":
+      case "div": {
+        const shapes: HtmlNode[] = [];
+        for (const element of layer.elements) {
+          if (element.type === "shape") {
+            const sp = element.computedShapePosition;
+            const parts: string[] = [];
+            if (sp.left) parts.push("left:" + sp.left);
+            if (sp.top) parts.push("top:" + sp.top);
+            if (sp.marginLeft) parts.push("margin-left:" + sp.marginLeft);
+            if (sp.marginTop) parts.push("margin-top:" + sp.marginTop);
+            if (sp.width) parts.push("width:" + sp.width);
+            if (sp.height) parts.push("height:" + sp.height);
+            if (sp.borderRadius) parts.push("border-radius:" + sp.borderRadius);
+            if (sp.backgroundColor) parts.push("background-color:" + sp.backgroundColor);
+            if (sp.border) parts.push("border:" + sp.border);
+            if (sp.borderTop) parts.push("border-top:" + sp.borderTop);
+            if (sp.borderRight) parts.push("border-right:" + sp.borderRight);
+            if (sp.opacity) parts.push("opacity:" + sp.opacity);
+            if (sp.mixBlendMode) parts.push("mix-blend-mode:" + sp.mixBlendMode);
+
+            const shapeAttrs: HtmlAttrs = [
+              ["class", ns + "aiSymbol"],
+              ["style", parts.join(";")],
+            ];
+            if (element.id) {
+              shapeAttrs.push(["data-name", element.id]);
+            }
+            shapes.push(el("div", shapeAttrs));
+          }
+        }
+        if (shapes.length > 0) {
+          children.push(
+            el("div", [["class", ns + "symbol-layer " + ns + makeKeyword(layer.name)]], shapes),
+          );
+        }
+        break;
+      }
+      case "default":
+        for (const element of layer.elements) {
+          if (element.type === "text" && element.renderAs === "html") {
+            children.push(renderTextElement(element, ns, layer.name, warnings));
+          }
+          if (element.type === "snippet") {
+            children.push(
+              el("div", [
+                ["class", ns + "aiAbs"],
+                ["data-replaceable", "snippet"],
+                ["data-key", element.key],
+                ["style", positionToStyleString(element.computedPosition)],
+              ]),
+            );
+          }
+          if (element.type === "rawHtml") children.push(raw(element.content));
+        }
+        break;
+    }
+  }
+
+  // html-after layers
+  for (const layer of ab.layers) {
+    if (layer.type !== "html-after") continue;
+    for (const element of layer.elements) {
+      if (element.type === "rawHtml") children.push(raw(element.content));
+    }
+  }
+
+  return el("div", abAttrs, children);
+}
+
+/**
+ * Build the node tree for one document (or one artboard group).
+ *
+ * Returns structured warnings alongside the tree; callers that want strings use
+ * `emitHTMLDocument()`, which serializes and projects them.
+ */
+export function buildHTMLTree(
+  doc: EmitterReadyDocument,
+  groupOptions?: EmitGroupOptions,
+  options?: EmitterOptions,
+): EmitHTMLTreeResult {
+  const warnings: StructuredWarning[] = [];
+  const resolvedDoc = applyEmitterOptions(doc, options);
+  const settings = resolvedDoc.settings;
+  const ns = settings.namespace;
+  const slug = groupOptions?.slug || settings.projectName || resolvedDoc.metadata.slug;
+  const containerId = ns + slug + "-box";
+
+  // If group options provided, create a scoped document view
+  const scopedDoc = {
+    ...resolvedDoc,
+    artboards: scopeArtboards(resolvedDoc, groupOptions?.artboards),
+  };
+  const cssVarMode = useCssVarImages(scopedDoc, options?.responsiveImageMode);
+
+  const { css, warnings: cssWarnings } = generateCSS(scopedDoc, {
+    slug,
+    responsiveImageMode: options?.responsiveImageMode,
+  });
+  for (const cssWarning of cssWarnings) warnings.push(cssWarning);
+
+  const nodes: HtmlNode[] = [];
+
+  nodes.push(comment("Generated by all2html"));
+  nodes.push(comment("source: " + slug));
+  nodes.push(raw("\n"));
+
+  if (settings.googleFonts === "link") {
+    const fontLinks = renderGoogleFontsLinkTags(scopedDoc.fonts);
+    if (fontLinks) {
+      nodes.push(raw(fontLinks));
+      nodes.push(raw("\n"));
+    }
+  }
+
+  // Style block. The CSS is passed raw — `<style>` is a raw-text element and the
+  // serializer neutralizes `</style` / `<!--` for it.
+  nodes.push(el("style", [["media", "screen,print"]], [text("\n" + css + "\n")]));
+  nodes.push(raw("\n"));
+
+  const containerAttrs: HtmlAttrs = [
+    ["id", containerId],
+    ["class", "ai2html"],
+  ];
+  if (resolvedDoc.metadata.ariaRole) {
+    containerAttrs.push(["role", resolvedDoc.metadata.ariaRole]);
+  }
+  const altTextId = containerId + "-img-desc";
+  if (resolvedDoc.metadata.altText) {
+    containerAttrs.push(["aria-describedby", altTextId]);
+  }
+
+  // Build asset index for O(1) lookups (used for both CSS vars and artboard rendering)
+  const assetIdx = buildScopedAssetIndex(resolvedDoc.artboards, resolvedDoc.assets);
+
+  // CSS custom property image loading: set image URLs as CSS vars on container.
+  // `toCssUrlValue` is a *CSS* grammar, applied before the value becomes part of
+  // an attribute — HTML attribute escaping cannot substitute for it.
+  if (cssVarMode) {
+    const varParts: string[] = [];
+    const sortedForVars = [...scopedDoc.artboards].sort(
+      (a, b) => a.breakpoint.minWidth - b.breakpoint.minWidth,
+    );
+    for (const ab of sortedForVars) {
+      const bgAsset = getScopedArtboardAsset(assetIdx, ab);
+      if (bgAsset) {
+        const keyword = makeArtboardKey(ab, scopedDoc.artboards);
+        varParts.push(
+          "--" + keyword + "-img:" + toCssUrlValue(resolveAssetPath(bgAsset, settings)),
+        );
+      }
+    }
+    if (varParts.length > 0) {
+      containerAttrs.push(["style", varParts.join(";")]);
+    }
+  }
+
+  const containerChildren: HtmlNode[] = [];
+
+  // Alt text
+  if (resolvedDoc.metadata.altText) {
+    containerChildren.push(
+      el(
+        "div",
+        [
+          ["class", ns + "aiAltText"],
+          ["id", altTextId],
+        ],
+        [text(resolvedDoc.metadata.altText)],
+      ),
+    );
+  }
+
+  // Clickable link. Escaping cannot make `javascript:` safe, so the URL is
+  // checked against the scheme allowlist and the wrapper is dropped if it fails.
+  let linkChildren: HtmlNode[] | null = null;
+  if (settings.clickableLink) {
+    if (isSafeUrl(settings.clickableLink)) {
+      linkChildren = [];
+    } else {
+      pushUniqueStructuredWarning(
+        warnings,
+        createWarning(
+          UNSAFE_URL_CODE,
+          "markup",
+          unsafeUrlWarning("clickableLink", settings.clickableLink),
+          { setting: "clickableLink" },
+        ),
+      );
+    }
+  }
+  const target = linkChildren ?? containerChildren;
+
+  // Custom HTML before
+  for (const block of resolvedDoc.customBlocks) {
+    if (block.type === "html-before") {
+      target.push(raw(block.content));
+    }
+  }
+
+  // Artboards (sorted by breakpoint)
+  const sortedAbs = [...scopedDoc.artboards].sort(
+    (a, b) => a.breakpoint.minWidth - b.breakpoint.minWidth,
+  );
+  for (const ab of sortedAbs) {
+    target.push(comment("Artboard: " + ab.name));
+    target.push(renderArtboard(ab, scopedDoc, ns, slug, assetIdx, cssVarMode, warnings));
+  }
+
+  // Custom HTML after
+  for (const block of resolvedDoc.customBlocks) {
+    if (block.type === "html-after" || block.type === "html") {
+      target.push(raw(block.content));
+    }
+  }
+
+  // Close link wrapper if needed
+  if (linkChildren) {
+    containerChildren.push(
+      el(
+        "a",
+        [
+          ["class", ns + "ai2htmlLink"],
+          ["href", settings.clickableLink],
+        ],
+        linkChildren,
+      ),
+    );
+  }
+
+  nodes.push(el("div", containerAttrs, containerChildren));
+
+  // Custom JS. Raw-text element again: the serializer neutralizes `</script` and
+  // `<!--` so a block cannot break out or swallow the rest of the document.
+  for (const block of resolvedDoc.customBlocks) {
+    if (block.type === "js") {
+      nodes.push(el("script", [["type", "text/javascript"]], [text(block.content)]));
+    }
+  }
+
+  nodes.push(raw("\n"));
+  nodes.push(comment("End all2html"));
+
+  return { nodes: nodes, structuredWarnings: warnings };
+}
+
+/** Build the tree and serialize it. The shared implementation of every HTML emit. */
+export function emitHTMLDocument(
+  doc: EmitterReadyDocument,
+  groupOptions?: EmitGroupOptions,
+  options?: EmitterOptions,
+): EmitHTMLResult {
+  const tree = buildHTMLTree(doc, groupOptions, options);
+  return {
+    html: serializeHtml(tree.nodes),
+    warnings: warningMessages(tree.structuredWarnings),
+    structuredWarnings: tree.structuredWarnings,
+  };
+}

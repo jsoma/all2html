@@ -74,7 +74,9 @@ describe("Svelte emitter", () => {
     expect(svelte).toContain(
       'href="https://fonts.googleapis.com/css2?family=Inter:wght@400&amp;display=swap"',
     );
-    expect(svelte).not.toContain("data-all2html-google-fonts");
+    // Exactly once, in <svelte:head>: the markup chunk is built with
+    // `googleFonts: "none"`, so the stylesheet link is never duplicated into it.
+    expect(svelte.match(/fonts\.googleapis\.com\/css2/g)).toHaveLength(1);
   });
 });
 
@@ -134,7 +136,8 @@ describe("React emitter", () => {
       'const googleFontsHref = "https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap";',
     );
     expect(jsx).toContain('<link rel="stylesheet" href={googleFontsHref} />');
-    expect(jsx).not.toContain("data-all2html-google-fonts");
+    // Once in the head constant, never inlined into the markup chunk.
+    expect(jsx.match(/fonts\.googleapis\.com\/css2/g)).toHaveLength(1);
   });
 });
 

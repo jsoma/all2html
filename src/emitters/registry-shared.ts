@@ -1,4 +1,5 @@
 import type { ArtboardGroup } from "../core/group-artboards.js";
+import { type StructuredWarning, warningMessages } from "../core/warnings.js";
 import type { EmitterReadyDocument } from "../ir/types.js";
 import { emitHTML } from "./html.js";
 import { emitReact } from "./react.js";
@@ -13,7 +14,9 @@ export interface EmitFile {
 
 export interface EmitResult {
   files: EmitFile[];
+  /** Plain-string projection of `structuredWarnings`. */
   warnings: string[];
+  structuredWarnings: StructuredWarning[];
 }
 
 export interface SharedEmitterDescriptor {
@@ -28,6 +31,7 @@ export interface SharedEmitterDescriptor {
 export interface StandaloneEmitterResult {
   html: string;
   warnings: string[];
+  structuredWarnings: StructuredWarning[];
 }
 
 export function createBuiltinEmitters(
@@ -50,7 +54,7 @@ export function createBuiltinEmitters(
               { artboards: g.artboards, slug: g.slug },
               emitterConfig?.html,
             );
-            return { output: result.html, warnings: result.warnings };
+            return { output: result.html, warnings: result.structuredWarnings };
           },
         ),
     },
@@ -63,7 +67,7 @@ export function createBuiltinEmitters(
             { artboards: g.artboards, slug: g.slug },
             emitterConfig?.svelte,
           );
-          return { output: result.svelte, warnings: result.warnings };
+          return { output: result.svelte, warnings: result.structuredWarnings };
         }),
     },
     react: {
@@ -73,7 +77,7 @@ export function createBuiltinEmitters(
         const extension = reactOptions?.typescript ? ".tsx" : ".jsx";
         return perGroup(doc, groups, extension, (d, g) => {
           const result = emitReact(d, { artboards: g.artboards, slug: g.slug }, reactOptions);
-          return { output: result.jsx, warnings: result.warnings };
+          return { output: result.jsx, warnings: result.structuredWarnings };
         });
       },
     },
@@ -85,6 +89,7 @@ export function createBuiltinEmitters(
         return {
           files: [{ slug, extension: ".html", output: result.html }],
           warnings: result.warnings,
+          structuredWarnings: result.structuredWarnings,
         };
       },
     },
@@ -99,14 +104,17 @@ function perGroup(
   doc: EmitterReadyDocument,
   groups: ArtboardGroup[],
   extension: string,
-  emit: (doc: EmitterReadyDocument, group: ArtboardGroup) => { output: string; warnings: string[] },
+  emit: (
+    doc: EmitterReadyDocument,
+    group: ArtboardGroup,
+  ) => { output: string; warnings: StructuredWarning[] },
 ): EmitResult {
   const files: EmitFile[] = [];
-  const warnings: string[] = [];
+  const warnings: StructuredWarning[] = [];
   for (const group of groups) {
     const result = emit(doc, group);
     files.push({ slug: group.slug, extension, output: result.output });
-    warnings.push(...result.warnings);
+    for (const warning of result.warnings) warnings.push(warning);
   }
-  return { files, warnings };
+  return { files, warnings: warningMessages(warnings), structuredWarnings: warnings };
 }

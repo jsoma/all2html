@@ -1,4 +1,5 @@
 import { makeArtboardKey } from "../../core/identifiers.js";
+import { createWarning, type StructuredWarning } from "../../core/warnings.js";
 import type { ComputedTextStyle, EmitterReadyDocument } from "../../ir/types.js";
 import { renderGoogleFontsImport } from "./google-fonts.js";
 
@@ -39,7 +40,7 @@ export interface CSSOptions {
 
 export interface CSSResult {
   css: string;
-  warnings: string[];
+  warnings: StructuredWarning[];
 }
 
 export function generateCSS(doc: EmitterReadyDocument, options?: CSSOptions): CSSResult {
@@ -50,12 +51,19 @@ export function generateCSS(doc: EmitterReadyDocument, options?: CSSOptions): CS
   const hasMultipleArtboards = doc.artboards.length > 1;
   const cssVarImages = useCssVarImages(doc, options?.responsiveImageMode);
   const fitMode = options?.fitMode ?? "width";
-  const warnings: string[] = [];
+  const warnings: StructuredWarning[] = [];
   const lines: string[] = [];
 
   // fitMode interaction rules
   if (fitMode === "cover" && settings.maxWidth) {
-    warnings.push("fitMode 'cover' ignores maxWidth setting");
+    warnings.push(
+      createWarning(
+        "emit:fit-mode-conflict",
+        "setting",
+        "fitMode 'cover' ignores maxWidth setting",
+        { setting: "maxWidth" },
+      ),
+    );
   }
 
   if (settings.googleFonts === "import") {

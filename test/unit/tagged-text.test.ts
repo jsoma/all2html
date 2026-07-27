@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { processDocument } from "../../src/core/pipeline.js";
 import { emitHTML } from "../../src/emitters/html.js";
-import { extractReplaceableNodes } from "../../src/emitters/shared/replaceable-nodes.js";
+import { buildComponentTree } from "../../src/emitters/shared/component-tree.js";
 
 function loadAndProcess(fixtureName: string) {
   const ir = JSON.parse(readFileSync(`test/fixtures/ir/${fixtureName}`, "utf-8"));
@@ -12,25 +12,33 @@ function loadAndProcess(fixtureName: string) {
 describe("tagged text bindings", () => {
   const { document: doc } = loadAndProcess("tagged-text.json");
 
-  describe("extractReplaceableNodes", () => {
-    it("extracts binding nodes from text elements", () => {
-      const nodes = extractReplaceableNodes(doc);
-      const bindings = nodes.filter((n) => n.type === "binding");
+  describe("bindings found in the node tree", () => {
+    it("collects bound text elements, sorted by path", () => {
+      const { bindings } = buildComponentTree(doc);
 
       expect(bindings).toHaveLength(2);
-      expect(bindings[0].bindingPath).toBe("headlines.main");
-      expect(bindings[0].allowHtml).toBe(false);
-      expect(bindings[0].fallbackText).toBe("Default Headline");
-
-      expect(bindings[1].bindingPath).toBe("content.body");
-      expect(bindings[1].allowHtml).toBe(true);
-      expect(bindings[1].fallbackText).toBe("Default body text");
+      expect(bindings[0].path).toBe("content.body");
+      expect(bindings[0].allowHtml).toBe(true);
+      expect(bindings[1].path).toBe("headlines.main");
+      expect(bindings[1].allowHtml).toBe(false);
     });
 
-    it("does not extract unbound text elements", () => {
-      const nodes = extractReplaceableNodes(doc);
-      // Static text (no binding) should not appear
-      expect(nodes.every((n) => n.elementId !== "binding-static-main")).toBe(true);
+    it("carries the fallback paragraph class so bound text keeps its type styles", () => {
+      const { bindings } = buildComponentTree(doc);
+      for (const binding of bindings) {
+        expect(binding.paragraphClassName).toMatch(/pstyle/);
+      }
+    });
+
+    it("gates allowHtml through the allowUnsafeHtml emitter option", () => {
+      const { bindings } = buildComponentTree(doc, undefined, { allowUnsafeHtml: false });
+      expect(bindings.every((b) => b.allowHtml === false)).toBe(true);
+    });
+
+    it("does not treat unbound text as replaceable", () => {
+      const { bindings, snippets } = buildComponentTree(doc);
+      expect(snippets).toEqual([]);
+      expect(bindings.map((b) => b.path)).not.toContain("static-main");
     });
   });
 

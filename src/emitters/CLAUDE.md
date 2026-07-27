@@ -4,32 +4,133 @@ Emitters take an `EmitterReadyDocument` and produce output in a specific format.
 
 ## Registry (`registry.ts`)
 
-Emitters are registered in an internal `Map` through `registerEmitter`. Built-ins use the same path as future internal emitters. Each descriptor has `emitAll(doc, groups)` returning `{ files: EmitFile[], warnings }`. The CLI uses `getEmitter(format)` for dispatch — no if/else chain. `perGroup()` helper handles the group loop for group-aware emitters (HTML, Svelte, React). Standalone ignores groups and always produces one file. Extensions are normalized (leading dot ensured).
+Emitters are registered in an internal `Map` through `registerEmitter`. Built-ins use the same path as future internal emitters. Each descriptor has `emitAll(doc, groups)` returning `{ files: EmitFile[], warnings, structuredWarnings }`. Emitters build `StructuredWarning[]` internally (code + category assigned at the call site, see `src/core/warnings.ts`); `warnings` is the plain-string projection kept for the manifest and the surface UIs. The CLI uses `getEmitter(format)` for dispatch — no if/else chain. `perGroup()` helper handles the group loop for group-aware emitters (HTML, Svelte, React). Standalone ignores groups and always produces one file. Extensions are normalized (leading dot ensured).
 Common emitter options must be wired end-to-end through the registry; don't leave typed options as dead config.
 
-## HTML emitter (`html.ts`)
+## HTML emitter (`html-tree.ts` + `shared/html-node.ts`)
 
-CRITICAL: Keep output in sync with `html-string.ts`. Both must produce byte-identical output.
+There is ONE HTML emitter (SPEC §12.6 / D23). `html-tree.ts` builds a tree of plain,
+JSON-serializable nodes; `shared/html-node.ts` defines those nodes and holds the single
+ES3-safe serializer. `html.ts` and `html-string.ts` are thin re-export entry points onto
+the same call — `emitHTML` and `emitHTMLString` are literally the same function.
 
-Builds a real hast tree using `hastscript`, serializes with `hast-util-to-html`. Custom code blocks injected as raw nodes (`allowDangerousHtml: true`).
+Do not reintroduce a second implementation. The two used to be ~1,050 lines with an
+identical function decomposition kept in sync by test alone, and they had already
+silently diverged on four fields.
 
-Renders all element types: TextElement, ShapeElement (symbols/divs), VideoElement, RawHtmlElement, SVG layers, PNG layers.
+**The serializer owns all escaping. Builders pass RAW values and never pre-escape.**
+There is no `escapeAttr`/`escapeHtml` call in `html-tree.ts` and there must not be one —
+pre-escaping would double-escape at emit time. The serializer picks the grammar from the
+node's position in the tree: text nodes, attribute values, comments, and `script`/`style`
+raw text are four different grammars (see the escaping contract below).
 
-Supports multi-file output via `EmitGroupOptions` parameter (subset of artboards + slug override).
+Node shape:
 
-## HTML string emitter (`html-string.ts`)
+```ts
+type HtmlNode =
+  | { kind: "element"; tag: string; attrs: [string, string | boolean | null | undefined][]; children: HtmlNode[] }
+  | { kind: "text"; value: string }
+  | { kind: "raw"; value: string; trust: "application" }
+  | { kind: "comment"; value: string };
+```
 
-CRITICAL: Keep output in sync with `html.ts`. Byte-identical output required.
+- **Attributes are an ordered array of pairs, not an object.** The old string emitter
+  depended on `Object.keys` insertion order, which ES3 does not define — and
+  ExtendScript's `Object.keys` is a `for...in` polyfill, so the shipped artifact relied on
+  unspecified behavior. Order is now a property of the data.
+- `undefined` / `null` / `false` values omit the attribute; `true` emits a bare boolean
+  attribute (`autoplay`, `muted`, `loop`, `playsinline`, `crossorigin`).
+- Void elements (`img`, `link`, `meta`, and the rest of the HTML void set) emit no closing
+  tag and drop children.
+- `script` and `style` are raw-text elements: their `text` children are *not* HTML-escaped;
+  they go through `escapeScriptContent()` / `escapeStyleContent()` instead.
+- `raw` nodes are the one escape hatch — custom blocks, inline SVG layers, html-hook
+  layers, and `&nbsp;`. `trust: "application"` keeps every such site greppable.
+- CSS URLs are a *fifth* grammar and are NOT delegated to HTML escaping: `toCssUrlValue()`
+  runs first, then the result is attribute-escaped like any other value.
 
-Pure string concatenation, no npm dependencies. Used in the ExtendScript bundle. Same `EmitGroupOptions` support.
+Renders all element types: TextElement, ShapeElement (symbols/divs), VideoElement,
+RawHtmlElement, SVG layers, PNG layers. Supports multi-file output via `EmitGroupOptions`
+(subset of artboards + slug override).
 
-## Svelte emitter (`svelte.ts`)
+`buildHTMLTree()` is exported for consumers that want the tree rather than a string.
 
-Wraps HTML in a Svelte 5 component with `$props()`. Extracts CSS into `<style>` block. Replaces image `src` with `{assetsPath}` prop interpolation.
+## hast adapter (`shared/to-hast.ts`)
 
-## React emitter (`react.ts`)
+`toHast(nodes)` converts the tree to hast. Nothing in this repo consumes it at runtime —
+the emitters use their own serializer, which is what ships into ExtendScript — and it is
+**not a published extension point**: `src/index.ts` does not re-export it and `exports` has
+no entry for it, so only in-repo code (and anyone vendoring `src/`) can call it. Exporting
+it would also mean moving `@types/hast` into `dependencies`, because the emitted `.d.ts`
+names `Root`. Its live job is the parity anchor: `test/unit/html-serializer.test.ts`
+renders every IR fixture through both paths and asserts byte equality, which is what keeps
+the escaping subsets pinned to `hast-util-to-html`'s own.
 
-Wraps HTML in a React functional component. `className` instead of `class`. `assetsPath` prop. CSS via `dangerouslySetInnerHTML` on `<style>`.
+`hast` types are imported type-only; no hast runtime package enters `src/` any more.
+
+## Framework emitters (`svelte.ts`, `react.ts`)
+
+Both consume the **node tree**, not serialized HTML (SPEC §12.6 / D23). `shared/component-tree.ts`
+is the shared entry: it builds the tree, takes the `<style>` element out of it as a node,
+suppresses the Google Fonts `<link>` tags at build time rather than stripping them afterwards,
+and splits what is left at replaceable placeholders. Nothing regexes emitted HTML, and comments —
+including comments an author wrote in an `html-before` / `html-after` block — are left alone.
+
+Snippets and bindings are real component surface, not markers:
+
+- **Svelte** — snippet placeholders become Svelte 5 snippet props rendered with `{@render key?.()}`;
+  bound text becomes `{#if bindings["path"] != null}…{:else}{@html …fallback}{/if}`.
+- **React** — snippet placeholders become `ReactNode` props rendered as `{key}`; bound text uses the
+  same `bindings` prop, with `dangerouslySetInnerHTML` only when `allowHtml` survived `allowUnsafeHtml`.
+
+Only the **spine** — the ancestors leading down to a placeholder — is emitted as real framework
+markup. Everything else stays one opaque chunk, so a document with no snippets and no bindings still
+produces exactly one `{@html}` / `dangerouslySetInnerHTML` call. React chunk wrappers carry
+`display: contents` so they add no box to the artboard's layout; the generated CSS uses only
+descendant combinators, so an inert wrapper is invisible to it.
+
+React's static markup is deliberately **not** converted to JSX. See SPEC §12.6 for what a full JSX
+emitter would need — the blocker is `raw` nodes (custom blocks, html-hook layers, inline SVG), which
+would require an HTML parser and SVG attribute camelCasing in a path that has neither.
+
+The Svelte `<style>` is wrapped in `:global { … }`: markup ships through `{@html}`, which the Svelte
+compiler cannot see into, so an unwrapped block is pruned as unused selectors and the component loses
+its entire stylesheet including the `@container` rules. That block accepts **rules only**, so the
+stylesheet goes through `shared/css-rule-list.ts` first — a custom `css` block with a bare
+declaration, a stray `}` or an unclosed rule is otherwise a hard compile error in the *generated*
+component. Malformed items are dropped (unclosed rules are closed), with an
+`emit:css-not-rule-list` warning naming the custom block. Only Svelte does this: HTML and React
+inject CSS where the browser's own error recovery applies.
+
+`test/unit/svelte-emitter-compile.test.ts` and `test/unit/react-emitter-compile.test.ts` both drive
+`test/fixtures/component-fixtures.ts` — every IR fixture × every option set. Do not hand-pick a
+fixture list in either: the two lists diverged once, and the Svelte emitter was failing to compile
+`escaping-adversarial.json` in all four option sets while React's list covered it.
+
+### Identifiers in generated components
+
+Layer names and binding paths are user text that becomes JavaScript source, so both emitters route
+every identifier through `shared/js-identifier.ts` and every piece of user text through
+`jsStringLiteral()`.
+
+- **No user text in a comment, ever.** `JSON.stringify` escapes neither `*/` (React's `/** … */`
+  prop docs) nor a newline (Svelte's `//` prop docs), so a layer name could close the comment and
+  execute. Keys and paths are emitted as string literals in a data position instead —
+  `snippetKeys` / `bindingPaths`, exported from the module (Svelte: `<script module>`).
+- `jsStringLiteral()` also escapes `<` and U+2028/U+2029: a Svelte `<script>` is still an HTML
+  script element, so `</script>` inside a JS string closes it.
+- The reserved set is the **union** across both emitters — JS/TS keywords plus every identifier the
+  generated components declare (`cssText`, `htmlChunks`, `googleFontsHref`, `CONTENTS`, `useMemo`,
+  `React`, `JSX`, `ReactNode`, `resolveHtml`, `ASSET_TOKEN`, `snippetKeys`, `bindingPaths`, …) — so
+  one key yields one prop name in both. **Add to `GENERATED_IDENTIFIERS` whenever you declare a new
+  identifier in either emitter**; a miss there is a silent shadow, not a compile error.
+- Names are made unique per document in `collectReplaceables()`, in document order, and any rename
+  warns (`emit:snippet-prop-renamed`) naming the layer and the chosen name.
+- Leading `$` is rewritten: Svelte rejects every `$`-prefixed binding.
+
+`test/unit/component-identifier-safety.test.ts` compiles each case with the real Svelte compiler and
+esbuild, then *executes* the module in a `node:vm` sandbox to prove nothing a layer name contains
+runs.
 
 ## Standalone emitter (`standalone.ts`)
 
@@ -38,26 +139,94 @@ Full HTML document. Supports `local_preview_template` setting via the template s
 ## Shared utilities (`shared/`)
 
 - `css.ts` — All CSS generation. Container queries, artboard styles (with `aspect-ratio` for dynamic), text style classes. Scoped to `#{ns}{slug}-box`.
-- `hast-helpers.ts` — `h()`, `raw()`, `commentNode()`, `escapeAttr()`, `escapeHtml()`.
+- `escape.ts` — **the** escaping module: `escapeHtml()`, `escapeAttr()`, `sanitizeCommentText()`, `renderComment()`, `escapeScriptContent()`, `escapeStyleContent()`, plus the `isSafeUrl()` href scheme allowlist and its `unsafeUrlWarning()` text. No other copy of these may exist. Only `html-node.ts` (the serializer) calls the escapers — emitters do not.
+- `html-node.ts` — the node types, the `el()`/`text()`/`raw()`/`comment()` builders and `serializeHtml()`. ES3-safe.
+- `to-hast.ts` — `toHast()` adapter plus `HAST_TO_HTML_OPTIONS`. Node-only, in-repo only, one caller (the parity test).
 - `assets.ts` — Asset indexing by canonical `artboardId`/`layerId`, `resolveAssetPath()` (static), `tokenizedAssetPath()` (with `%%ASSET_PATH%%`), `replaceAssetPathToken()`.
 - `options.ts` — Applies shared emitter options (`allowUnsafeHtml`, `positionMode`) before rendering.
-- `replaceable-nodes.ts` — Extracts snippets and bindings from EmitterReadyDocument. Accepts `{ allowUnsafeHtml }` option to gate `binding.allowHtml`.
+- `replaceable-nodes.ts` — Finds snippet/binding placeholders **in the node tree** by their
+  `data-replaceable` marker, and `segmentTree()` splits a sibling list into opaque markup runs plus
+  the spine down to each placeholder. Also owns `snippetPropName()` (layer name → JS identifier) and
+  the per-document prop-name assignment in `collectReplaceables()`.
+- `js-identifier.ts` — layer name → safe JS identifier (`sanitizeIdentifier`, `safeIdentifier`,
+  `uniqueIdentifier`, the reserved set) and user text → safe JS string literal (`jsStringLiteral`).
+  Node-only.
+- `css-rule-list.ts` — `toRuleList()` / `isRuleList()`: reduce a stylesheet to something a rule-list
+  context (Svelte's `:global { … }`) accepts, reporting what was dropped. Node-only.
+- `component-tree.ts` — The shared Svelte/React input: builds the tree, lifts the stylesheet out of
+  it, carries the Google Fonts href separately, segments the rest, and collects the snippet/binding
+  props. Owns `ASSETS_TOKEN` and `escapeTemplateLiteral()`.
 
 ## Svelte/React emitter rules
 
+- Consume `buildComponentTree()`. Do not call the HTML emitter for a string and take it apart
 - Asset paths use `__ALL2HTML_ASSETS__` token in the HTML string, replaced at runtime
-- Do NOT convert `class` → `className` in HTML strings (they're plain HTML inside dangerouslySetInnerHTML)
+- Do NOT convert `class` → `className` in HTML strings (they're plain HTML inside dangerouslySetInnerHTML).
+  Do convert it on the spine, where the element is real JSX
 - Strip trailing slashes from `assetsPath` before replacement to avoid double-slash paths
 - Component names must be valid JS identifiers (prefix with "Graphic" if slug starts with a digit)
 - Token regex must cover `src`, `data-src`, and video extensions (mp4, webm) not just images
+- Do not strip comments. Author comments in `html-before` / `html-after` blocks are content
+- Neither emitter may be imported from anything in the ExtendScript entry graph
+
+## Escaping contract
+
+There is exactly ONE contract, defined in `shared/escape.ts` and applied in exactly one
+place — the serializer in `shared/html-node.ts`. It is **hast's own escaping subset**:
+`hast-util-to-html` offers no way to widen what it escapes, so the serializer escapes
+exactly what hast escapes — no more, no less — and the `toHast()` adapter round-trips
+byte-identically as proof.
+
+- text content (`escapeHtml`) → `&` and `<` only
+- double-quoted attribute values (`escapeAttr`) → NUL, `"`, `&`, `'`, backtick
+- comments → `sanitizeCommentText()` breaks `<!--` / `-->` / `--!>` **before** the value
+  reaches hast, so hast's own comment encoder never fires and both paths agree
+- inline `<script>` → `escapeScriptContent()` rewrites `</script` and `<!--` with a
+  backslash. `<!--` enters *script-data-escaped* and a following `<script` enters
+  *script-data-double-escaped*, where `</script>` stops closing the element and swallows
+  the rest of the document; breaking `<!--` makes that state unreachable.
+- inline `<style>` → `escapeStyleContent()` rewrites `</style` and `<!--`. Applied by the
+  serializer to any `text` child of a `style` element, so it cannot be forgotten.
+
+Both subsets are still sufficient: `>`/`"` cannot start a tag in text, and `<`/`>`
+cannot terminate a double-quoted attribute. Narrowing (rather than widening) is what
+makes byte-identical output possible.
+
+Escaping alone cannot make a URL safe, so `href` values (text-run hyperlinks and
+`settings.clickableLink`) go through `isSafeUrl()` instead: `http`, `https`, `mailto`,
+`tel`, fragments and relative URLs are allowed, and anything else drops the anchor
+with a warning naming the URL. The check strips ASCII whitespace and C0 controls
+first, because browsers do (`java\tscript:` and `\njavascript:` are otherwise live).
+
+Defense in depth lives in the core too: `compute-styles.ts` validates `fontFamily`
+against the CSS `<family-name>` grammar (and `fontWeight`/`fontStyle` against a
+keyword grammar) so font mappings from `all2html.config.json`, document XMP or the
+panel font editor cannot reach the stylesheet as raw text. Rejected values warn,
+naming the font, and fall back — they are never silently dropped.
+
+Emitters pass RAW values everywhere. `escapeAttr()`/`escapeHtml()` are called by the
+serializer and by nothing else in the emitter path.
+
+`test/unit/emitter-escaping-parity.test.ts` + `test/fixtures/ir/escaping-adversarial.json`
+pin this down: every string-typed IR field carries `< > & " ' --> <!-- --!> </script`,
+and behavior is asserted across `{grouped, ungrouped}` × the full option cross-product.
+The style, script and href defenses are additionally asserted structurally with
+`jsdom`, so a payload has to actually escape its container to pass.
+`test/unit/html-serializer.test.ts` specifies the serializer itself — the two escaping
+grammars, boolean attributes, void elements, raw-text elements, attribute order, comment
+sanitization, raw markup, and the separate CSS-URL grammar — and asserts serializer/hast
+byte equality over every IR fixture.
 
 ## Rules
 
-- Always use `escapeAttr()` for attribute values, `escapeHtml()` for text content
+- The HTML emitter passes RAW values into the node tree and never escapes. Escaping is the serializer's job and happens exactly once
+- Outside the node tree (e.g. `standalone-shared.ts`), use `escapeAttr()` for attribute values and `escapeHtml()` for text content
+- Never define a local `escapeAttr`/`escapeHtml`/`escapeHtmlAttr` — import from `shared/escape.ts`
+- Never add a second HTML emitter. `html.ts` and `html-string.ts` are names for one function
 - CSS properties output in alphabetical order for determinism
-- Use `raw()` only for intentionally unescaped content (custom blocks, pre-escaped text)
+- Use `raw()` only for intentionally unescaped content (custom blocks, inline SVG, `&nbsp;`)
 - Pre-index assets with `buildScopedAssetIndex()` for O(1) canonical ID lookups — don't use `Object.values().find()` in loops
 - Grouped output must use the same effective slug for DOM IDs and generated CSS selectors
 - Shape elements use `EmitterReadyShapeElement` type — no `as any`
-- Escape video URLs with `escapeAttr()` in string emitter
-- Sanitize artboard names in HTML comments (strip `-->` sequences)
+- Narrow elements with `el.type` and `el.renderAs` only. `EmitterReadyLayer.elements` contains no un-positioned variants, so `"computedPosition" in el` / `"computedShapePosition" in el` probes are never needed and must not come back
+- Artboard names in HTML comments are sanitized by the serializer's `comment` handling — pass the raw name
