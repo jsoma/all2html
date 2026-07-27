@@ -17,6 +17,7 @@ import {
   processDocumentInBrowser,
   type SvgRasterizer,
 } from "../../../src/browser.js";
+import { escapeAttr, escapeHtml } from "../../../src/emitters/shared/escape.js";
 import "./styles.css";
 
 type SupportedFormat = "html" | "standalone" | "svelte" | "react";
@@ -288,8 +289,10 @@ export function mountSvgDropzoneApp(
             .map((item) => `<li>${escapeHtml(item)}</li>`)
             .join("");
 
+    // `value` is a double-quoted attribute and the label is text content: two
+    // different grammars, two different escapers (`src/emitters/shared/escape.ts`).
     outputFileSelect.innerHTML = currentRun.fileSummary
-      .map((path) => `<option value="${escapeHtml(path)}">${escapeHtml(path)}</option>`)
+      .map((path) => `<option value="${escapeAttr(path)}">${escapeHtml(path)}</option>`)
       .join("");
     if (!currentRun.fileSummary.includes(outputFileSelect.value)) {
       outputFileSelect.value = currentRun.emittedPath;
@@ -393,14 +396,6 @@ export function getOutputFormatLabel(format: SupportedFormat): string {
     case "react":
       return "React";
   }
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {

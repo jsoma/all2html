@@ -1,5 +1,6 @@
 /// <reference lib="dom" />
 
+import { escapeHtml } from "../../../src/emitters/shared/escape.js";
 import type { FigmaDirectControls, SandboxToUiMessage, UiToSandboxMessage } from "./types.js";
 import {
   applyDirectControlsToConfig,
@@ -44,15 +45,6 @@ function downloadZip(filename: string, bytes: Uint8Array): void {
   anchor.download = filename;
   anchor.click();
   URL.revokeObjectURL(url);
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
 }
 
 interface UiElements {

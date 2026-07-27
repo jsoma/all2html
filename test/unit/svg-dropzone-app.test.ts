@@ -465,4 +465,81 @@ describe("browser pipeline surface", () => {
     );
     expect(warning?.surface).toBe("browser");
   });
+
+  /**
+   * The app used to carry a local `escapeHtml` that escaped `"`, and used it in
+   * both a text position and the `<option value="...">` attribute. It now
+   * imports the shared pair, whose text escaper is deliberately narrowed to
+   * hast's subset (`&` and `<` only) and does **not** escape `"` — so the
+   * attribute site had to move to `escapeAttr` at the same time. This asserts
+   * the split structurally rather than by inspecting the markup string: a value
+   * that survives jsdom parsing byte-for-byte could not have closed its own
+   * attribute.
+   */
+  it("escapes bundle paths per grammar: attribute value vs text content", async () => {
+    const root = document.createElement("div");
+    document.body.append(root);
+
+    const hostilePath = `a" onmouseover="alert(1)" x="<img src=x onerror=alert(1)>.html`;
+    const hostileWarning = `<img src=x onerror="alert(1)"> & <script>alert(1)</script>`;
+
+    mountSvgDropzoneApp(root, {
+      ...createUnusedDependencies(),
+      async createRasterizer() {
+        return {
+          async rasterizeSvg() {
+            throw new Error("not used");
+          },
+        };
+      },
+      async loadFiles() {
+        return createLoadedFiles();
+      },
+      parseConfig: emptyConfig,
+      async convert() {
+        return {
+          loaded: createLoadedFiles(),
+          slug: "story",
+          format: "html",
+          irDocument: createDocument(),
+          bundle: createOutputBundle({
+            irDocument: createDocument(),
+            emittedFiles: [{ slug: "story", extension: ".html", output: "<div>preview</div>" }],
+            assetFiles: [],
+          }),
+          emittedPath: "story.html",
+          importWarnings: [hostileWarning],
+          renderWarnings: [],
+          artboardCount: 1,
+          groupCount: 1,
+          assetCount: 0,
+          filePaths: ["story.html", hostilePath],
+        };
+      },
+    });
+
+    const fileInput = requireElement<HTMLInputElement>(root, "[data-file-input]");
+    assignFiles(fileInput, [new File(["<svg />"], "story.svg", { type: "image/svg+xml" })]);
+    fileInput.dispatchEvent(new Event("change"));
+    requireElement<HTMLButtonElement>(root, "[data-generate]").click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const select = requireElement<HTMLSelectElement>(root, "[data-output-file]");
+    const options = Array.from(select.options);
+    expect(options).toHaveLength(2);
+    // Round-trips exactly: the `"` never terminated the attribute, so no stray
+    // `onmouseover` attribute and no injected element exist.
+    expect(options[1].value).toBe(hostilePath);
+    expect(options[1].textContent).toBe(hostilePath);
+    expect(options[1].hasAttribute("onmouseover")).toBe(false);
+    expect(select.querySelector("img")).toBeNull();
+
+    const warningList = requireElement<HTMLElement>(root, "[data-warnings]");
+    expect(warningList.textContent).toBe(`Import: ${hostileWarning}`);
+    expect(warningList.querySelector("img")).toBeNull();
+    expect(warningList.querySelector("script")).toBeNull();
+
+    document.body.innerHTML = "";
+  });
 });
