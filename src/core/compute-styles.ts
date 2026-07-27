@@ -65,6 +65,31 @@ function isFamilyIdentChar(ch: string): boolean {
   return isFamilyIdentStart(ch) || (ch >= "0" && ch <= "9") || ch === "-";
 }
 
+/**
+ * Characters that may not appear inside a *quoted* family name.
+ *
+ * The explicit five (`"`, `'`, `<`, `>`, `\`) are the ones that end the string,
+ * the declaration or the `<style>` element directly. The control range is the
+ * part that was wrong: CSS preprocessing (css-syntax-3 §3.3) rewrites CR, FF and
+ * CRLF to LF *before* tokenizing, and a newline inside a string token is a parse
+ * error that terminates the string. A check that named only CR and LF therefore
+ * let U+000C through, and `"Safe\f;}body{display:none}/*"` validated while the
+ * browser saw the string end at the form feed.
+ *
+ * So this rejects the whole class rather than the one character that was found:
+ * every C0 control (U+0000-U+001F, which covers CR, LF, FF and both halves of a
+ * CRLF pair) plus DEL (U+007F). U+0000 matters separately — preprocessing
+ * rewrites it to U+FFFD, so it can never be part of a family name that resolves.
+ * No real family name contains any of them, so nothing legitimate is lost.
+ *
+ * Written as a scan rather than a regex on purpose; see the note above on
+ * ExtendScript's backtracking.
+ */
+function isDisallowedInQuotedFamily(ch: string): boolean {
+  if (ch <= "\u001F" || ch === "\u007F") return true;
+  return ch === '"' || ch === "'" || ch === "<" || ch === ">" || ch === "\\";
+}
+
 /** One comma-separated component: either a quoted string or space-separated idents. */
 function isValidFamilyName(raw: string): boolean {
   const name = raw.replace(/^[ \t]+/, "").replace(/[ \t]+$/, "");
@@ -75,20 +100,9 @@ function isValidFamilyName(raw: string): boolean {
     if (name.length < 2 || name.charAt(name.length - 1) !== quote) return false;
     const inner = name.slice(1, -1);
     for (let i = 0; i < inner.length; i++) {
-      const ch = inner.charAt(i);
       // The characters that could end the attribute, the <style> element, or the
       // declaration if they reached the stylesheet.
-      if (
-        ch === '"' ||
-        ch === "'" ||
-        ch === "<" ||
-        ch === ">" ||
-        ch === "\\" ||
-        ch === "\r" ||
-        ch === "\n"
-      ) {
-        return false;
-      }
+      if (isDisallowedInQuotedFamily(inner.charAt(i))) return false;
     }
     return true;
   }

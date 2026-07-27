@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { assertUsableArtboardDimensions } from "../../src/core/artboard-dimensions.js";
-import { assertJsonPure, findNonFiniteNumbers } from "../../src/core/json-purity.js";
+import { assertJsonPure, findImpureValues } from "../../src/core/json-purity.js";
 import { processDocument } from "../../src/core/pipeline.js";
 import { emitHTML } from "../../src/emitters/html.js";
 import { processAndEmit } from "../../src/extendscript/index.js";
@@ -45,7 +45,7 @@ describe("document model is JSON-pure (SPEC §12.2)", () => {
       // collapse (D23), so asserting it separately compares a function to itself.
       expect(emitHTML(restored).html).toBe(emitHTML(document).html);
 
-      expect(findNonFiniteNumbers(document)).toEqual([]);
+      expect(findImpureValues(document)).toEqual([]);
 
       for (const artboard of restored.artboards) {
         const bp = artboard.breakpoint as unknown as Record<string, unknown>;
@@ -111,24 +111,56 @@ describe("per-transform JSON-purity invariant (D21)", () => {
   });
 
   it("catches Infinity, -Infinity and NaN, nested in arrays and objects", () => {
-    expect(findNonFiniteNumbers({ a: Infinity })).toEqual(["a = Infinity"]);
-    expect(findNonFiniteNumbers({ a: -Infinity })).toEqual(["a = -Infinity"]);
-    expect(findNonFiniteNumbers({ a: NaN })).toEqual(["a = NaN"]);
-    expect(findNonFiniteNumbers([{ b: [1, 2, Number.POSITIVE_INFINITY] }])).toEqual([
+    expect(findImpureValues({ a: Infinity })).toEqual(["a = Infinity"]);
+    expect(findImpureValues({ a: -Infinity })).toEqual(["a = -Infinity"]);
+    expect(findImpureValues({ a: NaN })).toEqual(["a = NaN"]);
+    expect(findImpureValues([{ b: [1, 2, Number.POSITIVE_INFINITY] }])).toEqual([
       "[0].b[2] = Infinity",
     ]);
   });
 
+  /**
+   * The contract rule is "no Infinity, NaN, undefined, Map or Set anywhere in it", but
+   * the checker only ever looked for non-finite numbers — so this exact object passed a
+   * function whose error message promises a JSON round-trip, and `compute-positions`
+   * shipped an enumerable `border: undefined` on every line shape underneath it.
+   */
+  it("enforces the whole contract rule, not just the non-finite clause", () => {
+    expect(() => assertJsonPure({ a: undefined, b: new Map(), c: new Set() }, "t")).toThrow();
+    expect(findImpureValues({ a: undefined, b: new Map(), c: new Set() })).toEqual([
+      "a = undefined",
+      "b = Map",
+      "c = Set",
+    ]);
+  });
+
+  it("catches undefined in an array, where JSON.stringify turns it into null", () => {
+    expect(findImpureValues({ a: [1, undefined, 3] })).toEqual(["a[1] = undefined"]);
+  });
+
+  it("rejects by class, so an exotic nobody has met yet is caught too", () => {
+    // Date and RegExp do not round-trip to themselves; functions and symbols are
+    // dropped. Naming only the exotics already seen is how the gap appeared.
+    expect(findImpureValues({ a: new Date(0) })).toEqual(["a = Date"]);
+    expect(findImpureValues({ a: /x/ })).toEqual(["a = RegExp"]);
+    expect(findImpureValues({ a: () => 1 })).toEqual(["a = function"]);
+    expect(findImpureValues({ a: Symbol("s") })).toEqual(["a = symbol"]);
+  });
+
   it("ignores values JSON can represent", () => {
     expect(
-      findNonFiniteNumbers({ a: 0, b: -1.5, c: null, d: "Infinity", e: true, f: [], g: {} }),
+      findImpureValues({ a: 0, b: -1.5, c: null, d: "Infinity", e: true, f: [], g: {} }),
     ).toEqual([]);
+    // A JSON.parse result may have a null prototype; that is still a plain object.
+    const nullProto = Object.create(null) as Record<string, unknown>;
+    nullProto.x = 1;
+    expect(findImpureValues({ a: nullProto })).toEqual([]);
   });
 
   it("caps how many findings it reports", () => {
     const many = Array.from({ length: 20 }, () => Infinity);
-    expect(findNonFiniteNumbers(many)).toHaveLength(5);
-    expect(findNonFiniteNumbers(many, 2)).toHaveLength(2);
+    expect(findImpureValues(many)).toHaveLength(5);
+    expect(findImpureValues(many, 2)).toHaveLength(2);
   });
 
   it("fires from inside the pipeline when a transform dirties the document", () => {

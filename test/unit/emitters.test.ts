@@ -5,7 +5,7 @@ import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 import { processDocument } from "../../src/core/pipeline.js";
 import { emitReact } from "../../src/emitters/react.js";
-import { emitStandalone } from "../../src/emitters/standalone.js";
+import { emitStandalone, emitStandaloneGroup } from "../../src/emitters/standalone.js";
 import { emitSvelte } from "../../src/emitters/svelte.js";
 
 const fixturesDir = resolve(import.meta.dirname, "../fixtures/ir");
@@ -161,6 +161,37 @@ describe("Standalone emitter", () => {
     const { html } = emitStandalone(doc);
     expect(html).toContain('<html lang="ja">');
   });
+
+  /**
+   * The public signature is `(doc, options)` and must stay that way.
+   *
+   * `emitStandalone` is a root export, so a JavaScript caller passing its
+   * options object second gets no type error when a parameter is inserted in
+   * front of it — the object is simply read as something else and every option
+   * is dropped, including the security-relevant `allowUnsafeHtml: false`, which
+   * silently re-enables unsafe binding HTML. Group support is
+   * `emitStandaloneGroup`, an explicitly named function, precisely so nothing
+   * has to discriminate these two objects by shape.
+   */
+  it("honors emitter options passed positionally as the second argument", () => {
+    const doc = loadAndProcess("tagged-text.json");
+    expect(emitStandalone(doc).html).toContain('data-binding-html="true"');
+    expect(emitStandalone(doc, { allowUnsafeHtml: false }).html).not.toContain(
+      'data-binding-html="true"',
+    );
+  });
+
+  it("emits every artboard, and emitStandaloneGroup emits the group it is given", () => {
+    const doc = loadAndProcess("multi-artboard-responsive.json");
+    expect(doc.artboards.length).toBeGreaterThan(1);
+
+    const all = emitStandalone(doc).html;
+    for (const ab of doc.artboards) expect(all).toContain(`Artboard: ${ab.name}`);
+
+    const one = emitStandaloneGroup(doc, { artboards: [doc.artboards[0]], slug: "solo" }).html;
+    expect(one).toContain(`Artboard: ${doc.artboards[0].name}`);
+    expect(one).not.toContain(`Artboard: ${doc.artboards[1].name}`);
+  });
 });
 
 /**
@@ -193,7 +224,9 @@ describe("Standalone emitter: local preview template substitution", () => {
 
     // The template was applied, not silently skipped.
     expect(structuredWarnings.some((w) => w.code === "emit:template-error")).toBe(false);
-    expect(html).toContain("<h1>&lt;img src=x onerror=alert(1)&gt;</h1>");
+    // Escaped for every position a slot can occupy, unquoted attribute included,
+    // so the inner spaces and `=` are encoded too — see `test/unit/template.test.ts`.
+    expect(html).toContain("<h1>&lt;img&#32;src&#61;x&#32;onerror&#61;alert(1)&gt;</h1>");
     expect(html).not.toContain(payload);
 
     const document = new JSDOM(html).window.document;
@@ -223,7 +256,9 @@ describe("Standalone emitter: local preview template substitution", () => {
 
   it("renders an ampersand in metadata as itself, not as a double-escaped entity", () => {
     const { html } = renderWithTemplate("<p>{{credit}}</p>", { credit: "Smith & Sons" });
-    expect(html).toContain("<p>Smith &amp; Sons</p>");
+    expect(html).toContain("<p>Smith&#32;&amp;&#32;Sons</p>");
+    // The point of the test: `&` yields one entity, not `&amp;amp;`. The `&#32;`
+    // around it is the unquoted-attribute-safe escape and decodes to a space.
     expect(new JSDOM(html).window.document.querySelector("p")?.textContent).toBe("Smith & Sons");
   });
 });

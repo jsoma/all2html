@@ -97,8 +97,10 @@ export function buildArtboard(frame: ExtractedFrame): Artboard {
       width: frame.actualWidth,
       height: frame.actualHeight,
     },
-    responsiveness: frame.responsiveness,
-    imageOnly: frame.imageOnly,
+    // Omitted, not set to undefined: the document model must survive a JSON
+    // round-trip, and assertJsonPure enforces that per transform.
+    ...(frame.responsiveness === undefined ? {} : { responsiveness: frame.responsiveness }),
+    ...(frame.imageOnly === undefined ? {} : { imageOnly: frame.imageOnly }),
     layers: frame.layers.map((layer) => ({
       id: makeFigmaLayerId(frame, layer),
       name: layer.name,

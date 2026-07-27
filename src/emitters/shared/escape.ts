@@ -107,33 +107,61 @@ export function renderComment(value: string): string {
  *
  *   1. `</script` ends the element outright, regardless of JS string/comment
  *      context.
- *   2. `<!--` switches to *script-data-escaped*, where `-->` matters.
+ *   2. `<!--` switches to *script-data-escaped*.
  *   3. `<script` while escaped switches to *script-data-double-escaped*, where
  *      a plain `</script>` no longer closes the element — so everything after
  *      the block (including the trailing `<!-- End all2html -->` comment) gets
- *      swallowed as script text.
+ *      swallowed as script text. `-->` is what leaves those states again.
  *
- * A backslash before the `/`, `!` or `s` breaks all three for the tokenizer
- * while staying inert inside JS string literals (`\X` is a NonEscapeCharacter
- * that evaluates to `X`). Note the one place inertness does *not* hold: inside
- * a regex literal `\s` is the whitespace class and `\!` is invalid under the
- * `u` flag, so `/<script/` and `/<!--/u` change meaning. Breaking `<!--` alone
- * is what actually stops the breakout — the `<script` rule is defense in depth.
+ * WHY `<!--` IS NO LONGER REWRITTEN
+ * ---------------------------------
+ * The old rule turned `<!--` into `<\!--`. That is inert inside a JS string or
+ * template literal (`\!` is a NonEscapeCharacter evaluating to `!`) and inside a
+ * non-`u` regex (`\!` is an IdentityEscape matching `!`) — but under the `u`/`v`
+ * flag `\!` is not a legal IdentityEscape, so `/<!--/u` was rewritten into a
+ * **SyntaxError** and the author's whole script stopped running. There is no
+ * insertion that fixes this: in Unicode mode the only legal identity escapes are
+ * the syntax characters and `/`, so neither `<\!--` nor `<!\--` parses, and
+ * telling the cases apart needs a full JS lexer (regex-vs-division included)
+ * inside a module that also ships to ExtendScript.
+ *
+ * CONTAINMENT ARGUMENT FOR THE REPLACEMENT
+ * ----------------------------------------
+ * Containment does not actually require touching `<!--`; it requires that the
+ * tokenizer be back in *script data* state when the emitter writes its own
+ * `</script>`. So:
+ *
+ *   - `</script` is still rewritten to `<\/script`. That one is inert in every
+ *     JS context, including regex literals: a bare `/` terminates a regex
+ *     literal, so the substring `</script` cannot appear in one at all, and in a
+ *     string/template `\/` is `/`. This keeps the element from closing early.
+ *   - When the content contains `<!--` at all, a line break and `-->` are
+ *     appended. From *any* state reachable inside script data — escaped,
+ *     double-escaped, or either of the dash states — the sequence LF `-` `-` `>`
+ *     lands in script data state: the LF resolves the escape-start/dash states,
+ *     and `-->` is the documented exit from both escaped and double-escaped. The
+ *     emitter's `</script>` then closes the element as written, and nothing
+ *     after it is swallowed. Leaving script data at all requires `<!--`, so
+ *     appending only when it is present is exactly the trigger condition.
+ *
+ * The appended text is inert JavaScript: `-->` at the start of a line is
+ * `SingleLineHTMLCloseComment` (Annex B), so it comments out the rest of that
+ * (empty) line. That production is unavailable in *module* code — every script
+ * these emitters produce is a classic `type="text/javascript"` script, and this
+ * is the constraint to check before ever emitting `type="module"`.
+ *
+ * The result: the author's source is never rewritten in a way that can change
+ * its meaning, and the element still cannot be escaped.
  */
 export function escapeScriptContent(value: string): string {
-  // Only these two sequences matter. `</script` ends the element directly, and
-  // `<!--` is what lets the tokenizer enter script-data-double-escaped state,
-  // where a later `</script>` no longer closes it.
-  //
   // A third rule neutralizing bare `<script` was tried and deliberately removed:
-  // it is redundant (blocking `<!--` already makes the double-escaped state
-  // unreachable) and it actively corrupts valid author JS. Inside a regex
-  // literal, `/<script/` would become `/<\script/`, where `\s` silently means
-  // the whitespace class rather than the letter `s`. Rewriting a user's working
-  // regex into a different-but-valid one is worse than the redundancy it buys.
-  return String(value)
-    .replace(/<\/(script)/gi, "<\\/$1")
-    .replace(/<!--/g, "<\\!--");
+  // it is redundant (the trailing `-->` already makes double-escaped state exit
+  // before the closing tag) and it actively corrupts valid author JS. Inside a
+  // regex literal, `/<script/` would become `/<\script/`, where `\s` silently
+  // means the whitespace class rather than the letter `s`. Rewriting a user's
+  // working regex into a different-but-valid one is worse than the redundancy.
+  const out = String(value).replace(/<\/(script)/gi, "<\\/$1");
+  return out.indexOf("<!--") === -1 ? out : out + "\n-->";
 }
 
 /**

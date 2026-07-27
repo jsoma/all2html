@@ -163,16 +163,19 @@ export function computeShapePosition(
 
   if (el.stroke) {
     const w = Math.max(1, Math.round(el.stroke.width));
-    result.border = `${w}px solid ${formatColor(el.stroke.color)}`;
-    // Lines use border-top or border-right instead
-    if (el.shapeType === "line") {
-      if (el.orientation === "vertical") {
-        result.border = undefined;
-        result.borderRight = `${w}px solid ${formatColor(el.stroke.color)}`;
-      } else {
-        result.border = undefined;
-        result.borderTop = `${w}px solid ${formatColor(el.stroke.color)}`;
-      }
+    const stroke = `${w}px solid ${formatColor(el.stroke.color)}`;
+    // Lines take a single edge instead of a full box. The edge is *chosen*, not
+    // assigned and then cleared: writing `result.border = undefined` afterwards
+    // left an enumerable `border` key holding `undefined`, which JSON.stringify
+    // drops — so a document containing any line shape did not survive the round
+    // trip the model is required to survive, and did so with every purity guard
+    // green (they only looked for non-finite numbers).
+    if (el.shapeType !== "line") {
+      result.border = stroke;
+    } else if (el.orientation === "vertical") {
+      result.borderRight = stroke;
+    } else {
+      result.borderTop = stroke;
     }
   }
 

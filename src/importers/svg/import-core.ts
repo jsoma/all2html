@@ -426,7 +426,7 @@ function parseColor(raw: string | undefined): Color | null {
         value.length === 4
           ? Math.round((Number.parseInt(value[3] + value[3], 16) / 255) * 100)
           : undefined;
-      return { r, g, b, opacity: alpha };
+      return rgbColor(r, g, b, alpha);
     }
     if (value.length === 6 || value.length === 8) {
       const r = Number.parseInt(value.slice(0, 2), 16);
@@ -436,7 +436,7 @@ function parseColor(raw: string | undefined): Color | null {
         value.length === 8
           ? Math.round((Number.parseInt(value.slice(6, 8), 16) / 255) * 100)
           : undefined;
-      return { r, g, b, opacity: alpha };
+      return rgbColor(r, g, b, alpha);
     }
   }
 
@@ -449,12 +449,24 @@ function parseColor(raw: string | undefined): Color | null {
       const b = Number.parseFloat(parts[2]);
       const alpha = parts.length >= 4 ? Math.round(Number.parseFloat(parts[3]) * 100) : undefined;
       if ([r, g, b].every((part) => Number.isFinite(part))) {
-        return { r, g, b, opacity: alpha };
+        return rgbColor(r, g, b, alpha);
       }
     }
   }
 
   return null;
+}
+
+/**
+ * Build a colour with the alpha channel *omitted* when the source had none.
+ *
+ * `{ r, g, b, opacity: undefined }` is not the same document as `{ r, g, b }`:
+ * `JSON.stringify` drops the key, so the model stopped surviving the round trip
+ * it is required to survive. `assertJsonPure` only looked for non-finite numbers
+ * at the time, so nothing caught it.
+ */
+function rgbColor(r: number, g: number, b: number, opacity: number | undefined): Color {
+  return opacity === undefined ? { r, g, b } : { r, g, b, opacity };
 }
 
 function hasDescendant(node: SvgNode, tagName: string): boolean {
@@ -577,7 +589,8 @@ function collectTextLines(
           letterSpacing: letterSpacingEm,
           capitalization: "normal",
           baselineShift: "normal",
-          hyperlink: context.hyperlink ? { href: context.hyperlink } : undefined,
+          // Absent, not `undefined`: the document model must survive JSON.
+          ...(context.hyperlink ? { hyperlink: { href: context.hyperlink } } : {}),
         };
 
         activeLine.runs.push(run);
@@ -1298,16 +1311,19 @@ async function parseSvgFile(
         id: file.path,
         name: naming.originalName,
       },
+      // Format-specific parameters are *omitted* for the formats they do not
+      // apply to. Writing `quality: undefined` on a PNG left an enumerable key
+      // that JSON.stringify drops, so the asset record did not round-trip.
       exportParams: {
         format: extensionForMimeType(rasterized.mimeType) as "png" | "jpg",
         scale: settings.use2xImages ? 2 : 1,
-        transparent:
-          rasterized.mimeType === "image/png" ? settings.pngTransparent || false : undefined,
-        quality: rasterized.mimeType === "image/jpeg" ? settings.jpgQuality || 85 : undefined,
-        colors:
-          rasterized.mimeType === "image/png" && resolvedFormat === "png"
-            ? settings.pngNumberOfColors || 128
-            : undefined,
+        ...(rasterized.mimeType === "image/png"
+          ? { transparent: settings.pngTransparent || false }
+          : {}),
+        ...(rasterized.mimeType === "image/jpeg" ? { quality: settings.jpgQuality || 85 } : {}),
+        ...(rasterized.mimeType === "image/png" && resolvedFormat === "png"
+          ? { colors: settings.pngNumberOfColors || 128 }
+          : {}),
       },
     };
   }
@@ -1361,8 +1377,11 @@ async function parseSvgFile(
         width: dimensions.width,
         height: dimensions.height,
       },
-      responsiveness: naming.responsiveness,
-      imageOnly: naming.imageOnly,
+      // Both are optional in the IR and both are absent for an unannotated
+      // filename; assigning `undefined` would put an enumerable key on the
+      // artboard that JSON.stringify drops.
+      ...(naming.responsiveness === undefined ? {} : { responsiveness: naming.responsiveness }),
+      ...(naming.imageOnly === undefined ? {} : { imageOnly: naming.imageOnly }),
       layers,
     },
     backgroundAsset,
