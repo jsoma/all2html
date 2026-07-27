@@ -851,19 +851,23 @@ function extractLayerContent(doc, artboard, layers, settings, assets) {
     // SVG layers: export as SVG file or inline
     if (layer.type === "svg") {
       try {
-        var svgResult = exportSvgLayer(doc, aiLayer, artboard, layer, settings);
+        // The asset id IS the filename base, computed once and passed down —
+        // exportSvgLayer deriving its own name from artboard.name while this
+        // record used source.name is how HTML references and written files
+        // diverged on suffixed artboard names (large-story regression).
+        var svgAssetId = makeAssetName([
+          slug,
+          artboard.source && artboard.source.name ? artboard.source.name : artboard.name,
+          layer.name
+        ]);
+        if (assets[svgAssetId]) {
+          svgAssetId = makeAssetName([svgAssetId, layer.id]);
+        }
+        var svgResult = exportSvgLayer(doc, aiLayer, artboard, layer, svgAssetId, settings);
         if (svgResult) {
           if (layer.inlineSvg && svgResult.content) {
             layer.elements.push({ type: "rawHtml", content: svgResult.content });
           } else if (svgResult.path) {
-            var svgAssetId = makeAssetName([
-              slug,
-              artboard.source && artboard.source.name ? artboard.source.name : artboard.name,
-              layer.name
-            ]);
-            if (assets[svgAssetId]) {
-              svgAssetId = makeAssetName([svgAssetId, layer.id]);
-            }
             assets[svgAssetId] = {
               id: svgAssetId,
               path: svgAssetId + ".svg",
@@ -1052,7 +1056,7 @@ function describeLayer(layer) {
   }
 }
 
-function exportSvgLayer(doc, aiLayer, artboard, irLayer, settings) {
+function exportSvgLayer(doc, aiLayer, artboard, irLayer, assetId, settings) {
   // Hide all layers except this one, export artboard as SVG
   var hiddenLayers = [];
   for (var i = 0; i < doc.layers.length; i++) {
@@ -1067,7 +1071,9 @@ function exportSvgLayer(doc, aiLayer, artboard, irLayer, settings) {
     doc.artboards.setActiveArtboardIndex(artboard._aiIndex);
     var outputPath = settings.outputPath;
     ensureFolder(outputPath);
-    var svgName = settings.projectName + "-" + makeKeyword(artboard.name) + "-" + makeKeyword(irLayer.name);
+    // The caller's asset record points at assetId + ".svg"; writing any other
+    // name ships HTML that references a file that does not exist.
+    var svgName = assetId;
     var svgFile = new File(outputPath + svgName + ".svg");
 
     var opts = new ExportOptionsSVG();
