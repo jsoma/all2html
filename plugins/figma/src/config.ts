@@ -1,5 +1,6 @@
 import { type ParseError, parse as parseJsonc, printParseErrorCode } from "jsonc-parser";
 import { z } from "zod";
+import { EmitterConfigSchema } from "../../../src/emitters/types.js";
 import { FontMappingSchema, MetadataSchema, SettingsSchema } from "../../../src/ir/schema.js";
 import { FigmaPluginError } from "./errors.js";
 import type { FigmaPluginConfig } from "./types.js";
@@ -17,6 +18,11 @@ const FigmaPluginConfigSchema = z
         }),
       )
       .optional(),
+    // The canonical emitter-options block, byte-for-byte the schema the CLI
+    // reads from `all2html.config.json`. Reusing it keeps the config thin: no
+    // Figma-specific emitter contract exists, and shipped emitter features are
+    // otherwise unreachable from this surface.
+    emit: EmitterConfigSchema,
   })
   .strict();
 

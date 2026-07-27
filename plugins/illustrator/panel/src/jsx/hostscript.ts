@@ -161,11 +161,20 @@ function hashString(value: string): string {
 
 function getSettingsBlockSignature(): string | null {
   try {
-    var tf = findSettingsBlock();
-    if (!tf) {
+    var blocks = findSettingsBlocks();
+    if (blocks.length === 0) {
       return null;
     }
-    return hashString(tf.contents || "");
+    // Both spellings can govern one document, so the change signal has to cover
+    // both — editing the legacy block while a canonical one exists still
+    // changes the resolved settings for any key the canonical block leaves out.
+    var parts: string[] = [];
+    for (var i = 0; i < blocks.length; i++) {
+      var contents = blocks[i].contents || "";
+      // Length-prefixed so ["a", "b c"] and ["a b", "c"] cannot hash alike.
+      parts.push(contents.length + ":" + contents);
+    }
+    return hashString(parts.join("\n"));
   } catch (e) {
     return null;
   }
@@ -410,11 +419,21 @@ registerHostCommand(AE_HOST_COMMANDS.saveAeConfigFile, (configJson: string): str
 );
 
 /**
- * Check if the document has an ai2html-settings text block.
+ * The exporter's own settings-block matcher (`SETTINGS_BLOCK_RXP` in
+ * `plugins/illustrator/exporter.jsx`). Both spellings are honored there, so a
+ * panel that only recognized `ai2html-settings` under-reported the doc lock:
+ * the export was governed by an `all2html-settings` block the badges never
+ * mentioned.
+ */
+var PANEL_SETTINGS_BLOCK_RXP = /^(all2html|ai2html)-settings\s*$/;
+var PANEL_LEGACY_SETTINGS_HEADER = "ai2html-settings";
+
+/**
+ * Check if the document has an all2html-settings or ai2html-settings block.
  */
 registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.hasSettingsBlock, (): string => {
   try {
-    if (findSettingsBlock()) {
+    if (findSettingsBlocks().length > 0) {
       return "true";
     }
     return "false";
@@ -423,20 +442,38 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.hasSettingsBlock, (): string => {
   }
 });
 
-function findSettingsBlock(): TextFrame | null {
+/**
+ * Every settings block in the document, canonical spelling first.
+ *
+ * The exporter merges both bags and lets `all2html-` win key-by-key, order
+ * independent (`parseSpecialBlocks`). Returning the canonical block first lets
+ * the caller reproduce that precedence by merging in reverse.
+ */
+function findSettingsBlocks(): TextFrame[] {
   var doc = app.activeDocument;
+  var canonical: TextFrame[] = [];
+  var legacy: TextFrame[] = [];
   for (var i = 0; i < doc.textFrames.length; i++) {
     var tf = doc.textFrames[i];
     try {
       var firstLine = tf.lines[0].contents;
-      if (/^ai2html-settings\s*$/.test(firstLine)) {
-        return tf;
+      if (!PANEL_SETTINGS_BLOCK_RXP.test(firstLine)) {
+        continue;
+      }
+      if (trimHostString(firstLine) === PANEL_LEGACY_SETTINGS_HEADER) {
+        legacy.push(tf);
+      } else {
+        canonical.push(tf);
       }
     } catch (e) {
       // Skip frames without text
     }
   }
-  return null;
+  return canonical.concat(legacy);
+}
+
+function trimHostString(value: string): string {
+  return String(value).replace(/^\s+|\s+$/g, "");
 }
 
 function parseSettingsBlock(tf: TextFrame): { [key: string]: string } {
@@ -474,19 +511,35 @@ function getIllustratorFallbackScriptPath(): string | null {
 }
 
 /**
- * Read parsed ai2html-settings values from the active document.
+ * Read parsed settings-block values from the active document.
+ *
+ * Mirrors the exporter's precedence: both spellings are read, and `all2html-`
+ * wins key-by-key over `ai2html-` while uncontested legacy keys survive.
  */
 registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.readSettingsBlock, (): string => {
   try {
-    var tf = findSettingsBlock();
-    if (!tf) {
-      return "{}";
-    }
-    return JSON.stringify(parseSettingsBlock(tf));
+    return JSON.stringify(readMergedSettingsBlocks());
   } catch (e) {
     return "{}";
   }
 });
+
+function readMergedSettingsBlocks(): { [key: string]: string } {
+  var blocks = findSettingsBlocks();
+  var merged: { [key: string]: string } = {};
+  // `findSettingsBlocks` returns canonical blocks first, so applying them in
+  // reverse leaves the `all2html-` value on top key-by-key while uncontested
+  // `ai2html-` keys survive — the exporter's rule, reproduced.
+  for (var i = blocks.length - 1; i >= 0; i--) {
+    var parsed = parseSettingsBlock(blocks[i]);
+    for (var key in parsed) {
+      if (Object.prototype.hasOwnProperty.call(parsed, key)) {
+        merged[key] = parsed[key];
+      }
+    }
+  }
+  return merged;
+}
 
 // ============================================================
 // Export execution

@@ -557,7 +557,7 @@ const TAG_SYNTAX_NOTES = [
   "**Figma** (`plugins/figma/src/extract/layers.ts`) matches case-insensitively as a prefix **or** a suffix of the node name, first match wins, and only scans direct children of the selected frame.",
   "",
   "- Inline SVG is written `:svg:inline` **only**. `:svg,inline` and `:inline` do not match.",
-  "- Frame tokens are `:dynamic`, `:fixed`, `:image` (not `:image-only`), or a bare integer width override.",
+  "- Frame tokens are `:dynamic`, `:fixed`, `:image-only`, or a bare integer width override. `:image` is still accepted as an older spelling of `:image-only`.",
   "",
   "**SVG import** (`src/importers/svg/import-core.ts`) has **no layer tags at all**. Every layer imports as an ordinary layer. Grouping and rendering come from the filename stem instead: `--dynamic` / `:dynamic`, `--image` / `:image`, and `--<width>` / `:<width>`.",
   "",

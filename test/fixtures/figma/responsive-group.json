@@ -62,7 +62,7 @@
     "assets": [
       {
         "id": "bg-story-640",
-        "path": "all2html-output/story-640.png",
+        "path": "story-640.png",
         "mimeType": "image/png",
         "width": 640,
         "height": 360,
@@ -142,7 +142,7 @@
     "assets": [
       {
         "id": "bg-story-1024",
-        "path": "all2html-output/story-1024.png",
+        "path": "story-1024.png",
         "mimeType": "image/png",
         "width": 1024,
         "height": 360,

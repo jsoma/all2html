@@ -22,7 +22,7 @@
     "assets": [
       {
         "id": "bg-photo",
-        "path": "all2html-output/photo.png",
+        "path": "photo.png",
         "mimeType": "image/png",
         "width": 800,
         "height": 450,

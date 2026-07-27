@@ -65,7 +65,7 @@
     "assets": [
       {
         "id": "bg-links",
-        "path": "all2html-output/links.png",
+        "path": "links.png",
         "mimeType": "image/png",
         "width": 800,
         "height": 400,

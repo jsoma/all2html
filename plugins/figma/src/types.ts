@@ -1,3 +1,4 @@
+import type { EmitterConfig } from "../../../src/emitters/types.js";
 import type {
   Asset,
   CharacterRun,
@@ -88,6 +89,14 @@ export interface FigmaPluginConfig {
   metadata?: Partial<Metadata>;
   fonts?: FontMapping[];
   customBlocks?: CustomBlock[];
+  /**
+   * Canonical emitter options, the same `emit` block the CLI reads out of
+   * `all2html.config.json` (`EmitterConfigSchema` in `src/emitters/types.ts`).
+   * Not a Figma-only contract — it is the one seam through which shipped
+   * emitter behavior (`positionMode`, `allowUnsafeHtml`, `responsiveImageMode`)
+   * is reachable at all.
+   */
+  emit?: EmitterConfig;
 }
 
 export type FigmaOutputFormat = "html" | "standalone";

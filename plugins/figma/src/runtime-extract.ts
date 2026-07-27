@@ -66,13 +66,23 @@ export interface SpecialLayerCandidate {
   inlineSvg: boolean;
 }
 
+/** The message a `:symbol` / `:div` node gets, since Figma cannot honor either. */
+export function unsupportedLayerTokenWarning(nodeName: string, token: string): string {
+  return `Layer "${nodeName}" tagged ${token} is not supported on Figma. The tag was ignored and the layer exported as ordinary artwork.`;
+}
+
 export function discoverTopLevelSpecialLayerNodes(
   frame: Pick<FrameNode, "children">,
+  warnings?: string[],
 ): SpecialLayerCandidate[] {
   const candidates: SpecialLayerCandidate[] = [];
 
   for (const child of frame.children) {
     const parsed = parseLayerType(child.name);
+    if (parsed.unsupportedToken) {
+      warnings?.push(unsupportedLayerTokenWarning(child.name, parsed.unsupportedToken));
+      continue;
+    }
     if (parsed.type === "default") {
       continue;
     }
@@ -375,7 +385,14 @@ export function createBackgroundAsset(
   const keyword = makeKeyword(frameInfo.originalName || frameInfo.name);
   return {
     id: `bg-${keyword}`,
-    path: `all2html-output/${slug}-${keyword}.png`,
+    // Asset paths are relative to `settings.imageOutputPath`, exactly like the
+    // Illustrator exporter (`exporter.jsx` writes `imageName + ext`) and the SVG
+    // importer. The output directory is applied twice, in two places that must
+    // agree: `resolveAssetPath()` prefixes it into the emitted `src`, and
+    // `createOutputBundle({ assetRoot })` prefixes it into the bundle layout.
+    // Baking it in here instead made a non-default `imageOutputPath` emit HTML
+    // pointing at a path the ZIP did not contain.
+    path: `${slug}-${keyword}.png`,
     mimeType: "image/png",
     width: actualWidth,
     height: actualHeight,
@@ -408,7 +425,8 @@ function createSpecialLayerAsset(
 
   return {
     id: `${layer.type}-${artboardKeyword}-${layerKeyword}`,
-    path: `all2html-output/${slug}-${artboardKeyword}-${layerKeyword}.${options.extension}`,
+    // Relative to `settings.imageOutputPath` — see `createBackgroundAsset`.
+    path: `${slug}-${artboardKeyword}-${layerKeyword}.${options.extension}`,
     mimeType: options.mimeType,
     width,
     height,
@@ -461,16 +479,6 @@ export async function extractSpecialLayer(
   slug: string,
   warnings: string[],
 ): Promise<{ layer: ExtractedLayer | null; assets: ExtractedAsset[] }> {
-  if (candidate.type === "symbol" || candidate.type === "div") {
-    warnings.push(
-      makeSpecialLayerWarning(
-        candidate,
-        "is not supported in the Figma plugin yet and was skipped.",
-      ),
-    );
-    return { layer: null, assets: [] };
-  }
-
   const baseLayer = makeSpecialLayerBase(candidate);
 
   switch (candidate.type) {
@@ -584,6 +592,10 @@ export async function extractSpecialLayer(
       };
     }
     default:
+      // `discoverTopLevelSpecialLayerNodes` only ever produces the types above:
+      // `:symbol` / `:div` are rejected by the parser and `default` is filtered.
+      // If a caller hands one in anyway, say so rather than dropping it.
+      warnings.push(unsupportedLayerTokenWarning(candidate.name, makeLayerToken(candidate)));
       return { layer: null, assets: [] };
   }
 }
@@ -629,7 +641,7 @@ export async function extractFramesFromSelection(
       const specialLayersByIndex = new Map<number, ExtractedLayer>();
       const specialAssets: ExtractedAsset[] = [];
       const fontMappings = new Map<string, FontMapping>();
-      const discovered = discoverTopLevelSpecialLayerNodes(movedClone);
+      const discovered = discoverTopLevelSpecialLayerNodes(movedClone, warnings);
       const children = [...movedClone.children];
 
       for (let index = 0; index < children.length; index++) {

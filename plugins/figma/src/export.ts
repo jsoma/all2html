@@ -4,6 +4,7 @@ import {
   getBrowserEmitter,
   processDocumentInBrowser,
 } from "../../../src/browser.js";
+import type { EmitterConfig } from "../../../src/emitters/types.js";
 import type { ImportedAssetFile } from "../../../src/importers/types.js";
 import type { Document } from "../../../src/ir/types.js";
 import type { ExtractedAsset, FigmaOutputFormat } from "./types.js";
@@ -38,6 +39,13 @@ export function buildExportBundle(
   options: {
     format: FigmaOutputFormat;
     assetFiles?: readonly ExtractedAsset[];
+    /**
+     * Canonical emitter options, read from the plugin config's `emit` block.
+     * The CLI passes the same object into `emitAll` (`src/cli/index.ts`);
+     * without it `positionMode`, `allowUnsafeHtml` and `responsiveImageMode`
+     * were unreachable from Figma even though the emitters implement them.
+     */
+    emit?: EmitterConfig;
   },
 ): FigmaExportBundle {
   const {
@@ -47,12 +55,17 @@ export function buildExportBundle(
   } = processDocumentInBrowser(ir, {
     surface: { surface: "figma", path: "render", format: options.format },
   });
-  const emitted = getBrowserEmitter(options.format).emitAll(document, groups);
+  const emitted = getBrowserEmitter(options.format).emitAll(document, groups, options.emit);
   const warnings = [...pipelineWarnings, ...emitted.warnings];
   const bundle = createOutputBundle({
     irDocument: ir,
     emittedFiles: emitted.files,
     assetFiles: normalizeAssetFiles(options.assetFiles ?? []),
+    // Asset records carry paths relative to the image output directory, so the
+    // bundle layout has to re-apply the same directory the emitted `src`
+    // attributes get from `resolveAssetPath()`. Omitting it is what made a
+    // non-default `imageOutputPath` produce HTML pointing outside the ZIP.
+    assetRoot: document.settings.imageOutputPath || "",
     emittedFormat: options.format,
     warnings,
   });

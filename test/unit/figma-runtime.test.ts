@@ -176,6 +176,38 @@ describe("Figma runtime helpers", () => {
   });
 
   /**
+   * The parser used to hand `:symbol` / `:div` candidates to the runtime, which
+   * refused them. Now they never become candidates — but they must not go
+   * quiet either: the node still exports as ordinary artwork, and the user is
+   * told the tag did nothing.
+   */
+  it("warns instead of producing candidates for :symbol / :div nodes", () => {
+    const frame = {
+      children: [
+        { id: "sym", name: "chart:symbol", visible: true, children: [] },
+        { id: "wrap", name: ":div sidebar", visible: true, children: [] },
+        { id: "png", name: "highlight:png", visible: true, children: [] },
+      ],
+    };
+    const warnings: string[] = [];
+
+    const candidates = discoverTopLevelSpecialLayerNodes(frame as never, warnings);
+
+    expect(candidates.map((entry) => entry.node.id)).toEqual(["png"]);
+    expect(warnings).toEqual([
+      `Layer "chart:symbol" tagged :symbol is not supported on Figma. The tag was ignored and the layer exported as ordinary artwork.`,
+      `Layer ":div sidebar" tagged :div is not supported on Figma. The tag was ignored and the layer exported as ordinary artwork.`,
+    ]);
+  });
+
+  it("still discovers candidates when no warning sink is passed", () => {
+    const frame = {
+      children: [{ id: "sym", name: "chart:symbol", visible: true, children: [] }],
+    };
+    expect(discoverTopLevelSpecialLayerNodes(frame as never)).toEqual([]);
+  });
+
+  /**
    * `exportParams` is a record of what the bytes beside it actually are, and
    * `figmaCapabilities` is a claim about the same thing. When they disagree,
    * one of them is lying to the user — this is the D1 defect from

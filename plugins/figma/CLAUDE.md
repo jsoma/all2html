@@ -7,9 +7,12 @@ The Figma plugin should feel usable to newsroom designers, not just developers. 
 - Do not define local IR document/artboard interfaces. Import canonical types from `src/ir/`.
 - Build canonical artboard/layer IDs through `src/ir-ids.ts`; do not hand-roll IDs in extraction/export code.
 - Selection contract is strict: selected top-level frames only.
+- The layer-tag parser must not recognize a tag the runtime refuses. `:symbol` / `:div` resolve to `default` with an `unsupportedToken`, which `discoverTopLevelSpecialLayerNodes` turns into an explicit "not supported on Figma" warning. Frame tokens accept both `image-only` (documented) and `image` (older spelling).
 - Same base frame name = responsive group. Duplicate widths inside a group are an error, not a fallback case.
 - Keep Figma-specific details in extraction metadata only. Do not add Figma-only fields to public IR without a proven cross-tool need.
-- JSONC config should stay small and canonical: `settings`, `metadata`, `fonts`, `customBlocks`.
+- JSONC config should stay small and canonical: `settings`, `metadata`, `fonts`, `customBlocks`, `emit`.
+- `emit` is the canonical `EmitterConfigSchema` from `src/emitters/types.ts` — the identical block the CLI reads from `all2html.config.json`. It is the only route to shipped emitter behavior (`positionMode`, `allowUnsafeHtml`, `responsiveImageMode`), so `buildExportBundle` must keep passing it into `emitAll`. No direct control edits it; `cloneConfig` in `ui.ts` has to carry it through or a form edit deletes it.
+- Extracted asset `path` values are **relative to `settings.imageOutputPath`**, exactly like Illustrator and the SVG importer. The output directory is applied twice and the two must agree: `resolveAssetPath()` prefixes it into the emitted `src`, `createOutputBundle({ assetRoot })` prefixes it into the ZIP layout. Never bake a directory into the asset path.
 - Shared config is stored on `figma.root`. Local convenience state belongs in `figma.clientStorage`.
 - Direct controls are the primary UX. Keep the always-visible surface minimal, use presets for common newsroom workflows, and keep rarer controls inside `More settings`.
 - Advanced JSONC is a secondary view onto the same canonical config, not a separate model.

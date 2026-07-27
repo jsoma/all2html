@@ -84,7 +84,7 @@ function makeFrame(overrides: Partial<ExtractedFrame> = {}): ExtractedFrame {
       {
         id: "story-bg",
         sourceNodeId: "frame-1",
-        path: "all2html-output/story-bg.png",
+        path: "story-bg.png",
         mimeType: "image/png",
         width: 640,
         height: 360,
@@ -122,6 +122,21 @@ describe("Figma plugin foundation", () => {
       expect(result.widthOverride).toBe(320);
       expect(result.responsiveness).toBe("dynamic");
       expect(result.imageOnly).toBe(true);
+    });
+
+    /**
+     * `image-only` is the documented spelling everywhere else in the project
+     * (it is the name of the IR field). `image` is what this parser shipped
+     * with, so both have to work or live files silently start exporting text.
+     */
+    it("accepts both image-only spellings on frame names", () => {
+      expect(parseFrameName("story:image-only").imageOnly).toBe(true);
+      expect(parseFrameName("story:image").imageOnly).toBe(true);
+      expect(parseFrameName("story:IMAGE-ONLY").imageOnly).toBe(true);
+      expect(parseFrameName("story:640").imageOnly).toBe(false);
+      expect(parseFrameName("story:imagery").imageOnly).toBe(false);
+      // The token must not be mistaken for a width override.
+      expect(parseFrameName("story:image-only:640").widthOverride).toBe(640);
     });
 
     it("requires selected top-level frames", () => {
@@ -178,6 +193,21 @@ describe("Figma plugin foundation", () => {
       expect(parseLayerType(":snippet Chart").type).toBe("default");
       expect(parseLayerType(":text Headlines").type).toBe("default");
       expect(parseLayerType(":htext Content").type).toBe("default");
+      expect(parseLayerType(":snippet Chart").unsupportedToken).toBeUndefined();
+    });
+
+    /**
+     * The parser used to return `type: "symbol"` / `type: "div"`, which the
+     * runtime then refused. Advertising a type nothing can build is the defect;
+     * these must resolve to `default` *and* say why.
+     */
+    it("does not claim :symbol / :div, and reports them as unsupported", () => {
+      for (const name of [":symbol Chart", "Chart :symbol", ":DIV Wrapper", "Wrapper :div"]) {
+        const parsed = parseLayerType(name);
+        expect(parsed.type).toBe("default");
+        expect(parsed.cleanName).toBe(name);
+        expect(parsed.unsupportedToken).toMatch(/^:(symbol|div)$/);
+      }
     });
   });
 
@@ -309,7 +339,7 @@ describe("Figma plugin foundation", () => {
       expect(doc.metadata.slug).toBe("figma-story");
       expect(doc.metadata.headline).toBe("Figma Story");
       expect(doc.artboards).toHaveLength(1);
-      expect(doc.assets["story-bg"].path).toBe("all2html-output/story-bg.png");
+      expect(doc.assets["story-bg"].path).toBe("story-bg.png");
     });
 
     it("auto-adds Figma font mappings and lets config override them", () => {
@@ -363,7 +393,7 @@ describe("Figma plugin foundation", () => {
             assets: [
               {
                 id: "story-bg-wide",
-                path: "all2html-output/story-bg-wide.png",
+                path: "story-bg-wide.png",
                 mimeType: "image/png",
                 width: 1024,
                 height: 360,
@@ -392,7 +422,7 @@ describe("Figma plugin foundation", () => {
             assets: [
               {
                 id: "story-bg-wide",
-                path: "all2html-output/story-bg-wide.png",
+                path: "story-bg-wide.png",
                 mimeType: "image/png",
                 width: 1024,
                 height: 360,
@@ -435,6 +465,89 @@ describe("Figma plugin foundation", () => {
       expect(Object.keys(files)).toContain("figma-story.html");
       expect(strFromU8(files["figma-story.html"])).toContain("Hello from Figma");
       expect(strFromU8(files["all2html-output/story-bg.png"])).toBe("png-bytes");
+    });
+
+    /**
+     * Figma used to bake `all2html-output/` into every asset path and omit
+     * `assetRoot` from the bundle, so the two ways the output directory reaches
+     * the output — `resolveAssetPath()` for the emitted `src`, `assetRoot` for
+     * the ZIP layout — disagreed the moment `imageOutputPath` was not the
+     * default. The HTML pointed at a path the ZIP did not contain.
+     *
+     * The assertion is the agreement itself: every `src` the HTML references
+     * must be an entry in the archive.
+     */
+    it.each([
+      ["all2html-output/", "default"],
+      ["img/", "non-default"],
+      ["assets/graphics/", "nested non-default"],
+      ["", "empty"],
+    ])("keeps HTML src paths and ZIP entries in sync for %s imageOutputPath", (imageOutputPath) => {
+      const ir = buildDocument([makeFrame()], {
+        slug: "figma-story",
+        settings: { imageOutputPath, projectName: "figma-story" },
+      });
+      const bundle = buildExportBundle(ir, {
+        format: "html",
+        assetFiles: makeFrame().assets ?? [],
+      });
+      const files = unzipSync(createZipArchive(bundle));
+
+      const htmlEntry = bundle.entries.find((entry) => entry.path.endsWith(".html"));
+      const html = htmlEntry?.content;
+      if (typeof html !== "string") throw new Error("Expected an emitted HTML entry.");
+
+      const srcPaths = Array.from(html.matchAll(/src="([^"]+\.png)"/g)).map((match) => match[1]);
+      expect(srcPaths).toHaveLength(1);
+      expect(srcPaths[0]).toBe(`${imageOutputPath}story-bg.png`);
+      expect(Object.keys(files)).toContain(srcPaths[0]);
+      expect(strFromU8(files[srcPaths[0]])).toBe("png-bytes");
+
+      // The manifest is the machine-readable inventory; it must agree too.
+      expect(bundle.entries.map((entry) => entry.path)).toContain(srcPaths[0]);
+    });
+
+    /**
+     * `emitAll` was called with no emitter config, so every shipped emitter
+     * option was unreachable from Figma. The CLI passes `parsedConfig.emit`
+     * straight through (`src/cli/index.ts`); the plugin now reads the same
+     * canonical block out of its own JSONC.
+     */
+    it("routes the config emit block into the emitters", () => {
+      const config = parsePluginConfig(`{
+        "settings": { "projectName": "figma-story" },
+        "emit": { "html": { "positionMode": "percentage" } }
+      }`);
+      expect(config.emit?.html?.positionMode).toBe("percentage");
+
+      const ir = buildDocument([makeFrame()], {
+        slug: "figma-story",
+        settings: config.settings,
+      });
+
+      const absolute = buildExportBundle(ir, { format: "html" });
+      const percentage = buildExportBundle(ir, { format: "html", emit: config.emit });
+
+      const htmlOf = (bundle: ReturnType<typeof buildExportBundle>): string => {
+        const entry = bundle.entries.find((file) => file.path.endsWith(".html"));
+        if (typeof entry?.content !== "string") throw new Error("Expected emitted HTML.");
+        return entry.content;
+      };
+
+      const absoluteHtml = htmlOf(absolute);
+      const percentageHtml = htmlOf(percentage);
+
+      expect(absoluteHtml).not.toBe(percentageHtml);
+      // percentage mode converts the remaining absolute text widths to `%`.
+      expect(absoluteHtml).toMatch(/width:\s*\d+(\.\d+)?px/);
+      expect(percentageHtml).not.toMatch(/width:\s*\d+(\.\d+)?px/);
+      expect(percentageHtml).toMatch(/width:\s*\d+(\.\d+)?%/);
+    });
+
+    it("rejects an unknown emit option instead of ignoring it", () => {
+      expect(() => parsePluginConfig(`{ "emit": { "html": { "nope": true } } }`)).toThrow(
+        FigmaPluginError,
+      );
     });
   });
 

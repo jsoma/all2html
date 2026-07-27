@@ -334,7 +334,7 @@
     "assets": [
       {
         "id": "bg-news-story-nested",
-        "path": "all2html-output/news-story-nested-news-story-nested.png",
+        "path": "news-story-nested-news-story-nested.png",
         "mimeType": "image/png",
         "width": 720,
         "height": 520,

@@ -90,6 +90,10 @@ function cloneConfig(config: FigmaPluginConfig): FigmaPluginConfig {
     metadata: config.metadata ? { ...config.metadata } : undefined,
     fonts: config.fonts ? [...config.fonts] : undefined,
     customBlocks: config.customBlocks ? [...config.customBlocks] : undefined,
+    // No direct control edits `emit`, so it only ever arrives from the Advanced
+    // JSONC view. Dropping it here would delete an author's emitter options the
+    // first time any form field changed.
+    emit: config.emit ? { ...config.emit } : undefined,
   };
 }
 
@@ -107,6 +111,9 @@ function cleanupConfig(config: FigmaPluginConfig): FigmaPluginConfig {
   }
   if (cleaned.customBlocks && cleaned.customBlocks.length === 0) {
     delete cleaned.customBlocks;
+  }
+  if (cleaned.emit && Object.keys(cleaned.emit).length === 0) {
+    delete cleaned.emit;
   }
 
   return cleaned;

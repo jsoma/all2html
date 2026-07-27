@@ -84,7 +84,7 @@
     "assets": [
       {
         "id": "bg-news-special-mixed-640",
-        "path": "all2html-output/news-special-mixed-news-special-mixed-640.png",
+        "path": "news-special-mixed-news-special-mixed-640.png",
         "mimeType": "image/png",
         "width": 640,
         "height": 420,
@@ -101,7 +101,7 @@
       },
       {
         "id": "png-news-special-mixed-route-highlight-640",
-        "path": "all2html-output/news-special-mixed-news-special-mixed-640-route-highlight.png",
+        "path": "news-special-mixed-news-special-mixed-640-route-highlight.png",
         "mimeType": "image/png",
         "width": 640,
         "height": 420,
@@ -204,7 +204,7 @@
     "assets": [
       {
         "id": "bg-news-special-mixed-960",
-        "path": "all2html-output/news-special-mixed-news-special-mixed-960.png",
+        "path": "news-special-mixed-news-special-mixed-960.png",
         "mimeType": "image/png",
         "width": 960,
         "height": 440,
@@ -221,7 +221,7 @@
       },
       {
         "id": "png-news-special-mixed-route-highlight-960",
-        "path": "all2html-output/news-special-mixed-news-special-mixed-960-route-highlight.png",
+        "path": "news-special-mixed-news-special-mixed-960-route-highlight.png",
         "mimeType": "image/png",
         "width": 960,
         "height": 440,

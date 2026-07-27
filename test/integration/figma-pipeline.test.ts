@@ -64,7 +64,7 @@ function makeFrame(overrides: Partial<ExtractedFrame> = {}): ExtractedFrame {
     assets: [
       {
         id: `asset-${sourceNodeId}`,
-        path: `all2html-output/${sourceNodeId}.png`,
+        path: `${sourceNodeId}.png`,
         mimeType: "image/png",
         width: overrides.width ?? 640,
         height: 360,
@@ -90,7 +90,7 @@ describe("Figma canonical plugin pipeline", () => {
           assets: [
             {
               id: "asset-frame-2",
-              path: "all2html-output/frame-2.png",
+              path: "frame-2.png",
               mimeType: "image/png",
               width: 1024,
               height: 360,

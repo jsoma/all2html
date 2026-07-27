@@ -18,7 +18,7 @@ The tag names are shared across the richer surfaces:
 - `:html-before`
 - `:html-after`
 
-Illustrator also supports `:symbol` and `:div`. Figma parses both and then rejects them.
+Illustrator also supports `:symbol` and `:div`. Figma does not: it recognizes the spelling only to warn you that the tag did nothing, and the layer exports as ordinary artwork.
 
 ## The Spelling Is Not Shared
 

@@ -30,7 +30,7 @@ The extracted folder needs to stay intact because the manifest points at built f
    - `story:640`
    - `story:960`
    - `story:dynamic`
-   - `story:image`
+   - `story:image-only`
 4. Run the imported all2html plugin.
 5. Choose a preset and output format.
 6. Export the ZIP bundle.
@@ -79,9 +79,9 @@ Figma's tag syntax is **not** the same as Illustrator's, even though the tag nam
 - Inline SVG is written `:svg:inline` here. Illustrator's `:svg,inline` and `:inline` do not match in Figma.
 - Matching is case-insensitive and works as a prefix **or** a suffix of the node name.
 - Only direct children of the selected frame are scanned.
-- `:symbol` and `:div` are parsed and then rejected — they do nothing in Figma.
+- `:symbol` and `:div` are **not supported on Figma**. The plugin recognizes the spelling only so it can tell you: the layer exports as ordinary artwork and the export warns, rather than the tag being silently accepted or silently ignored.
 
-Frame names take a separate set of tokens: `:dynamic`, `:fixed`, `:image` (not `:image-only`), or a bare integer width override.
+Frame names take a separate set of tokens: `:dynamic`, `:fixed`, `:image-only`, or a bare integer width override. `:image` is accepted as an older spelling of `:image-only` so existing files keep working; new files should use `:image-only`.
 
 See the [Support Matrix](../reference/support-matrix.md) for the full per-surface tag comparison.
 

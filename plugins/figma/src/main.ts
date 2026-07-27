@@ -116,6 +116,7 @@ export function exportExtractedFrames(
   const bundle = buildExportBundle(ir, {
     format: options.format ?? "html",
     assetFiles: frames.flatMap((frame) => frame.assets ?? []),
+    emit: config.emit,
   });
   const zip = createZipArchive(bundle);
 

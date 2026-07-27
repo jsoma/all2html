@@ -61,7 +61,7 @@
     "assets": [
       {
         "id": "bg-nested",
-        "path": "all2html-output/nested.png",
+        "path": "nested.png",
         "mimeType": "image/png",
         "width": 720,
         "height": 405,
