@@ -21,7 +21,7 @@ site/
 # local build scratch
 .tmp/
 
-# macOS metadata. Must stay last: the `!data/all2html-output/**` re-include
+# macOS metadata. Must stay last: the `!data/all2html-output/*/` re-include
 # above would otherwise un-ignore .DS_Store inside that directory (it did —
 # data/all2html-output/.DS_Store was tracked until this was moved down).
 .DS_Store
