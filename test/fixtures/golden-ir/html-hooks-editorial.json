@@ -1,16 +1,33 @@
 {
   "irVersion": "0.1.0",
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "29.8.9",
+    "adapterVersion": "0.1.0"
+  },
   "settings": {},
   "fonts": [],
   "artboards": [
     {
+      "id": "illustrator:artboard:desktop-1",
       "name": "desktop",
       "width": 760,
       "height": 520,
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop",
+        "width": 760,
+        "height": 520
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:desktop-1:layer:footer-hook-1",
           "name": "footer-hook",
           "type": "html-after",
+          "source": {
+            "tool": "illustrator",
+            "name": "footer-hook:html-after"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -19,29 +36,29 @@
               "type": "rawHtml",
               "content": "<div data-hook=\"layer-after\">Layer after hook</div>"
             }
-          ],
-          "id": "artboard:desktop:layer:footer-hook",
-          "source": {
-            "tool": "illustrator",
-            "name": "footer-hook"
-          }
+          ]
         },
         {
+          "id": "illustrator:artboard:desktop-1:layer:blank-layer-hook-2",
           "name": "blank-layer-hook",
           "type": "html-before",
+          "source": {
+            "tool": "illustrator",
+            "name": "blank-layer-hook:html-before"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": [],
-          "id": "artboard:desktop:layer:blank-layer-hook",
-          "source": {
-            "tool": "illustrator",
-            "name": "blank-layer-hook"
-          }
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:desktop-1:layer:deck-hook-3",
           "name": "deck-hook",
           "type": "html-before",
+          "source": {
+            "tool": "illustrator",
+            "name": "deck-hook:html-before"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -50,16 +67,16 @@
               "type": "rawHtml",
               "content": "<div data-hook=\"layer-before\">Layer before hook</div>"
             }
-          ],
-          "id": "artboard:desktop:layer:deck-hook",
-          "source": {
-            "tool": "illustrator",
-            "name": "deck-hook"
-          }
+          ]
         },
         {
+          "id": "illustrator:artboard:desktop-1:layer:content-4",
           "name": "content",
           "type": "default",
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -178,21 +195,9 @@
                 }
               ]
             }
-          ],
-          "id": "artboard:desktop:layer:content",
-          "source": {
-            "tool": "illustrator",
-            "name": "content"
-          }
+          ]
         }
-      ],
-      "id": "artboard:desktop",
-      "source": {
-        "tool": "illustrator",
-        "name": "desktop",
-        "width": 760,
-        "height": 520
-      }
+      ]
     }
   ],
   "customBlocks": [
@@ -212,17 +217,17 @@
       "mimeType": "image/png",
       "width": 1520,
       "height": 1040,
+      "artboardId": "illustrator:artboard:desktop-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
-      },
-      "artboardId": "artboard:desktop",
-      "source": {
-        "tool": "illustrator",
-        "name": "desktop"
       }
     }
   },
@@ -234,10 +239,5 @@
     "notes": "",
     "sources": "",
     "credit": ""
-  },
-  "source": {
-    "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "adapterVersion": "0.1.0"
   }
 }

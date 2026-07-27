@@ -1,9 +1,9 @@
 {
-  "irVersion": "0.0.0",
-  "generator": {
+  "irVersion": "0.1.0",
+  "source": {
     "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "pluginVersion": "0.1.0"
+    "toolVersion": "29.8.9",
+    "adapterVersion": "0.1.0"
   },
   "settings": {
     
@@ -13,16 +13,25 @@
   ],
   "artboards": [
     {
+      "id": "illustrator:artboard:artboard-1-1",
       "name": "Artboard 1",
-      "originalName": "Artboard 1",
       "width": 600,
       "height": 400,
-      "actualWidth": 600,
-      "actualHeight": 400,
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 1",
+        "width": 600,
+        "height": 400
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:highlight-1",
           "name": "highlight",
           "type": "png",
+          "source": {
+            "tool": "illustrator",
+            "name": "highlight:png"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -31,8 +40,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:footer-2",
           "name": "footer",
           "type": "html-after",
+          "source": {
+            "tool": "illustrator",
+            "name": "footer:html-after"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -44,8 +58,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:banner-3",
           "name": "banner",
           "type": "html-before",
+          "source": {
+            "tool": "illustrator",
+            "name": "banner:html-before"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -57,8 +76,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:bg-4",
           "name": "bg",
           "type": "video",
+          "source": {
+            "tool": "illustrator",
+            "name": "bg:video"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -70,8 +94,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:markers-5",
           "name": "markers",
           "type": "symbol",
+          "source": {
+            "tool": "illustrator",
+            "name": "markers:symbol"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -111,8 +140,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:content-6",
           "name": "content",
           "type": "default",
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -208,7 +242,11 @@
       "mimeType": "image/png",
       "width": 1200,
       "height": 800,
-      "artboardName": "Artboard 1",
+      "artboardId": "illustrator:artboard:artboard-1-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 1"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
@@ -223,8 +261,12 @@
       "mimeType": "image/png",
       "width": 1200,
       "height": 800,
-      "artboardName": "Artboard 1",
-      "layerName": "highlight",
+      "artboardId": "illustrator:artboard:artboard-1-1",
+      "layerId": "illustrator:artboard:artboard-1-1:layer:highlight-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "highlight"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,

@@ -1,44 +1,46 @@
 {
-  "irVersion": "0.0.0",
-  "generator": {
+  "irVersion": "0.1.0",
+  "source": {
     "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "pluginVersion": "0.1.0"
+    "toolVersion": "29.8.9",
+    "adapterVersion": "0.1.0"
   },
   "settings": {
-    "settings_version": "0.121.1",
-    "image_format": "auto",
-    "responsiveness": "fixed",
-    "include_resizer_script": "true",
-    "use_lazy_loader": "false",
+    "imageFormat": [
+      "auto"
+    ],
     "output": "one-file",
-    "html_output_path": "ai2html-output/",
-    "image_output_path": "ai2html-output/",
-    "image_source_path": "",
-    "local_preview_template": "",
-    "png_number_of_colors": "128",
-    "jpg_quality": "80",
-    "headline": "",
-    "leadin": "",
-    "notes": "",
-    "sources": "",
-    "credit": ""
+    "responsiveness": "fixed",
+    "htmlOutputPath": "ai2html-output/",
+    "imageOutputPath": "ai2html-output/",
+    "jpgQuality": 80,
+    "pngNumberOfColors": 128,
+    "useLazyLoader": false
   },
   "fonts": [
     
   ],
   "artboards": [
     {
+      "id": "illustrator:artboard:full-1",
       "name": "full",
-      "originalName": "full",
       "width": 700,
       "height": 425,
-      "actualWidth": 700,
-      "actualHeight": 425,
+      "source": {
+        "tool": "illustrator",
+        "name": "full",
+        "width": 700,
+        "height": 425
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:full-1:layer:layer-1-1",
           "name": "Layer 1",
           "type": "default",
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 1"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -137,16 +139,25 @@
       ]
     },
     {
+      "id": "illustrator:artboard:medium-2",
       "name": "medium",
-      "originalName": "medium",
       "width": 490,
       "height": 350,
-      "actualWidth": 490,
-      "actualHeight": 350,
+      "source": {
+        "tool": "illustrator",
+        "name": "medium",
+        "width": 490,
+        "height": 350
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:medium-2:layer:layer-1-1",
           "name": "Layer 1",
           "type": "default",
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 1"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -245,16 +256,25 @@
       ]
     },
     {
+      "id": "illustrator:artboard:mobile-3",
       "name": "mobile",
-      "originalName": "mobile",
       "width": 375,
       "height": 471,
-      "actualWidth": 375,
-      "actualHeight": 471,
+      "source": {
+        "tool": "illustrator",
+        "name": "mobile",
+        "width": 375,
+        "height": 471
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:mobile-3:layer:layer-1-1",
           "name": "Layer 1",
           "type": "default",
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 1"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -363,7 +383,11 @@
       "mimeType": "image/png",
       "width": 1400,
       "height": 850,
-      "artboardName": "full",
+      "artboardId": "illustrator:artboard:full-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "full"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
@@ -378,7 +402,11 @@
       "mimeType": "image/png",
       "width": 980,
       "height": 700,
-      "artboardName": "medium",
+      "artboardId": "illustrator:artboard:medium-2",
+      "source": {
+        "tool": "illustrator",
+        "name": "medium"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
@@ -393,7 +421,11 @@
       "mimeType": "image/png",
       "width": 750,
       "height": 942,
-      "artboardName": "mobile",
+      "artboardId": "illustrator:artboard:mobile-3",
+      "source": {
+        "tool": "illustrator",
+        "name": "mobile"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,

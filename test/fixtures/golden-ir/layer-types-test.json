@@ -1,29 +1,46 @@
 {
   "irVersion": "0.1.0",
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "29.8.9",
+    "adapterVersion": "0.1.0"
+  },
   "settings": {},
   "fonts": [],
   "artboards": [
     {
+      "id": "illustrator:artboard:artboard-1-1",
       "name": "Artboard 1",
       "width": 600,
       "height": 400,
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 1",
+        "width": 600,
+        "height": 400
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:highlight-1",
           "name": "highlight",
           "type": "png",
+          "source": {
+            "tool": "illustrator",
+            "name": "highlight:png"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": [],
-          "id": "artboard:artboard-1:layer:highlight",
-          "source": {
-            "tool": "illustrator",
-            "name": "highlight"
-          }
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:footer-2",
           "name": "footer",
           "type": "html-after",
+          "source": {
+            "tool": "illustrator",
+            "name": "footer:html-after"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -32,16 +49,16 @@
               "type": "rawHtml",
               "content": "<footer>Source: Test Data</footer>"
             }
-          ],
-          "id": "artboard:artboard-1:layer:footer",
-          "source": {
-            "tool": "illustrator",
-            "name": "footer"
-          }
+          ]
         },
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:banner-3",
           "name": "banner",
           "type": "html-before",
+          "source": {
+            "tool": "illustrator",
+            "name": "banner:html-before"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -50,16 +67,16 @@
               "type": "rawHtml",
               "content": "<div class=\"promo\">Breaking News</div>"
             }
-          ],
-          "id": "artboard:artboard-1:layer:banner",
-          "source": {
-            "tool": "illustrator",
-            "name": "banner"
-          }
+          ]
         },
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:bg-4",
           "name": "bg",
           "type": "video",
+          "source": {
+            "tool": "illustrator",
+            "name": "bg:video"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -68,16 +85,16 @@
               "type": "video",
               "url": "https://example.com/background.mp4"
             }
-          ],
-          "id": "artboard:artboard-1:layer:bg",
-          "source": {
-            "tool": "illustrator",
-            "name": "bg"
-          }
+          ]
         },
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:markers-5",
           "name": "markers",
           "type": "symbol",
+          "source": {
+            "tool": "illustrator",
+            "name": "markers:symbol"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -114,16 +131,16 @@
               },
               "shapeType": "circle"
             }
-          ],
-          "id": "artboard:artboard-1:layer:markers",
-          "source": {
-            "tool": "illustrator",
-            "name": "markers"
-          }
+          ]
         },
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:content-6",
           "name": "content",
           "type": "default",
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -204,21 +221,9 @@
                 }
               ]
             }
-          ],
-          "id": "artboard:artboard-1:layer:content",
-          "source": {
-            "tool": "illustrator",
-            "name": "content"
-          }
+          ]
         }
-      ],
-      "id": "artboard:artboard-1",
-      "source": {
-        "tool": "illustrator",
-        "name": "Artboard 1",
-        "width": 600,
-        "height": 400
-      }
+      ]
     }
   ],
   "customBlocks": [],
@@ -229,17 +234,17 @@
       "mimeType": "image/png",
       "width": 1200,
       "height": 800,
+      "artboardId": "illustrator:artboard:artboard-1-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 1"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
-      },
-      "artboardId": "artboard:artboard-1",
-      "source": {
-        "tool": "illustrator",
-        "name": "Artboard 1"
       }
     },
     "layer-types-test-artboard-1-highlight": {
@@ -248,16 +253,16 @@
       "mimeType": "image/png",
       "width": 1200,
       "height": 800,
+      "artboardId": "illustrator:artboard:artboard-1-1",
+      "layerId": "illustrator:artboard:artboard-1-1:layer:highlight-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "highlight"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": true
-      },
-      "artboardId": "artboard:artboard-1",
-      "layerId": "artboard:artboard-1:layer:highlight",
-      "source": {
-        "tool": "illustrator",
-        "name": "highlight"
       }
     }
   },
@@ -269,10 +274,5 @@
     "notes": "",
     "sources": "",
     "credit": ""
-  },
-  "source": {
-    "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "adapterVersion": "0.1.0"
   }
 }

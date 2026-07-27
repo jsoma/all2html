@@ -1,55 +1,72 @@
 {
   "irVersion": "0.1.0",
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "29.8.9",
+    "adapterVersion": "0.1.0"
+  },
   "settings": {},
   "fonts": [],
   "artboards": [
     {
+      "id": "illustrator:artboard:desktop-1",
       "name": "desktop",
       "width": 760,
       "height": 500,
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop",
+        "width": 760,
+        "height": 500
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:desktop-1:layer:blank-video-1",
           "name": "blank-video",
           "type": "video",
+          "source": {
+            "tool": "illustrator",
+            "name": "blank-video:video"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": [],
-          "id": "artboard:desktop:layer:blank-video",
-          "source": {
-            "tool": "illustrator",
-            "name": "blank-video"
-          }
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:desktop-1:layer:bad-protocol-2",
           "name": "bad-protocol",
           "type": "video",
+          "source": {
+            "tool": "illustrator",
+            "name": "bad-protocol:video"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": [],
-          "id": "artboard:desktop:layer:bad-protocol",
-          "source": {
-            "tool": "illustrator",
-            "name": "bad-protocol"
-          }
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:desktop-1:layer:bad-ext-3",
           "name": "bad-ext",
           "type": "video",
+          "source": {
+            "tool": "illustrator",
+            "name": "bad-ext:video"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": [],
-          "id": "artboard:desktop:layer:bad-ext",
-          "source": {
-            "tool": "illustrator",
-            "name": "bad-ext"
-          }
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:desktop-1:layer:hero-video-4",
           "name": "hero-video",
           "type": "video",
+          "source": {
+            "tool": "illustrator",
+            "name": "hero-video:video"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -58,16 +75,16 @@
               "type": "video",
               "url": "https://example.com/video.mp4"
             }
-          ],
-          "id": "artboard:desktop:layer:hero-video",
-          "source": {
-            "tool": "illustrator",
-            "name": "hero-video"
-          }
+          ]
         },
         {
+          "id": "illustrator:artboard:desktop-1:layer:content-5",
           "name": "content",
           "type": "default",
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          },
           "inlineSvg": false,
           "visible": true,
           "opacity": 100,
@@ -186,21 +203,9 @@
                 }
               ]
             }
-          ],
-          "id": "artboard:desktop:layer:content",
-          "source": {
-            "tool": "illustrator",
-            "name": "content"
-          }
+          ]
         }
-      ],
-      "id": "artboard:desktop",
-      "source": {
-        "tool": "illustrator",
-        "name": "desktop",
-        "width": 760,
-        "height": 500
-      }
+      ]
     }
   ],
   "customBlocks": [],
@@ -211,17 +216,17 @@
       "mimeType": "image/png",
       "width": 1520,
       "height": 1000,
+      "artboardId": "illustrator:artboard:desktop-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
-      },
-      "artboardId": "artboard:desktop",
-      "source": {
-        "tool": "illustrator",
-        "name": "desktop"
       }
     }
   },
@@ -233,10 +238,5 @@
     "notes": "",
     "sources": "",
     "credit": ""
-  },
-  "source": {
-    "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "adapterVersion": "0.1.0"
   }
 }
