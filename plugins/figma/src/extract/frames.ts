@@ -4,7 +4,13 @@
  */
 
 import { FigmaPluginError } from "../errors.js";
-import type { ExtractedFrame, FrameGroup, FrameInfo, FrameSelectionNodeLike, SelectionNodeLike } from "../types.js";
+import type {
+  ExtractedFrame,
+  FrameGroup,
+  FrameInfo,
+  FrameSelectionNodeLike,
+  SelectionNodeLike,
+} from "../types.js";
 
 export function parseFrameName(rawName: string): {
   name: string;
@@ -55,7 +61,9 @@ export function extractFrameInfo(frame: FrameSelectionNodeLike): FrameInfo {
   };
 }
 
-export function getSelectedTopLevelFrames(selection: readonly SelectionNodeLike[]): FrameSelectionNodeLike[] {
+export function getSelectedTopLevelFrames(
+  selection: readonly SelectionNodeLike[],
+): FrameSelectionNodeLike[] {
   if (selection.length === 0) {
     throw new FigmaPluginError("Select one or more top-level frames before exporting.");
   }

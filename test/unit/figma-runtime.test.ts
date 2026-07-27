@@ -11,13 +11,16 @@ import {
 } from "../../plugins/figma/src/persistence.js";
 import {
   collectSegmentWarnings,
+  createBackgroundAsset,
   discoverTopLevelSpecialLayerNodes,
   extractSpecialLayer,
+  FIGMA_EXPORT_PARAMS,
   getNodeBoundsRelativeToFrame,
   isValidVideoUrl,
   mapTextAutoResizeToKind,
   resolveSpecialLayerTextValue,
 } from "../../plugins/figma/src/runtime-extract.js";
+import { figmaCapabilities } from "../../src/core/capabilities.js";
 
 const fixtureDir = resolve(import.meta.dirname, "../fixtures/figma");
 
@@ -170,6 +173,100 @@ describe("Figma runtime helpers", () => {
         inlineSvg: false,
       },
     ]);
+  });
+
+  /**
+   * `exportParams` is a record of what the bytes beside it actually are, and
+   * `figmaCapabilities` is a claim about the same thing. When they disagree,
+   * one of them is lying to the user — this is the D1 defect from
+   * `internal-docs/capability-matrix.md` (`exportParams.format` recording `svg`
+   * over PNG8 bytes) reproduced on Figma. Figma's `exportAsync({format:"PNG"})`
+   * takes no bit-depth, palette, or matte option and no `constraint`, so it
+   * produces full-color PNG with alpha at 1x: png24, transparent, scale 1.
+   */
+  describe("PNG export records agree with the Figma capability declaration", () => {
+    const params = FIGMA_EXPORT_PARAMS.png;
+
+    it("records the format the declaration says Figma produces", () => {
+      const imageFormat = figmaCapabilities.settings.imageFormat;
+      expect(imageFormat?.status).toBe("partial");
+      expect(imageFormat?.values).toContain(params.format);
+      expect(params.format).toBe("png24");
+    });
+
+    it("records the alpha and scale the declaration says Figma diverges to", () => {
+      // `divergesAtDefault` is the value the surface really behaves as (D25).
+      expect(figmaCapabilities.settings.pngTransparent?.divergesAtDefault).toBe(params.transparent);
+      expect(params.transparent).toBe(true);
+
+      // use2xImages false <=> scale 1. Any 2x export would set a SCALE constraint.
+      expect(figmaCapabilities.settings.use2xImages?.divergesAtDefault).toBe(false);
+      expect(params.scale).toBe(1);
+    });
+
+    it("stamps those params on both the background and overlay PNG assets", async () => {
+      const frameInfo = {
+        name: "story",
+        originalName: "story:640:dynamic",
+        sourceNodeId: "frame-1",
+        width: 640,
+        height: 360,
+      } as never;
+
+      const background = createBackgroundAsset(
+        "figma-story",
+        frameInfo,
+        640,
+        360,
+        new Uint8Array([1]),
+      );
+      expect(background.exportParams).toEqual(params);
+      expect(background.mimeType).toBe("image/png");
+
+      const overlay = await extractSpecialLayer(
+        {
+          name: "highlight",
+          type: "png",
+          inlineSvg: false,
+          node: {
+            id: "png-1",
+            name: "highlight:png",
+            type: "FRAME",
+            visible: true,
+            width: 200,
+            height: 100,
+            exportAsync: async () => new Uint8Array([2]),
+          } as never,
+        },
+        frameInfo,
+        "figma-story",
+        [],
+      );
+      expect(overlay.assets[0]?.exportParams).toEqual(params);
+      // The extension is not the format: a .png file holding png24 bytes.
+      expect(overlay.assets[0]?.path.endsWith(".png")).toBe(true);
+
+      const svgLayer = await extractSpecialLayer(
+        {
+          name: "map",
+          type: "svg",
+          inlineSvg: false,
+          node: {
+            id: "svg-1",
+            name: "map:svg",
+            type: "FRAME",
+            visible: true,
+            width: 200,
+            height: 100,
+            exportAsync: async () => new Uint8Array([3]),
+          } as never,
+        },
+        frameInfo,
+        "figma-story",
+        [],
+      );
+      expect(svgLayer.assets[0]?.exportParams).toEqual(FIGMA_EXPORT_PARAMS.svg);
+    });
   });
 
   it("accepts only https mp4 video URLs for :video layers", () => {

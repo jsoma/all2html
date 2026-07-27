@@ -22,7 +22,11 @@ const matches: LayerTypeMatch[] = [
   { token: ":video", type: "video" },
 ];
 
-export function parseLayerType(name: string): { type: LayerType; cleanName: string; inlineSvg: boolean } {
+export function parseLayerType(name: string): {
+  type: LayerType;
+  cleanName: string;
+  inlineSvg: boolean;
+} {
   const lower = name.toLowerCase().trim();
 
   for (const match of matches) {

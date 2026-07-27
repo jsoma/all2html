@@ -1,9 +1,9 @@
 /// <reference types="@figma/plugin-typings" />
 
 import type { FontMapping, Paragraph, TextElement } from "../../../src/ir/types.js";
-import { parseLayerType } from "./extract/layers.js";
-import { figmaFontToMapping, segmentsToParagraphs, type FigmaTextSegment } from "./extract/text.js";
 import { extractFrameInfo } from "./extract/frames.js";
+import { parseLayerType } from "./extract/layers.js";
+import { type FigmaTextSegment, figmaFontToMapping, segmentsToParagraphs } from "./extract/text.js";
 import { makeFigmaArtboardId, makeFigmaLayerId } from "./ir-ids.js";
 import type { ExtractedAsset, ExtractedFrame, ExtractedLayer } from "./types.js";
 
@@ -163,9 +163,7 @@ function extractParagraphs(
   warnings: string[],
   fontMappings: Map<string, FontMapping>,
 ): Paragraph[] {
-  const segments = textNode.getStyledTextSegments([
-    ...TEXT_SEGMENT_FIELDS,
-  ]) as FigmaTextSegment[];
+  const segments = textNode.getStyledTextSegments([...TEXT_SEGMENT_FIELDS]) as FigmaTextSegment[];
   warnings.push(...collectSegmentWarnings(segments, { name: textNode.name, id: textNode.id }));
   addSegmentFontMappings(segments, fontMappings);
   return segmentsToParagraphs(segments, { alignment: mapAlignment(textNode) });
@@ -331,7 +329,43 @@ export function resolveSpecialLayerTextValue(
   return { value, warning: null };
 }
 
-function createBackgroundAsset(
+/**
+ * What `exportAsync({ format: "PNG" })` actually produces.
+ *
+ * The Figma image export takes no bit-depth, palette, or matte option
+ * (`ExportSettingsImage` in @figma/plugin-typings is `format`, `contentsOnly`,
+ * `useAbsoluteBounds`, `suffix`, `constraint`, `colorProfile`), so the result is
+ * always a full-color PNG that preserves the node's alpha — i.e. `png24`,
+ * transparent. No `constraint` is passed anywhere in this file, and the
+ * documented default is `{ type: "SCALE", value: 1 }`, so the scale is 1.
+ *
+ * These are the same three facts `figmaCapabilities` declares in
+ * `src/core/capabilities.ts` (`imageFormat` partial at png24,
+ * `pngTransparent` divergesAtDefault true, `use2xImages` divergesAtDefault
+ * false). The asset record and the declaration are pinned to each other by
+ * `test/unit/figma-runtime.test.ts`; the two must not drift, because an
+ * `exportParams` that misdescribes its own bytes is exactly the defect
+ * `capability-matrix.md` cites as D1 evidence on Illustrator.
+ */
+const FIGMA_PNG_EXPORT_PARAMS = {
+  format: "png24",
+  scale: 1,
+  transparent: true,
+} as const;
+
+/** Figma SVG export carries no background either. */
+const FIGMA_SVG_EXPORT_PARAMS = {
+  format: "svg",
+  scale: 1,
+  transparent: true,
+} as const;
+
+export const FIGMA_EXPORT_PARAMS = {
+  png: FIGMA_PNG_EXPORT_PARAMS,
+  svg: FIGMA_SVG_EXPORT_PARAMS,
+} as const;
+
+export function createBackgroundAsset(
   slug: string,
   frameInfo: ReturnType<typeof extractFrameInfo>,
   actualWidth: number,
@@ -351,7 +385,7 @@ function createBackgroundAsset(
       id: frameInfo.sourceNodeId,
       name: frameInfo.originalName,
     },
-    exportParams: { format: "png", scale: 1, transparent: false },
+    exportParams: { ...FIGMA_PNG_EXPORT_PARAMS },
     bytes,
   };
 }
@@ -365,7 +399,6 @@ function createSpecialLayerAsset(
     bytes: Uint8Array;
     extension: "png" | "svg";
     mimeType: "image/png" | "image/svg+xml";
-    transparent?: boolean;
   },
 ): ExtractedAsset {
   const artboardKeyword = makeAssetKeyword(frameInfo.originalName || frameInfo.name);
@@ -386,11 +419,9 @@ function createSpecialLayerAsset(
       id: layer.sourceNodeId,
       name: layer.name,
     },
-    exportParams: {
-      format: options.extension,
-      scale: 1,
-      ...(options.transparent ? { transparent: true } : {}),
-    },
+    // The file extension is not the format: Figma writes `.png` files that are
+    // png24, so the record names the format it actually produced.
+    exportParams: { ...FIGMA_EXPORT_PARAMS[options.extension] },
     bytes: options.bytes,
   };
 }
@@ -431,7 +462,12 @@ export async function extractSpecialLayer(
   warnings: string[],
 ): Promise<{ layer: ExtractedLayer | null; assets: ExtractedAsset[] }> {
   if (candidate.type === "symbol" || candidate.type === "div") {
-    warnings.push(makeSpecialLayerWarning(candidate, "is not supported in the Figma plugin yet and was skipped."));
+    warnings.push(
+      makeSpecialLayerWarning(
+        candidate,
+        "is not supported in the Figma plugin yet and was skipped.",
+      ),
+    );
     return { layer: null, assets: [] };
   }
 
@@ -514,7 +550,6 @@ export async function extractSpecialLayer(
             bytes,
             extension: "svg",
             mimeType: "image/svg+xml",
-            transparent: true,
           }),
         ],
       };
@@ -544,7 +579,6 @@ export async function extractSpecialLayer(
             bytes,
             extension: "png",
             mimeType: "image/png",
-            transparent: true,
           }),
         ],
       };
@@ -571,14 +605,19 @@ export async function extractFramesFromSelection(
     const extracted: ExtractedFrame[] = [];
 
     for (const selected of selection) {
-      const movedClone = normalizeCloneTree(selected.clone());
+      const clone = selected.clone();
+      // Parent the clone into tempRoot before normalizing so the finally
+      // cleanup covers it even if normalization throws mid-tree.
+      tempRoot.appendChild(clone);
+      const movedClone = normalizeCloneTree(clone);
       if (movedClone.type !== "FRAME") {
         movedClone.remove();
-        warnings.push(`Skipped selected node "${selected.name}" because its clone did not remain a frame.`);
+        warnings.push(
+          `Skipped selected node "${selected.name}" because its clone did not remain a frame.`,
+        );
         continue;
       }
 
-      tempRoot.appendChild(movedClone);
       const frameInfo = extractFrameInfo({
         id: selected.id,
         name: selected.name,

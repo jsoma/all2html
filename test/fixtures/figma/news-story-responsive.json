@@ -176,9 +176,9 @@
         "width": 640,
         "height": 420,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-news-responsive-640",
         "source": {
@@ -365,9 +365,9 @@
         "width": 960,
         "height": 440,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-news-responsive-960",
         "source": {
@@ -554,9 +554,9 @@
         "width": 1280,
         "height": 480,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-news-responsive-1280",
         "source": {

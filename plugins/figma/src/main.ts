@@ -1,9 +1,10 @@
 /// <reference types="@figma/plugin-typings" />
 
 import { parsePluginConfig } from "./config.js";
+import { FigmaPluginError } from "./errors.js";
 import { buildExportBundle, createZipArchive } from "./export.js";
 import { extractFrameInfo, getSelectedTopLevelFrames, groupFrameInfos } from "./extract/frames.js";
-import { FigmaPluginError } from "./errors.js";
+import { buildDocument } from "./ir-builder.js";
 import { isUiToSandboxMessage } from "./messages.js";
 import {
   loadLocalUiState,
@@ -12,7 +13,6 @@ import {
   saveSharedConfig,
 } from "./persistence.js";
 import { extractFramesFromSelection } from "./runtime-extract.js";
-import { buildDocument } from "./ir-builder.js";
 import type {
   ExtractedFrame,
   FigmaLocalUiState,
@@ -174,9 +174,12 @@ async function handleExport(configText: string, format: FigmaOutputFormat): Prom
     summary.groupNames[0] ||
     summary.frameNames[0] ||
     "all2html-figma";
-  const { frames: extractedFrames, warnings: extractWarnings } = await extractFramesFromSelection(frames, {
-    slug,
-  });
+  const { frames: extractedFrames, warnings: extractWarnings } = await extractFramesFromSelection(
+    frames,
+    {
+      slug,
+    },
+  );
 
   const result = exportExtractedFrames(extractedFrames, {
     slug,
@@ -194,7 +197,9 @@ async function handleExport(configText: string, format: FigmaOutputFormat): Prom
     warningCount: warnings.length,
     warnings,
     zipFilename: `${slug}.zip`,
-    zipBytes: Array.from(result.zip),
+    // figma.ui.postMessage structured-clones Uint8Array directly; a plain
+    // number[] copy is far larger for multi-MB zips.
+    zipBytes: result.zip,
   });
 }
 

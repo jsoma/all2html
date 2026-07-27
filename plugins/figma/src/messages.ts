@@ -36,6 +36,8 @@ export function isUiToSandboxMessage(value: unknown): value is UiToSandboxMessag
   }
 }
 
-export function toPluginMessage(message: SandboxToUiMessage): { pluginMessage: SandboxToUiMessage } {
+export function toPluginMessage(message: SandboxToUiMessage): {
+  pluginMessage: SandboxToUiMessage;
+} {
   return { pluginMessage: message };
 }

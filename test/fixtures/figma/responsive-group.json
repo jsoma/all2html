@@ -67,9 +67,9 @@
         "width": 640,
         "height": 360,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-frame-1",
         "source": {
@@ -147,9 +147,9 @@
         "width": 1024,
         "height": 360,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-frame-2",
         "source": {

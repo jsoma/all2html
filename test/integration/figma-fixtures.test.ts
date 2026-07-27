@@ -37,6 +37,27 @@ function expectTextElementToWrap(html: string, id: string) {
   expect(html).not.toMatch(new RegExp(`id="${id}" class="[^"]*g-aiPointText`));
 }
 
+/**
+ * Settings whose default the Figma runtime does not implement, so every Figma
+ * export warns about them regardless of the fixture: it always exports
+ * full-color alpha PNG at scale 1 with no quantizer, while the defaults promise
+ * opaque, 128-color, 2x. Declared in `src/core/capabilities.ts`; asserted
+ * directly in `capabilities.test.ts`.
+ *
+ * These fixtures are about the extracted document, so they subtract the
+ * standing surface warnings and require everything else to be empty.
+ */
+const FIGMA_STANDING_SETTING_WARNINGS = ["pngTransparent", "pngNumberOfColors", "use2xImages"];
+
+function fixtureWarnings(warnings: string[]): string[] {
+  return warnings.filter(
+    (warning) =>
+      !FIGMA_STANDING_SETTING_WARNINGS.some((setting) =>
+        warning.startsWith(`Setting "${setting}"`),
+      ),
+  );
+}
+
 describe("Figma extracted-frame fixtures", () => {
   it("processes the single-frame fixture", () => {
     const doc = buildDocument(loadFrames("single-frame.json"), { slug: "figma-single" });
@@ -112,7 +133,7 @@ describe("Figma extracted-frame fixtures", () => {
     const html = entryText(exported.html.bundle.entries, "news-story-single.html");
     const standalone = entryText(exported.standalone.bundle.entries, "news-story-single.html");
 
-    expect(exported.html.bundle.warnings).toEqual([]);
+    expect(fixtureWarnings(exported.html.bundle.warnings)).toEqual([]);
     expect(html).toContain("Mayor unveils a late-night plan to keep buses moving");
     expect(html).toContain("https://example.com/transit-plan");
     expect(html).toContain("all2html-output/news-story-single-news-story-single.png");
@@ -128,7 +149,7 @@ describe("Figma extracted-frame fixtures", () => {
     const standalone = entryText(exported.standalone.bundle.entries, "news-story-responsive.html");
 
     expect(exported.frames.map((frame) => frame.width)).toEqual([640, 960, 1280]);
-    expect(exported.html.bundle.warnings).toEqual([]);
+    expect(fixtureWarnings(exported.html.bundle.warnings)).toEqual([]);
     expect(html).toContain("all2html-output/news-story-responsive-news-story-responsive-640.png");
     expect(html).toContain("all2html-output/news-story-responsive-news-story-responsive-960.png");
     expect(html).toContain("all2html-output/news-story-responsive-news-story-responsive-1280.png");
@@ -147,7 +168,7 @@ describe("Figma extracted-frame fixtures", () => {
     const html = entryText(exported.html.bundle.entries, "news-story-nested.html");
     const standalone = entryText(exported.standalone.bundle.entries, "news-story-nested.html");
 
-    expect(exported.html.bundle.warnings).toEqual([]);
+    expect(fixtureWarnings(exported.html.bundle.warnings)).toEqual([]);
     expect(html).toContain("Parents juggle shifting bus times as districts swap routes");
     expect(html).toContain("https://example.com/service-guide");
     expect(html).toContain("What changed");
@@ -167,7 +188,7 @@ describe("Figma extracted-frame fixtures", () => {
       "news-story-mixed-warning.html",
     );
 
-    expect(exported.html.bundle.warnings).toEqual([]);
+    expect(fixtureWarnings(exported.html.bundle.warnings)).toEqual([]);
     expect(html).toContain("Library branches extend hours after a spike in afternoon visits");
     expect(html).toContain("Tap to review the branch map");
     expect(html).not.toContain('href="3:46"');
@@ -181,7 +202,7 @@ describe("Figma extracted-frame fixtures", () => {
     const html = entryText(exported.html.bundle.entries, "news-special-visual.html");
     const standalone = entryText(exported.standalone.bundle.entries, "news-special-visual.html");
 
-    expect(exported.html.bundle.warnings).toEqual([]);
+    expect(fixtureWarnings(exported.html.bundle.warnings)).toEqual([]);
     expect(html).toContain(
       "all2html-output/news-special-visual-news-special-visual-storm-track.png",
     );
@@ -204,7 +225,7 @@ describe("Figma extracted-frame fixtures", () => {
     const beforeIndex = html.indexOf('data-hook="before"');
     const afterIndex = html.indexOf('data-hook="after"');
 
-    expect(exported.html.bundle.warnings).toEqual([]);
+    expect(fixtureWarnings(exported.html.bundle.warnings)).toEqual([]);
     expect(beforeIndex).toBeGreaterThan(-1);
     expect(afterIndex).toBeGreaterThan(-1);
     expect(beforeIndex).toBeLessThan(headlineIndex);
@@ -216,9 +237,14 @@ describe("Figma extracted-frame fixtures", () => {
     const html = entryText(exported.html.bundle.entries, "news-special-video.html");
     const standalone = entryText(exported.standalone.bundle.entries, "news-special-video.html");
 
-    expect(exported.html.bundle.warnings).toEqual([]);
+    // The one fixture with a video, so the one fixture that gets the emitter's
+    // lazy-video warning: useLazyLoader defaults on, the markup is data-src
+    // only, and no surface emits a loader.
+    expect(fixtureWarnings(exported.html.bundle.warnings)).toEqual([
+      'Layer "hero-video" emits a lazy <video> with data-src and no src, and no loader script is emitted, so the video never plays. Set useLazyLoader: false to emit a direct src.',
+    ]);
     expect(html).toContain("<video");
-    expect(html).toContain("https://cdn.example.com/night-service.mp4");
+    expect(html).toContain('data-src="https://cdn.example.com/night-service.mp4"');
     expect(html).toContain(
       "Night crews test a new bus lane while cameras stream the first rush-hour run",
     );
@@ -232,7 +258,7 @@ describe("Figma extracted-frame fixtures", () => {
     const standalone = entryText(exported.standalone.bundle.entries, "news-special-mixed.html");
 
     expect(exported.frames.map((frame) => frame.width)).toEqual([640, 960]);
-    expect(exported.html.bundle.warnings).toEqual([]);
+    expect(fixtureWarnings(exported.html.bundle.warnings)).toEqual([]);
     expect(html).toContain(
       "all2html-output/news-special-mixed-news-special-mixed-640-route-highlight.png",
     );

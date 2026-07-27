@@ -1,13 +1,13 @@
 import { defaultSettings } from "../../../src/ir/defaults.js";
+import { parsePluginConfig } from "./config.js";
 import type {
-  FigmaPluginConfig,
   FigmaDirectControls,
   FigmaLocalUiState,
   FigmaOutputFormat,
+  FigmaPluginConfig,
   FigmaPresetId,
   SelectionSummary,
 } from "./types.js";
-import { parsePluginConfig } from "./config.js";
 
 export interface FigmaUiState {
   configText: string;
@@ -20,6 +20,7 @@ export interface FigmaUiState {
   selection: SelectionSummary;
   warnings: string[];
   exportSummary: ExportResultSummary | null;
+  exporting: boolean;
 }
 
 export interface ExportResultSummary {
@@ -78,6 +79,7 @@ export function createInitialUiState(selection: SelectionSummary): FigmaUiState 
     selection,
     warnings: [],
     exportSummary: null,
+    exporting: false,
   };
 }
 
@@ -189,7 +191,8 @@ export function directControlsFromConfig(config: FigmaPluginConfig): FigmaDirect
     renderRotatedSkewedTextAs:
       config.settings?.renderRotatedSkewedTextAs ?? defaultSettings.renderRotatedSkewedTextAs,
     googleFonts: config.settings?.googleFonts ?? defaultSettings.googleFonts,
-    responsiveImageMode: config.settings?.responsiveImageMode ?? defaultSettings.responsiveImageMode,
+    responsiveImageMode:
+      config.settings?.responsiveImageMode ?? defaultSettings.responsiveImageMode,
   };
 }
 
@@ -238,7 +241,12 @@ export function applyDirectControlsToConfig(
 
   setOptionalString(settings, "projectName", controls.projectName, defaultSettings.projectName);
   setOptionalValue(settings, "output", controls.output, defaultSettings.output);
-  setOptionalValue(settings, "responsiveness", controls.responsiveness, defaultSettings.responsiveness);
+  setOptionalValue(
+    settings,
+    "responsiveness",
+    controls.responsiveness,
+    defaultSettings.responsiveness,
+  );
   if (controls.imageFormat === defaultSettings.imageFormat[0]) {
     delete settings.imageFormat;
   } else {
@@ -358,7 +366,10 @@ export function isExportBlocked(selection: SelectionSummary, configError: string
   return Boolean(configError || selection.error || selection.eligibleFrames === 0);
 }
 
-export function shouldShowReadyStatus(selection: SelectionSummary, configError: string | null): boolean {
+export function shouldShowReadyStatus(
+  selection: SelectionSummary,
+  configError: string | null,
+): boolean {
   return !isExportBlocked(selection, configError);
 }
 
@@ -366,7 +377,9 @@ export function exportBlockedMessage(selection: SelectionSummary): string {
   return selection.error ?? "Select one or more top-level frames before exporting.";
 }
 
-export function exportWarningNoticeCopy(warningCount: number): { title: string; detail: string } | null {
+export function exportWarningNoticeCopy(
+  warningCount: number,
+): { title: string; detail: string } | null {
   if (warningCount <= 0) {
     return null;
   }

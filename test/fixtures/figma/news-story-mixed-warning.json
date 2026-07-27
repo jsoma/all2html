@@ -144,9 +144,9 @@
         "width": 760,
         "height": 460,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-news-mixed-warning",
         "source": {

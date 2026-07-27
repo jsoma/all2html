@@ -89,12 +89,29 @@ function makeFrame(overrides: Partial<ExtractedFrame> = {}): ExtractedFrame {
         width: 640,
         height: 360,
         artboardId: makeFigmaArtboardId({ sourceNodeId, originalName }),
-        exportParams: { format: "png", scale: 1, transparent: false },
+        exportParams: { format: "png24", scale: 1, transparent: true },
         bytes: new TextEncoder().encode("png-bytes"),
       },
     ],
     ...overrides,
   };
+}
+
+/**
+ * The Figma runtime always exports full-color alpha PNG at scale 1 with no
+ * quantizer, so every Figma export warns about the three raster defaults it
+ * cannot implement (`src/core/capabilities.ts`). These tests are about bundle
+ * contents, so they subtract the standing surface warnings.
+ */
+const FIGMA_STANDING_SETTING_WARNINGS = ["pngTransparent", "pngNumberOfColors", "use2xImages"];
+
+function bundleWarnings(warnings: string[]): string[] {
+  return warnings.filter(
+    (warning) =>
+      !FIGMA_STANDING_SETTING_WARNINGS.some((setting) =>
+        warning.startsWith(`Setting "${setting}"`),
+      ),
+  );
 }
 
 describe("Figma plugin foundation", () => {
@@ -317,7 +334,7 @@ describe("Figma plugin foundation", () => {
         format: "html",
         assetFiles: frame.assets,
       });
-      expect(bundle.warnings).toEqual([]);
+      expect(bundleWarnings(bundle.warnings)).toEqual([]);
       const htmlEntry = bundle.entries.find((entry) => entry.path === "figma-story.html");
       expect(htmlEntry?.content).toContain("font-family: Poppins,system-ui,sans-serif;");
 
@@ -354,7 +371,7 @@ describe("Figma plugin foundation", () => {
                   sourceNodeId: "frame-2",
                   originalName: "story:1024:dynamic",
                 }),
-                exportParams: { format: "png", scale: 1, transparent: false },
+                exportParams: { format: "png24", scale: 1, transparent: true },
                 bytes: new TextEncoder().encode("wide-png"),
               },
             ],
@@ -383,7 +400,7 @@ describe("Figma plugin foundation", () => {
                   sourceNodeId: "frame-2",
                   originalName: "story:1024:dynamic",
                 }),
-                exportParams: { format: "png", scale: 1, transparent: false },
+                exportParams: { format: "png24", scale: 1, transparent: true },
                 bytes: new TextEncoder().encode("wide-png"),
               },
             ],
@@ -401,7 +418,7 @@ describe("Figma plugin foundation", () => {
       expect(html).toContain("Hello from Figma");
       expect(html).toContain("all2html-output/story-bg.png");
       expect(html).toContain("all2html-output/story-bg-wide.png");
-      expect(bundle.warnings).toEqual([]);
+      expect(bundleWarnings(bundle.warnings)).toEqual([]);
     });
 
     it("packages export bundle entries into a zip archive", () => {

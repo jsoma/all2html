@@ -91,11 +91,7 @@ export interface FigmaPluginConfig {
 }
 
 export type FigmaOutputFormat = "html" | "standalone";
-export type FigmaPresetId =
-  | "standard-story"
-  | "responsive-story"
-  | "image-only-graphic"
-  | "custom";
+export type FigmaPresetId = "standard-story" | "responsive-story" | "image-only-graphic" | "custom";
 
 export type SelectionExportKind = "empty" | "single" | "responsive" | "mixed";
 
@@ -159,7 +155,7 @@ export type SandboxToUiMessage =
       warningCount: number;
       warnings: string[];
       zipFilename: string;
-      zipBytes: number[];
+      zipBytes: Uint8Array;
     }
   | {
       type: "export-error";

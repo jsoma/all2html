@@ -40,7 +40,13 @@ export function buildExportBundle(
     assetFiles?: readonly ExtractedAsset[];
   },
 ): FigmaExportBundle {
-  const { document, groups, warnings: pipelineWarnings } = processDocumentInBrowser(ir);
+  const {
+    document,
+    groups,
+    warnings: pipelineWarnings,
+  } = processDocumentInBrowser(ir, {
+    surface: { surface: "figma", path: "render", format: options.format },
+  });
   const emitted = getBrowserEmitter(options.format).emitAll(document, groups);
   const warnings = [...pipelineWarnings, ...emitted.warnings];
   const bundle = createOutputBundle({

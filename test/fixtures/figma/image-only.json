@@ -27,9 +27,9 @@
         "width": 800,
         "height": 450,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-frame-image",
         "source": {

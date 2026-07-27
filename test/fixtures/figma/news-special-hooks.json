@@ -94,9 +94,9 @@
         "width": 700,
         "height": 400,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-news-special-hooks",
         "source": {

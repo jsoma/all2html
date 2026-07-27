@@ -66,9 +66,9 @@
         "width": 720,
         "height": 405,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-frame-nested",
         "source": {

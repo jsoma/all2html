@@ -13,8 +13,8 @@ import type {
 } from "../../../src/ir/types.js";
 import { CURRENT_IR_VERSION } from "../../../src/ir/types.js";
 import { loadAndValidateIR } from "../../../src/ir/validate.js";
-import { figmaSourceFontToMapping } from "./extract/text.js";
 import { validateExtractedFrames } from "./extract/frames.js";
+import { figmaSourceFontToMapping } from "./extract/text.js";
 import { makeFigmaArtboardId, makeFigmaLayerId } from "./ir-ids.js";
 import type { ExtractedAsset, ExtractedFrame } from "./types.js";
 
@@ -130,10 +130,7 @@ export function buildDocument(
   },
 ): Document {
   const validatedFrames = validateExtractedFrames(frames);
-  const fontMappings = mergeFontMappings(
-    collectFigmaFontMappings(validatedFrames),
-    options.fonts,
-  );
+  const fontMappings = mergeFontMappings(collectFigmaFontMappings(validatedFrames), options.fonts);
   const doc = {
     irVersion: CURRENT_IR_VERSION,
     source: {
