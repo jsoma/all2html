@@ -6,7 +6,7 @@ import { processDocumentShared } from "./core/pipeline-shared.js";
 import { resolveSettingsPure } from "./core/resolve-settings-pure.js";
 import type { StructuredWarning } from "./core/warnings.js";
 import { createBuiltinEmitters, type EmitResult } from "./emitters/registry-shared.js";
-import { emitStandaloneBrowser } from "./emitters/standalone-browser.js";
+import { emitStandaloneBrowserGroup } from "./emitters/standalone-browser.js";
 import type { EmitterConfig } from "./emitters/types.js";
 import { loadSVGImportFilesFromBrowser } from "./importers/svg/browser.js";
 import {
@@ -162,7 +162,7 @@ export async function convertLoadedSvgFilesInBrowser(
   };
 }
 
-const browserEmitters = createBuiltinEmitters(emitStandaloneBrowser);
+const browserEmitters = createBuiltinEmitters(emitStandaloneBrowserGroup);
 const browserEmitterRegistry = new Map<string, BrowserEmitterDescriptor>(
   Object.entries(browserEmitters).map(([name, emitter]) => [
     name,

@@ -54,6 +54,34 @@ export interface SettingSupport {
   /** Not honored when emitting these formats. */
   unsupportedFormats?: readonly string[];
   /**
+   * What those formats produce **instead**, keyed by format — the per-format
+   * form of `divergesAtDefault`, and for the same reason: a format that ignores
+   * the request still produces *something*, and the check is request-vs-reality.
+   *
+   * Every key must also appear in `unsupportedFormats` (pinned by
+   * `test/unit/capabilities.test.ts`), so the two fields tell one story: the
+   * list says which formats ignore the request, the map says what they do. A
+   * format absent from both honors the request verbatim.
+   *
+   * The value is a list of acceptable actuals because a format may legitimately
+   * produce more than one — react emits `.jsx` or `.tsx` depending on
+   * `emitterConfig.react.typescript`, which the settings-only checker cannot
+   * see, and warning at `.tsx` would be a false positive. A request matching any
+   * entry is silent.
+   *
+   * The **documented default is also silent**, unlike `divergesAtDefault`. A
+   * format-dictated setting has no promise to break at its default: choosing
+   * `--format react` is choosing `.jsx`, and resolved settings carry no
+   * provenance, so warning there would fire on every react and svelte export
+   * about a value nobody typed.
+   *
+   * Without this, `htmlOutputExtension` was wrong on every non-html format:
+   * `.svelte` requested on a svelte render produced exactly `.svelte` and warned
+   * anyway, because the global default `.html` was treated as the reality on
+   * every format.
+   */
+  producedByFormat?: { readonly [format: string]: readonly unknown[] };
+  /**
    * The setting is honored for some document content and not for other content,
    * so a settings-only check cannot decide it. The emitter that produces the
    * unhonored case warns at its own call site with this code; the checker stays
@@ -157,12 +185,16 @@ export interface SurfaceContext {
 /**
  * Matrix footnote 5 — the extension is an `html` emitter concept only.
  *
- * `registry-shared.ts:52` is the single reader; `:66` forces `.svelte`, `:79`
- * forces `.jsx`/`.tsx`, and `:93` hardcodes `.html` for standalone. Declared
- * `partial` with the three formats that ignore it, so a non-default extension
- * warns exactly when the run is targeting one of them — and an untouched
- * `.html` stays silent on every format, because that is what those formats
- * would have produced anyway.
+ * `registry-shared.ts` is the single reader: the svelte arm forces `.svelte`,
+ * the react arm `.jsx`/`.tsx`, and standalone `.html`. Declared `partial` with
+ * the three formats that ignore the request, plus what each one writes instead,
+ * so the warning fires only when the requested extension is not the extension
+ * the run will produce. `.svelte` on a svelte render does not warn even though
+ * the setting is nominally "not honored" there — the user gets precisely what
+ * they asked for, and warning at it was the bug. `.php` on that render does
+ * warn, naming `.svelte` as what it writes. The untouched `.html` default is
+ * silent on every format: it is what standalone writes anyway, and on svelte
+ * and react it is a value nobody chose.
  *
  * Illustrator carries no entry: it emits `html` only and writes the extension
  * verbatim (the ExtendScript bundle now puts it on every emitted file record,
@@ -176,6 +208,13 @@ export interface SurfaceContext {
 const HTML_ONLY_OUTPUT_EXTENSION: SettingSupport = {
   status: "partial",
   unsupportedFormats: ["standalone", "svelte", "react"],
+  producedByFormat: {
+    standalone: [".html"],
+    svelte: [".svelte"],
+    // `.tsx` when `emitterConfig.react.typescript` is set; the checker sees
+    // settings only, so both are acceptable actuals.
+    react: [".jsx", ".tsx"],
+  },
   note: "Only the html emitter uses this extension. The svelte and react emitters force .svelte and .jsx/.tsx, and the standalone emitter always writes .html.",
 };
 
@@ -677,6 +716,40 @@ function valuesAreHonored(value: unknown, honored: readonly string[]): boolean {
   return true;
 }
 
+/**
+ * The values the active format actually produces for this setting, or `null`
+ * when the format is not declared in `producedByFormat` (i.e. the request is
+ * produced verbatim, or the declaration says nothing per-format).
+ */
+function producedValues(
+  support: SettingSupport,
+  format: string | undefined,
+): readonly unknown[] | null {
+  const map = support.producedByFormat;
+  if (!map || format === undefined) return null;
+  // The lookup is on a plain object literal, so an inherited key would answer:
+  // a format named `constructor` or `toString` resolves off `Object.prototype`.
+  // The type check rejects those — every declared entry is an array — without
+  // `Object.hasOwn`, which is ES2022 and outside this bundle's ES3 runtime.
+  const produced = map[format];
+  return isArrayValue(produced) ? produced : null;
+}
+
+function containsValue(list: readonly unknown[], value: unknown): boolean {
+  for (let i = 0; i < list.length; i++) {
+    if (sameValue(list[i], value)) return true;
+  }
+  return false;
+}
+
+/** "`.jsx` or `.tsx`" — the acceptable actuals, read as prose. */
+function formatAlternatives(list: readonly unknown[]): string {
+  const parts: string[] = [];
+  for (let i = 0; i < list.length; i++) parts.push(formatValue(list[i]));
+  if (parts.length < 2) return parts.join("");
+  return parts.slice(0, parts.length - 1).join(", ") + " or " + parts[parts.length - 1];
+}
+
 function formatValue(value: unknown): string {
   if (isArrayValue(value)) {
     const parts: string[] = [];
@@ -729,6 +802,14 @@ function unhonoredReason(
  * value Figma does produce — warned. A surface states its real behavior with
  * `divergesAtDefault`; omitting it asserts the default is what happens.
  *
+ * Where the real behavior depends on the emitter format rather than the surface
+ * — `htmlOutputExtension` is written verbatim by `html`, forced to `.svelte` by
+ * `svelte`, `.jsx`/`.tsx` by `react` and `.html` by `standalone` — the
+ * declaration says so with `producedByFormat`, and that wins over both. Treating
+ * the global default as the reality on every format was the same D25 mistake one
+ * level down: asking for `.svelte` on a svelte render warned while producing
+ * exactly `.svelte`, and leaving `.html` there produced `.svelte` in silence.
+ *
  * A request that matches the surface's real behavior is never a warning, which
  * is what keeps ordinary exports quiet: a surface that ignores a setting but
  * lands on the documented default anyway (Illustrator always writes image
@@ -750,7 +831,14 @@ export function checkSurfaceCapabilities(
       status: declaration.defaultStatus,
       note: declaration.defaultNote,
     };
-    if (support.status === "honored" && !support.paths && !support.unsupportedFormats) continue;
+    if (
+      support.status === "honored" &&
+      !support.paths &&
+      !support.unsupportedFormats &&
+      !support.producedByFormat
+    ) {
+      continue;
+    }
     // Content-dependent: the emitter warns where the harm actually happens.
     if (support.warnedByEmitter) continue;
 
@@ -758,13 +846,31 @@ export function checkSurfaceCapabilities(
     const reason = unhonoredReason(support, value, context);
     if (reason === null) continue;
 
-    // What the surface really produces. `divergesAtDefault: null` means it
-    // produces nothing comparable, so every request is a divergence.
-    const diverges = "divergesAtDefault" in support;
-    const actual = diverges ? support.divergesAtDefault : definition.defaultValue;
-    if (sameValue(value, actual)) continue;
-
-    const behavior = diverges && actual !== null ? "; it behaves as " + formatValue(actual) : "";
+    // What the surface really produces, most specific first: the active format's
+    // declared output, then `divergesAtDefault` (`null` means it produces
+    // nothing comparable, so every request is a divergence), then the documented
+    // default.
+    const produced = producedValues(support, context.format);
+    let behavior: string;
+    if (produced) {
+      // Silent when the request is what the format writes — and when the value
+      // is the documented default, which for a format-dictated setting is not a
+      // request at all. Resolved settings carry no provenance, so the default is
+      // the only available signal for "the user never touched this", and warning
+      // there would fire on every svelte and react export ever run about an
+      // extension that `--format` itself dictates and nobody typed. That is not
+      // the `divergesAtDefault` case: there the default IS a promise the surface
+      // breaks (Figma exporting 1x while `use2xImages` says 2x), and the user is
+      // silently getting output they did not choose. Here choosing the format is
+      // choosing the extension.
+      if (containsValue(produced, value) || sameValue(value, definition.defaultValue)) continue;
+      behavior = produced.length > 0 ? "; it writes " + formatAlternatives(produced) : "";
+    } else {
+      const diverges = "divergesAtDefault" in support;
+      const actual = diverges ? support.divergesAtDefault : definition.defaultValue;
+      if (sameValue(value, actual)) continue;
+      behavior = diverges && actual !== null ? "; it behaves as " + formatValue(actual) : "";
+    }
     const message =
       'Setting "' +
       key +

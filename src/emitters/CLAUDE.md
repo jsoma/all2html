@@ -136,6 +136,23 @@ runs.
 
 Full HTML document. Supports `local_preview_template` setting via the template system.
 
+Two entry points, on purpose:
+
+- `emitStandalone(doc, options?)` — the **public**, root-exported call. Its second parameter is
+  `EmitterOptions` and must stay that way. A JavaScript caller writing
+  `emitStandalone(doc, { allowUnsafeHtml: false })` gets no type error when a parameter is
+  inserted in front of its options object; the object is silently read as something else and
+  every option is dropped, including that one. That regression shipped once.
+- `emitStandaloneGroup(doc, groupOptions?, options?)` — internal, group-aware, what the registry
+  calls. `standalone-browser.ts` mirrors the pair (`emitStandaloneBrowser` /
+  `emitStandaloneBrowserGroup`). Never discriminate the two objects by shape — the named function
+  is the whole point.
+
+Neither browser entry point warns about `localPreviewTemplate`. The capability checker
+(`src/core/capabilities.ts`) owns that warning: it fires once per document and knows the real
+surface, whereas the emitter fired once per output group and hardcoded `surface: "browser"` even
+on a Figma export, which shares this emitter.
+
 ## Shared utilities (`shared/`)
 
 - `css.ts` — All CSS generation. Container queries, artboard styles (with `aspect-ratio` for dynamic), text style classes. Scoped to `#{ns}{slug}-box`.

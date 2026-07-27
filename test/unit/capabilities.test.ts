@@ -193,6 +193,37 @@ describe("surface capability declarations", () => {
     }
   });
 
+  /**
+   * The same budget, per emitted format — still empty on all four.
+   *
+   * `htmlOutputExtension` is the one setting whose reality is format-dependent,
+   * and its default must stay silent everywhere: `--format react` writes
+   * `story.jsx` while the resolved default reads `.html`, but the extension is
+   * dictated by the format the user explicitly chose, not promised by the
+   * default they never touched. `test/integration/watch-config.test.ts` asserts
+   * an ordinary react watch writes nothing to stderr, and it is right to.
+   */
+  const STANDING_WARNINGS_BY_FORMAT: Record<string, string[]> = {
+    html: [],
+    standalone: [],
+    svelte: [],
+    react: [],
+  };
+
+  it("keeps an untouched export silent on every emitted format", () => {
+    for (const [format, expected] of Object.entries(STANDING_WARNINGS_BY_FORMAT)) {
+      const warnings = checkCapabilitiesForSurface(createDefaultSettings(), {
+        surface: "cli",
+        path: "render",
+        format,
+      });
+      expect(
+        warnings.map((warning) => warning.setting),
+        `cli/${format} standing warnings changed`,
+      ).toEqual(expected);
+    }
+  });
+
   it("every standing warning is a declared divergence, not a default comparison", () => {
     for (const [surface, settings] of Object.entries(STANDING_WARNINGS)) {
       const declaration = getSurfaceCapabilities(surface as SurfaceId);
@@ -404,9 +435,24 @@ describe("declarations match what the code actually does", () => {
     }
   });
 
-  it("htmlOutputExtension is honored for html only, and silent at its default", () => {
-    // Matrix footnote 5: registry-shared.ts:50 is the only reader. :64 forces
-    // .svelte, :77 forces .jsx/.tsx, :90 hardcodes .html for standalone.
+  /**
+   * The extension check is per **format**, not per global default.
+   *
+   * The declaration used to name the three formats that ignore the request and
+   * stop there, which left the checker comparing against `.html` — the global
+   * default — on every one of them. That is D25 one level down, and it was wrong
+   * in both directions: `.svelte` on a svelte render produced exactly `.svelte`
+   * and warned anyway, while the default `.html` on that same render produced
+   * `.svelte` in silence. `producedByFormat` states what each format writes.
+   */
+  describe("htmlOutputExtension is checked against what the format writes", () => {
+    const PRODUCED: Record<string, string[]> = {
+      html: [],
+      standalone: [".html"],
+      svelte: [".svelte"],
+      react: [".jsx", ".tsx"],
+    };
+
     const forFormat = (surface: SurfaceId, format: string, value: string) =>
       checkCapabilitiesForSurface(settingsWith("htmlOutputExtension", value), {
         surface,
@@ -414,22 +460,72 @@ describe("declarations match what the code actually does", () => {
         format,
       }).filter((warning) => warning.setting === "htmlOutputExtension");
 
-    for (const surface of ["cli", "browser", "figma"] as const) {
-      // The user asked for something the format cannot deliver.
-      for (const format of ["standalone", "svelte", "react"]) {
-        const warnings = forFormat(surface, format, ".php");
-        expect(warnings, `${surface}/${format} did not warn`).toHaveLength(1);
-        expect(warnings[0].code).toBe(SETTING_UNSUPPORTED_CODE);
-        expect(warnings[0].message).toContain(".php");
-        expect(warnings[0].message).toContain("standalone emitter always writes .html");
-        // The default is silent even on the formats that ignore it: .html is
-        // what those formats' own extensions amount to asking for.
-        expect(forFormat(surface, format, ".html")).toEqual([]);
+    it("keeps the declaration and the checker telling one story", () => {
+      const support = getSurfaceCapabilities("cli").settings.htmlOutputExtension;
+      // Every format that ignores the request declares what it writes instead,
+      // and nothing declares an output for a format it honors.
+      expect(Object.keys(support.producedByFormat ?? {}).sort()).toEqual(
+        [...(support.unsupportedFormats ?? [])].sort(),
+      );
+      for (const format of support.unsupportedFormats ?? []) {
+        expect(support.producedByFormat?.[format]).toEqual(PRODUCED[format]);
       }
-      // html is the one emitter that reads it, so nothing warns there.
-      expect(forFormat(surface, "html", ".php")).toEqual([]);
-      expect(forFormat(surface, "html", ".html")).toEqual([]);
-    }
+    });
+
+    it("stays silent when the request is what the format will write", () => {
+      for (const surface of ["cli", "browser", "figma"] as const) {
+        // html writes the request verbatim, whatever it is.
+        expect(forFormat(surface, "html", ".php")).toEqual([]);
+        expect(forFormat(surface, "html", ".html")).toEqual([]);
+        // The other three write their own, and asking for exactly that is not a
+        // divergence even though the setting is nominally unhonored there.
+        for (const format of ["standalone", "svelte", "react"]) {
+          for (const produced of PRODUCED[format]) {
+            expect(
+              forFormat(surface, format, produced),
+              `${surface}/${format} warned about ${produced}, which is what it writes`,
+            ).toEqual([]);
+          }
+        }
+      }
+    });
+
+    it("warns when the request is not what the format will write, naming it", () => {
+      for (const surface of ["cli", "browser", "figma"] as const) {
+        for (const format of ["standalone", "svelte", "react"]) {
+          const warnings = forFormat(surface, format, ".php");
+          expect(warnings, `${surface}/${format} did not warn`).toHaveLength(1);
+          expect(warnings[0].code).toBe(SETTING_UNSUPPORTED_CODE);
+          expect(warnings[0].message).toContain(".php");
+          expect(warnings[0].message).toContain(`it writes ${PRODUCED[format].join(" or ")}`);
+        }
+      }
+    });
+
+    /**
+     * The untouched default stays silent on every format, including the two
+     * that write something else.
+     *
+     * This is the one place the checker does look at the documented default,
+     * and it is deliberate: the extension is dictated by the format the user
+     * explicitly selected, so `.html` on a react render is a value nobody chose
+     * rather than a promise anything broke. Warning there put a
+     * `setting:unsupported` line on every react and svelte export — see
+     * `test/integration/watch-config.test.ts`, which asserts a plain react watch
+     * writes nothing to stderr. Contrast `divergesAtDefault` (Figma exporting 1x
+     * while `use2xImages` promises 2x), where the default IS the broken promise
+     * and warning at it is the entire point.
+     */
+    it("stays silent at the untouched default even where the format writes something else", () => {
+      for (const surface of ["cli", "browser", "figma"] as const) {
+        for (const format of ["html", "standalone", "svelte", "react"]) {
+          expect(
+            forFormat(surface, format, ".html"),
+            `${surface}/${format} warned at default`,
+          ).toEqual([]);
+        }
+      }
+    });
   });
 
   it("Illustrator honors htmlOutputExtension outright, because it emits html only", () => {
@@ -584,10 +680,20 @@ describe("declarations are only claimed as enforced where they run", () => {
     expect(unenforced).toEqual(["after-effects"]);
   });
 
-  it("the After Effects exporter cannot run the checker: it never loads the core", () => {
+  it("the After Effects exporter cannot run the checker: it loads helpers, not the pipeline", () => {
     const exporter = readFileSync(join(repoRoot, "plugins/after-effects/exporter.jsx"), "utf-8");
-    expect(exporter).not.toContain("All2Html");
+    // It *does* load a bundle now (D13 gave it the helper slot, which is what
+    // retired its forked escaping and google-fonts copies)...
+    expect(exporter).toContain("All2HtmlAE");
+    // ...but that bundle is `src/extendscript/ae-index.ts`, which exports
+    // helpers only. The checker runs inside `processAndEmit`, and neither is
+    // reachable from here — so `runtimeChecked: false` is still the truth.
     expect(exporter).not.toContain("checkSurfaceCapabilities");
+    expect(exporter).not.toContain("processAndEmit");
+
+    const aeEntry = readFileSync(join(repoRoot, "src/extendscript/ae-index.ts"), "utf-8");
+    expect(aeEntry).not.toContain("processAndEmit");
+    expect(aeEntry).not.toContain("checkSurfaceCapabilities");
   });
 
   it("every enforced surface has a call site that passes its identity", () => {

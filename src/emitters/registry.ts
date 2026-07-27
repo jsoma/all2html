@@ -5,7 +5,7 @@ import {
   type EmitResult,
   type SharedEmitterDescriptor,
 } from "./registry-shared.js";
-import { emitStandalone } from "./standalone.js";
+import { emitStandaloneGroup } from "./standalone.js";
 import type { EmitterConfig } from "./types.js";
 
 export type { EmitFile, EmitResult } from "./registry-shared.js";
@@ -20,7 +20,7 @@ export interface EmitterDescriptor {
 }
 
 const builtinEmitters: Record<string, SharedEmitterDescriptor> =
-  createBuiltinEmitters(emitStandalone);
+  createBuiltinEmitters(emitStandaloneGroup);
 
 const emitters = new Map<string, SharedEmitterDescriptor>(Object.entries(builtinEmitters));
 

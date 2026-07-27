@@ -254,6 +254,15 @@ function describeSupport(support: SettingSupport): string {
   if (support.unsupportedFormats) {
     parts.push(`Not honored for the ${codeList(support.unsupportedFormats)} format.`);
   }
+  if (support.producedByFormat) {
+    const written: string[] = [];
+    for (const format of Object.keys(support.producedByFormat)) {
+      written.push(
+        `${code(format)} writes ${codeList(support.producedByFormat[format].map(String))}`,
+      );
+    }
+    parts.push(`Those formats write their own value instead: ${written.join(", ")}.`);
+  }
   if ("divergesAtDefault" in support) {
     parts.push(
       support.divergesAtDefault === null

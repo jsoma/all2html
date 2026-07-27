@@ -280,9 +280,9 @@ Honored on: Illustrator.
 | Surface | Support | What actually happens |
 |---|---|---|
 | After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
-| Figma plugin | partial | Not honored for the `standalone`, `svelte`, `react` format. Only the html emitter uses this extension. The svelte and react emitters force .svelte and .jsx/.tsx, and the standalone emitter always writes .html. |
-| all2html CLI | partial | Not honored for the `standalone`, `svelte`, `react` format. Only the html emitter uses this extension. The svelte and react emitters force .svelte and .jsx/.tsx, and the standalone emitter always writes .html. |
-| Browser converter | partial | Not honored for the `standalone`, `svelte`, `react` format. Only the html emitter uses this extension. The svelte and react emitters force .svelte and .jsx/.tsx, and the standalone emitter always writes .html. |
+| Figma plugin | partial | Not honored for the `standalone`, `svelte`, `react` format. Those formats write their own value instead: `standalone` writes `.html`, `svelte` writes `.svelte`, `react` writes `.jsx`, `.tsx`. Only the html emitter uses this extension. The svelte and react emitters force .svelte and .jsx/.tsx, and the standalone emitter always writes .html. |
+| all2html CLI | partial | Not honored for the `standalone`, `svelte`, `react` format. Those formats write their own value instead: `standalone` writes `.html`, `svelte` writes `.svelte`, `react` writes `.jsx`, `.tsx`. Only the html emitter uses this extension. The svelte and react emitters force .svelte and .jsx/.tsx, and the standalone emitter always writes .html. |
+| Browser converter | partial | Not honored for the `standalone`, `svelte`, `react` format. Those formats write their own value instead: `standalone` writes `.html`, `svelte` writes `.svelte`, `react` writes `.jsx`, `.tsx`. Only the html emitter uses this extension. The svelte and react emitters force .svelte and .jsx/.tsx, and the standalone emitter always writes .html. |
 
 <a id="imageOutputPath"></a>
 ### `imageOutputPath`

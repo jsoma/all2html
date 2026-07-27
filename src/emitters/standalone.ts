@@ -20,13 +20,35 @@ function getErrorMessage(error: unknown): string {
 }
 
 /**
+ * The public standalone emitter: every artboard in the document, one file.
+ *
+ * **The second argument is `EmitterOptions` and must stay that way.** This is a
+ * root export (`src/index.ts`), so an existing JavaScript caller writing
+ * `emitStandalone(doc, { allowUnsafeHtml: false })` gets no type error if the
+ * parameter list changes underneath it — the object is simply read as something
+ * else and the options are dropped, silently re-enabling unsafe binding HTML.
+ * That is exactly what happened when group support was added here as a new
+ * *second* parameter. Group-aware callers use the explicitly named
+ * `emitStandaloneGroup` below; nothing discriminates by argument shape, because
+ * shape-sniffing is the ambiguity that caused the regression.
+ */
+export function emitStandalone(
+  doc: EmitterReadyDocument,
+  options?: EmitterOptions,
+): EmitStandaloneResult {
+  return emitStandaloneGroup(doc, undefined, options);
+}
+
+/**
+ * Internal, group-aware entry point used by the emitter registry.
+ *
  * `groupOptions` is the same artboard-subset + slug override every other emitter
  * takes. It used to be missing, which made `output: "multiple-files"` a silent
  * no-op on this format: the registry passed the groups in and standalone dropped
  * them, emitting one file containing every artboard while `html`, `svelte` and
  * `react` emitted one per group.
  */
-export function emitStandalone(
+export function emitStandaloneGroup(
   doc: EmitterReadyDocument,
   groupOptions?: EmitGroupOptions,
   options?: EmitterOptions,

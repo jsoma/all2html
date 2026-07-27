@@ -36,6 +36,11 @@ export interface StandaloneEmitterResult {
 }
 
 export function createBuiltinEmitters(
+  /**
+   * The group-aware standalone entry point (`emitStandaloneGroup` /
+   * `emitStandaloneBrowserGroup`), never the public `emitStandalone`, whose
+   * second parameter is `EmitterOptions`.
+   */
   emitStandaloneLike: (
     doc: EmitterReadyDocument,
     groupOptions?: EmitGroupOptions,

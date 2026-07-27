@@ -2,7 +2,11 @@
 
 import { describe, expect, it, vi } from "vitest";
 import { mountSvgDropzoneApp } from "../../apps/svg-dropzone/src/app.js";
-import { convertLoadedSvgFilesInBrowser, processDocumentInBrowser } from "../../src/browser.js";
+import {
+  convertLoadedSvgFilesInBrowser,
+  getBrowserEmitter,
+  processDocumentInBrowser,
+} from "../../src/browser.js";
 import { processDocument } from "../../src/core/pipeline.js";
 import { CURRENT_IR_VERSION, type Document } from "../../src/ir/types.js";
 import { createOutputBundle } from "../../src/output-bundle.js";
@@ -464,6 +468,43 @@ describe("browser pipeline surface", () => {
       (entry) => entry.setting === "localPreviewTemplate",
     );
     expect(warning?.surface).toBe("browser");
+  });
+
+  /**
+   * One owner for the warning: the capability checker.
+   *
+   * `standalone-browser.ts` used to raise its own `setting:unsupported` for
+   * `localPreviewTemplate` on top of the checker's, once per output group, with
+   * `surface: "browser"` hardcoded — so a three-group document produced four
+   * copies, and a Figma export (which shares this emitter) was told the surface
+   * was the browser. The checker already knows the setting and the real surface,
+   * and it runs once per document.
+   */
+  it("warns exactly once for localPreviewTemplate, whatever the group count", () => {
+    const doc = createDocument(["chart", "map", "table"]);
+    doc.settings = {
+      ...doc.settings,
+      output: "multiple-files",
+      localPreviewTemplate: "preview.html",
+    };
+
+    for (const surface of ["browser", "figma"] as const) {
+      const processed = processDocumentInBrowser(structuredClone(doc), {
+        format: "standalone",
+        surface: { surface, path: "render", format: "standalone" },
+      });
+      expect(processed.groups.length).toBe(3);
+
+      const emitted = getBrowserEmitter("standalone").emitAll(processed.document, processed.groups);
+      expect(emitted.files).toHaveLength(3);
+
+      const all = [...processed.structuredWarnings, ...emitted.structuredWarnings].filter(
+        (entry) => entry.setting === "localPreviewTemplate",
+      );
+      expect(all, `${surface} raised ${all.length} warnings`).toHaveLength(1);
+      expect(all[0].code).toBe("setting:unsupported");
+      expect(all[0].surface).toBe(surface);
+    }
   });
 
   /**
