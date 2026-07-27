@@ -27,6 +27,3 @@ This is the simplest SVG import example: one source SVG, one imported IR documen
 ## Notes
 
 This example starts from the Canva-oriented fixture `photo-card.svg`, but the importer behavior is the same for generic SVG sources.
-
-> Screenshot placeholder
-> Crop the rendered card so the text and the photo area are both visible.

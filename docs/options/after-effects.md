@@ -7,6 +7,8 @@ description: After Effects script and CEP panel workflow, output shape, and curr
 
 The After Effects path turns a comp into a video export plus timed HTML overlays. It is different from Illustrator on purpose: it is about temporal graphics, not responsive artboards.
 
+**Support is limited.** The AE exporter does not run the shared all2html pipeline — it produces its own video/overlay output rather than `ir.json`, and splices HTML into its own player template. Most of the canonical settings in the [Settings Reference](../reference/settings.md) therefore do nothing here, and unlike the other surfaces the AE exporter does not warn you about it. `googleFonts` is the one canonical setting it honors; everything else it needs comes from `all2html-ae.config.json` or the panel.
+
 ## Downloads
 
 - [After Effects script](https://github.com/jsoma/all2html/releases/latest/download/all2html-after-effects.zip)
@@ -77,6 +79,3 @@ The AE exporter is useful now, but it is narrower than Illustrator:
 - text animation details are sampled values, not semantic reconstructions
 
 That is expected. It is the right tool when you need HTML over rendered motion, not when you need an artboard-driven layout system.
-
-> Screenshot placeholder
-> Crop the AE panel export section or a rendered output folder showing the video, HTML, and summary files together.

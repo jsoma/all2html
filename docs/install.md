@@ -7,6 +7,17 @@ description: Download and install all2html for Illustrator, After Effects, Figma
 
 This is the main install page. Start with the direct download links below.
 
+## How Finished Each Surface Is
+
+| Surface | Maturity | Read this first |
+|---|---|---|
+| Illustrator (script or panel) | **Stable** | The production path, with the deepest feature coverage. |
+| After Effects (script or panel) | **Limited** | One comp at a time, video plus timed HTML overlays. It does not run the shared pipeline, so most canonical settings do not apply. |
+| Figma plugin | **Beta** | Runnable and useful on real files, but not a supported exporter yet. |
+| SVG conversion (CLI or browser) | **Beta** | Full pipeline, but SVG input carries less information than a native document. |
+
+[Support matrix](reference/support-matrix.md) — output formats and special-layer tags, per surface. [Settings reference](reference/settings.md) — which settings each surface actually honors.
+
 ## Start Here
 
 - [Download Illustrator script](https://github.com/jsoma/all2html/releases/latest/download/all2html.js)
@@ -32,9 +43,6 @@ For permanent install, copy it into Illustrator’s Scripts folder and restart I
 
 [Illustrator details and options](options/illustrator.md)
 
-> Screenshot placeholder
-> Crop the Illustrator Scripts menu and the file picker or installed script entry.
-
 ## Illustrator/After Effects Panel
 
 The extension gives you a shared interface for Illustrator and After Effects.
@@ -53,9 +61,6 @@ Direct downloads:
 [Illustrator panel details](options/illustrator.md)
 [After Effects panel details](options/after-effects.md)
 
-> Screenshot placeholder
-> Crop the panel open inside the host app with the main settings section visible.
-
 ## After Effects Script
 
 Use this when you want the packaged `.jsx` workflow.
@@ -69,9 +74,6 @@ Direct download: [all2html-after-effects.zip](https://github.com/jsoma/all2html/
 This exporter works on the active comp in a saved `.aep` project.
 
 [After Effects details and options](options/after-effects.md)
-
-> Screenshot placeholder
-> Crop the AE Scripts menu or Run Script dialog with `all2html-ae.jsx` selected.
 
 ## Figma Plugin
 
@@ -87,9 +89,6 @@ The extracted folder needs to stay intact because the manifest points at the bui
 The plugin works from selected top-level frames and currently exports HTML or Standalone HTML from the UI.
 
 [Figma details and options](options/figma.md)
-
-> Screenshot placeholder
-> Crop the manifest import dialog and the plugin panel export controls.
 
 ## SVG Conversion
 
@@ -111,9 +110,6 @@ pnpm dev:svg-dropzone
 
 [SVG conversion details and options](options/svg-conversion.md)
 
-> Screenshot placeholder
-> Crop the SVG dropzone with one uploaded file and the generated output summary visible.
-
 ## Build From Source
 
 If you want every surface available locally:
@@ -123,7 +119,7 @@ pnpm install
 pnpm build
 pnpm build:illustrator
 pnpm build:panel
-pnpm package:after-effects
+pnpm build:after-effects
 pnpm build:figma
 pnpm build:svg-dropzone
 ```

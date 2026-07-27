@@ -12,10 +12,24 @@ This project is **pre-launch** right now. Try everything. Some paths are more po
 - [Install all2html](install.md)
 - [Browse export demos](examples/index.md)
 - [Learn how it works](how-it-works/index.md)
+- [See what works where](reference/support-matrix.md)
+
+## Maturity By Surface
+
+The surfaces are not equally finished. Pick one with your eyes open:
+
+| Surface | Maturity | What that means |
+|---|---|---|
+| Illustrator | **Stable** | The production path. Script and panel are both supported, and it has the deepest feature coverage. |
+| After Effects | **Limited** | Works for its narrow job — one comp, rendered video plus timed HTML overlays. It does not run the shared pipeline, so most settings on the [Settings Reference](reference/settings.md) do not apply to it. |
+| Figma | **Beta** | Runnable and useful, but not yet a supported exporter. Expect rough edges, and check the [Settings Reference](reference/settings.md) before trusting a setting. |
+| SVG conversion | **Beta** | The CLI and browser converter run the full pipeline, but SVG input carries less information than a native document, so text recovery and grouping are best-effort. |
+
+[Full support matrix](reference/support-matrix.md) — output formats and special-layer tags, per surface.
 
 ## Quick Install
 
-> Illustrator and After Effects panels need to be [installed with with ZXPInstaller](https://zxpinstaller.com/)
+> Illustrator and After Effects panels need to be [installed with ZXPInstaller](https://zxpinstaller.com/)
 
 - **Illustrator:** [panel](https://github.com/jsoma/all2html/releases/latest/download/all2html-panel.zxp) or [plain script](https://github.com/jsoma/all2html/releases/latest/download/all2html.js)
 - **After Effects:** [panel](https://github.com/jsoma/all2html/releases/latest/download/all2html-panel.zxp) or [plain script](https://github.com/jsoma/all2html/releases/latest/download/all2html-after-effects.zip)
@@ -24,25 +38,25 @@ This project is **pre-launch** right now. Try everything. Some paths are more po
 
 ## What You Can Use Today
 
-### Illustrator
+### Illustrator — stable
 
 The original all2html path. Use the script if you want the classic workflow, or the CEP panel if you want a modern settings surface with diagnostics and font mapping.
 
 [Illustrator install and options](options/illustrator.md)
 
-### After Effects
+### After Effects — limited
 
 Exports a rendered video plus timed HTML overlays from AE text layers. There is also a shared CEP panel surface if you want a UI for templates, font mappings, and output paths.
 
 [After Effects install and options](options/after-effects.md)
 
-### Figma
+### Figma — beta
 
-The Figma plugin exports selected top-level frames into the same shared pipeline. The current UI targets HTML and Standalone HTML and is already useful for real files.
+The Figma plugin exports selected top-level frames into the same shared pipeline. The current UI targets HTML and Standalone HTML. It is beta: it runs on real files, but it is not yet a supported exporter.
 
 [Figma install and options](options/figma.md)
 
-### SVG Conversion
+### SVG Conversion — beta
 
 You can import a single SVG, a folder of SVGs, or a ZIP of SVGs and render them through the same pipeline. This is the Canva-friendly path, but it is intentionally general-purpose rather than Canva-specific.
 
@@ -58,6 +72,3 @@ You can import a single SVG, a folder of SVGs, or a ZIP of SVGs and render them 
 - [How It Works](how-it-works/index.md) explains the IR, pipeline, adapter model, responsiveness, and special layers.
 - [Reference](reference/settings.md) is the technical documentation for settings, formats, and schema shape.
 - [Troubleshooting](troubleshooting.md) covers the common failure modes.
-
-> Screenshot placeholder
-> Crop the GitHub Releases page to the asset list so the script, panel packages, and After Effects zip are all visible in one shot.

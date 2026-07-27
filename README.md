@@ -17,7 +17,7 @@ pnpm install
 pnpm build
 pnpm build:illustrator
 pnpm build:panel
-pnpm package:after-effects
+pnpm build:after-effects
 pnpm build:figma
 pnpm build:svg-dropzone
 ```

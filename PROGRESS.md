@@ -1,21 +1,30 @@
 # Progress
 
 ## Current Stats
-- **595 vitest tests** across 33 test files
-- **145KB** assembled Illustrator plugin (`dist/all2html.js`)
-- **31 IR test fixtures** + **20 golden IR fixtures** from real Illustrator exports
+- **78 vitest test files** covering the pipeline, all five emitters, both plugin
+  hosts and the CEP panel
+  <!-- Deliberately not a test *count*. A count rewards multiplication: the suite
+  had grown to 1670 tests of which ~700 were fixture × option matrices reporting
+  a single bug dozens of times over ("does the JSX parse", asserted 256 times).
+  Breadth is measured by what is covered, not by how many `it`s a nested loop
+  emits. If you want the number it is ~980; do not optimize it upward. -->
+- **52 IR corpora under continuous sweep**: every hand-written fixture compiles
+  under both framework emitters, and every golden validates + round-trips
+- **~186KB** assembled Illustrator plugin (`dist/all2html.js`)
+- **32 IR test fixtures** + **20 golden IR fixtures** from real Illustrator exports
 - **20 tracked real Illustrator source fixtures** in `data/`
 - **5 output formats**: HTML fragment, Standalone HTML, Svelte, React, ExtendScript bundle
 
 ## Completed
 
 ### Core Pipeline
-- [x] IR schema with phase types (Document → Resolved → Styled → Deduplicated → EmitterReady)
+- [x] IR schema with **exclusive** phase types (SPEC §12.1 / D20): `Document → Resolved → Breakpointed → Styled → Deduplicated → EmitterReady`, each carrying a `pipelinePhase` literal so no transform can be skipped or repeated without a compile error. Image-rendered text is its own variant (`ImageTextElement`); `EmitterReadyLayer` admits no un-positioned variants. Removed the placeholder breakpoint in `settings-resolver.ts`, the placeholder `computedPosition` in `deduplicate-styles.ts`, and 12 runtime property-sniffing guards across the transforms and emitters.
+- [ ] `Artboard.relationship: "alternates" | "sequence"` (SPEC §12.10.5) is **not** in the IR. It was declared and validated with no consumer, and was removed under D27 rather than documented as unused; it lands with `groupArtboards`, which is where it has to act and which is blocked on ES3 safety (D19).
 - [x] Zod validation, default settings, JSONC config
 - [x] resolveSettings + resolveSettingsPure (fs-free for ExtendScript)
 - [x] computeBreakpoints, computeStyles, fontMap, deduplicateStyles, computePositions
 - [x] groupArtboards (one-file / multiple-files output)
-- [x] SVG post-processing (ID cleanup, data-name, hex decode, opacity/multiply, non-scaling-stroke, raster removal)
+- [ ] SVG post-processing (ID cleanup, `data-name`, hex decode, opacity/multiply, non-scaling-stroke, raster removal) — `src/core/svg-postprocess.ts` implemented all of this and was imported by nothing but its own test on any surface. Deleted under D16; nothing replaces it, and `svgIdPrefix` stays declared `unsupported` in `src/core/capabilities.ts` so the setting warns rather than silently no-opping
 - [x] Template system (Mustache + EJS), warning consolidation, asset path tokens
 - [x] Text effects: drop shadow → `text-shadow`, blur → `filter: blur()`, deduplicated as `g-effect{N}` classes
 - [x] Hyperlinks on text runs: `CharacterRun.hyperlink` → `<a>` tags in both emitters
@@ -29,8 +38,7 @@
 - [x] ExtendScript exporter: `logSpan()` with `$.writeln()` timestamps
 
 ### Emitters (5 formats)
-- [x] HTML fragment (hast) — all element types: text, shapes, video, SVG/PNG layers, raw HTML
-- [x] HTML string (byte-identical, no deps) — for ExtendScript bundle
+- [x] HTML — one emitter: a node-tree builder (`emitters/html-tree.ts`) over an ES3-safe serializer (`emitters/shared/html-node.ts`). `html.ts` and `html-string.ts` are re-export entry points, not two implementations. Covers text, shapes, video, SVG/PNG layers, raw HTML
 - [x] Standalone HTML with template support
 - [x] Svelte component ($props, assetsPath, scoped CSS)
 - [x] React component (typed props, assetsPath, className)
@@ -49,7 +57,8 @@
 - [x] Symbol/div shape detection (rectangles, circles, lines)
 - [x] Video layer URL extraction
 - [x] HTML before/after layer content extraction
-- [x] Clipping mask detection, locked object handling
+- [x] Locked object handling (LIFO unlock/relock restore stack)
+- [ ] Clipping mask detection — the `findClippedTextFrames` helper had no call sites and was deleted rather than wired (it excluded every text frame in a clipping group, not just the clipped ones). Masked text still exports; see Known Limitations
 - [x] Image export (PNG8/JPG, auto format, retina 2x)
 - [x] Local config file resolution, cache bust auto-increment, promo image
 - [x] Overset text detection, automated mode, timing + structured warnings
@@ -87,7 +96,7 @@
 - [x] Internal Figma support gate doc tracking what passes now vs what still blocks a support claim
 
 ### IR Schema Improvements
-- [x] `irVersion` field on Document (pre-release: `"0.0.0"`)
+- [x] `irVersion` field on Document (pre-release: `"0.1.0"`)
 - [x] `letterSpacing` in em (was `tracking` in AI thousandths) — exporters convert at boundary
 - [x] `renderAsReason` on TextElement — explains why exporter chose html/image
 - [x] `direction` on Paragraph (optional: `"ltr" | "rtl"`)
@@ -99,11 +108,20 @@
 - [x] Unit convention JSDoc comments on opacity, letterSpacing, Color.opacity
 
 ### Testing
-- [x] 32 vitest test files, 586 tests
-- [x] 31 IR fixtures + 20 golden IR fixtures from real Illustrator exports
-- [x] Hardening-specific integration coverage for real Illustrator fixtures
-- [x] Fixture coverage (every fixture × 4 checks), specific feature tests, golden IR tests
-- [x] String emitter parity, bundle regression, multiple-files output tests
+- [x] 78 vitest test files
+- [x] 32 IR fixtures + 20 golden IR fixtures from real Illustrator exports
+- [x] Hardening-specific integration coverage for real Illustrator fixtures — every
+      registered fixture is either asserted by name or on an explicit exemption list,
+      checked by a registry test (no early-`return` tests that pass while asserting nothing)
+- [x] Fixture coverage (one end-to-end check per fixture), specific feature tests, golden IR tests
+- [x] Serializer↔hast byte-equality (`test/unit/html-serializer.test.ts`), bundle regression, multiple-files output tests
+- [x] Both framework emitters sweep the **whole** fixture corpus under default options
+      (the shared list in `test/fixtures/component-fixtures.ts`); emitter *options* are
+      swept only over structurally distinct fixtures, since a second fixture of the same
+      shape cannot fail where the first passes
+- [x] Adversarial escaping matrix (`test/unit/emitter-escaping-parity.test.ts`) keeps its
+      full option cross-product — that axis genuinely changes behavior and caught a
+      four-field divergence that only appeared under specific combinations
 - [x] Playwright visual baselines for layout-sensitive real Illustrator fixtures
 
 ### Documentation
@@ -124,6 +142,25 @@
 | TypeScript React output (.tsx) | v1.1 | `emitterConfig.react.typescript` — already implemented |
 | Settings block creation | v2 | Create if missing |
 
+## Confirmed Broken
+
+Verified against the code and reproduced. These are defects, not limitations — several are features listed as complete above.
+
+| What | Where | Effect |
+|---|---|---|
+| `output: multiple-files` no-op on Illustrator | `src/extendscript/index.ts:84` | `groupArtboards` never called; the `multiple-files-test` fixture emits one file |
+| `imageFormat: svg`/`png24` → PNG8 on Illustrator | `exporter.jsx:1177` | Silently wrong format, no warning |
+| Illustrator emits HTML only | `src/extendscript/index.ts:84` | Standalone/Svelte/React unreachable from the production surface |
+| Element ids not slug-prefixed | emitters | Two graphics on one page collide on `g-ai0-1` |
+| Visual baselines are stale | `test/visual/fixture-output/` | 28 checked-in HTML files nothing regenerates; ~56 tests screenshot a superseded emitter |
+| `useLazyLoader` emits `data-src` with no loader | `html-tree.ts` (`video` layer arm) | **No loader script is emitted anywhere in `src/`** — lazy videos never receive a `src` and simply never play. The emitter warns per video layer (`video:lazy-src-no-loader`); the loader is still unimplemented |
+| `output: multiple-files` collapses for `standalone` | `registry-shared.ts:84-96` | `emitAll` discards `groups`; verified html→2 files, svelte→2, react→2, **standalone→1** |
+| Illustrator custom blocks are `ai2html-` prefix only | `exporter.jsx:242` | A block named `all2html-css` — the obvious guess given the product name — silently does nothing |
+| Figma `:symbol` and `:div` parsed then rejected | `runtime-extract.ts:464` | Recognized by the tag parser, then skipped with a warning |
+| Figma frame token is `:image`, not `:image-only` | `extract/frames.ts:33` | Diverges from the Illustrator artboard-token vocabulary |
+
+**31 DEAD settings cells** (a control accepts a value, the export succeeds, nothing happens) are catalogued with file:line proof in [`internal-docs/capability-matrix.md`](internal-docs/capability-matrix.md). That document is the evidence base for the capability-declaration work in SPEC §12.5. D1-D30 warn from the core capability check on Illustrator, Figma, the CLI and the browser; D31 warns from the emitters. After Effects declares its capabilities but does not enforce them — it never loads the core (decision D26).
+
 ## Known Limitations
 
 - Windows CEP/manual Illustrator QA still requires a real Windows Illustrator environment
@@ -132,7 +169,12 @@
 - Figma special layers now cover the main Illustrator-aligned tags, but `:symbol` and `:div` remain deferred on the Figma side
 - Figma plugin still has no repeated live visual baseline capture from real Figma exports
 - ExtendScript now uses a deterministic `tsc -> rollup` build path to avoid stale-bundle drift; revisit later if we want a cleaner single-step build without reintroducing resolution/transpilation mismatches
+- Illustrator: text hidden by a clipping mask still appears in the output. The exporter filters text frames by artboard intersection, visibility, and layer tag, never by mask geometry — `plugins/illustrator/exporter.jsx` carried a `findClippedTextFrames` helper for this that was never called, and it was deleted rather than wired because it excluded every text frame in a clipping group whether or not it was actually clipped. Workaround: delete or move clipped text instead of relying on the mask to hide it
 - Rotated text transform-origin may drift vs ai2html on edge cases
-- ExtendScript character scanning is slow on large documents
+- Illustrator export cost is dominated by asset writing, not by scanning. Measured
+  2026-07-27: `layer-types-test.ai` 0.2s, `countries.ai` 4.0s (3.4s of it writing two
+  210 KB inline SVGs). Character scanning is 17 ms for 258 characters and the text-frame
+  filter is 4 ms for 72 frames, so neither is worth optimizing. The former note here
+  ("character scanning is slow on large documents") was wrong and cost a day chasing it
 - Missing fonts: substituted with defaults
 - Document marked as modified after export (due to unlock/relock)

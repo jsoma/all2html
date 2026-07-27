@@ -7,6 +7,8 @@ description: SVG import from single files, folders, or ZIPs, including Canva-sty
 
 The SVG importer is the tool-agnostic path. It is especially useful for Canva exports, but it is not Canva-specific in the architecture.
 
+**This path is beta.** It runs the full pipeline and emits every output format, but an SVG carries less information than a native design document, so text recovery and layer structure are best-effort. In particular, **SVG input supports no layer tags** — `:png`, `:svg`, `:video` and the HTML hooks are read from IR that some other exporter produced, and the SVG importer never produces them. Grouping and rendering come from filenames instead, as described below.
+
 ## Open It
 
 - [Open the SVG browser converter](https://jsoma.github.io/all2html/svg-converter/)
@@ -85,6 +87,3 @@ The SVG importer supports the full emitter surface:
 - generic SVG-to-web conversion
 - multi-file responsive graphics
 - one-off visual tests through the browser app
-
-> Screenshot placeholder
-> Crop the dropzone after upload with the selected format, warnings list, and generated bundle summary visible.

@@ -40,7 +40,7 @@ The panel is the better install for people who use all2html frequently.
 2. Create one or more artboards.
 3. Add text, overlays, and special layers.
 4. Run the script or export from the panel.
-5. Rejoice in the the generated HTML/images.
+5. Rejoice in the generated HTML/images.
 
 Output is written next to the document by default in `all2html-output/`.
 
@@ -66,20 +66,30 @@ You can set them in:
 
 The panel also shows where values are coming from and lets you save defaults.
 
+Names in an `ai2html-settings` text block are snake_case (`image_format`); everywhere else — `all2html.config.json`, `ir.json`, the panel — they are camelCase (`imageFormat`). Both resolve to the same setting.
+
+Two of these do less than they look like they do on Illustrator: `image_format` only distinguishes `jpg` from everything else (`png24` and `svg` both come out as 8-bit PNG), and `output: multiple-files` still emits a single HTML file. The export warns when you ask for something Illustrator will not produce. The full list is in the [Settings Reference](../reference/settings.md).
+
 ## Special Layers
 
 Illustrator supports the richest set of special layers today. The main ones are:
 
 - `:png`
 - `:svg`
-- `:svg:inline`
+- `:svg,inline` (or the shorthand `:inline`)
 - `:video`
 - `:html-before`
 - `:html-after`
 - `:symbol`
 - `:div`
 
-These either stay as overlays/hooks or influence how the final background and HTML are built. They are explained in more detail in [Special Layers](../how-it-works/special-layers.md).
+Inline SVG is spelled **`:svg,inline`** — with a comma. `:svg:inline` is the *Figma* spelling and matches nothing in Illustrator: the layer will silently export as ordinary artwork instead.
+
+Illustrator splits the layer name on the first `:`, lowercases the rest, and matches it exactly, so `My chart:PNG` works but `:png ` with a trailing space does not.
+
+The document-level `inlineSvg` setting is not read by any surface. Tag the individual layer instead.
+
+These either stay as overlays/hooks or influence how the final background and HTML are built. They are explained in more detail in [Special Layers](../how-it-works/special-layers.md), and compared across surfaces in the [Support Matrix](../reference/support-matrix.md).
 
 ## Fonts
 
@@ -107,6 +117,3 @@ The panel also has a `Google Fonts` control. It writes the canonical `googleFont
 - classic newsroom ai2html workflows
 - special-layer overlays and hooks
 - deterministic background image generation
-
-> Screenshot placeholder
-> Crop the main panel settings area plus one visible badge or font-mapping row.

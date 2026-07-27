@@ -5,7 +5,9 @@ description: Figma manifest-import workflow, export model, and current plugin be
 
 # Figma
 
-The Figma plugin works well now and fits the same pipeline as the other surfaces.
+**The Figma plugin is beta.** It runs, it fits the same pipeline as the other surfaces, and it exports real newsroom files — but it is not a supported exporter yet. Expect to check the output, and check the [Settings Reference](../reference/settings.md) before relying on a setting: several settings that the Illustrator path honors do nothing here.
+
+Beta means, concretely: no repeated live-export sign-off yet, and the raster export is fixed at transparent full-color PNG at 1x regardless of what you set.
 
 ## Download
 
@@ -63,7 +65,7 @@ The plugin keeps shared config in `figma.root` plugin data and local convenience
 
 The settings UI includes `Google Fonts` with `Off`, `CSS @import`, and `Link tag` modes. Figma text fonts are inferred into canonical font mappings automatically, and explicit config mappings still override the inferred mapping for the same `sourceFont`.
 
-Top-level tagged child nodes inside a selected frame can define special layers with the Illustrator-aligned naming contract:
+Top-level tagged child nodes inside a selected frame can define special layers:
 
 - `:png`
 - `:svg`
@@ -71,6 +73,17 @@ Top-level tagged child nodes inside a selected frame can define special layers w
 - `:video`
 - `:html-before`
 - `:html-after`
+
+Figma's tag syntax is **not** the same as Illustrator's, even though the tag names look alike:
+
+- Inline SVG is written `:svg:inline` here. Illustrator's `:svg,inline` and `:inline` do not match in Figma.
+- Matching is case-insensitive and works as a prefix **or** a suffix of the node name.
+- Only direct children of the selected frame are scanned.
+- `:symbol` and `:div` are parsed and then rejected — they do nothing in Figma.
+
+Frame names take a separate set of tokens: `:dynamic`, `:fixed`, `:image` (not `:image-only`), or a bare integer width override.
+
+See the [Support Matrix](../reference/support-matrix.md) for the full per-surface tag comparison.
 
 ## What Figma Is Good For Right Now
 
@@ -80,6 +93,3 @@ Top-level tagged child nodes inside a selected frame can define special layers w
 - special hooks and visual overlays
 
 It is less about full-file auto-discovery and more about clean, selected export roots.
-
-> Screenshot placeholder
-> Crop the Figma plugin UI showing the selection summary, preset selector, and export format controls.

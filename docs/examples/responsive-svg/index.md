@@ -29,6 +29,3 @@ This example shows how multiple SVG files can become one responsive group.
 ## Notes
 
 The `--640` and `--960` suffixes are what let the importer treat these as related responsive variants.
-
-> Screenshot placeholder
-> Crop the output so both the mobile-scale and wider treatment can be compared side by side.

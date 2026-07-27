@@ -10,15 +10,20 @@ Clean-room reimplementation of ai2html as a plugin-based system. Exporters produ
 - `pnpm run typecheck` — type check without emitting
 - `pnpm build:extendscript` — build ES5 core bundle
 - `pnpm build:figma` — build the runnable Figma plugin to `plugins/figma/dist/`
-- `pnpm build:illustrator` — build assembled Illustrator plugin (~136KB)
+- `pnpm build:illustrator` — build assembled Illustrator plugin (~186KB)
 - `pnpm build:panel` — build Illustrator panel package from source
 - `pnpm package:panel` — build Illustrator bundle + signed panel package
-- `pnpm package:panel:zip` — build Illustrator bundle + panel zip
+- `pnpm package:panel:zip` — build Illustrator bundle + panel zip **and** the signed `.zxp` (the zip target signs first, then wraps; see `internal-docs/cep-panel-architecture.md`)
 - `pnpm diagnostics:illustrator` — read structured CEP diagnostics from the Illustrator host
 - `pnpm diagnostics:after-effects` — read structured CEP diagnostics from the After Effects host
 - `pnpm exec tsx src/cli/index.ts render <ir.json> -o <dir> [--format html|standalone|svelte|react] [--verbose]`
 - `pnpm exec tsx src/cli/index.ts watch <ir.json> -o <dir> [--format html|standalone|svelte|react] [--verbose]` — watch mode
+- `pnpm exec tsx src/cli/index.ts import svg <input> -o <dir> [--format ...] [--verbose]` — import SVG files directly
 - `pnpm exec tsx src/cli/index.ts validate <ir.json>` — validate IR schema
+- `pnpm check` — the full gate: lint + root typecheck + 3 panel typechecks + test
+- `pnpm build` — clears `dist/` then `tsc -p tsconfig.build.json`; produces the publishable package. CI runs it, then `node scripts/check-package-entrypoints.mjs`. The clean is not optional: `files` publishes `dist/**/*.js`, so a module deleted from `src/` otherwise stays in the tarball — `dist/emitters/shared/hast-helpers.js` lingered that way with a value import of a package that had moved to devDependencies. Run it *before* `build:illustrator`/`build:panel`, not after: it also removes `dist/all2html.js` and `dist/after-effects/`.
+- `pnpm check:generated-docs` — assert `docs/reference/{settings,support-matrix}.md` still match the definitions they are generated from
+- `pnpm check:release-artifacts` — assert every release artifact was produced and is non-empty (CI Artifacts + release workflows)
 - `bash scripts/test-illustrator.sh` — run all .ai files through Illustrator (needs AI running)
 - `pnpm exec tsx scripts/generate-illustrator-hardening-fixtures.ts [fixture...]` — regenerate the scripted real Illustrator `.ai` fixtures (pass names to avoid rewriting unrelated binaries)
 - `pnpm exec tsx scripts/export-illustrator-fixtures.ts --golden [fixture...]` — re-export tracked Illustrator fixtures through the real bundle and refresh saved outputs/goldens
@@ -29,7 +34,9 @@ Clean-room reimplementation of ai2html as a plugin-based system. Exporters produ
 **Pipeline:** IR JSON → `loadAndValidateIR` → `resolveSettings` → `computeBreakpoints` → `computeStyles` → `deduplicateStyles` → `computePositions` → `groupArtboards` → emitter → optional output bundle
 
 Each transform takes a phase-typed document and returns the next phase:
-`Document` → `ResolvedDocument` → `StyledDocument` → `DeduplicatedDocument` → `EmitterReadyDocument`
+`Document` → `ResolvedDocument` → `BreakpointedDocument` → `StyledDocument` → `DeduplicatedDocument` → `EmitterReadyDocument`
+
+**Phase rule:** every intermediate document carries an explicit `pipelinePhase` literal (`PhaseDocument<P>` in `src/ir/types.ts`). The literal — not the presence of extra fields — is what makes the phases mutually unassignable, so a transform can be neither skipped nor run twice. Phase documents are internal: the persisted canonical IR is always the validated source `Document`, and `Document.pipelinePhase` is a type-level `never` marker that never exists at runtime.
 
 **Boundary rule:** Input plugins (e.g. ExtendScript) extract data the design tool knows. The core handles everything tool-agnostic (CSS, positions, breakpoints, HTML).
 
@@ -46,7 +53,7 @@ Each transform takes a phase-typed document and returns the next phase:
 - IR documents must include `irVersion` (currently `"0.1.0"` pre-release)
 - IR documents must include `source`; source-native names/IDs belong under `source`, not ad-hoc top-level fields
 - Artboard/layer IDs must be stable and unique inside the document. File importers should include enough path/source context to avoid basename collisions.
-- All positions in IR are absolute pixels, top-left origin, per-artboard coordinate space
+- All positions in **static-scene** IR are absolute pixels, top-left origin, per-artboard coordinate space. This is a static-scene rule, not a global IR rule — temporal scenes key to time and map scenes carry a geographic space (SPEC.md §12.10).
 - IR `letterSpacing` is in em units (CSS-ready). Exporters convert from tool-native (e.g., AI tracking / 1000)
 - IR `opacity` fields are 0-100 scale (Illustrator convention). Core converts to CSS 0-1
 - Asset record keys must equal `asset.id`. Asset `artboardId`/`layerId` references must point at real canonical IDs. Paths are relative to IR file directory
@@ -71,12 +78,19 @@ Each transform takes a phase-typed document and returns the next phase:
 - No `as any` in core transforms — use the phase types (`EmitterReadyShapeElement`, etc.)
 - Document model must stay JSON-serializable (no `Map`, no `Set`)
 - Generated artifacts (`dist/`, panel `dist/`, `.zip`, `.zxp`) are release outputs, not tracked source files
-- Attribute values in HTML output must use `escapeAttr()`
+- The HTML emitter builds a serializable node tree and **passes raw values only**. All escaping happens once, in the serializer (`src/emitters/shared/html-node.ts`), which picks the grammar from the node's position in the tree. Escaping at a builder call site would double-escape
 - Config files use JSONC (parsed with `jsonc-parser` in Node, `//` stripping in ExtendScript)
-- HTML emitter (hast) and HTML string emitter must produce byte-identical output — test with `html-string-emitter.test.ts` and fixture coverage
+- There is **one** HTML emitter (SPEC §12.6 / D23): `src/emitters/html-tree.ts` builds a plain-object node tree, `src/emitters/shared/html-node.ts` serializes it, and `html.ts` / `html-string.ts` are re-export entry points onto the same function. Do not reintroduce a parallel implementation — the byte-parity bug class is now retired by construction, not by test. `src/emitters/shared/to-hast.ts` keeps a hast adapter for rehype-based post-processing; nothing in the repo consumes it at runtime, but `test/unit/html-serializer.test.ts` renders every IR fixture through it and asserts byte equality, which is what keeps the escaping subsets pinned to hast's own
 - After rebuilding core, must also `pnpm build:extendscript` before bundle tests pass
+- ExtendScript has no ES2015+ *runtime APIs*; transpilers lower syntax but never polyfill APIs. `test/integration/es5-runtime-apis.test.ts` scans every shipped ExtendScript artifact and the panel `src/jsx` sources. Its allowlist is derived from `src/extendscript/polyfills.ts` — add the polyfill there rather than editing the test
+- Tests that inspect build artifacts must go through `test/helpers/extendscript-build.ts`, which rebuilds when an artifact is missing **or older than its inputs**. Existence checks alone let a stale `dist/` satisfy the ES5 guard while the current sources are broken
+- Both ExtendScript artifacts — the ES5 core bundle and the assembled `dist/all2html.js` users install — are guarded against checked-in baselines (`test/fixtures/extendscript-bundle-baseline.json`) plus a growth tolerance, not a fixed cliff. Size, delta, and headroom print on every test run, and any growth above the recorded baseline is reported as UNATTRIBUTED DRIFT. Raising `bytes` is allowed but must be a deliberate, reviewed commit, and the last `history` entry must state the new number — the test fails otherwise
+- Panel/docs help copy for settings lives in `src/ir/setting-help.ts`, never on `SETTING_DEFINITIONS`. That table is imported by the ExtendScript bundle and rollup cannot tree-shake object properties, so help copy on it ships into Illustrator (it cost 8,706 B). Nothing in `src/extendscript/` may import `setting-help.ts`
+- HTML escaping inside `src/emitters/` is single-sourced in `src/emitters/shared/escape.ts` and **deliberately narrowed to match `hast-util-to-html`'s subsets** (text: `&` `<`; double-quoted attributes: NUL `"` `&` `'` backtick) so the serializer and the `toHast()` adapter stay byte-identical. hast offers no way to *widen* its escaping, so matching it was the only route to byte-identity. Do not add a local escape helper inside `src/emitters/`, and do not "fix" the narrowness without re-proving parity
+- Three escape helpers legitimately survive **outside** `src/emitters/`, and this is not yet cleaned up: `plugins/after-effects/exporter.jsx` (ExtendScript, cannot import TS), `plugins/figma/src/ui-entry.ts`, and `apps/svg-dropzone/src/app.ts`. The last one uses its local helper in an *attribute* context (`app.ts:292`) and is safe only because that copy escapes `"` — swapping in the narrowed shared helper would open a hole. Those two browser surfaces need an `escapeAttr`/`escapeHtml` split before they can share
+- `script` and `style` are raw-text elements: the serializer runs their `text` children through `escapeScriptContent()` / `escapeStyleContent()` instead of HTML-escaping them, so a custom block cannot break out. Passing a `raw()` child into either element bypasses that and must be deliberate
 - Use the `ObservableLogger` interface for pipeline observability — pass via `options.logger` to `processDocument()`. Default is `noopLogger` (zero overhead). Use `createConsoleLogger()` for CLI verbose mode, `createCollectingLogger()` for tests.
-- In hast emitter: do NOT call `escapeAttr()`/`escapeHtml()` on values passed to `h()` — hast auto-escapes. Only escape inside `raw()` nodes.
+- Node-tree attributes are an **ordered array of `[name, value]` pairs**, not an object: ES3 does not define `for...in` order and ExtendScript's `Object.keys` is a `for...in` polyfill, so object key order was unspecified in the shipped artifact. `undefined`/`null`/`false` omit the attribute; `true` emits a bare boolean attribute.
 - Emitter registry (`src/emitters/registry.ts`): all emitters return `{ files: EmitFile[], warnings }` via `emitAll(doc, groups)`. CLI uses `getEmitter(format)` — no if/else dispatch.
 - Importer/emitter registries are internal extension seams for now. Use `registerImporter`, `registerEmitter`, and browser-safe `registerBrowserEmitter`; do not add public third-party plugin loading yet.
 - Browser apps should use `src/browser.ts` orchestration helpers such as `convertLoadedSvgFilesInBrowser` instead of duplicating import/process/emit/bundle logic.
@@ -145,16 +159,48 @@ Shared CEP architecture is documented in `internal-docs/cep-panel-architecture.m
 
 ## Deferred Features (v1.1+)
 
-These are specced but NOT implemented yet. Don't implement without checking SPEC.md phasing:
-- SnippetElement rendering (v1.1)
-- Tagged text bindings (v1.2)
+These are specced but NOT implemented yet:
+- SnippetElement rendering (v1.1) — IR types exist; `shared/replaceable-nodes.ts` is written but imported by no emitter
+- Tagged text bindings (v1.2) — `data-binding-path` is emitted but inert
 - onMounted/onArtboardChange callbacks (v1.2)
-- CSS custom property image loading (v1.1)
 - Global config file (`~/.all2html/config.json`) (v2)
+
+(CSS custom property image loading is **shipped**, not deferred — `src/emitters/shared/css.ts`. `positionMode: "percentage"` is also shipped.)
+
+## Known Broken — do not assume these work
+
+Verified against the code. Fix or remove; do not build on top of them.
+
+- **`output: multiple-files` is a no-op on Illustrator.** `groupArtboards` is never called from `src/extendscript/index.ts`; the single `emitHTMLString(ready)` at `:84` emits one file. The `multiple-files-test` fixture passes while producing a single HTML file.
+- **`imageFormat: svg` and `png24` silently produce PNG8 on Illustrator.** `exporter.jsx:1177-1194` branches only jpg vs `ExportType.PNG8`.
+- **Illustrator emits HTML only.** `src/extendscript/index.ts:84` hardcodes `emitHTMLString`; the emitter registry is unreachable from that surface. Standalone/Svelte/React are CLI-only. Figma does html + standalone.
+- **After Effects never loads the core** (`grep -c All2Html plugins/after-effects/exporter.jsx` → 0) and carries a forked copy of the google-fonts and escaping helpers.
+- **31 settings cells are DEAD** — a control accepts the value, the export succeeds, nothing happens. Three of them (Figma `pngTransparent`, `pngNumberOfColors`, `use2xImages`) are dead *at their default*, so those warn on every Figma export. Full table with file:line proof in `internal-docs/capability-matrix.md`. Check it before assuming any setting works on any surface.
+- **`useLazyLoader` emits `data-src` but no loader script exists anywhere in `src/`** — lazy videos never receive a `src` and never play. Images are fine (native `loading="lazy"`). Both HTML emitters now warn per video layer (`video:lazy-src-no-loader`); the loader itself is still unimplemented.
+- **Illustrator custom blocks match `ai2html-` only.** A text block named `all2html-css` — the obvious guess — silently does nothing (`exporter.jsx:242`).
+
+## Contract Rules
+
+These encode failures that have already happened. Treat them as hard rules.
+
+- **The document model must survive a JSON round-trip.** No `Infinity`, `NaN`, `undefined`, `Map`, or `Set` anywhere in it. Use optional/absent instead of sentinels. Enforced per transform by `assertJsonPure()` (`src/core/json-purity.ts`).
+- **Phase types must make the previous phase's uncertainty unrepresentable.** If a transform can be skipped without a type error, the phase type is decoration. Never fabricate a placeholder value to satisfy a later phase type — add the missing phase instead. Model a variant that transforms skip (image-rendered text) as its own type rather than casting past it, and never re-admit an earlier phase's element variants into a later phase's layer union: every `"computedX" in el` probe in an emitter is a phase-type defect. `test/unit/pipeline-phase-types.test.ts` pins this down with `@ts-expect-error` assertions that `pnpm run typecheck` enforces.
+- **No forked helpers between exporters and core.** If an exporter needs tool-agnostic logic, export it from `src/extendscript/index.ts` and load the bundle. Hand-copied ES5 forks are how `groupWarnings` and the google-fonts helpers drifted.
+- **The product boundary is "a graphics desk person needs to embed this in a web page," not "responsive positioned text."** Motion work (After Effects today; Lottie, Rive, Cavalry plausibly later) is in scope. Do not infer product scope from code sharing — if a surface shares little with the core, that is evidence the contract does not generalize yet, not evidence the surface is a different product. See SPEC.md §12.9.
+- **A surface must not accept a setting it does not honor.** Silently ignoring a value is worse than rejecting it. If a surface cannot act on a setting, it warns; if a UI cannot act on it, it does not show the control. This is enforced by the declarations in `src/core/capabilities.ts`: every surface declares its settings as `honored` / `partial` / `unsupported` / `na`, and `processDocumentShared` warns (`setting:unsupported`) for anything the surface will not produce. **Compare the request against what the surface actually does, never against the global default** — a default the surface does not implement is exactly the case the warning exists for, and comparing against it is wrong in both directions (see D25). Declare the real behavior with `divergesAtDefault`; defer content-dependent gaps to the emitter with `warnedByEmitter`. Adding a capability means editing that table, not adding a conditional. Surfaces must pass their identity through `options.surface`, including `format`. After Effects is declared but not enforced (`runtimeChecked: false`) — it never loads the core.
+- **Emitter parity is asserted on adversarial input, not fixtures.** Any test that only proves output *exists* (`length > 100`, no `NaN`) proves nothing. Assert that a given setting changes the output in a specific way.
+- **Warnings carry a structured code, not English prose.** `StructuredWarning` in `src/core/warnings.ts` has `code`, `category`, `message` and optional `artboardId`/`layerId`/`elementId`/`setting`/`surface`. Assign the code and category **at the call site**; never classify by matching the message. Public results keep `warnings: string[]` as a projection of `structuredWarnings` — do not remove it, the manifest and every surface UI read it.
+
+## Surface-Specific Gotchas
+
+- **Special-layer tag syntax differs by tool and the docs currently merge them.** Illustrator splits on the *first* colon (`exporter.jsx:412`) and accepts `:svg,inline` or `:inline`. Figma accepts `:svg:inline`. `:svg:inline` on an Illustrator layer matches nothing and falls through to the unrecognized-tag warning.
+- **The Illustrator `all2html.config.json` needs snake_case keys.** `exporter.jsx:1685-1698` merges config → panel → text block into one bag read as `docSettings.project_name`. The camelCase rule applies to the IR and the core config, not to that file. Illustrator settings precedence is `config file < panel < text block`.
+- Artboards whose names start with `-` are skipped entirely.
 
 ## Reference
 
-- `SPEC.md` — full technical specification
-- `PROGRESS.md` — what's done, what's deferred, known limitations
+- `SPEC.md` — the **target** design. Aspirational, not a description of current behavior.
+- `PROGRESS.md` — what is actually built. This is the accurate one; trust it over SPEC.md.
+- `internal-docs/capability-matrix.md` — which settings and features each surface actually honors
 - `research/ai2html-feature-spec.md` — exhaustive ai2html feature catalog (1348 lines)
 - `research/ai2svelte-feature-spec.md` — Reuters ai2svelte analysis (CEP extension, snippets, tagged text)
