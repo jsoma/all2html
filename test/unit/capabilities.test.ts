@@ -366,6 +366,46 @@ describe("declarations match what the code actually does", () => {
     expect(asStandalone.map((warning) => warning.setting)).toEqual(["output"]);
   });
 
+  it("htmlOutputExtension is honored for html only, and silent at its default", () => {
+    // Matrix footnote 5: registry-shared.ts:50 is the only reader. :64 forces
+    // .svelte, :77 forces .jsx/.tsx, :90 hardcodes .html for standalone.
+    const forFormat = (surface: SurfaceId, format: string, value: string) =>
+      checkCapabilitiesForSurface(settingsWith("htmlOutputExtension", value), {
+        surface,
+        path: "render",
+        format,
+      }).filter((warning) => warning.setting === "htmlOutputExtension");
+
+    for (const surface of ["cli", "browser", "figma"] as const) {
+      // The user asked for something the format cannot deliver.
+      for (const format of ["standalone", "svelte", "react"]) {
+        const warnings = forFormat(surface, format, ".php");
+        expect(warnings, `${surface}/${format} did not warn`).toHaveLength(1);
+        expect(warnings[0].code).toBe(SETTING_UNSUPPORTED_CODE);
+        expect(warnings[0].message).toContain(".php");
+        expect(warnings[0].message).toContain("standalone emitter always writes .html");
+        // The default is silent even on the formats that ignore it: .html is
+        // what those formats' own extensions amount to asking for.
+        expect(forFormat(surface, format, ".html")).toEqual([]);
+      }
+      // html is the one emitter that reads it, so nothing warns there.
+      expect(forFormat(surface, "html", ".php")).toEqual([]);
+      expect(forFormat(surface, "html", ".html")).toEqual([]);
+    }
+  });
+
+  it("Illustrator honors htmlOutputExtension outright, because it emits html only", () => {
+    // exporter.jsx writes outputPath + slug + settings.htmlOutputExtension.
+    expect(getSurfaceCapabilities("illustrator").settings.htmlOutputExtension).toBeUndefined();
+    expect(
+      checkCapabilitiesForSurface(settingsWith("htmlOutputExtension", ".php"), {
+        surface: "illustrator",
+        path: "render",
+        format: "html",
+      }).filter((warning) => warning.setting === "htmlOutputExtension"),
+    ).toEqual([]);
+  });
+
   it("rasterization settings are honored on `import svg` but inert on `render`", () => {
     // Matrix footnotes 1-2.
     const onImport = checkCapabilitiesForSurface(settingsWith("jpgQuality", 50), {

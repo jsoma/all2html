@@ -161,6 +161,29 @@ const LAZY_LOADER: SettingSupport = {
   note: 'Images get native loading="lazy". Videos are emitted with data-src and no src and no loader script is emitted, so a lazily-loaded video never plays; the emitter warns per video layer.',
 };
 
+/**
+ * Matrix footnote 5 — the extension is an `html` emitter concept only.
+ *
+ * `registry-shared.ts:50` is the single reader; `:64` forces `.svelte`, `:77`
+ * forces `.jsx`/`.tsx`, and `:90` hardcodes `.html` for standalone. Declared
+ * `partial` with the three formats that ignore it, so a non-default extension
+ * warns exactly when the run is targeting one of them — and an untouched
+ * `.html` stays silent on every format, because that is what those formats
+ * would have produced anyway.
+ *
+ * Illustrator carries no entry: it emits `html` only and writes the extension
+ * verbatim (`exporter.jsx:1815`), so it honors the setting outright.
+ *
+ * Shared, and declared here rather than beside the other shared entries,
+ * because the Figma table below references it and a `const` is in its temporal
+ * dead zone until this line runs.
+ */
+const HTML_ONLY_OUTPUT_EXTENSION: SettingSupport = {
+  status: "partial",
+  unsupportedFormats: ["standalone", "svelte", "react"],
+  note: "Only the html emitter uses this extension. The svelte and react emitters force .svelte and .jsx/.tsx, and the standalone emitter always writes .html.",
+};
+
 /* ------------------------------------------------------------------ */
 /* Illustrator                                                         */
 /* ------------------------------------------------------------------ */
@@ -326,6 +349,8 @@ export const figmaCapabilities: SurfaceCapabilities = {
       status: "unsupported",
       note: "Figma always writes extracted assets into the export ZIP.",
     },
+    // Footnote 5 — Figma emits html and standalone; standalone ignores this.
+    htmlOutputExtension: HTML_ONLY_OUTPUT_EXTENSION,
     // D11 — delivery is a ZIP; paths come from the bundle manifest.
     htmlOutputPath: {
       status: "unsupported",
@@ -499,6 +524,7 @@ const CLI_SETTINGS: { [key: string]: SettingSupport } = {
   renderTextAs: IMPORT_ONLY_TEXT_RENDER,
   writeImageFiles: NODE_WRITE_IMAGE_FILES,
   htmlOutputPath: NODE_HTML_OUTPUT_PATH,
+  htmlOutputExtension: HTML_ONLY_OUTPUT_EXTENSION,
   renderRotatedSkewedTextAs: NODE_ROTATED_TEXT,
   inlineSvg: NODE_INLINE_SVG,
   svgIdPrefix: NODE_SVG_ID_PREFIX,
@@ -519,6 +545,7 @@ const BROWSER_SETTINGS: { [key: string]: SettingSupport } = {
   renderTextAs: IMPORT_ONLY_TEXT_RENDER,
   writeImageFiles: NODE_WRITE_IMAGE_FILES,
   htmlOutputPath: NODE_HTML_OUTPUT_PATH,
+  htmlOutputExtension: HTML_ONLY_OUTPUT_EXTENSION,
   renderRotatedSkewedTextAs: NODE_ROTATED_TEXT,
   inlineSvg: NODE_INLINE_SVG,
   svgIdPrefix: NODE_SVG_ID_PREFIX,

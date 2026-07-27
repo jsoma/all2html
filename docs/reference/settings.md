@@ -56,7 +56,7 @@ A surface that warns tells you, during the export itself, whenever you asked for
 | [`projectName`](#projectName) | yes | n/a | yes | yes | yes |
 | [`output`](#output) | **no** | n/a | partial | partial | partial |
 | [`htmlOutputPath`](#htmlOutputPath) | yes | n/a | **no** | **no** | **no** |
-| [`htmlOutputExtension`](#htmlOutputExtension) | yes | n/a | yes | yes | yes |
+| [`htmlOutputExtension`](#htmlOutputExtension) | yes | n/a | partial | partial | partial |
 | [`imageOutputPath`](#imageOutputPath) | yes | n/a | partial | yes | yes |
 | [`imageSourcePath`](#imageSourcePath) | yes | n/a | yes | yes | yes |
 | [`responsiveness`](#responsiveness) | yes | n/a | yes | yes | yes |
@@ -277,11 +277,14 @@ Honored on: Illustrator.
 
 File extension used for emitted HTML files, for CMSes that expect something other than `.html`.
 
-Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
+Honored on: Illustrator.
 
 | Surface | Support | What actually happens |
 |---|---|---|
 | After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | partial | Not honored for the `standalone`, `svelte`, `react` format. Only the html emitter uses this extension. The svelte and react emitters force .svelte and .jsx/.tsx, and the standalone emitter always writes .html. |
+| all2html CLI | partial | Not honored for the `standalone`, `svelte`, `react` format. Only the html emitter uses this extension. The svelte and react emitters force .svelte and .jsx/.tsx, and the standalone emitter always writes .html. |
+| Browser converter | partial | Not honored for the `standalone`, `svelte`, `react` format. Only the html emitter uses this extension. The svelte and react emitters force .svelte and .jsx/.tsx, and the standalone emitter always writes .html. |
 
 <a id="imageOutputPath"></a>
 ### `imageOutputPath`
