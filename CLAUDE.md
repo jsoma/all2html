@@ -4,7 +4,7 @@ Clean-room reimplementation of ai2html as a plugin-based system. Exporters produ
 
 ## Commands
 
-Requires **Node >= 20.19** (declared in `package.json` `engines`). jsdom's dependency chain needs `require(esm)`; on older Nodes two test suites fail at collect time rather than failing an assertion, so the failure does not look like a version problem.
+Requires **Node 20.19+, 22.12+, or 23+** (declared in `package.json` `engines`; enforced at install by `.npmrc` `engine-strict` and at test time by `scripts/check-node-version.mjs`). jsdom's dependency chain needs `require(esm)`; on excluded Nodes (including all of 21.x) two test suites fail at collect time rather than failing an assertion, so the failure does not look like a version problem. The repo is pnpm-only — `preinstall` rejects npm/yarn.
 
 - `pnpm test` — run unit + integration tests (vitest)
 - `pnpm check:illustrator-fixtures` — audit the real Illustrator fixture registry against tracked artifacts
