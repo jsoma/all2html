@@ -165,8 +165,13 @@ describe("ExtendScript regex safety", () => {
     {
       label: "panel src/jsx",
       files: () => {
-        const { globSync } = require("node:fs") as typeof import("node:fs");
-        return globSync("plugins/illustrator/panel/src/jsx/**/*.{ts,js}");
+        // readdirSync recursive, not fs.globSync — CI runs Node 20, which
+        // does not have globSync.
+        const { readdirSync } = require("node:fs") as typeof import("node:fs");
+        const root = "plugins/illustrator/panel/src/jsx";
+        return readdirSync(root, { recursive: true, encoding: "utf8" })
+          .filter((name) => name.endsWith(".ts") || name.endsWith(".js"))
+          .map((name) => `${root}/${name}`);
       },
     },
     {
