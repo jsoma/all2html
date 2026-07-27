@@ -64,6 +64,12 @@ for (const dirName of testDirs) {
         await expect(page).toHaveScreenshot(`${dirName}-${width}.png`, {
           fullPage: true,
           threshold: 0.05,
+          // Linux font rasterization is not deterministic run-to-run at glyph
+          // edges (html-hooks-editorial flaked against its own previous CI
+          // actual on two injected text lines). A missing image or layout
+          // break diffs tens of thousands of pixels, so this absorbs
+          // antialiasing noise without blinding the lane.
+          maxDiffPixels: 2500,
         });
       });
     }
