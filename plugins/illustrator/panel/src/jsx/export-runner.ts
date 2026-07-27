@@ -61,7 +61,8 @@ function resolveScriptFile(
   // literal at the first unescaped `/` even inside a character class, so
   // /[^/\\]+$/ is a load-time SyntaxError that takes the whole hostscript
   // down with it. Guarded by extendscript-regex-safety.test.ts.
-  var primaryPath = env.getCurrentScriptPath().replace(/[^/\\]+$/, scriptFileName);
+  // biome-ignore lint/complexity/useRegexLiterals: the literal form is the bug -- biome's auto-fix reintroduced it once already
+  var primaryPath = env.getCurrentScriptPath().replace(new RegExp("[^/\\\\]+$"), scriptFileName);
   var scriptFile = env.createFile(primaryPath);
 
   if (scriptFile.exists) {
