@@ -10,6 +10,7 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": false,
     "sourceMap": false,
+    "removeComments": true,
     "downlevelIteration": false,
     "importHelpers": false
   },

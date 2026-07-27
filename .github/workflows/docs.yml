@@ -8,6 +8,11 @@ on:
 permissions:
   contents: write
 
+# Deploys to gh-pages, so overlapping runs would race on the same branch.
+concurrency:
+  group: docs-deploy
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest

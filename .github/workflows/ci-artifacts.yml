@@ -1,10 +1,43 @@
 name: CI Artifacts
 
+# Packaging only. Verification (tests, lint, typecheck, fixture audit, generated
+# docs, entry points) belongs to `ci.yml`, which runs on the same `main` pushes.
+# Duplicating it here bought nothing and doubled the runner minutes on every
+# merge. This workflow exists for the two things `ci.yml` cannot do on ubuntu:
+# building the signed .zxp, and proving the release packaging path still works
+# before a tag is cut rather than after.
+#
+# `pnpm package:panel:zip` already runs `build:illustrator` (which runs
+# `build:extendscript`) and `build:after-effects`, so those are not separate
+# steps. Signing needs no secret: vite-cep-plugin generates a self-signed
+# certificate from the `zxp` block in `plugins/illustrator/panel/cep.config.ts`
+# and timestamps it against a public TSA, with `allowSkipTSA` as the fallback.
+
 on:
+  # PR coverage is path-scoped: a docs or core-only PR does not need a macOS
+  # packaging run, but a change to the plugins or the packaging scripts does —
+  # that is the class of break `check:release-artifacts` used to catch only
+  # after a release had been published.
+  pull_request:
+    paths:
+      - "plugins/**"
+      - "scripts/assemble-illustrator.mjs"
+      - "scripts/build-extendscript.mjs"
+      - "scripts/build-figma-plugin.mjs"
+      - "scripts/package-after-effects.mjs"
+      - "scripts/check-release-artifacts.mjs"
+      - ".github/workflows/ci-artifacts.yml"
+      - ".github/workflows/release-artifacts.yml"
+      - "package.json"
+      - "pnpm-lock.yaml"
   push:
     branches:
       - main
   workflow_dispatch:
+
+concurrency:
+  group: ci-artifacts-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -28,32 +61,53 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build ExtendScript bundle
-        run: pnpm build:extendscript
-
-      - name: Run tests
-        run: pnpm test
-
-      - name: Run typecheck
-        run: pnpm run typecheck
-
-      - name: Audit Illustrator fixtures
-        run: pnpm check:illustrator-fixtures
-
-      - name: Build Illustrator bundle
-        run: pnpm build:illustrator
-
-      - name: Package panel zip
+      # `ZIP_PACKAGE=true` signs the .zxp *and* wraps it in the distributable
+      # zip, so this one step produces both release artifacts
+      # (dist/zxp/com.all2html.panel.zxp and dist/zip/all2html_<version>.zip).
+      # `pnpm package:panel` is not run after it: it is the same signing path
+      # with the zip step turned off, and it starts by clearing the panel's
+      # build output, which used to delete the zip this job had just produced.
+      - name: Package panel zip and zxp
         run: pnpm package:panel:zip
 
-      - name: Collect CI artifacts
+      - name: Build Figma plugin
+        run: pnpm build:figma
+
+      - name: Package Figma plugin zip
         run: |
+          mkdir -p dist/figma-plugin/dist
+          cp plugins/figma/manifest.json dist/figma-plugin/manifest.json
+          cp plugins/figma/dist/* dist/figma-plugin/dist/
+          python3 - <<'PY'
+          import os
+          import zipfile
+          root = "dist/figma-plugin"
+          out = "dist/all2html-figma-plugin.zip"
+          with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+              for dirpath, _, filenames in os.walk(root):
+                  for filename in filenames:
+                      path = os.path.join(dirpath, filename)
+                      arcname = os.path.relpath(path, root)
+                      zf.write(path, arcname)
+          PY
+
+      # The same gate the release workflow runs, moved earlier.
+      - name: Verify release artifacts
+        run: pnpm check:release-artifacts
+
+      - name: Collect CI artifacts
+        if: github.event_name != 'pull_request'
+        run: |
+          set -euo pipefail
           mkdir -p ci-artifacts
           cp dist/all2html.js ci-artifacts/all2html.js
-          find plugins/illustrator/panel/dist/zip -type f -name '*.zip' -maxdepth 3 -exec cp {} ci-artifacts/ \;
-          find plugins/illustrator/panel/dist/zxp -type f -name '*.zxp' -maxdepth 3 -exec cp {} ci-artifacts/ \;
+          cp dist/all2html-after-effects.zip ci-artifacts/all2html-after-effects.zip
+          cp dist/all2html-figma-plugin.zip ci-artifacts/all2html-figma-plugin.zip
+          find plugins/illustrator/panel/dist/zip -maxdepth 3 -type f -name '*.zip' -exec cp {} ci-artifacts/ \;
+          find plugins/illustrator/panel/dist/zxp -maxdepth 3 -type f -name '*.zxp' -exec cp {} ci-artifacts/ \;
 
       - name: Upload CI artifacts
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: all2html-main-build-${{ github.sha }}

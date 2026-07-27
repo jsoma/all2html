@@ -1,6 +1,6 @@
+import { execFileSync } from "node:child_process";
 import { mkdirSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
-import { execFileSync } from "node:child_process";
 import { rollup } from "rollup";
 
 const root = process.cwd();

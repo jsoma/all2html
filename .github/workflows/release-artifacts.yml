@@ -13,6 +13,11 @@ on:
 permissions:
   contents: write
 
+# Uploads assets to a release; never cancel a run mid-upload.
+concurrency:
+  group: release-artifacts-${{ github.event.release.tag_name || inputs.release_tag || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: macos-latest

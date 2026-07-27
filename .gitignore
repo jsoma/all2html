@@ -1,4 +1,3 @@
-.DS_Store
 node_modules/
 dist/
 coverage/
@@ -7,12 +6,22 @@ coverage/
 test-results/
 data/*-output/
 !data/all2html-output/
-!data/all2html-output/**
+# Only the per-fixture subdirectories are tracked. Loose files at the top level
+# are stray exports — a manual run and an agent have each dumped an ir.json plus
+# a page and its PNGs here, and the second time they were nearly committed.
+data/all2html-output/*
+!data/all2html-output/*/
 research/
-temp/*
-!temp/ae-prototype/
-temp/ae-prototype/*
-!temp/ae-prototype/README.md
-!temp/ae-prototype/export-ae-temporal.jsx
-!temp/ae-prototype/player-template.html
+# Local scratch. `temp/ae-prototype/` used to be re-included here; it was
+# superseded by `plugins/after-effects/exporter.jsx` and
+# `plugins/after-effects/player-template.html` and is no longer tracked.
+temp/
 site/
+
+# local build scratch
+.tmp/
+
+# macOS metadata. Must stay last: the `!data/all2html-output/**` re-include
+# above would otherwise un-ignore .DS_Store inside that directory (it did —
+# data/all2html-output/.DS_Store was tracked until this was moved down).
+.DS_Store
