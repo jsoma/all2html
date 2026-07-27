@@ -215,9 +215,19 @@ function unlockObjects(doc) {
 // for the full ~120s interaction timeout. Suppressing alerts removes the
 // handshake. Restore is pushed first so it runs last: cleanup stays
 // non-interactive, and the level is back before any completion dialog.
+//
+// The observed level is never trusted as "previous" when it is already
+// suppressed. A run that dies between suppression and runRestoreActions()
+// (cancelled script, host crash) leaves DONTDISPLAYALERTS in place; the next run
+// would then read the suppressed value as the level to restore and pin
+// Illustrator to auto-answered dialogs for the rest of the session. Restoring to
+// DISPLAYALERTS is the only self-healing choice.
 function suppressUserInteraction() {
   try {
     var previousLevel = app.userInteractionLevel;
+    if (previousLevel === UserInteractionLevel.DONTDISPLAYALERTS) {
+      previousLevel = UserInteractionLevel.DISPLAYALERTS;
+    }
     app.userInteractionLevel = UserInteractionLevel.DONTDISPLAYALERTS;
     pushInteractionLevelRestore(previousLevel);
   } catch(e) {}
@@ -1001,6 +1011,16 @@ function isOrthogonal(pts) {
   return true;
 }
 
+// Reading `.name` off a layer whose restore just failed can throw too, so the
+// name is only ever fetched defensively, for the warning message.
+function describeLayer(layer) {
+  try {
+    return "\"" + layer.name + "\"";
+  } catch(e) {
+    return "(unnamed)";
+  }
+}
+
 function exportSvgLayer(doc, aiLayer, artboard, irLayer, settings) {
   // Hide all layers except this one, export artboard as SVG
   var hiddenLayers = [];
@@ -1044,9 +1064,15 @@ function exportSvgLayer(doc, aiLayer, artboard, irLayer, settings) {
 
     return { path: svgName + ".svg" };
   } finally {
-    // Restore hidden layers
+    // Restore hidden layers. This function hid every other layer in the
+    // document, so a swallowed failure leaves the user's .ai file with layers
+    // permanently invisible while the export still reports success.
     for (var i = 0; i < hiddenLayers.length; i++) {
-      try { hiddenLayers[i].visible = true; } catch(e) {}
+      try {
+        hiddenLayers[i].visible = true;
+      } catch(e) {
+        warn("Could not restore layer " + describeLayer(hiddenLayers[i]) + " after SVG layer export: " + (e.message || e.toString()), "illustrator:restore-failed", "other");
+      }
     }
   }
 }
@@ -1078,8 +1104,14 @@ function exportPngLayer(doc, aiLayer, artboard, assetId, settings) {
     opts.colorCount = 256;
     doc.exportFile(file, ExportType.PNG8, opts);
   } finally {
+    // Same contract as exportSvgLayer: every other layer was hidden, so a
+    // silent restore failure permanently blanks the user's document.
     for (var i = 0; i < hiddenLayers.length; i++) {
-      try { hiddenLayers[i].visible = true; } catch(e) {}
+      try {
+        hiddenLayers[i].visible = true;
+      } catch(e) {
+        warn("Could not restore layer " + describeLayer(hiddenLayers[i]) + " after PNG layer export: " + (e.message || e.toString()), "illustrator:restore-failed", "other");
+      }
     }
   }
 }
