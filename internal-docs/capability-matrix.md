@@ -11,9 +11,9 @@ Cell vocabulary:
 
 Columns: **IL** = Illustrator script/panel · **AE** = After Effects · **FIG** = Figma plugin · **CLI/SVG** = Node CLI + browser dropzone.
 
-> **31 DEAD cells.** Every one is a place where a user sets something, the export succeeds, and nothing happens. This is the single largest source of user-visible wrongness in the product, and it is the reason SPEC §12.5 (capability declarations) leads the contract work.
+> **31 DEAD cells recorded; 30 still dead.** Every one is a place where a user sets something, the export succeeds, and nothing happens. D10 (`output` on Illustrator) is the first one closed rather than declared: `group-artboards.ts` is ES3-safe now, `src/extendscript/index.ts` calls it, and `exporter.jsx` writes one file per group. This is the single largest source of user-visible wrongness in the product, and it is the reason SPEC §12.5 (capability declarations) leads the contract work.
 >
-> **STATUS: seeded into code.** D1–D30 are declared in `src/core/capabilities.ts` and warn at export time with the `setting:unsupported` code; D31 (`useLazyLoader`) is content-dependent and warns from the emitter instead (see below). `test/unit/capabilities.test.ts` transcribes the table below (by D-id) and fails if any of them stops warning; it also re-derives the "zero readers" claims for `writeImageFiles`, `inlineSvg`, `svgIdPrefix` and `createPromoImage` from the source tree, so the matrix cannot silently drift from the code. Changing a cell here means changing the declaration.
+> **STATUS: seeded into code.** D1–D30 minus D10 (fixed, see its row) are declared in `src/core/capabilities.ts` and warn at export time with the `setting:unsupported` code; D31 (`useLazyLoader`) is content-dependent and warns from the emitter instead (see below). `test/unit/capabilities.test.ts` transcribes the table below (by D-id) and fails if any of them stops warning; it also re-derives the "zero readers" claims for `writeImageFiles`, `inlineSvg`, `svgIdPrefix` and `createPromoImage` from the source tree, so the matrix cannot silently drift from the code. Changing a cell here means changing the declaration.
 >
 > **The public docs are generated from the declarations.** `docs/reference/settings.md` and `docs/reference/support-matrix.md` are emitted by `scripts/generate-settings-docs.ts` from `SETTING_DEFINITIONS`, `SURFACE_CAPABILITIES`, and `SURFACE_FEATURES` — never hand-edited. `pnpm check:generated-docs` runs in CI and fails when the committed pages no longer match the declarations, so changing a cell here changes the declaration, and changing the declaration changes the public page in the same commit.
 >
@@ -36,9 +36,9 @@ Columns: **IL** = Illustrator script/panel · **AE** = After Effects · **FIG** 
 | 7 | `cacheBustToken` | yes `assets.ts:64` | no | yes | yes |
 | 8 | `namespace` | yes `html-string.ts:394` | no | yes³ | yes |
 | 9 | `projectName` | yes `exporter.jsx:998` | no | yes `main.ts:173` | yes |
-| 10 | `output` | **DEAD** [D10] | no | yes⁴ | yes⁴ |
+| 10 | `output` | yes [D10 fixed] | no | yes⁴ | yes⁴ |
 | 11 | `htmlOutputPath` | yes `exporter.jsx:1623` | no | **DEAD** [D11] | **DEAD** [D12] |
-| 12 | `htmlOutputExtension` | yes `exporter.jsx:1762` | no | yes⁵ | yes⁵ |
+| 12 | `htmlOutputExtension` | yes — `extendscript/index.ts` stamps it on every emitted file record, `exporter.jsx` writes `slug + extension` | no | yes⁵ | yes⁵ |
 | 13 | `imageOutputPath` | yes⁶ | no | yes⁷ | yes |
 | 14 | `imageSourcePath` | yes `assets.ts:59` | no | yes³ | yes |
 | 15 | `responsiveness` | yes `css.ts:131` | no | yes | yes |
@@ -83,7 +83,7 @@ Columns: **IL** = Illustrator script/panel · **AE** = After Effects · **FIG** 
 | D4 | `config.ts:9` | Zero readers; assets always written to ZIP. |
 | D5 | `ir.json` settings | Zero readers; `cli/index.ts:197` writes assets unconditionally. |
 | D6–D9 | `config.ts:9` | Figma hardcodes transparency, has no quantizer, never emits JPEG, and sets no `constraint` on any `exportAsync`, so the documented default `{type:"SCALE",value:1}` applies (`ExportSettingsImage` in `@figma/plugin-typings`; the recorded params are `runtime-extract.ts:350`). D6, D7 and D9 diverge **at the default**: the defaults promise opaque, 128-color, 2x, and Figma produces alpha, full-color, 1x, so all three warn on every export. D8 does not: Figma never emits JPEG at all, so `jpgQuality` is unobservable rather than wrong and warns only when the user moves it. |
-| D10 | Panel select `MainSettings.svelte:88`; `exporter.jsx:1421` | `src/extendscript/index.ts:7-12` never imports `group-artboards`; `processAndEmit` calls resolve→breakpoints→styles→dedupe→positions→`emitHTMLString`. Artifact: `multiple-files-test/ir.json` has `"output":"multiple-files"` with two base names → exactly **1** `.html`. |
+| D10 | Panel select `MainSettings.svelte:88`; `exporter.jsx:1421` | **Fixed.** Was: `src/extendscript/index.ts` never imported `group-artboards` (it uses two `Map`s, which the bundle guard forbids) and `processAndEmit` ended in a single `emitHTMLString`, so `multiple-files-test/ir.json` with two base names produced exactly **1** `.html`. Now: `groupArtboards` accumulates into plain objects, `processAndEmit` returns `files[]` (one per group), and `exporter.jsx` writes each. Pinned by `test/integration/surface-entrypoints.test.ts`, which drives the shipped bundle. |
 | D11–D12 | `config.ts:9` / `ir.json` | Zero readers; Figma delivers a ZIP, CLI uses `-o` only. Verified with a fixture carrying `htmlOutputPath`. |
 | D13 | `ui.html:381`; also set by the `image-only-graphic` preset `ui.ts:167` | `runtime-extract.ts:193` hardcodes `renderAs:"html"`; text always hidden before raster (`:637`). |
 | D14–D15 | `ui.html:388` / `ir.json` | Zero references in `src/`; honored only by `exporter.jsx:674`. |
@@ -121,7 +121,7 @@ Columns: **IL** = Illustrator script/panel · **AE** = After Effects · **FIG** 
 | Tag `:video` | yes | no | yes | yes (render) / no (import) |
 | Tag `:html-before` / `:html-after` | yes | no | yes | yes (render) / no (import) |
 | Responsive grouping | yes | no | yes | yes |
-| `output: multiple-files` | **DEAD** [D10] | no | yes (html) / **DEAD** (standalone) | yes (html/svelte/react) / **DEAD** (standalone) |
+| `output: multiple-files` | yes (html) [D10 fixed] | no | yes (html) / **DEAD** (standalone) | yes (html/svelte/react) / **DEAD** (standalone) |
 | 2x / retina raster | yes | no | **DEAD at default** [D9] | yes (import) / n/a (render) |
 | Text effects (shadow / blur) | no¹² | no | no | yes if in IR — **no producer** |
 | Hyperlinks on text runs | yes | no | yes (URL only; node-level links dropped with warning) | yes |

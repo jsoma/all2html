@@ -1753,7 +1753,6 @@ function runExporter() {
     pngNumberOfColors: parseInt(docSettings.png_number_of_colors, 10) || 128,
     jpgQuality: parseInt(docSettings.jpg_quality, 10) || 85,
     use2xImages: docSettings.use_2x_images_if_possible !== "false",
-    htmlOutputExtension: docSettings.html_output_extension || ".html",
     createPromoImage: docSettings.create_promo_image === "true",
     renderTextAs: (docSettings.render_text_as === "image") ? "image" : "html",
     renderRotatedSkewedTextAs: (docSettings.render_rotated_skewed_text_as === "image") ? "image" : "html",
@@ -1873,10 +1872,18 @@ function runExporter() {
   pushCoreWarnings(result);
   span.end(warnings.length + " warnings");
 
-  // Write HTML
+  // Write HTML. One file per artboard group: the core honors `output`
+  // ("one-file" -> a single group named after the document, "multiple-files" ->
+  // one group per artboard base name), and the filename is the group slug, not
+  // the document slug. In one-file mode that slug IS the document slug, so this
+  // writes the same path it always did.
   span = logSpan("writeHTML");
-  writeFile(outputPath + slug + settings.htmlOutputExtension, result.html);
-  span.end();
+  var emittedFiles = result.files || [];
+  for (var fi = 0; fi < emittedFiles.length; fi++) {
+    var emitted = emittedFiles[fi];
+    writeFile(outputPath + emitted.slug + emitted.extension, emitted.output);
+  }
+  span.end(emittedFiles.length + " file(s)");
 
   // Promo image generation
   if (settings.createPromoImage && artboards.length > 0) {

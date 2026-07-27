@@ -174,11 +174,10 @@ These are specced but NOT implemented yet:
 
 Verified against the code. Fix or remove; do not build on top of them.
 
-- **`output: multiple-files` is a no-op on Illustrator.** `groupArtboards` is never called from `src/extendscript/index.ts`; the single `emitHTMLString(ready)` in `processAndEmit` (`src/extendscript/index.ts:172`) emits one file. The `multiple-files-test` fixture passes while producing a single HTML file.
 - **`imageFormat: svg` and `png24` silently produce PNG8 on Illustrator.** `exportArtboardImage` (`exporter.jsx:1178-1194`) branches only jpg vs `ExportType.PNG8`.
-- **Illustrator emits HTML only.** `processAndEmit` (`src/extendscript/index.ts:172`) hardcodes `emitHTMLString`; the emitter registry is unreachable from that surface. Standalone/Svelte/React are CLI-only. Figma does html + standalone.
+- **Illustrator emits HTML only.** `processAndEmit` calls the HTML emitter directly; the emitter registry is unreachable from that surface (it imports the Node-only Svelte and React emitters). Standalone/Svelte/React are CLI-only. Figma does html + standalone. `output: multiple-files` *is* honored — the bundle groups artboards and returns one file per group — but every file is HTML.
 - **After Effects never loads the core** (`grep -c All2Html plugins/after-effects/exporter.jsx` → 0) and carries a forked copy of the google-fonts and escaping helpers.
-- **31 settings cells are DEAD** — a control accepts the value, the export succeeds, nothing happens. Three of them (Figma `pngTransparent`, `pngNumberOfColors`, `use2xImages`) are dead *at their default*, so those warn on every Figma export. Full table with file:line proof in `internal-docs/capability-matrix.md`. Check it before assuming any setting works on any surface.
+- **30 settings cells are DEAD** (31 were catalogued; Illustrator `output` was fixed rather than declared) — a control accepts the value, the export succeeds, nothing happens. Three of them (Figma `pngTransparent`, `pngNumberOfColors`, `use2xImages`) are dead *at their default*, so those warn on every Figma export. Full table with file:line proof in `internal-docs/capability-matrix.md`. Check it before assuming any setting works on any surface.
 - **`useLazyLoader` emits `data-src` but no loader script exists anywhere in `src/`** — lazy videos never receive a `src` and never play. Images are fine (native `loading="lazy"`). Both HTML emitters now warn per video layer (`video:lazy-src-no-loader`); the loader itself is still unimplemented.
 
 ## Contract Rules

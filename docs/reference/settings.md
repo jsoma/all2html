@@ -54,7 +54,7 @@ A surface that warns tells you, during the export itself, whenever you asked for
 | [`cacheBustToken`](#cacheBustToken) | yes | n/a | yes | yes | yes |
 | [`namespace`](#namespace) | yes | n/a | yes | yes | yes |
 | [`projectName`](#projectName) | yes | n/a | yes | yes | yes |
-| [`output`](#output) | **no** | n/a | yes | yes | yes |
+| [`output`](#output) | yes | n/a | yes | yes | yes |
 | [`htmlOutputPath`](#htmlOutputPath) | yes | n/a | **no** | **no** | **no** |
 | [`htmlOutputExtension`](#htmlOutputExtension) | yes | n/a | partial | partial | partial |
 | [`imageOutputPath`](#imageOutputPath) | yes | n/a | partial | yes | yes |
@@ -242,11 +242,10 @@ Use Single file for one graphic with breakpoints; use Per artboard when each art
 - **Single file** — Emits one HTML file that can contain responsive artboard variants together.
 - **Per artboard** — Writes separate output files instead of bundling all artboards into one result.
 
-Honored on: Figma plugin, all2html CLI, Browser converter.
+Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
 
 | Surface | Support | What actually happens |
 |---|---|---|
-| Illustrator | **no** | Illustrator always emits a single HTML file. Artboard grouping is deliberately not wired into the ExtendScript bundle yet. |
 | After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
 
 <a id="htmlOutputPath"></a>

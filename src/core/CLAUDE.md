@@ -11,7 +11,7 @@ Each file is one transform step. Order matters — see `pipeline.ts`.
 4. `compute-styles.ts` — Converts IR text properties to CSS. `letterSpacing` is already in em (passed through directly). Font lookup via `font-map.ts`. Returns `StyledDocument` + warnings.
 5. `deduplicate-styles.ts` — Finds base paragraph style, assigns `g-pstyle{N}` / `g-cstyle{N}` classes. Returns `DeduplicatedDocument`. It assigns class names only — positions belong to the next phase, so it inserts no `computedPosition`.
 6. `compute-positions.ts` — Converts absolute px to percentages. Handles text alignment anchoring, rotated text transforms, and shape positioning (center-point with margin offset). Returns `EmitterReadyDocument`.
-7. `group-artboards.ts` — Groups artboards for output: one-file (single group) or multiple-files (group by name).
+7. `group-artboards.ts` — Groups artboards for output: one-file (single group) or multiple-files (group by name). **In the ExtendScript entry graph** (`processAndEmit` calls it), so it must stay ES3-safe: no `Map`/`Set`, no `for...of`, no spread, and group order carried in an explicit array rather than read back out of an accumulator object — ES3 does not define `for...in` order.
 
 ## Key behaviors
 

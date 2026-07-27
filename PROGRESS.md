@@ -21,7 +21,7 @@
 
 ### Core Pipeline
 - [x] IR schema with **exclusive** phase types (SPEC §12.1 / D20): `Document → Resolved → Breakpointed → Styled → Deduplicated → EmitterReady`, each carrying a `pipelinePhase` literal so no transform can be skipped or repeated without a compile error. Image-rendered text is its own variant (`ImageTextElement`); `EmitterReadyLayer` admits no un-positioned variants. Removed the placeholder breakpoint in `settings-resolver.ts`, the placeholder `computedPosition` in `deduplicate-styles.ts`, and 12 runtime property-sniffing guards across the transforms and emitters.
-- [ ] `Artboard.relationship: "alternates" | "sequence"` (SPEC §12.10.5) is **not** in the IR. It was declared and validated with no consumer, and was removed under D27 rather than documented as unused; it lands with `groupArtboards`, which is where it has to act and which is blocked on ES3 safety (D19).
+- [ ] `Artboard.relationship: "alternates" | "sequence"` (SPEC §12.10.5) is **not** in the IR. It was declared and validated with no consumer, and was removed under D27 rather than documented as unused. The D19 blocker is now gone — `groupArtboards` is ES3-safe and every surface calls it — but the field still has no consumer: grouping decides which artboards share a file, while alternates-vs-sequence decides whether the viewer sees one artboard or all of them, which lives in breakpoints and the emitter. It lands with that behavior.
 - [x] Zod validation, default settings, JSONC config
 - [x] CSS-identifier sanitizing on the Zod-free path: `src/extendscript/index.ts` checks `namespace`, `projectName` and `svgIdPrefix` against `SAFE_SETTING_IDENTIFIER_RE` (defined in `src/ir/settings-definitions.ts`, re-exported from `schema.ts` so there is one pattern, not two). A rejected value falls back to its declared default and warns `setting:invalid-value` rather than aborting the export — every Zod-free caller enters through this bundle, so the check belongs there rather than in one exporter
 - [x] resolveSettings + resolveSettingsPure (fs-free for ExtendScript)
@@ -152,9 +152,8 @@ Verified against the code and reproduced. These are defects, not limitations —
 
 | What | Where | Effect |
 |---|---|---|
-| `output: multiple-files` no-op on Illustrator | `src/extendscript/index.ts:172` (`processAndEmit`) | `groupArtboards` never called; the `multiple-files-test` fixture emits one file |
 | `imageFormat: svg`/`png24` → PNG8 on Illustrator | `exporter.jsx:1178-1194` (`exportArtboardImage`) | Silently wrong format, no warning |
-| Illustrator emits HTML only | `src/extendscript/index.ts:172` (`processAndEmit`) | Standalone/Svelte/React unreachable from the production surface |
+| Illustrator emits HTML only | `src/extendscript/index.ts` (`processAndEmit`) | Standalone/Svelte/React unreachable from the production surface. `output: multiple-files` is honored — one HTML file per artboard group — but the format is always HTML |
 | Element ids not slug-prefixed | minted in `plugins/illustrator/exporter.jsx:712`, emitted un-namespaced by `src/emitters/html-tree.ts:170` | Two graphics on one page collide on `g-ai0-1`. Both files are involved: the exporter mints the id, the emitter passes `element.id` through without a slug prefix |
 | Visual baselines are stale | `test/visual/fixture-output/` | 28 checked-in HTML files nothing regenerates; ~56 tests screenshot a superseded emitter |
 | `useLazyLoader` emits `data-src` with no loader | `html-tree.ts` (`video` layer arm) | **No loader script is emitted anywhere in `src/`** — lazy videos never receive a `src` and simply never play. The emitter warns per video layer (`video:lazy-src-no-loader`); the loader is still unimplemented |
@@ -162,7 +161,7 @@ Verified against the code and reproduced. These are defects, not limitations —
 | Figma `:symbol` and `:div` parsed then rejected | `runtime-extract.ts:464` | Recognized by the tag parser, then skipped with a warning |
 | Figma frame token is `:image`, not `:image-only` | `extract/frames.ts:33` | Diverges from the Illustrator artboard-token vocabulary |
 
-**31 DEAD settings cells** (a control accepts a value, the export succeeds, nothing happens) are catalogued with file:line proof in [`internal-docs/capability-matrix.md`](internal-docs/capability-matrix.md). That document is the evidence base for the capability-declaration work in SPEC §12.5. D1-D30 warn from the core capability check on Illustrator, Figma, the CLI and the browser; D31 warns from the emitters. After Effects declares its capabilities but does not enforce them — it never loads the core (decision D26).
+**30 DEAD settings cells** (a control accepts a value, the export succeeds, nothing happens; 31 were catalogued, and Illustrator `output` has since been fixed) are catalogued with file:line proof in [`internal-docs/capability-matrix.md`](internal-docs/capability-matrix.md). That document is the evidence base for the capability-declaration work in SPEC §12.5. D1–D30 warn from the core capability check on Illustrator, Figma, the CLI and the browser — except D10, which is fixed rather than declared; D31 warns from the emitters. After Effects declares its capabilities but does not enforce them — it never loads the core (decision D26).
 
 `htmlOutputExtension` is the newest entry in that table: Illustrator honors it, but the CLI, browser and Figma declare it `partial` with `unsupportedFormats: ["standalone", "svelte", "react"]`, since svelte/react force `.svelte` and `.jsx`/`.tsx` and standalone always writes `.html`. Requesting it under those formats now warns instead of being silently dropped.
 

@@ -10,6 +10,7 @@ import { computeBreakpoints } from "../core/compute-breakpoints.js";
 import { computePositions } from "../core/compute-positions.js";
 import { computeStyles } from "../core/compute-styles.js";
 import { deduplicateStyles } from "../core/deduplicate-styles.js";
+import { groupArtboards } from "../core/group-artboards.js";
 import { assertJsonPure } from "../core/json-purity.js";
 import { resolveSettingsPure } from "../core/resolve-settings-pure.js";
 import { createWarning, type StructuredWarning, warningMessages } from "../core/warnings.js";
@@ -26,8 +27,33 @@ import { installPolyfills } from "./polyfills.js";
 // Install polyfills on load
 installPolyfills();
 
+/**
+ * One emitted file. Field names match `EmitFile` in
+ * `src/emitters/registry-shared.ts` — the Node registry's file record — so the
+ * two surfaces describe an emitted file the same way. The registry itself is not
+ * reachable from here: it imports the Svelte and React emitters, which are
+ * Node-only, so this path loops the groups and calls the HTML emitter directly.
+ */
+export interface ProcessFile {
+  slug: string;
+  extension: string;
+  output: string;
+}
+
 export interface ProcessResult {
+  /**
+   * `files[0].output`, or `""` when there is nothing to emit. Kept because
+   * `exporter.jsx` and the bundle tests read it, and because a one-file export —
+   * still the default — has exactly one file.
+   */
   html: string;
+  /**
+   * One entry per artboard group: a single file under `output: "one-file"`, one
+   * per artboard base name under `output: "multiple-files"`. Only empty for a
+   * document with no artboards in `multiple-files` mode, which `exporter.jsx`
+   * rejects before it gets here.
+   */
+  files: ProcessFile[];
   /** Plain-string projection of `structuredWarnings`, kept for the ExtendScript exporters. */
   warnings: string[];
   structuredWarnings: StructuredWarning[];
@@ -169,11 +195,36 @@ export function processAndEmit(
   phase("computePositions");
   assertJsonPure(ready, "the pipeline");
   phase("assertJsonPure:ready");
-  const { html, structuredWarnings: emitWarnings } = emitHTMLString(ready);
-  warnings.push(...emitWarnings);
+  // `output: "multiple-files"` is honored here, not in the exporter: the grouping
+  // rule (base name -> responsive group) is tool-agnostic, so it belongs to the
+  // core (KB1). One group in `one-file` mode, which is byte-identical to the
+  // ungrouped emit that used to run — `scopeArtboards` filters the document's own
+  // artboard list, so passing every artboard back in changes neither order nor
+  // content, and the group slug is the same `projectName || metadata.slug` the
+  // emitter would have defaulted to.
+  const groups = groupArtboards(ready);
+  phase("groupArtboards");
+  // Written verbatim, exactly as `exporter.jsx` did when it owned the filename:
+  // no dot is inserted for a malformed value, because that would rename files for
+  // documents that export fine today.
+  const extension = ready.settings.htmlOutputExtension || ".html";
+  const files: ProcessFile[] = [];
+  for (let i = 0; i < groups.length; i++) {
+    const group = groups[i];
+    const emitted = emitHTMLString(ready, { artboards: group.artboards, slug: group.slug });
+    for (let j = 0; j < emitted.structuredWarnings.length; j++) {
+      warnings.push(emitted.structuredWarnings[j]);
+    }
+    files.push({ slug: group.slug, extension: extension, output: emitted.html });
+  }
   phase("emitHTMLString");
 
-  return { html, warnings: warningMessages(warnings), structuredWarnings: warnings };
+  return {
+    html: files.length > 0 ? files[0].output : "",
+    files: files,
+    warnings: warningMessages(warnings),
+    structuredWarnings: warnings,
+  };
 }
 
 export { defaultSettings };

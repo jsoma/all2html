@@ -91,9 +91,11 @@ describe("Illustrator exporter warning plumbing", () => {
     // starts with a capitalized `Setting "..."`, and the old classifier
     // substring-matched lowercase "setting", so every capability warning on the
     // highest-value surface was filed under `other`.
+    // `output: "multiple-files"` used to be the sample warning here; Illustrator
+    // honors it now (KB1), so this uses a cell that is still declared dead.
     const settingWarning = checkSurfaceCapabilities(
       illustratorCapabilities,
-      { ...createDefaultSettings(), output: "multiple-files" },
+      { ...createDefaultSettings(), inlineSvg: true },
       { surface: "illustrator", path: "render", format: "html" },
     )[0];
     expect(settingWarning.category).toBe("setting");

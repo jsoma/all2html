@@ -60,11 +60,22 @@ describe("Illustrator panel capability gating", () => {
   });
 
   it("disables controls for settings Illustrator does not read at all", () => {
-    for (const key of ["output", "inlineSvg", "svgIdPrefix"] as PanelSettingKey[]) {
+    for (const key of ["inlineSvg", "svgIdPrefix"] as PanelSettingKey[]) {
       expect(isControlDisabledByCapability(key)).toBe(true);
       expect(capabilityNote(key)).toBe(illustratorCapabilities.settings[key].note);
       expect(capabilityNote(key)).toBeTruthy();
     }
+  });
+
+  it("re-enables the output control now that the export honors it", () => {
+    // The gate is data-driven, so removing the `output` declaration is the whole
+    // change: the panel select was disabled because the ExtendScript bundle could
+    // not group artboards, and it groups them now. Asserted here because the
+    // inverse — a live control for a setting nothing acts on — is the failure the
+    // gate exists to prevent, and it has to be able to swing back.
+    expect(illustratorCapabilities.settings.output).toBeUndefined();
+    expect(isControlDisabledByCapability("output")).toBe(false);
+    expect(capabilityNote("output")).toBeUndefined();
   });
 
   it("surfaces the declaration's own note, never a restatement of it", () => {

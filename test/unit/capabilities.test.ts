@@ -73,7 +73,10 @@ const DEAD_CELLS: ReadonlyArray<{
   { id: "D7", surface: "figma", setting: "pngNumberOfColors", value: 128 },
   { id: "D8", surface: "figma", setting: "jpgQuality" },
   { id: "D9", surface: "figma", setting: "use2xImages", value: true },
-  { id: "D10", surface: "illustrator", setting: "output" },
+  // D10 (illustrator/output) is gone from this list, not merely re-declared:
+  // the ExtendScript bundle groups artboards and emits one file per group, so
+  // the cell is alive. `Illustrator honors output: multiple-files` below asserts
+  // the wiring rather than the warning.
   { id: "D11", surface: "figma", setting: "htmlOutputPath" },
   { id: "D12", surface: "cli", setting: "htmlOutputPath" },
   { id: "D13", surface: "figma", setting: "renderTextAs" },
@@ -287,17 +290,32 @@ describe("DEAD settings now warn", () => {
     );
   });
 
-  it("covers all 30 DEAD cells recorded in the capability matrix", () => {
-    expect(DEAD_CELLS).toHaveLength(30);
+  it("covers the 29 DEAD cells still recorded in the capability matrix", () => {
+    // 30 when the matrix was transcribed; D10 (illustrator/output) was fixed
+    // rather than declared.
+    expect(DEAD_CELLS).toHaveLength(29);
   });
 });
 
 describe("declarations match what the code actually does", () => {
-  it("Illustrator cannot honor output: multiple-files because it never groups artboards", () => {
-    // Matrix D10: src/extendscript/index.ts never imports group-artboards.
+  it("Illustrator honors output: multiple-files, because it now groups artboards", () => {
+    // Matrix D10, inverted. The declaration used to say `unsupported` and the
+    // reason was structural: `group-artboards.ts` used two `Map`s, which the
+    // ExtendScript bundle guard forbids, so the entry point could not import it
+    // and emitted one file whatever `output` said. Both halves are asserted here
+    // — the import and the absence of a declaration — because either one alone
+    // could go stale without the other noticing.
     const entry = readFileSync(join(repoRoot, "src/extendscript/index.ts"), "utf-8");
-    expect(entry).not.toContain("group-artboards");
-    expect(getSurfaceCapabilities("illustrator").settings.output.status).toBe("unsupported");
+    expect(entry).toContain("group-artboards");
+    expect(entry).toContain("groupArtboards(ready)");
+    expect(getSurfaceCapabilities("illustrator").settings.output).toBeUndefined();
+    expect(
+      checkCapabilitiesForSurface(settingsWith("output", "multiple-files"), {
+        surface: "illustrator",
+        path: "render",
+        format: "html",
+      }).filter((warning) => warning.setting === "output"),
+    ).toEqual([]);
   });
 
   it("svgIdPrefix has no implementation anywhere, so no surface declares it honored", () => {

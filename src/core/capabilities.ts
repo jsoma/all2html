@@ -160,7 +160,9 @@ export interface SurfaceContext {
  * would have produced anyway.
  *
  * Illustrator carries no entry: it emits `html` only and writes the extension
- * verbatim (`exporter.jsx:1815`), so it honors the setting outright.
+ * verbatim (the ExtendScript bundle now puts it on every emitted file record,
+ * and `exporter.jsx` writes `slug + extension`), so it honors the setting
+ * outright.
  *
  * Shared, and declared here rather than beside the other shared entries,
  * because the Figma table below references it and a `const` is in its temporal
@@ -194,11 +196,10 @@ export const illustratorCapabilities: SurfaceCapabilities = {
       status: "unsupported",
       note: "Illustrator always writes image files.",
     },
-    // D10 — groupArtboards is never imported by src/extendscript/index.ts.
-    output: {
-      status: "unsupported",
-      note: "Illustrator always emits a single HTML file. Artboard grouping is deliberately not wired into the ExtendScript bundle yet.",
-    },
+    // D10 is retired: `src/extendscript/index.ts` imports `groupArtboards` and
+    // emits one file per group, and `exporter.jsx` writes each one. No `output`
+    // entry, so the surface default (`honored`) applies.
+    //
     // N1 — absent from buildCanonicalIrSettings and from the panel key map.
     responsiveImageMode: {
       status: "unsupported",

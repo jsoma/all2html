@@ -110,8 +110,11 @@ export type Responsiveness = "fixed" | "dynamic";
  * and validated here and consumed by nothing. Removed under D16 — dead code gets a
  * test pinning its intended caller or a deletion naming its replacement; a
  * round-trip test is neither. Its replacement is `groupArtboards`, which is where
- * the alternates/sequence distinction has to act, and which cannot take it until
- * it is ES3-safe (D19). See D27.
+ * the alternates/sequence distinction has to act. That module is ES3-safe now and
+ * every surface runs it, so the D19 blocker is gone — what is still missing is the
+ * behavior: "all of them, in order" (sequence) versus "pick one by width"
+ * (alternates) is a `computeBreakpoints`/emitter distinction, not a grouping one,
+ * and D27 does not specify it. The field returns with that behavior, not before.
  */
 
 export interface Artboard {

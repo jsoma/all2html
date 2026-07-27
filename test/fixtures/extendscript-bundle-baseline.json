@@ -4,7 +4,7 @@
     "core": {
       "artifact": "dist/extendscript/all2html-core.js",
       "build": "build:extendscript",
-      "bytes": 108993,
+      "bytes": 114757,
       "recordedAt": "2026-07-27",
       "growthTolerance": 0.05,
       "history": [
@@ -39,13 +39,17 @@
         {
           "bytes": 108993,
           "reason": "+2,453 B (+2.3%), measured in two parts. +1,610 B: isValidCssFontFamily in compute-styles.ts is now a linear hand-written scan instead of a regex. The regex it replaced hung Illustrator — a single .test() against `arial,helvetica,sans-serif` did not finish in 300s, so every export using a mapped font was unusable, while V8 answered the same call in 56us and the whole suite passed. The replacement is byte-identical in behavior over a 200k-input fuzz against the old pattern, and test/integration/extendscript-regex-safety.test.ts now fails the build on any nested-quantifier regex in a shipped artifact. Bytes were not negotiable here: the alternative was a correct regex, and no regex of this grammar is safe on that engine. +843 B: per-transform phase timing in extendscript/index.ts, reported through the diagnostics hook. That is what localized the hang to computeStyles; without it the core is one opaque span and the Node reproduction is clean, so the bug looks like it is somewhere else."
+        },
+        {
+          "bytes": 114757,
+          "reason": "+5,764 B (+5.3%) to 114,757 B, covering everything this branch spent on the core and attributing it in three parts, because two of them had already drifted in unattributed. (a) ~+1,800 B: the identifier-settings guard in extendscript/index.ts — namespace/projectName/svgIdPrefix reach CSS selectors unescaped and the Illustrator surface never runs Zod, so the check has to live in the bundle. (b) ~+1,400 B: emitters/shared/lazy-video.ts and its call sites, the per-video-layer warning for useLazyLoader (D31). Those two are the 3,218 B the artifact had already grown above the previous record before this change. (c) +2,546 B net, this change: KB1 — `output: multiple-files` was a no-op on Illustrator, and the root cause was structural, not an oversight. core/group-artboards.ts used two `new Map`s; the ExtendScript bundle guard forbids them; so extendscript/index.ts could not import the module and ran a hardcoded pipeline ending in one emitHTMLString(ready), and ProcessResult had no way to express a second file. group-artboards.ts now accumulates into `$`-prefixed plain objects with an explicit first-appearance order array (ES3 leaves for...in order unspecified and this bundle's Object.keys is a for...in polyfill), processAndEmit returns `files: {slug, extension, output}[]` — the EmitFile shape — and exporter.jsx writes one file per group. Measured as rollup renderedLength: +1,517 B core/group-artboards.js, +505 B extendscript/index.js, the remainder IIFE scaffolding; -224 B reclaimed by deleting the Illustrator `output` capability declaration, which is now a lie. Reclaim beyond that was considered and refused: the alternative to importing the module was a second grouping implementation inside the exporter, which is the forked-helper failure this repo has a rule against. Not spent: +631 B measured for reaching `format: standalone` from this bundle (emitters/standalone-shared.ts). It fits, but there is no `format` in SETTING_DEFINITIONS to carry the request, so wiring it would mean inventing a user-facing key and a panel control — see the report for A5."
         }
       ]
     },
     "assembled": {
       "artifact": "dist/all2html.js",
       "build": "build:illustrator",
-      "bytes": 194181,
+      "bytes": 203416,
       "recordedAt": "2026-07-27",
       "growthTolerance": 0.05,
       "history": [
@@ -72,6 +76,10 @@
         {
           "bytes": 194181,
           "reason": "+3,493 B (+1.8%). +2,453 B carried from the core (see its history entry). The remaining +1,040 B is plugins/illustrator/exporter.jsx: app.userInteractionLevel is suppressed for the duration of the export, restores moved to a LIFO stack of closures pushed at the point of mutation, and log() now tees to the diagnostics hook. Save-for-Web asks the host to interact with the user before writing each file; driven over AppleEvents nothing answers, so every exportFile() blocked for the full ~120s interaction timeout — a one-artboard, two-image document took 241.5s and now takes 0.2s."
+        },
+        {
+          "bytes": 203416,
+          "reason": "+9,235 B (+4.8%) to 203,416 B. +5,764 B is carried from the core (see its history entry for the three-part attribution). The remaining +3,471 B is plugins/illustrator/exporter.jsx, in two parts. ~+3,036 B had already accumulated before this change: the restore-failure warnings (a failed relock/unhide now warns instead of vanishing) and the all2html- custom-block prefixes (a text block named all2html-css used to do nothing, because the matcher only knew ai2html-). +435 B is this change: the single writeFile(outputPath + slug + extension, result.html) became a loop over result.files, so `output: multiple-files` writes one file per artboard group instead of silently writing one file (KB1). The exporter's own htmlOutputExtension copy was deleted in the same edit — the extension now travels on each file record from the core, so there is one source of truth for it rather than two that agreed by luck."
         }
       ]
     }
