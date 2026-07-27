@@ -135,4 +135,59 @@ describe("ExtendScript regex safety", () => {
       ).toEqual([]);
     });
   }
+
+  /**
+   * ExtendScript's tokenizer ends a regex literal at the first unescaped `/`
+   * even inside a character class, so /[^/\\]+$/ — legal per the ES spec and
+   * accepted by every ES3 *parser* guard in this suite — is a load-time
+   * SyntaxError that takes the whole hostscript down with it. Only a literal
+   * with `/` inside a class can reach this state (a bare `/` outside a class
+   * would have terminated the literal in Node too), so any unescaped `/` in an
+   * extracted literal body is a shipped parse failure. `new RegExp("...")` is
+   * the fix, never an ALLOWED entry.
+   */
+  function hasUnescapedSlash(source: string): boolean {
+    for (let i = 0; i < source.length; i++) {
+      if (source.charAt(i) === "\\") {
+        i++;
+        continue;
+      }
+      if (source.charAt(i) === "/") return true;
+    }
+    return false;
+  }
+
+  const EXTENDSCRIPT_SOURCE_GROUPS: Array<{ label: string; files: () => string[] }> = [
+    ...ARTIFACTS.map((artifact) => ({
+      label: artifact.path,
+      files: () => [ensureFreshArtifact(artifact.path, artifact.build)],
+    })),
+    {
+      label: "panel src/jsx",
+      files: () => {
+        const { globSync } = require("node:fs") as typeof import("node:fs");
+        return globSync("plugins/illustrator/panel/src/jsx/**/*.{ts,js}");
+      },
+    },
+    {
+      label: "after-effects exporter",
+      files: () => ["plugins/after-effects/exporter.jsx"],
+    },
+  ];
+
+  for (const group of EXTENDSCRIPT_SOURCE_GROUPS) {
+    it(`${group.label} contains no regex literal ExtendScript cannot tokenize`, () => {
+      for (const file of group.files()) {
+        const offenders = extractRegexLiterals(readFileSync(file, "utf8")).filter(
+          hasUnescapedSlash,
+        );
+        expect(
+          offenders,
+          `${file}: regex literal with unescaped '/' in a character class — ExtendScript ` +
+            `ends the literal at the first '/', making the whole file a SyntaxError. ` +
+            `Use new RegExp("...") instead.`,
+        ).toEqual([]);
+      }
+    });
+  }
 });

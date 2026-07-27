@@ -57,6 +57,10 @@ function resolveScriptFile(
   file: ScriptFileLike | null;
   expectedPath: string;
 } {
+  // RegExp constructor, not a literal: ExtendScript's tokenizer ends a regex
+  // literal at the first unescaped `/` even inside a character class, so
+  // /[^/\\]+$/ is a load-time SyntaxError that takes the whole hostscript
+  // down with it. Guarded by extendscript-regex-safety.test.ts.
   var primaryPath = env.getCurrentScriptPath().replace(/[^/\\]+$/, scriptFileName);
   var scriptFile = env.createFile(primaryPath);
 
