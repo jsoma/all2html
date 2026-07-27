@@ -184,6 +184,12 @@ export function processAndEmit(
   });
   for (let i = 0; i < capabilityWarnings.length; i++) warnings.push(capabilityWarnings[i]);
   phase("checkSurfaceCapabilities");
+  // After the capability check (which must see the user's request): the
+  // exporter writes every image flat next to the HTML and never creates an
+  // imageOutputPath subfolder, so the only src prefix that matches the files
+  // on disk is none at all. Leaving the resolved default ("all2html-output/")
+  // in place shipped HTML whose images 404 on every live export.
+  resolved.settings.imageOutputPath = "";
   const withBreakpoints = computeBreakpoints(resolved);
   phase("computeBreakpoints");
   const { document: styled, warnings: styleWarnings } = computeStyles(withBreakpoints);

@@ -201,6 +201,18 @@ export const illustratorCapabilities: SurfaceCapabilities = {
       status: "unsupported",
       note: "Illustrator always writes image files.",
     },
+    // The exporter writes every image flat, next to the HTML, and never creates
+    // an imageOutputPath subfolder. processAndEmit forces the resolved value to
+    // "" before emit — after this check runs — so <img src> matches where the
+    // files actually land; without that override every live export shipped src
+    // prefixes pointing at a folder that does not exist (caught by CI's visual
+    // lane loading the refreshed fixture pages). Deliberately no
+    // divergesAtDefault: at the default the override makes the output
+    // self-consistent, so only an explicitly requested custom path warns.
+    imageOutputPath: {
+      status: "partial",
+      note: "Illustrator writes images next to the HTML and does not create a custom image folder, so the emitted src stays flat. Use imageSourcePath if your CMS serves assets from elsewhere.",
+    },
     // D10 is retired: `src/extendscript/index.ts` imports `groupArtboards` and
     // emits one file per group, and `exporter.jsx` writes each one. No `output`
     // entry, so the surface default (`honored`) applies.

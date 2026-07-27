@@ -57,7 +57,7 @@ A surface that warns tells you, during the export itself, whenever you asked for
 | [`output`](#output) | yes | n/a | yes | yes | yes |
 | [`htmlOutputPath`](#htmlOutputPath) | yes | n/a | **no** | **no** | **no** |
 | [`htmlOutputExtension`](#htmlOutputExtension) | yes | n/a | partial | partial | partial |
-| [`imageOutputPath`](#imageOutputPath) | yes | n/a | yes | yes | yes |
+| [`imageOutputPath`](#imageOutputPath) | partial | n/a | yes | yes | yes |
 | [`imageSourcePath`](#imageSourcePath) | yes | n/a | yes | yes | yes |
 | [`responsiveness`](#responsiveness) | yes | n/a | yes | yes | yes |
 | [`textResponsiveness`](#textResponsiveness) | yes | n/a | yes | yes | yes |
@@ -295,10 +295,11 @@ This is usually the same as the HTML output folder, but can differ if your build
 
 Keep it aligned with HTML path unless you have a specific asset pipeline.
 
-Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
+Honored on: Figma plugin, all2html CLI, Browser converter.
 
 | Surface | Support | What actually happens |
 |---|---|---|
+| Illustrator | partial | Illustrator writes images next to the HTML and does not create a custom image folder, so the emitted src stays flat. Use imageSourcePath if your CMS serves assets from elsewhere. |
 | After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
 
 <a id="imageSourcePath"></a>

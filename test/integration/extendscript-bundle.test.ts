@@ -181,12 +181,20 @@ describe("ExtendScript bundle", () => {
     }
   });
 
+  // The bundle's processAndEmit models the Illustrator surface, which writes
+  // images flat and therefore forces imageOutputPath to "" before emit. The
+  // Node reference must request the same behavior explicitly, or parity fails
+  // on the src prefix rather than on anything the emitters disagree about.
+  const ILLUSTRATOR_SURFACE_CONFIG = {
+    inlineConfig: { emit: {}, settings: { imageOutputPath: "" } },
+  };
+
   it("produces identical output to Node.js pipeline for single artboard", () => {
     const bundle = loadBundle();
     const raw = loadFixture("single-artboard-basic.json");
 
     // Node.js pipeline
-    const { document: nodeDoc } = processDocument(raw);
+    const { document: nodeDoc } = processDocument(raw, ILLUSTRATOR_SURFACE_CONFIG);
     const { html: nodeHtml } = emitHTMLString(nodeDoc);
 
     // Bundle pipeline
@@ -199,7 +207,7 @@ describe("ExtendScript bundle", () => {
     const bundle = loadBundle();
     const raw = loadFixture("multi-artboard-responsive.json");
 
-    const { document: nodeDoc } = processDocument(raw);
+    const { document: nodeDoc } = processDocument(raw, ILLUSTRATOR_SURFACE_CONFIG);
     const { html: nodeHtml } = emitHTMLString(nodeDoc);
 
     const { html: bundleHtml } = bundle.processAndEmit(raw);
