@@ -438,7 +438,7 @@ function buildSettingsDoc(): string {
     GENERATED_BANNER,
     "# Settings Reference",
     "all2html keeps one canonical settings model even though each source tool exposes it differently. This page is generated from the setting definitions and the per-surface capability declarations in the source tree, so it cannot describe behavior the code does not have.",
-    "Settings always use canonical camelCase keys inside the IR and in `all2html.config.json`. Tool-native spellings such as `image_format` or `html_output_path` are accepted only on the tool side of the boundary — in an Illustrator `ai2html-settings` text block — and are normalized before they reach the pipeline.",
+    "Settings always use canonical camelCase keys inside the IR and in `all2html.config.json`. Tool-native spellings such as `image_format` or `html_output_path` are accepted only on the tool side of the boundary — in an Illustrator `all2html-settings` text block (the legacy `ai2html-settings` name still works) — and are normalized before they reach the pipeline.",
     `There are ${definitions.length} settings.`,
     renderSurfacesSection(),
     renderKeySection(),

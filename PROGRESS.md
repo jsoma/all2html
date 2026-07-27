@@ -67,6 +67,7 @@
 - [x] Overset text detection, automated mode, timing + structured warnings
 - [x] Invalid `:video` layers warn explicitly and do not emit broken `<video>` markup
 - [x] Hidden/empty html hook blocks and layers warn explicitly instead of failing silently
+- [x] Block/layer names accept `all2html-` (primary) and `ai2html-` (compat alias) at every match site. When a document carries both settings/text blocks, `all2html-` wins key-by-key, order-independent; uncontested legacy keys are kept. Pinned by `test/unit/illustrator-block-prefixes.test.ts`, which derives the matchers from the shipped `.jsx`
 
 ### Illustrator Hardening + Fixtures
 - [x] Tracked Illustrator fixture registry with required artifact metadata
@@ -158,7 +159,6 @@ Verified against the code and reproduced. These are defects, not limitations —
 | Visual baselines are stale | `test/visual/fixture-output/` | 28 checked-in HTML files nothing regenerates; ~56 tests screenshot a superseded emitter |
 | `useLazyLoader` emits `data-src` with no loader | `html-tree.ts` (`video` layer arm) | **No loader script is emitted anywhere in `src/`** — lazy videos never receive a `src` and simply never play. The emitter warns per video layer (`video:lazy-src-no-loader`); the loader is still unimplemented |
 | `output: multiple-files` collapses for `standalone` | `registry-shared.ts:84-96` | `emitAll` discards `groups`; verified html→2 files, svelte→2, react→2, **standalone→1** |
-| Illustrator custom blocks are `ai2html-` prefix only | `exporter.jsx:269` (`parseSpecialBlocks`) | A block named `all2html-css` — the obvious guess given the product name — silently does nothing |
 | Figma `:symbol` and `:div` parsed then rejected | `runtime-extract.ts:464` | Recognized by the tag parser, then skipped with a warning |
 | Figma frame token is `:image`, not `:image-only` | `extract/frames.ts:33` | Diverges from the Illustrator artboard-token vocabulary |
 

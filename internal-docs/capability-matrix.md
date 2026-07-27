@@ -125,7 +125,7 @@ Columns: **IL** = Illustrator script/panel · **AE** = After Effects · **FIG** 
 | 2x / retina raster | yes | no | **DEAD at default** [D9] | yes (import) / n/a (render) |
 | Text effects (shadow / blur) | no¹² | no | no | yes if in IR — **no producer** |
 | Hyperlinks on text runs | yes | no | yes (URL only; node-level links dropped with warning) | yes |
-| Custom blocks (css/js/html) | yes — **`ai2html-` prefix only**; `all2html-css` does *not* match | no | yes, **Advanced JSONC only**, no UI control | yes if in IR / no on SVG import |
+| Custom blocks (css/js/html) | yes — `all2html-` and `ai2html-` both match; `all2html-` wins key-by-key on settings/text | no | yes, **Advanced JSONC only**, no UI control | yes if in IR / no on SVG import |
 | Promo image | yes | no | **DEAD** [D24] | **DEAD** [D25] |
 | Lazy loading | images yes / **video DEAD** [D31] | no | images yes / **video DEAD** [D31] | images yes / **video DEAD** [D31] |
 

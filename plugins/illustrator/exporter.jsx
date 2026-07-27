@@ -249,7 +249,7 @@ function pushUnhideRestore(item) {
 
 // Runs every pending restore in LIFO order. Failures are reported through the
 // warning system instead of being silently swallowed — a failed restore leaves
-// the user's .ai file mutated (e.g. a permanently hidden ai2html-settings block).
+// the user's .ai file mutated (e.g. a permanently hidden all2html-settings block).
 function runRestoreActions() {
   while (restoreActions.length > 0) {
     var action = restoreActions.pop();
@@ -265,9 +265,19 @@ function runRestoreActions() {
 // Settings + custom block parsing
 // ============================================================
 
+// Block/layer names are recognized under `all2html-` first, with `ai2html-` as a
+// compatibility alias. INPUT names only — emitted classes/markers are unaffected.
+// Precedence when a document carries both: `all2html-` wins key-by-key over
+// `ai2html-`. Custom code blocks do not conflict, so both are kept in doc order.
+var LEGACY_BLOCK_PREFIX = "ai2html-";
+var SPECIAL_BLOCK_PREFIXES = ["all2html-", LEGACY_BLOCK_PREFIX];
+var SPECIAL_BLOCK_RXP = /^(all2html|ai2html)-(css|js|html|settings|text|html-before|html-after)\s*$/;
+var SPECIAL_NAME_RXP = /^(all2html|ai2html)-/;
+var SETTINGS_BLOCK_RXP = /^(all2html|ai2html)-settings\s*$/;
+
 function parseSpecialBlocks(doc) {
-  var rxp = /^ai2html-(css|js|html|settings|text|html-before|html-after)\s*$/;
   var settings = {};
+  var legacySettings = {};
   var customBlocks = [];
 
   for (var i = 0; i < doc.textFrames.length; i++) {
@@ -278,15 +288,17 @@ function parseSpecialBlocks(doc) {
       firstLine = tf.lines[0].contents;
     } catch(e) { continue; }
 
-    var match = rxp.exec(firstLine);
+    var match = SPECIAL_BLOCK_RXP.exec(firstLine);
     if (!match) continue;
-    var blockType = match[1];
+    var prefix = match[1] + "-";
+    var blockType = match[2];
+    var blockName = prefix + blockType;
 
     if (objectIsHidden(tf)) {
       if (blockType === "settings") {
-        throw new Error("Found a hidden ai2html-settings text block. Please unhide it.");
+        throw new Error("Found a hidden " + blockName + " text block. Please unhide it.");
       }
-      warn("Skipping hidden ai2html-" + blockType + " block.", "block:hidden", "markup");
+      warn("Skipping hidden " + blockName + " block.", "block:hidden", "markup");
       continue;
     }
 
@@ -294,16 +306,19 @@ function parseSpecialBlocks(doc) {
     lines.shift(); // remove header line
 
     if (blockType === "settings" || blockType === "text") {
+      // Legacy keys land in their own bag and are merged underneath at return,
+      // so precedence does not depend on text-frame order.
+      var bag = prefix === LEGACY_BLOCK_PREFIX ? legacySettings : settings;
       // Parse key: value entries
       for (var j = 0; j < lines.length; j++) {
         var line = trim(lines[j]);
         var entryMatch = /^([\w-]+)\s*:\s*(.*)$/.exec(line);
         if (entryMatch) {
-          settings[entryMatch[1]] = straightenCurlyQuotesInAngleBrackets(entryMatch[2]);
+          bag[entryMatch[1]] = straightenCurlyQuotesInAngleBrackets(entryMatch[2]);
         }
       }
       if (blockType === "settings") {
-        tf.name = "ai2html-settings";
+        tf.name = blockName; // keep the user's own spelling
       }
     } else {
       // Custom code block
@@ -317,7 +332,7 @@ function parseSpecialBlocks(doc) {
         content = straightenCurlyQuotesInAngleBrackets(content);
       }
       if (!trim(content)) {
-        warn("Skipping empty ai2html-" + blockType + " block.", "block:empty", "markup");
+        warn("Skipping empty " + blockName + " block.", "block:empty", "markup");
         continue;
       }
       customBlocks.push({ type: blockType, content: content });
@@ -334,7 +349,23 @@ function parseSpecialBlocks(doc) {
       pushUnhideRestore(tf);
     }
   }
+  // `all2html-` wins key-by-key over the legacy `ai2html-` spelling.
+  for (var k in legacySettings) {
+    if (hasOwn(legacySettings, k) && !hasOwn(settings, k)) {
+      settings[k] = legacySettings[k];
+    }
+  }
   return { settings: settings, customBlocks: customBlocks };
+}
+
+// parseSpecialBlocks names the frame with whichever spelling the user typed.
+function findSettingsTextFrame(doc) {
+  for (var i = 0; i < SPECIAL_BLOCK_PREFIXES.length; i++) {
+    try {
+      return doc.textFrames.getByName(SPECIAL_BLOCK_PREFIXES[i] + "settings");
+    } catch(e) {}
+  }
+  return null;
 }
 
 function blockOverlapsArtboard(doc, tf) {
@@ -430,7 +461,7 @@ function extractLayers(doc) {
   var layers = [];
   for (var i = 0; i < doc.layers.length; i++) {
     var layer = doc.layers[i];
-    if (layer.name === "ai2html-settings") continue;
+    if (SETTINGS_BLOCK_RXP.test(layer.name)) continue;
 
     var parsedName = layer.name;
     var layerType = "default";
@@ -482,7 +513,7 @@ function extractLayers(doc) {
 function isSpecialBlock(tf) {
   try {
     var first = tf.lines[0].contents;
-    return /^ai2html-/.test(first);
+    return SPECIAL_NAME_RXP.test(first);
   } catch(e) {
     return false;
   }
@@ -1205,7 +1236,7 @@ function hideSpecialLayersForExport(doc, artboard, hidden) {
     var layer = doc.layers[i];
     if (!layer.visible) continue;
     var name = layer.name;
-    if (name.indexOf("ai2html-") === 0) continue; // skip settings blocks
+    if (SPECIAL_NAME_RXP.test(name)) continue; // skip settings blocks
     var colonIdx = name.indexOf(":");
     if (colonIdx >= 0) {
       var tag = name.substring(colonIdx + 1).toLowerCase();
@@ -1882,17 +1913,19 @@ function runExporter() {
       var token = parseInt(docSettings.cache_bust_token, 10);
       if (!isNaN(token)) {
         var newToken = token + 1;
-        // Find and update the settings text frame
-        try {
-          var settingsFrame = doc.textFrames.getByName("ai2html-settings");
-          var contents = settingsFrame.contents;
-          contents = contents.replace(
-            /cache_bust_token\s*:\s*\d+/,
-            "cache_bust_token: " + newToken
-          );
-          settingsFrame.contents = contents;
-        } catch(e2) {
-          // Settings frame not found or can't update
+        // Find and update the settings text frame, under either spelling.
+        var settingsFrame = findSettingsTextFrame(doc);
+        if (settingsFrame) {
+          try {
+            var contents = settingsFrame.contents;
+            contents = contents.replace(
+              /cache_bust_token\s*:\s*\d+/,
+              "cache_bust_token: " + newToken
+            );
+            settingsFrame.contents = contents;
+          } catch(e2) {
+            // Settings frame can't be updated
+          }
         }
       }
     } catch(e) {}

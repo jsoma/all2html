@@ -31,7 +31,7 @@ These commands build the shared CEP extension, including the Illustrator host su
 ## Developer Notes
 
 - Illustrator remains the deepest special-layer/export surface.
-- Document-local settings still use the `ai2html-settings` text block contract.
+- Document-local settings use the `all2html-settings` text block contract; the legacy `ai2html-settings` name is still accepted (`all2html-` wins key-by-key if both are present).
 - Font mappings still come from `all2html.config.json` or the panel UI.
 
 Engineering references:
