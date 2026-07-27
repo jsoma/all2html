@@ -1,13 +1,16 @@
 import type {
   ComputedPosition,
   ComputedShapePosition,
+  DeduplicatedDocument,
+  DeduplicatedTextElement,
+  EmitterReadyArtboard,
   EmitterReadyDocument,
+  EmitterReadyElement,
+  EmitterReadyLayer,
   EmitterReadyShapeElement,
   EmitterReadySnippetElement,
-  EmitterReadyTextElement,
   ShapeElement,
 } from "../ir/types.js";
-import type { DeduplicatedDocument } from "./deduplicate-styles.js";
 
 const CSS_PRECISION = 4;
 const POINT_TEXT_EXTRA_WIDTH = 22;
@@ -17,12 +20,24 @@ function round(n: number, decimals: number = CSS_PRECISION): number {
   return Math.round(n * factor) / factor;
 }
 
-function isEmitterReadyText(el: { type: string }): el is EmitterReadyTextElement {
-  return el.type === "text" && "computedParagraphStyles" in el;
+const IDENTITY_MATRIX = [1, 0, 0, 1, 0, 0];
+
+/**
+ * Index loop rather than `Array.prototype.every`: this transform ships inside the
+ * ExtendScript (ES3) bundle, where `every` is neither native nor polyfilled
+ * (`src/extendscript/polyfills.ts`). `test/integration/es5-runtime-apis.test.ts`
+ * enforces that, so this must stay a loop unless a polyfill is added.
+ */
+function isIdentityMatrix(matrix: readonly number[]): boolean {
+  if (matrix.length !== 6) return false;
+  for (let i = 0; i < 6; i++) {
+    if (matrix[i] !== IDENTITY_MATRIX[i]) return false;
+  }
+  return true;
 }
 
 function computeTextPosition(
-  el: EmitterReadyTextElement,
+  el: DeduplicatedTextElement,
   artboardWidth: number,
   artboardHeight: number,
   textResponsiveness: string,
@@ -75,11 +90,33 @@ function computeTextPosition(
   }
 
   // Rotated text: apply CSS transform
+  const vertAnchorPct = el.valign === "bottom" ? 100 : el.valign === "middle" ? 50 : 0;
   if (el.transformMatrix && el.rotation) {
     const m = el.transformMatrix;
     result.transform = `matrix(${m.map((v) => round(v, 6)).join(",")})`;
-    const vertAnchorPct = el.valign === "bottom" ? 100 : el.valign === "middle" ? 50 : 0;
     result.transformOrigin = `50% ${vertAnchorPct}%`;
+  } else if (el.transformMatrix && !isIdentityMatrix(el.transformMatrix)) {
+    // Unrotated but scaled text (e.g. Illustrator's horizontal-scale slider).
+    // Anchor the scale on the same edge the alignment anchors on, so the
+    // element's computed left/right stays the visual anchor.
+    //
+    // The translation components (m[4]/m[5]) are dropped on purpose: this element's
+    // placement is already fully expressed by the computed left/right/top/bottom
+    // above, so passing them through would translate it a second time. Both current
+    // producers emit zeros here (`plugins/illustrator/exporter.jsx` only sets
+    // `transformMatrix` alongside `rotation`; `src/importers/svg/import-core.ts`
+    // writes `[scale,0,0,1,0,0]`), so this changes no shipped output — it makes the
+    // contract explicit for third-party IR that does carry a translation.
+    //
+    // The rotated branch above deliberately does NOT do this: it passes Illustrator's
+    // matrix through whole, translation included, which is long-standing shipped
+    // behavior pinned by the tracked goldens. The asymmetry is intentional, not an
+    // oversight.
+    const m = el.transformMatrix;
+    const unrotated = [m[0], m[1], m[2], m[3], 0, 0];
+    result.transform = `matrix(${unrotated.map((v) => round(v, 6)).join(",")})`;
+    const horizAnchorPct = firstAlignment === "right" ? 100 : firstAlignment === "center" ? 50 : 0;
+    result.transformOrigin = `${horizAnchorPct}% ${vertAnchorPct}%`;
   }
 
   return result;
@@ -153,11 +190,13 @@ export function computeShapePosition(
 export function computePositions(doc: DeduplicatedDocument): EmitterReadyDocument {
   const textResponsiveness = doc.settings.textResponsiveness;
 
-  const artboards = doc.artboards.map((ab) => {
-    const layers = ab.layers.map((layer) => {
+  const artboards: EmitterReadyArtboard[] = doc.artboards.map((ab) => {
+    const layers: EmitterReadyLayer[] = ab.layers.map((layer) => {
       const scaled = layer.type === "div";
-      const elements = layer.elements.map((el) => {
-        if (isEmitterReadyText(el) && el.renderAs !== "image") {
+      const elements: EmitterReadyElement[] = layer.elements.map((el) => {
+        if (el.type === "text") {
+          // Image-rendered text is a distinct variant and is never positioned.
+          if (el.renderAs === "image") return el;
           const computedPosition = computeTextPosition(el, ab.width, ab.height, textResponsiveness);
           return { ...el, computedPosition };
         }
@@ -183,5 +222,5 @@ export function computePositions(doc: DeduplicatedDocument): EmitterReadyDocumen
     return { ...ab, layers };
   });
 
-  return { ...doc, artboards };
+  return { ...doc, pipelinePhase: "emitterReady", artboards };
 }

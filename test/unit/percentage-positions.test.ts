@@ -18,7 +18,7 @@ describe("percentage positioning mode", () => {
     for (const ab of converted.artboards) {
       for (const layer of ab.layers) {
         for (const el of layer.elements) {
-          if (el.type === "text" && "computedPosition" in el) {
+          if (el.type === "text" && el.renderAs === "html") {
             const pos = el.computedPosition;
             // Should not have pixel marginLeft
             if (pos.marginLeft) {
@@ -37,7 +37,7 @@ describe("percentage positioning mode", () => {
     for (const ab of converted.artboards) {
       for (const layer of ab.layers) {
         for (const el of layer.elements) {
-          if (el.type === "text" && "computedPosition" in el && el.kind === "point") {
+          if (el.type === "text" && el.renderAs === "html" && el.kind === "point") {
             // Point text width should be percentage, not pixels
             expect(el.computedPosition.width).toMatch(/%$/);
           }
@@ -53,7 +53,7 @@ describe("percentage positioning mode", () => {
     for (const ab of converted.artboards) {
       for (const layer of ab.layers) {
         for (const el of layer.elements) {
-          if (el.type === "text" && "computedPosition" in el) {
+          if (el.type === "text" && el.renderAs === "html") {
             // All widths should be percentages
             expect(el.computedPosition.width).toMatch(/%$/);
           }
@@ -69,7 +69,7 @@ describe("percentage positioning mode", () => {
     for (const ab of converted.artboards) {
       for (const layer of ab.layers) {
         for (const el of layer.elements) {
-          if (el.type === "text" && "computedPosition" in el && el.rotation) {
+          if (el.type === "text" && el.renderAs === "html" && el.rotation) {
             // Should have both matrix and translate in transform
             const t = el.computedPosition.transform;
             expect(t).toBeDefined();

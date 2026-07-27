@@ -6,6 +6,7 @@ import { parseConfigText } from "../core/config.js";
 import type { ArtboardGroup } from "../core/group-artboards.js";
 import { createConsoleLogger, noopLogger } from "../core/logger.js";
 import { processDocument } from "../core/pipeline.js";
+import { formatGroupedWarnings, groupWarnings, type StructuredWarning } from "../core/warnings.js";
 import type { EmitResult } from "../emitters/registry.js";
 import { getAvailableFormats, getEmitter } from "../emitters/registry.js";
 import type { EmitterConfig } from "../emitters/types.js";
@@ -29,6 +30,12 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+/** Print warnings grouped by their declared category, not by prose matching. */
+function reportWarnings(warnings: readonly StructuredWarning[]): void {
+  if (warnings.length === 0) return;
+  console.error(formatGroupedWarnings(groupWarnings(warnings)));
+}
+
 function emitAndWrite(
   doc: EmitterReadyDocument,
   groups: ArtboardGroup[],
@@ -38,7 +45,7 @@ function emitAndWrite(
 ): EmitResult {
   const emitter = getEmitter(format);
   const result = emitter.emitAll(doc, groups, emitterConfig);
-  for (const w of result.warnings) console.error(`Warning: ${w}`);
+  reportWarnings(result.structuredWarnings);
   const absOutputDir = resolve(outputDir);
   for (const file of result.files) {
     const outPath = join(absOutputDir, `${file.slug}${file.extension}`);
@@ -101,14 +108,20 @@ async function main() {
     try {
       const logger = verbose ? createConsoleLogger() : noopLogger;
       const raw = JSON.parse(readFileSync(resolve(irPath), "utf-8"));
-      const { document: doc, groups, warnings } = processDocument(raw, { configPath, logger });
+      const {
+        document: doc,
+        groups,
+        structuredWarnings,
+      } = processDocument(raw, {
+        configPath,
+        logger,
+        surface: { surface: "cli", path: "render", format },
+      });
       const emitterConfig = configPath
         ? parseConfigText(readFileSync(resolve(configPath), "utf-8"), configPath).emit
         : undefined;
 
-      for (const w of warnings) {
-        console.error(`Warning: ${w}`);
-      }
+      reportWarnings(structuredWarnings);
 
       mkdirSync(resolve(outputDir), { recursive: true });
       emitAndWrite(doc, groups, format, outputDir, emitterConfig);
@@ -165,23 +178,21 @@ async function main() {
         settings: parsedConfig?.settings,
       });
 
-      for (const warning of imported.warnings) {
-        console.error(`Warning: ${warning}`);
-      }
+      reportWarnings(imported.structuredWarnings);
 
       const {
         document: doc,
         groups,
         warnings,
+        structuredWarnings,
       } = processDocument(imported.document, {
         inlineConfig: parsedConfig,
         logger,
+        surface: { surface: "cli", path: "import", format },
       });
       const emitterConfig = parsedConfig?.emit;
 
-      for (const warning of warnings) {
-        console.error(`Warning: ${warning}`);
-      }
+      reportWarnings(structuredWarnings);
 
       mkdirSync(resolve(outputDir), { recursive: true });
       const emitResult = emitAndWrite(doc, groups, format, outputDir, emitterConfig);
@@ -237,12 +248,21 @@ async function main() {
       try {
         const logger = verbose ? createConsoleLogger() : noopLogger;
         const raw = JSON.parse(readFileSync(resolve(irPath), "utf-8"));
-        const { document: doc, groups, warnings } = processDocument(raw, { configPath, logger });
+        const {
+          document: doc,
+          groups,
+          warnings,
+          structuredWarnings,
+        } = processDocument(raw, {
+          configPath,
+          logger,
+          surface: { surface: "cli", path: "render", format },
+        });
         const emitterConfig = configPath
           ? parseConfigText(readFileSync(resolve(configPath), "utf-8"), configPath).emit
           : undefined;
         mkdirSync(resolve(outputDir), { recursive: true });
-        for (const w of warnings) console.error(`Warning: ${w}`);
+        reportWarnings(structuredWarnings);
         const emitResult = emitAndWrite(doc, groups, format, outputDir, emitterConfig);
         const totalWarnings = warnings.length + emitResult.warnings.length;
         console.log(`Rebuilt (${totalWarnings} warnings)`);

@@ -21,15 +21,11 @@ export function readConfigFile(path: string): All2HtmlConfig {
   return parseConfigText(raw, path);
 }
 
-export function parseConfigSettings(
-  config?: string | All2HtmlConfig,
-): Partial<Settings> | undefined {
-  if (!config) return undefined;
-  return typeof config === "string"
-    ? getConfigSettings(readConfigFile(config))
-    : getConfigSettings(config);
-}
-
+// Removed: `parseConfigSettings(config)`. It had no caller anywhere — not in
+// `src/`, not in `test/`, and it was never re-exported from `src/index.ts`, so
+// it was not public API either. `resolveSettings()` below is its replacement:
+// it is the only thing that ever needed config settings, and it reads them via
+// `getConfigSettings(readConfigFile(path))` directly.
 export function resolveSettings(doc: Document, configPath?: string): ResolvedDocument {
   if (configPath) {
     const config = readConfigFile(configPath);

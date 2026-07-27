@@ -1,8 +1,10 @@
+import type { SurfaceContext } from "./core/capabilities.js";
 import { type All2HtmlConfig, getEmitterConfig, parseConfigText } from "./core/config.js";
 import type { ArtboardGroup } from "./core/group-artboards.js";
 import type { ObservableLogger } from "./core/logger.js";
 import { processDocumentShared } from "./core/pipeline-shared.js";
 import { resolveSettingsPure } from "./core/resolve-settings-pure.js";
+import type { StructuredWarning } from "./core/warnings.js";
 import { createBuiltinEmitters, type EmitResult } from "./emitters/registry-shared.js";
 import { emitStandaloneBrowser } from "./emitters/standalone-browser.js";
 import type { EmitterConfig } from "./emitters/types.js";
@@ -34,12 +36,22 @@ import {
 export interface BrowserPipelineOptions {
   inlineConfig?: All2HtmlConfig;
   logger?: ObservableLogger;
+  /** Defaults to the browser converter on its SVG import path. */
+  surface?: SurfaceContext;
+  /**
+   * Emitter format this run is targeting. Folded into the default surface
+   * context, because format-qualified declarations (`unsupportedFormats:
+   * ["standalone"]`) cannot fire without it.
+   */
+  format?: string;
 }
 
 export interface BrowserPipelineResult {
   document: EmitterReadyDocument;
   groups: ArtboardGroup[];
+  /** Plain-string projection of `structuredWarnings`. */
   warnings: string[];
+  structuredWarnings: StructuredWarning[];
 }
 
 export interface BrowserEmitterDescriptor {
@@ -85,6 +97,7 @@ export function processDocumentInBrowser(
 ): BrowserPipelineResult {
   return processDocumentShared(irJson, {
     logger: options.logger,
+    surface: options.surface ?? { surface: "browser", path: "import", format: options.format },
     resolveSettingsSpanData: { inlineConfig: options.inlineConfig ? "present" : "absent" },
     resolveSettings(raw) {
       return resolveSettingsPure(raw, {
@@ -112,6 +125,7 @@ export async function convertLoadedSvgFilesInBrowser(
   });
   const processed = process(imported.document, {
     inlineConfig: options.parsedConfig,
+    surface: { surface: "browser", path: "import", format: options.format },
   });
   const emitterConfig = getEmitterConfig(options.parsedConfig);
   const emitResult = emitter(options.format).emitAll(

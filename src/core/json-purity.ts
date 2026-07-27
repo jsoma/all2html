@@ -1,0 +1,143 @@
+/**
+ * JSON-purity invariants for the document model (SPEC §12.2, decision D21).
+ *
+ * Zod rejects non-finite numbers at *input* (`src/ir/schema.ts`), but computed
+ * documents have no equivalent gate — which is exactly how `computeBreakpoints`
+ * stored `Infinity` unchallenged for as long as it did. A single JSON round-trip
+ * test is necessary but not sufficient: it tells you *that* the document is dirty,
+ * not *which transform* dirtied it. These assertions run at each transform boundary
+ * so the failure names the transform that introduced the sentinel.
+ *
+ * Scope is deliberately narrow — non-finite numbers (`Infinity`, `-Infinity`, `NaN`),
+ * the values `JSON.stringify` silently rewrites to `null`. Strings are *not* inspected:
+ * a text run reading "NaN" or an artboard named "Infinity Pool" is legitimate document
+ * content, so pattern-matching strings would throw on valid artwork. The sentinels that
+ * are stringified before any boundary sees them are prevented at the input instead — see
+ * `assertUsableArtboardDimensions` and the note on `assertJsonPure` below.
+ */
+
+/** Enumerable own keys, ES5-safe. */
+function ownKeys(value: object): string[] {
+  return Object.keys(value);
+}
+
+/**
+ * True for `Infinity`, `-Infinity` and `NaN`. The ordered comparison covers all three:
+ * NaN fails both, and each infinity fails one. Written this way rather than with the
+ * global `isFinite` (which coerces its argument) or `Number.isFinite` (ES2015, absent
+ * from ExtendScript — see decision D22, where a lint autofix to an ES2015+ API nearly
+ * shipped). Callers must have already established `typeof n === "number"`.
+ */
+function isNonFiniteNumber(n: number): boolean {
+  return !(n > -Infinity && n < Infinity);
+}
+
+/**
+ * Fast scan. No allocation, no path building, early exit on the first violation.
+ * The happy path — which is every path in practice — is a bare type-tag walk.
+ */
+function hasNonFiniteNumber(value: unknown): boolean {
+  if (typeof value === "number") return isNonFiniteNumber(value);
+  if (value === null || typeof value !== "object") return false;
+
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i++) {
+      if (hasNonFiniteNumber(value[i])) return true;
+    }
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  const keys = ownKeys(record);
+  for (let i = 0; i < keys.length; i++) {
+    if (hasNonFiniteNumber(record[keys[i]])) return true;
+  }
+  return false;
+}
+
+/**
+ * Slow pass, only ever run once a violation is already known to exist, to produce a
+ * useful message. Collects up to `limit` `path = value` descriptions.
+ */
+export function findNonFiniteNumbers(value: unknown, limit = 5): string[] {
+  const found: string[] = [];
+
+  function walk(node: unknown, path: string): void {
+    if (found.length >= limit) return;
+
+    if (typeof node === "number") {
+      if (isNonFiniteNumber(node)) found.push(`${path} = ${String(node)}`);
+      return;
+    }
+    if (node === null || typeof node !== "object") return;
+
+    if (Array.isArray(node)) {
+      for (let i = 0; i < node.length; i++) walk(node[i], `${path}[${i}]`);
+      return;
+    }
+
+    const record = node as Record<string, unknown>;
+    const keys = ownKeys(record);
+    for (let i = 0; i < keys.length; i++) {
+      walk(record[keys[i]], path ? `${path}.${keys[i]}` : keys[i]);
+    }
+  }
+
+  walk(value, "");
+  return found;
+}
+
+/**
+ * Assert that a transform's output contains no non-finite numbers.
+ *
+ * Throws rather than warns: a sentinel in the document model is a contract break,
+ * not a document-quality problem, and it is always a bug in this repo rather than in
+ * a user's artwork (Zod already rejects non-finite input).
+ *
+ * Cost is one type-tag walk of the object graph with no allocation on the happy path.
+ * The walk is O(document), so the *relative* cost does not shrink as documents grow —
+ * an earlier "~0.18 ms, negligible" note was measured on one small fixture and did not
+ * generalize. Re-measured over 20 rounds x 20 reps (median), transforms only, Zod
+ * validation excluded:
+ *
+ *   |  processed document | transforms | + 5 guards        | + 6 guards (old) |
+ *   |---------------------|------------|-------------------|------------------|
+ *   |  44 KB (countries)  |  0.19 ms   | 0.26 ms  (+32%)   | 0.30 ms (+52%)   |
+ *   | 168 KB (x4)         |  0.52 ms   | 0.96 ms  (+84%)   | 1.06 ms (+103%)  |
+ *   | 419 KB (x10)        |  1.31 ms   | 2.41 ms  (+83%)   | 2.71 ms (+106%)  |
+ *
+ * So the guard approaches ~1x the cost of the transform stage it protects. It stays on
+ * unconditionally anyway, because (a) in absolute terms ~1 ms on a 419 KB document is
+ * noise next to the file and image I/O that surrounds any real export, and (b) a guard
+ * that only runs in tests cannot catch the sentinel a user's document introduces. But
+ * the number of boundaries is now chosen, not assumed: `groupArtboards` lost its
+ * assertion (it only partitions existing references and coins no numbers), which is
+ * worth ~20% of the total guard cost for zero coverage.
+ *
+ * `src/extendscript/index.ts` asserts at two boundaries rather than five — see the
+ * comment there. That is the entry/exit subset: it catches every sentinel that is still
+ * a *number* when the exit assertion runs, at ~40% of the five-boundary cost, but it
+ * names "the pipeline" rather than the specific transform.
+ *
+ * **The limit of the walk, at any boundary count.** It tests `typeof === "number"`, so a
+ * sentinel that is created and stringified inside a single expression is already invisible
+ * by the next boundary. `compute-positions.ts:52` divides by `artboard.width` and
+ * interpolates the result straight into `"…%"`, so a zero-width artboard produced
+ * `left: Infinity%` with every purity gate green. Five boundaries would not have caught it
+ * either — the value is never a number at any boundary. That class is closed where it can
+ * be closed, at the input: Zod (`ArtboardSchema.width` is `.positive()`) on the shared path,
+ * and `assertUsableArtboardDimensions` (`src/core/artboard-dimensions.ts`) on the
+ * ExtendScript path, which runs no Zod. Any *new* divisor in the ExtendScript-bound
+ * transforms needs the same treatment; a purity assertion will not cover it.
+ */
+export function assertJsonPure(value: unknown, transformName: string): void {
+  if (!hasNonFiniteNumber(value)) return;
+
+  const details = findNonFiniteNumbers(value);
+  throw new Error(
+    `${transformName} produced a non-JSON-representable value. ` +
+      `The document model must survive a JSON round-trip; JSON.stringify turns ` +
+      `Infinity/-Infinity/NaN into null. Model absence by absence (an optional field), ` +
+      `not by a sentinel. Offending path(s): ${details.join(", ")}`,
+  );
+}
