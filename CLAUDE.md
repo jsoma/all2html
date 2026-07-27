@@ -4,13 +4,15 @@ Clean-room reimplementation of ai2html as a plugin-based system. Exporters produ
 
 ## Commands
 
+Requires **Node >= 20.19** (declared in `package.json` `engines`). jsdom's dependency chain needs `require(esm)`; on older Nodes two test suites fail at collect time rather than failing an assertion, so the failure does not look like a version problem.
+
 - `pnpm test` — run unit + integration tests (vitest)
 - `pnpm check:illustrator-fixtures` — audit the real Illustrator fixture registry against tracked artifacts
 - `pnpm test:visual` — run Playwright visual regression tests
 - `pnpm run typecheck` — type check without emitting
 - `pnpm build:extendscript` — build ES5 core bundle
 - `pnpm build:figma` — build the runnable Figma plugin to `plugins/figma/dist/`
-- `pnpm build:illustrator` — build assembled Illustrator plugin (~186KB)
+- `pnpm build:illustrator` — build assembled Illustrator plugin (~190KB)
 - `pnpm build:panel` — build Illustrator panel package from source
 - `pnpm package:panel` — build Illustrator bundle + signed panel package
 - `pnpm package:panel:zip` — build Illustrator bundle + panel zip **and** the signed `.zxp` (the zip target signs first, then wraps; see `internal-docs/cep-panel-architecture.md`)
@@ -85,6 +87,7 @@ Each transform takes a phase-typed document and returns the next phase:
 - ExtendScript has no ES2015+ *runtime APIs*; transpilers lower syntax but never polyfill APIs. `test/integration/es5-runtime-apis.test.ts` scans every shipped ExtendScript artifact and the panel `src/jsx` sources. Its allowlist is derived from `src/extendscript/polyfills.ts` — add the polyfill there rather than editing the test
 - Tests that inspect build artifacts must go through `test/helpers/extendscript-build.ts`, which rebuilds when an artifact is missing **or older than its inputs**. Existence checks alone let a stale `dist/` satisfy the ES5 guard while the current sources are broken
 - Both ExtendScript artifacts — the ES5 core bundle and the assembled `dist/all2html.js` users install — are guarded against checked-in baselines (`test/fixtures/extendscript-bundle-baseline.json`) plus a growth tolerance, not a fixed cliff. Size, delta, and headroom print on every test run, and any growth above the recorded baseline is reported as UNATTRIBUTED DRIFT. Raising `bytes` is allowed but must be a deliberate, reviewed commit, and the last `history` entry must state the new number — the test fails otherwise
+- `SAFE_SETTING_IDENTIFIER_RE` (and the `SAFE_IDENTIFIER_SETTING_KEYS` derived from the `string-safe` setting kind) lives in `src/ir/settings-definitions.ts` and is re-exported from `src/ir/schema.ts` — the pattern must not be restated, because `schema.ts` imports Zod and the ExtendScript bundle has to apply the identical rule without it. `src/extendscript/index.ts` sanitizes `namespace` / `projectName` / `svgIdPrefix` through it before the pipeline runs, falling back to the declared default and warning `setting:invalid-value` rather than aborting the export
 - Panel/docs help copy for settings lives in `src/ir/setting-help.ts`, never on `SETTING_DEFINITIONS`. That table is imported by the ExtendScript bundle and rollup cannot tree-shake object properties, so help copy on it ships into Illustrator (it cost 8,706 B). Nothing in `src/extendscript/` may import `setting-help.ts`
 - HTML escaping inside `src/emitters/` is single-sourced in `src/emitters/shared/escape.ts` and **deliberately narrowed to match `hast-util-to-html`'s subsets** (text: `&` `<`; double-quoted attributes: NUL `"` `&` `'` backtick) so the serializer and the `toHast()` adapter stay byte-identical. hast offers no way to *widen* its escaping, so matching it was the only route to byte-identity. Do not add a local escape helper inside `src/emitters/`, and do not "fix" the narrowness without re-proving parity
 - Three escape helpers legitimately survive **outside** `src/emitters/`, and this is not yet cleaned up: `plugins/after-effects/exporter.jsx` (ExtendScript, cannot import TS), `plugins/figma/src/ui-entry.ts`, and `apps/svg-dropzone/src/app.ts`. The last one uses its local helper in an *attribute* context (`app.ts:292`) and is safe only because that copy escapes `"` — swapping in the narrowed shared helper would open a hole. Those two browser surfaces need an `escapeAttr`/`escapeHtml` split before they can share
@@ -171,13 +174,13 @@ These are specced but NOT implemented yet:
 
 Verified against the code. Fix or remove; do not build on top of them.
 
-- **`output: multiple-files` is a no-op on Illustrator.** `groupArtboards` is never called from `src/extendscript/index.ts`; the single `emitHTMLString(ready)` at `:84` emits one file. The `multiple-files-test` fixture passes while producing a single HTML file.
-- **`imageFormat: svg` and `png24` silently produce PNG8 on Illustrator.** `exporter.jsx:1177-1194` branches only jpg vs `ExportType.PNG8`.
-- **Illustrator emits HTML only.** `src/extendscript/index.ts:84` hardcodes `emitHTMLString`; the emitter registry is unreachable from that surface. Standalone/Svelte/React are CLI-only. Figma does html + standalone.
+- **`output: multiple-files` is a no-op on Illustrator.** `groupArtboards` is never called from `src/extendscript/index.ts`; the single `emitHTMLString(ready)` in `processAndEmit` (`src/extendscript/index.ts:172`) emits one file. The `multiple-files-test` fixture passes while producing a single HTML file.
+- **`imageFormat: svg` and `png24` silently produce PNG8 on Illustrator.** `exportArtboardImage` (`exporter.jsx:1178-1194`) branches only jpg vs `ExportType.PNG8`.
+- **Illustrator emits HTML only.** `processAndEmit` (`src/extendscript/index.ts:172`) hardcodes `emitHTMLString`; the emitter registry is unreachable from that surface. Standalone/Svelte/React are CLI-only. Figma does html + standalone.
 - **After Effects never loads the core** (`grep -c All2Html plugins/after-effects/exporter.jsx` → 0) and carries a forked copy of the google-fonts and escaping helpers.
 - **31 settings cells are DEAD** — a control accepts the value, the export succeeds, nothing happens. Three of them (Figma `pngTransparent`, `pngNumberOfColors`, `use2xImages`) are dead *at their default*, so those warn on every Figma export. Full table with file:line proof in `internal-docs/capability-matrix.md`. Check it before assuming any setting works on any surface.
 - **`useLazyLoader` emits `data-src` but no loader script exists anywhere in `src/`** — lazy videos never receive a `src` and never play. Images are fine (native `loading="lazy"`). Both HTML emitters now warn per video layer (`video:lazy-src-no-loader`); the loader itself is still unimplemented.
-- **Illustrator custom blocks match `ai2html-` only.** A text block named `all2html-css` — the obvious guess — silently does nothing (`exporter.jsx:242`).
+- **Illustrator custom blocks match `ai2html-` only.** A text block named `all2html-css` — the obvious guess — silently does nothing — the `rxp` in `parseSpecialBlocks` (`exporter.jsx:269`).
 
 ## Contract Rules
 
@@ -193,8 +196,9 @@ These encode failures that have already happened. Treat them as hard rules.
 
 ## Surface-Specific Gotchas
 
-- **Special-layer tag syntax differs by tool and the docs currently merge them.** Illustrator splits on the *first* colon (`exporter.jsx:412`) and accepts `:svg,inline` or `:inline`. Figma accepts `:svg:inline`. `:svg:inline` on an Illustrator layer matches nothing and falls through to the unrecognized-tag warning.
-- **The Illustrator `all2html.config.json` needs snake_case keys.** `exporter.jsx:1685-1698` merges config → panel → text block into one bag read as `docSettings.project_name`. The camelCase rule applies to the IR and the core config, not to that file. Illustrator settings precedence is `config file < panel < text block`.
+- **Special-layer tag syntax differs by tool and the docs currently merge them.** Illustrator splits on the *first* colon (`extractLayers`, `exporter.jsx:439`) and accepts `:svg,inline` or `:inline`. Figma accepts `:svg:inline`. `:svg:inline` on an Illustrator layer matches nothing and falls through to the unrecognized-tag warning.
+- **The Illustrator `all2html.config.json` needs snake_case keys.** `exporter.jsx:1691-1706` merges config → panel → text block into one `docSettings` bag read as `docSettings.project_name` (`:1709`). The camelCase rule applies to the IR and the core config, not to that file. Illustrator settings precedence is `config file < panel < text block`.
+- **`htmlOutputExtension` only reaches the html emitter.** Illustrator honors it; the CLI, browser and Figma declare it `partial` with `unsupportedFormats: ["standalone", "svelte", "react"]` in `src/core/capabilities.ts`, so setting it while emitting one of those formats warns instead of silently doing nothing (svelte/react force `.svelte` and `.jsx`/`.tsx`, standalone always writes `.html`).
 - Artboards whose names start with `-` are skipped entirely.
 
 ## Reference

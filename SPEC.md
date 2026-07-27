@@ -185,6 +185,8 @@ all2html/
 
 ## 3. Intermediate Representation (IR) Schema
 
+**STATUS: RECONCILED with the shipped IR, not superseded.** This section was edited to match `src/ir/types.ts` / `src/ir/schema.ts` — `generator` became the `source` envelope, `irVersion` was added, and the `settings` block was brought in line with `SETTING_DEFINITIONS`. Unlike §2.3, nothing here was overtaken by a different design: the canonical IR is still the target, so the shipped shape and the specced shape are meant to be the same document. The rest of this file remains aspirational; when this section and the code disagree, the code is the contract and this section is the bug. `PROGRESS.md` records what is actually built.
+
 ### 3.1 Document
 
 ```typescript
@@ -1176,7 +1178,7 @@ An earlier draft chained everything behind the envelope split, which meant the u
 **Target.**
 - Each phase type makes the previous phase's uncertainty *unrepresentable*. If a transform can be skipped without a type error, the phase type is decoration and should be deleted or fixed.
 - **Use an explicit `pipelinePhase` literal discriminator, not additive fields.** TypeScript is structural: adding a field per phase does not stop a later document from being assignable to an earlier phase's parameter, which is exactly why `computeBreakpoints` can currently be called twice or never with no type error. Per-phase field types are selected by the literal; each transform's signature names the exact phase it consumes and produces.
-- **Phase documents are internal.** The persisted canonical IR stays the validated source document — bundles already serialize the original IR (`output-bundle.ts:45`). Serializing intermediate phases would expand the long-term contract for no benefit.
+- **Phase documents are internal.** The persisted canonical IR stays the validated source document — bundles already serialize the original IR (`output-bundle.ts:48`). Serializing intermediate phases would expand the long-term contract for no benefit.
 - Add a distinct `BreakpointedDocument` phase so `breakpoint` simply does not exist before `computeBreakpoints` runs. Delete the placeholder.
 - Model image-rendered text as its own element variant so no transform casts.
 - Remove the raw variants from `EmitterReadyLayer`. Every runtime `"in"`-check that disappears is the measure of success.
@@ -1203,7 +1205,7 @@ The rule binds consumers too, not just the model: `extractBreakpointData()` carr
 
 ### 12.4 Settings resolve exactly once, in the core
 
-**Evidence.** Precedence is implemented three times with different layer counts — panel 5 (`persistence.ts:132`), Illustrator 3 (`exporter.jsx:1685-1698`), After Effects 3 (`ae-persistence.ts:146`) — and the panel pre-merges its layers before handing them over, so the exporter's documented order is only accidentally correct.
+**Evidence.** Precedence is implemented three times with different layer counts — panel 5 (`persistence.ts:132`), Illustrator 3 (`exporter.jsx:1691-1706`), After Effects 3 (`ae-persistence.ts:146`) — and the panel pre-merges its layers before handing them over, so the exporter's documented order is only accidentally correct.
 
 **Target.** Surfaces contribute *unmerged, labelled layers*; the core resolves and returns both the resolved value and its provenance. The panel sends only the keys the user actually edited. Provenance becomes a core output rather than a thing the UI reconstructs, which also collapses the five-badge display into what a user needs: locked, and changed.
 
@@ -1253,7 +1255,7 @@ The mistake worth recording: an earlier draft of this section inferred product s
 >
 > **What ships instead:** export the shared google-fonts and escape helpers through `src/extendscript/index.ts` and give AE the bundle slot (~90% of the dedupe benefit, zero contract churn). `Document` stays as-is. (`Artboard.relationship` was added here as "one field" and then removed again under D27: it had zero consumers, and a field nothing reads is the pattern this work exists to remove. It returns with `groupArtboards`, which is where it has to act and which is blocked on ES3 safety — D19.) If a second scene kind actually ships, add `scene` as an optional discriminated field then.
 >
-> **The envelope contents below are also wrong and must be revised before this is ever picked up.** `Settings` is predominantly static-renderer policy (`imageFormat`, `responsiveness`, `renderRotatedSkewedTextAs`, `includeResizerCss`), and assets are structurally artboard-bound — `Asset.artboardId` is required (`schema.ts:193`) and cross-validated against the artboard graph (`schema.ts:304`). Putting settings and assets in a "universal" envelope would move static coupling rather than remove it, then freeze it into the contract.
+> **The envelope contents below are also wrong and must be revised before this is ever picked up.** `Settings` is predominantly static-renderer policy (`imageFormat`, `responsiveness`, `renderRotatedSkewedTextAs`, `includeResizerCss`), and assets are structurally artboard-bound — `Asset.artboardId` is required (`schema.ts:197`) and cross-validated against the artboard graph (`schema.ts:310-325`). Putting settings and assets in a "universal" envelope would move static coupling rather than remove it, then freeze it into the contract.
 >
 > **Correct decomposition when revisited:** only `irVersion`, `source`, and `metadata` are universal. Scene-specific configuration *and resources* live beside the scene. A unified resource catalog, if ever wanted, needs generic ownership — `{ owner: { kind, id } }` — not a mandatory `artboardId`.
 >

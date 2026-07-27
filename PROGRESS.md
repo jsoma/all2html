@@ -1,16 +1,18 @@
 # Progress
 
 ## Current Stats
-- **78 vitest test files** covering the pipeline, all five emitters, both plugin
+- **77 vitest test files** covering the pipeline, all five emitters, both plugin
   hosts and the CEP panel
   <!-- Deliberately not a test *count*. A count rewards multiplication: the suite
   had grown to 1670 tests of which ~700 were fixture × option matrices reporting
   a single bug dozens of times over ("does the JSX parse", asserted 256 times).
   Breadth is measured by what is covered, not by how many `it`s a nested loop
-  emits. If you want the number it is ~980; do not optimize it upward. -->
+  emits. If you want the number it is ~1000; do not optimize it upward. -->
 - **52 IR corpora under continuous sweep**: every hand-written fixture compiles
   under both framework emitters, and every golden validates + round-trips
-- **~186KB** assembled Illustrator plugin (`dist/all2html.js`)
+- **~190KB** assembled Illustrator plugin (`dist/all2html.js`) — the tracked
+  baseline is `assembled.bytes` in `test/fixtures/extendscript-bundle-baseline.json`
+  (currently 194,181 B)
 - **32 IR test fixtures** + **20 golden IR fixtures** from real Illustrator exports
 - **20 tracked real Illustrator source fixtures** in `data/`
 - **5 output formats**: HTML fragment, Standalone HTML, Svelte, React, ExtendScript bundle
@@ -21,6 +23,7 @@
 - [x] IR schema with **exclusive** phase types (SPEC §12.1 / D20): `Document → Resolved → Breakpointed → Styled → Deduplicated → EmitterReady`, each carrying a `pipelinePhase` literal so no transform can be skipped or repeated without a compile error. Image-rendered text is its own variant (`ImageTextElement`); `EmitterReadyLayer` admits no un-positioned variants. Removed the placeholder breakpoint in `settings-resolver.ts`, the placeholder `computedPosition` in `deduplicate-styles.ts`, and 12 runtime property-sniffing guards across the transforms and emitters.
 - [ ] `Artboard.relationship: "alternates" | "sequence"` (SPEC §12.10.5) is **not** in the IR. It was declared and validated with no consumer, and was removed under D27 rather than documented as unused; it lands with `groupArtboards`, which is where it has to act and which is blocked on ES3 safety (D19).
 - [x] Zod validation, default settings, JSONC config
+- [x] CSS-identifier sanitizing on the Zod-free path: `src/extendscript/index.ts` checks `namespace`, `projectName` and `svgIdPrefix` against `SAFE_SETTING_IDENTIFIER_RE` (defined in `src/ir/settings-definitions.ts`, re-exported from `schema.ts` so there is one pattern, not two). A rejected value falls back to its declared default and warns `setting:invalid-value` rather than aborting the export — every Zod-free caller enters through this bundle, so the check belongs there rather than in one exporter
 - [x] resolveSettings + resolveSettingsPure (fs-free for ExtendScript)
 - [x] computeBreakpoints, computeStyles, fontMap, deduplicateStyles, computePositions
 - [x] groupArtboards (one-file / multiple-files output)
@@ -108,7 +111,7 @@
 - [x] Unit convention JSDoc comments on opacity, letterSpacing, Color.opacity
 
 ### Testing
-- [x] 78 vitest test files
+- [x] 77 vitest test files
 - [x] 32 IR fixtures + 20 golden IR fixtures from real Illustrator exports
 - [x] Hardening-specific integration coverage for real Illustrator fixtures — every
       registered fixture is either asserted by name or on an explicit exemption list,
@@ -148,18 +151,20 @@ Verified against the code and reproduced. These are defects, not limitations —
 
 | What | Where | Effect |
 |---|---|---|
-| `output: multiple-files` no-op on Illustrator | `src/extendscript/index.ts:84` | `groupArtboards` never called; the `multiple-files-test` fixture emits one file |
-| `imageFormat: svg`/`png24` → PNG8 on Illustrator | `exporter.jsx:1177` | Silently wrong format, no warning |
-| Illustrator emits HTML only | `src/extendscript/index.ts:84` | Standalone/Svelte/React unreachable from the production surface |
-| Element ids not slug-prefixed | emitters | Two graphics on one page collide on `g-ai0-1` |
+| `output: multiple-files` no-op on Illustrator | `src/extendscript/index.ts:172` (`processAndEmit`) | `groupArtboards` never called; the `multiple-files-test` fixture emits one file |
+| `imageFormat: svg`/`png24` → PNG8 on Illustrator | `exporter.jsx:1178-1194` (`exportArtboardImage`) | Silently wrong format, no warning |
+| Illustrator emits HTML only | `src/extendscript/index.ts:172` (`processAndEmit`) | Standalone/Svelte/React unreachable from the production surface |
+| Element ids not slug-prefixed | minted in `plugins/illustrator/exporter.jsx:712`, emitted un-namespaced by `src/emitters/html-tree.ts:170` | Two graphics on one page collide on `g-ai0-1`. Both files are involved: the exporter mints the id, the emitter passes `element.id` through without a slug prefix |
 | Visual baselines are stale | `test/visual/fixture-output/` | 28 checked-in HTML files nothing regenerates; ~56 tests screenshot a superseded emitter |
 | `useLazyLoader` emits `data-src` with no loader | `html-tree.ts` (`video` layer arm) | **No loader script is emitted anywhere in `src/`** — lazy videos never receive a `src` and simply never play. The emitter warns per video layer (`video:lazy-src-no-loader`); the loader is still unimplemented |
 | `output: multiple-files` collapses for `standalone` | `registry-shared.ts:84-96` | `emitAll` discards `groups`; verified html→2 files, svelte→2, react→2, **standalone→1** |
-| Illustrator custom blocks are `ai2html-` prefix only | `exporter.jsx:242` | A block named `all2html-css` — the obvious guess given the product name — silently does nothing |
+| Illustrator custom blocks are `ai2html-` prefix only | `exporter.jsx:269` (`parseSpecialBlocks`) | A block named `all2html-css` — the obvious guess given the product name — silently does nothing |
 | Figma `:symbol` and `:div` parsed then rejected | `runtime-extract.ts:464` | Recognized by the tag parser, then skipped with a warning |
 | Figma frame token is `:image`, not `:image-only` | `extract/frames.ts:33` | Diverges from the Illustrator artboard-token vocabulary |
 
 **31 DEAD settings cells** (a control accepts a value, the export succeeds, nothing happens) are catalogued with file:line proof in [`internal-docs/capability-matrix.md`](internal-docs/capability-matrix.md). That document is the evidence base for the capability-declaration work in SPEC §12.5. D1-D30 warn from the core capability check on Illustrator, Figma, the CLI and the browser; D31 warns from the emitters. After Effects declares its capabilities but does not enforce them — it never loads the core (decision D26).
+
+`htmlOutputExtension` is the newest entry in that table: Illustrator honors it, but the CLI, browser and Figma declare it `partial` with `unsupportedFormats: ["standalone", "svelte", "react"]`, since svelte/react force `.svelte` and `.jsx`/`.tsx` and standalone always writes `.html`. Requesting it under those formats now warns instead of being silently dropped.
 
 ## Known Limitations
 
