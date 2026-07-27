@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { defaultSettings } from "../../src/ir/defaults.js";
 import { SettingsSchema } from "../../src/ir/schema.js";
+import { getSettingHelpDefinition, SETTING_HELP } from "../../src/ir/setting-help.js";
 import {
   createDefaultSettings,
   getSettingDefault,
@@ -27,9 +28,16 @@ describe("settings definitions", () => {
     expect(first).not.toBe(second);
   });
 
-  it("carries panel help metadata for documented settings", () => {
-    expect(getSettingDefinition("responsiveness")?.help?.docsAnchor).toBe("responsiveness");
-    expect(getSettingDefinition("renderTextAs")?.help?.summary).toContain("live HTML");
+  it("keeps panel help copy in a sibling module, keyed by real settings", () => {
+    expect(getSettingHelpDefinition("responsiveness")?.docsAnchor).toBe("responsiveness");
+    expect(getSettingHelpDefinition("renderTextAs")?.summary).toContain("live HTML");
+    expect(getSettingHelpDefinition("nonexistentSetting")).toBeUndefined();
+
+    const known = new Set(SETTING_DEFINITIONS.map((definition) => definition.key as string));
+    for (const key of Object.keys(SETTING_HELP)) {
+      expect(known.has(key), `help copy for unknown setting "${key}"`).toBe(true);
+      expect(getSettingDefinition(key)).toBeDefined();
+    }
   });
 
   it("defaults Google Fonts off and validates supported modes", () => {

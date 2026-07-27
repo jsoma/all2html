@@ -1,202 +1,648 @@
 ---
 title: Settings Reference
-description: Canonical settings concepts and where they show up across the product.
+description: Every canonical setting, its type, its default, and which surfaces actually honor it.
 ---
+
+<!--
+  GENERATED FILE — do not edit by hand.
+  Source: src/ir/settings-definitions.ts, src/ir/setting-help.ts, src/core/capabilities.ts, src/ir/schema.ts
+  Regenerate: pnpm docs:generate
+  CI fails when this file is stale: pnpm check:generated-docs
+-->
 
 # Settings Reference
 
-all2html keeps one canonical settings model even though each source tool exposes it differently.
+all2html keeps one canonical settings model even though each source tool exposes it differently. This page is generated from the setting definitions and the per-surface capability declarations in the source tree, so it cannot describe behavior the code does not have.
 
-## Important Families
+Settings always use canonical camelCase keys inside the IR and in `all2html.config.json`. Tool-native spellings such as `image_format` or `html_output_path` are accepted only on the tool side of the boundary — in an Illustrator `ai2html-settings` text block — and are normalized before they reach the pipeline.
 
-### Output
+There are 33 settings.
 
-- `output`
-- `htmlOutputPath`
-- `imageOutputPath`
-- `slug`
+## Surfaces
 
-### Responsiveness
+Every setting below is scored against these five surfaces. A surface with no explicit entry for a setting behaves as its default column says.
 
-- `responsiveness`
-- `textResponsiveness`
-- `responsiveImageMode`
+| Surface | Settings it does not name | Warns you at export time? | Surface note |
+|---|---|---|---|
+| Illustrator | honored | yes | — |
+| After Effects | n/a — never reached | **no** — the declaration is documentation only | The After Effects exporter does not run the shared pipeline; it splices its own player template. |
+| Figma plugin | honored | yes | — |
+| all2html CLI | honored | yes | — |
+| Browser converter | honored | yes | — |
 
-### Images
+A surface that warns tells you, during the export itself, whenever you asked for something it will not produce. A surface that does not warn will simply do something else in silence.
 
-- `imageFormat`
-- `jpgQuality`
-- `pngNumberOfColors`
-- `use2xImages`
+## Support Key
 
-### HTML Behavior
+| Value | Meaning |
+|---|---|
+| yes | Read and acted on. |
+| partial | Acted on for some values, entry paths, or output formats only. See the setting's own section. |
+| **no** | The surface accepts the setting and does nothing with it. |
+| n/a | Meaningless here — the surface never reaches the code the setting drives. |
 
-- `namespace`
-- `clickableLink`
-- `inlineSvg`
-- `googleFonts`
+## Support At A Glance
 
-### Accessibility And Metadata
+| Setting | Illustrator | After Effects | Figma plugin | all2html CLI | Browser converter |
+|---|---|---|---|---|---|
+| [`imageFormat`](#imageFormat) | partial | n/a | partial | partial | partial |
+| [`writeImageFiles`](#writeImageFiles) | **no** | n/a | **no** | **no** | **no** |
+| [`pngTransparent`](#pngTransparent) | yes | n/a | **no** | partial | partial |
+| [`pngNumberOfColors`](#pngNumberOfColors) | yes | n/a | **no** | partial | partial |
+| [`jpgQuality`](#jpgQuality) | yes | n/a | **no** | partial | partial |
+| [`use2xImages`](#use2xImages) | yes | n/a | **no** | partial | partial |
+| [`cacheBustToken`](#cacheBustToken) | yes | n/a | yes | yes | yes |
+| [`namespace`](#namespace) | yes | n/a | yes | yes | yes |
+| [`projectName`](#projectName) | yes | n/a | yes | yes | yes |
+| [`output`](#output) | **no** | n/a | partial | partial | partial |
+| [`htmlOutputPath`](#htmlOutputPath) | yes | n/a | **no** | **no** | **no** |
+| [`htmlOutputExtension`](#htmlOutputExtension) | yes | n/a | yes | yes | yes |
+| [`imageOutputPath`](#imageOutputPath) | yes | n/a | partial | yes | yes |
+| [`imageSourcePath`](#imageSourcePath) | yes | n/a | yes | yes | yes |
+| [`responsiveness`](#responsiveness) | yes | n/a | yes | yes | yes |
+| [`textResponsiveness`](#textResponsiveness) | yes | n/a | yes | yes | yes |
+| [`maxWidth`](#maxWidth) | yes | n/a | yes | yes | yes |
+| [`centerHtmlOutput`](#centerHtmlOutput) | yes | n/a | yes | yes | yes |
+| [`renderTextAs`](#renderTextAs) | yes | n/a | **no** | partial | partial |
+| [`renderRotatedSkewedTextAs`](#renderRotatedSkewedTextAs) | yes | n/a | **no** | **no** | **no** |
+| [`googleFonts`](#googleFonts) | yes | yes | yes | yes | yes |
+| [`testingMode`](#testingMode) | yes | n/a | yes | yes | yes |
+| [`includeResizerCss`](#includeResizerCss) | yes | n/a | yes | yes | yes |
+| [`includeResizerWidths`](#includeResizerWidths) | yes | n/a | yes | yes | yes |
+| [`responsiveImageMode`](#responsiveImageMode) | **no** | n/a | yes | yes | yes |
+| [`useLazyLoader`](#useLazyLoader) | partial | n/a | partial | partial | partial |
+| [`inlineSvg`](#inlineSvg) | **no** | n/a | **no** | **no** | **no** |
+| [`svgIdPrefix`](#svgIdPrefix) | **no** | n/a | **no** | **no** | **no** |
+| [`svgEmbedImages`](#svgEmbedImages) | yes | n/a | **no** | **no** | **no** |
+| [`clickableLink`](#clickableLink) | yes | n/a | yes | yes | yes |
+| [`createPromoImage`](#createPromoImage) | yes | n/a | **no** | **no** | **no** |
+| [`promoImageWidth`](#promoImageWidth) | yes | n/a | **no** | **no** | **no** |
+| [`localPreviewTemplate`](#localPreviewTemplate) | **no** | n/a | **no** | yes | **no** |
 
-These mostly live in `metadata` rather than settings:
-
-- `altText`
-- `imageAltText`
-- `ariaRole`
-- `lang`
-
-## Covered Panel Settings
-
-<a id="responsiveness"></a>
-### `responsiveness`
-
-**Panel label:** `Layout`
-
-Controls whether artboards export at fixed widths or as layouts that can stretch with the container.
-
-Use `fixed` for classic ai2html-style breakpoint swaps. Use `dynamic` when the layout itself should scale more fluidly instead of behaving like a locked-width panel.
-
-Tradeoffs: `fixed` is easier to reason about and matches newsroom embed expectations. `dynamic` is more flexible, but you should expect more responsive behavior in the emitted HTML and CSS.
-
-<a id="renderTextAs"></a>
-### `renderTextAs`
-
-**Panel label:** `Text as`
-
-Chooses whether text is emitted as live HTML or baked into the exported background image.
-
-Use `html` when you want searchable, selectable, and styleable text. Use `image` when exact Illustrator fidelity matters more than live text.
-
-Tradeoffs: HTML is better for accessibility and editing. Image text is more faithful visually, but loses semantic text behavior.
-
-<a id="googleFonts"></a>
-### `googleFonts`
-
-**Panel label:** `Google Fonts`
-
-Controls whether all2html emits Google Fonts loading markup for mapped live text fonts.
-
-Supported values:
-
-- `none`: emits no external font loading markup
-- `import`: prepends a CSS `@import` rule to the generated CSS
-- `link`: emits Google preconnect tags plus a stylesheet `<link>` before the generated style output
-
-The generated URL comes from the first non-generic, non-web-safe CSS family in each font mapping. For example, `'IBM Plex Sans', system-ui, sans-serif` becomes an `IBM Plex Sans` request. all2html does not validate that a family exists on Google Fonts; invalid family requests fall back through normal browser font behavior.
-
-Tradeoffs: `none` is best for privacy, self-hosted fonts, and fully offline output. `import` is the recommended enabled mode for snippets and component output. `link` is useful when the integration expects font loading markup outside the generated CSS.
-
-<a id="output"></a>
-### `output`
-
-**Panel label:** `Output`
-
-Controls whether related artboards are emitted into one HTML file or split into separate files.
-
-Use `one-file` for one responsive graphic with multiple artboards or breakpoints. Use `multiple-files` when each artboard or responsive group should stand alone as its own deliverable.
-
-Tradeoffs: one file is simpler for a single embed; multiple files are easier when publishing outputs separately.
+## Settings
 
 <a id="imageFormat"></a>
 ### `imageFormat`
 
-**Panel label:** `Format`
+**Type:** array of `auto`, `png`, `png24`, `jpg`, `svg` · **Default:** `["auto"]` · **Panel label:** `Format`
 
 Chooses the raster or vector format used for exported background artwork.
 
-Use `auto` unless you know the output needs a specific format. PNG is better for transparency and flatter artwork; JPEG is smaller for photo-heavy work; SVG keeps vector output when compatible.
+Auto lets the pipeline pick a reasonable image format. SVG keeps vector layers where possible, while PNG and JPEG trade off transparency, file size, and fidelity.
 
-Tradeoffs: PNG is larger but safer, JPEG is smaller but lossy, and SVG can stay crisp while exposing more browser rendering differences.
+Start with Auto unless you know the output needs a specific format.
+
+- **Auto** — Lets all2html choose the image format based on the artwork.
+- **PNG (8-bit)** — Palette-based PNG. Good for flatter graphics with fewer colors.
+- **PNG (24-bit)** — Full-color PNG. Larger but more faithful, with transparency support.
+- **JPEG** — Smaller for photo-heavy graphics, but no transparency and more compression artifacts.
+- **SVG** — Keeps vector output when compatible, but can expose more browser rendering differences.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| Illustrator | partial | Honored values: `auto`, `png`, `jpg`. Illustrator rasterizes 8-bit PNG for every value except jpg, so png24 and svg both produce an 8-bit PNG. |
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | partial | Honored values: `auto`, `png24`. The Figma runtime always exports full-color PNG with alpha, equivalent to png24. |
+| all2html CLI | partial | Honored on the `import` path only. Rasterization settings are honored by `import svg`. The `render` command never rasterizes, so this value is inert. |
+| Browser converter | partial | Honored on the `import` path only. Rasterization settings are honored by `import svg`. The `render` command never rasterizes, so this value is inert. |
+
+<a id="writeImageFiles"></a>
+### `writeImageFiles`
+
+**Type:** boolean · **Default:** `true`
+
+Asks the exporter to write extracted image assets to disk alongside the emitted output.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| Illustrator | **no** | Illustrator always writes image files. |
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | **no** | Figma always writes extracted assets into the export ZIP. |
+| all2html CLI | **no** | Extracted assets are always written next to the emitted files. |
+| Browser converter | **no** | Extracted assets are always written next to the emitted files. |
+
+<a id="pngTransparent"></a>
+### `pngTransparent`
+
+**Type:** boolean · **Default:** `false`
+
+Exports PNG backgrounds with a transparent background instead of a flat matte.
+
+Honored on: Illustrator.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | **no** | This surface behaves as `true`, whatever you set. The Figma runtime exports transparent PNG at 1x with no format, quantizer, or quality controls. |
+| all2html CLI | partial | Honored on the `import` path only. Rasterization settings are honored by `import svg`. The `render` command never rasterizes, so this value is inert. |
+| Browser converter | partial | Honored on the `import` path only. Rasterization settings are honored by `import svg`. The `render` command never rasterizes, so this value is inert. |
+
+<a id="pngNumberOfColors"></a>
+### `pngNumberOfColors`
+
+**Type:** integer, 1–256 · **Default:** `128`
+
+Size of the color palette used when quantizing 8-bit PNG output. Fewer colors means smaller files and more banding.
+
+Honored on: Illustrator.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | **no** | There is no equivalent behavior here, so any value diverges. The Figma runtime exports full-color PNG with no quantizer, so no color count is honored. |
+| all2html CLI | partial | Honored on the `import` path only. Rasterization settings are honored by `import svg`. The `render` command never rasterizes, so this value is inert. |
+| Browser converter | partial | Honored on the `import` path only. Rasterization settings are honored by `import svg`. The `render` command never rasterizes, so this value is inert. |
+
+<a id="jpgQuality"></a>
+### `jpgQuality`
+
+**Type:** integer, 0–100 · **Default:** `85`
+
+JPEG compression quality for rasterized backgrounds, from 0 (worst) to 100 (best).
+
+Honored on: Illustrator.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | **no** | The Figma runtime exports transparent PNG at 1x with no format, quantizer, or quality controls. |
+| all2html CLI | partial | Honored on the `import` path only. Rasterization settings are honored by `import svg`. The `render` command never rasterizes, so this value is inert. |
+| Browser converter | partial | Honored on the `import` path only. Rasterization settings are honored by `import svg`. The `render` command never rasterizes, so this value is inert. |
 
 <a id="use2xImages"></a>
 ### `use2xImages`
 
-**Panel label:** `Retina (2x) images`
+**Type:** boolean · **Default:** `true` · **Panel label:** `Retina (2x) images`
 
 Exports high-density image assets so the graphic looks sharper on retina screens.
 
-Use it when display quality matters and you can afford larger assets. Turn it off when file size is the main constraint.
+This writes larger source images and scales them down in the browser. It usually improves crispness, but increases image weight.
 
-Tradeoffs: sharper images versus heavier image payloads.
+Leave this on for production web graphics unless file size is unusually tight.
+
+Honored on: Illustrator.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | **no** | This surface behaves as `false`, whatever you set. The Figma runtime exports transparent PNG at 1x with no format, quantizer, or quality controls. |
+| all2html CLI | partial | Honored on the `import` path only. Rasterization settings are honored by `import svg`. The `render` command never rasterizes, so this value is inert. |
+| Browser converter | partial | Honored on the `import` path only. Rasterization settings are honored by `import svg`. The `render` command never rasterizes, so this value is inert. |
+
+<a id="cacheBustToken"></a>
+### `cacheBustToken`
+
+**Type:** positive integer, or `null` · **Default:** `null`
+
+Appended to every emitted image URL as `?v=<token>` so a re-export busts CDN and browser caches.
+
+Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+
+<a id="namespace"></a>
+### `namespace`
+
+**Type:** string — empty, or a CSS-safe identifier (letters, digits, `_`, `-`, not starting with a digit) · **Default:** `"g-"`
+
+Prefix applied to every generated CSS class and id (`g-artboard`, `g-pstyle0`, and so on). Change it when the host page already uses the default prefix.
+
+Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+
+<a id="projectName"></a>
+### `projectName`
+
+**Type:** string — empty, or a CSS-safe identifier (letters, digits, `_`, `-`, not starting with a digit) · **Default:** `""`
+
+Base name used for emitted files, the container id, and the CSS scope. Falls back to `metadata.slug` when empty.
+
+Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+
+<a id="output"></a>
+### `output`
+
+**Type:** one of `one-file`, `multiple-files` · **Default:** `"one-file"` · **Panel label:** `Output`
+
+Controls whether related artboards are emitted into one HTML file or split into separate files.
+
+Single file is the classic ai2html-style output for responsive artboard groups. Per artboard writes a separate file for each base artboard group.
+
+Use Single file for one graphic with breakpoints; use Per artboard when each artboard should stand alone.
+
+- **Single file** — Emits one HTML file that can contain responsive artboard variants together.
+- **Per artboard** — Writes separate output files instead of bundling all artboards into one result.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| Illustrator | **no** | Illustrator always emits a single HTML file. Artboard grouping is deliberately not wired into the ExtendScript bundle yet. |
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | partial | Not honored for the `standalone` format. The standalone emitter collapses every artboard group into a single file. |
+| all2html CLI | partial | Not honored for the `standalone` format. The standalone emitter collapses every artboard group into a single file. |
+| Browser converter | partial | Not honored for the `standalone` format. The standalone emitter collapses every artboard group into a single file. |
 
 <a id="htmlOutputPath"></a>
 ### `htmlOutputPath`
 
-**Panel label:** `HTML path`
+**Type:** string · **Default:** `"all2html-output/"` · **Panel label:** `HTML path`
 
-Controls where exported HTML files are written. Relative paths are resolved next to the Illustrator document unless you use an absolute path.
+Folder where the exported HTML files are written, relative to the Illustrator document unless you use an absolute path.
 
-Use the default `all2html-output/` for most projects. Change it when your publishing workflow expects HTML somewhere else.
+By default, all2html writes next to the document in all2html-output/. Use a different folder when your publishing workflow expects HTML somewhere else.
 
-Tradeoffs: custom paths help fit an asset pipeline, but make the output location less obvious when you reopen the document later.
+Most projects can leave this at all2html-output/.
+
+Honored on: Illustrator.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | **no** | Figma delivers a ZIP whose layout is fixed by the bundle manifest. |
+| all2html CLI | **no** | Output location comes from the -o flag. |
+| Browser converter | **no** | Output location comes from the -o flag. |
+
+<a id="htmlOutputExtension"></a>
+### `htmlOutputExtension`
+
+**Type:** string · **Default:** `".html"`
+
+File extension used for emitted HTML files, for CMSes that expect something other than `.html`.
+
+Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
 
 <a id="imageOutputPath"></a>
 ### `imageOutputPath`
 
-**Panel label:** `Image path`
+**Type:** string · **Default:** `"all2html-output/"` · **Panel label:** `Image path`
 
-Controls where exported image assets are written.
+Folder where exported image assets are written.
 
-Most projects keep this aligned with `htmlOutputPath`. Split it only when your build or CMS wants images in a different location from the HTML files.
+This is usually the same as the HTML output folder, but can differ if your build or CMS wants images in a separate location.
 
-Tradeoffs: separate asset roots can be useful, but you then need to keep image references and deployment paths in sync.
+Keep it aligned with HTML path unless you have a specific asset pipeline.
+
+Honored on: Illustrator, all2html CLI, Browser converter.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | partial | Changing this moves the <img src> prefix but not the asset paths inside the ZIP, so the HTML stops resolving against the bundle. |
+
+<a id="imageSourcePath"></a>
+### `imageSourcePath`
+
+**Type:** string · **Default:** `""`
+
+Prefix prepended to image `src` attributes in the emitted HTML. Use it when images are served from a different URL root than the one they were written to.
+
+Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+
+<a id="responsiveness"></a>
+### `responsiveness`
+
+**Type:** one of `fixed`, `dynamic` · **Default:** `"fixed"` · **Panel label:** `Layout`
+
+Controls whether artboards export at fixed widths or as layouts that can stretch with the container.
+
+Fixed swaps between artboards at breakpoints while keeping each artboard width locked. Dynamic lets an artboard scale more fluidly and uses aspect-ratio spacing in the HTML.
+
+Leave this on Fixed unless the layout itself should stretch between breakpoints.
+
+- **Fixed** — Keeps each artboard at a defined width and swaps variants at breakpoints.
+- **Dynamic** — Lets an artboard scale more fluidly instead of behaving like a locked-width panel.
+
+Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
 
 <a id="textResponsiveness"></a>
 ### `textResponsiveness`
 
-**Panel label:** `Text sizing`
+**Type:** one of `fixed`, `dynamic` · **Default:** `"dynamic"` · **Panel label:** `Text sizing`
 
 Controls whether live HTML text keeps fixed sizing or scales more dynamically with the layout.
 
-This matters only when text is emitted as HTML. Use `dynamic` for more flexible live text behavior. Use `fixed` when you want text geometry to stay closer to the Illustrator artboard.
+This only matters when text is emitted as HTML. Dynamic text sizing produces more flexible text positioning, while Fixed keeps the text box behavior closer to the Illustrator artboard.
 
-Tradeoffs: dynamic adapts better to responsive layouts; fixed is more rigid but can feel more predictable.
+Dynamic is the safer default for live HTML text.
+
+- **Dynamic** — Lets live HTML text scale and reposition more fluidly.
+- **Fixed** — Keeps live HTML text closer to fixed artboard geometry.
+
+Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+
+<a id="maxWidth"></a>
+### `maxWidth`
+
+**Type:** positive number, or `null` · **Default:** `null`
+
+Caps the width of the generated container in pixels. `null` leaves the graphic uncapped.
+
+Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+
+<a id="centerHtmlOutput"></a>
+### `centerHtmlOutput`
+
+**Type:** boolean · **Default:** `true`
+
+Centers the generated container and its artboards with `margin: 0 auto`.
+
+Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+
+<a id="renderTextAs"></a>
+### `renderTextAs`
+
+**Type:** one of `html`, `image` · **Default:** `"html"` · **Panel label:** `Text as`
+
+Chooses whether text is emitted as live HTML or baked into the exported background image.
+
+HTML text stays searchable, selectable, and styleable, but depends on browser fonts. Image text preserves Illustrator appearance more exactly, but it is no longer live text.
+
+Use HTML unless fidelity problems force you to rasterize the type.
+
+- **HTML** — Keeps text live in the markup for accessibility, search, and CSS styling.
+- **Image** — Renders text into the exported image for maximum visual fidelity.
+
+Honored on: Illustrator.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | **no** | Figma always emits live HTML text and always hides text before the background raster. |
+| all2html CLI | partial | Honored on the `import` path only. Text rendering mode is decided by the exporter that produced the IR. On `render` the value is inert. |
+| Browser converter | partial | Honored on the `import` path only. Text rendering mode is decided by the exporter that produced the IR. On `render` the value is inert. |
+
+<a id="renderRotatedSkewedTextAs"></a>
+### `renderRotatedSkewedTextAs`
+
+**Type:** one of `html`, `image` · **Default:** `"html"`
+
+Whether rotated and skewed text is kept as live HTML or baked into the background image. Browsers place transformed text less predictably than upright text.
+
+Honored on: Illustrator.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | **no** | Figma always emits rotated and skewed text as live HTML. |
+| all2html CLI | **no** | Only the Illustrator exporter acts on this; the core always emits rotated and skewed text as live HTML. |
+| Browser converter | **no** | Only the Illustrator exporter acts on this; the core always emits rotated and skewed text as live HTML. |
+
+<a id="googleFonts"></a>
+### `googleFonts`
+
+**Type:** one of `none`, `import`, `link` · **Default:** `"none"` · **Panel label:** `Google Fonts`
+
+Optionally adds Google Fonts loading markup for mapped live text fonts.
+
+The generated URL is based on the first concrete CSS family in each font mapping. all2html does not validate whether the family exists on Google Fonts; invalid requests fall back through normal browser font behavior.
+
+Off keeps exports self-contained and avoids external font requests.
+
+- **Off** — Does not emit Google Fonts loading markup.
+- **CSS @import** — Adds an @import rule at the top of generated CSS. This is the recommended enabled mode for snippets.
+- **Link tag** — Adds preconnect and stylesheet link tags before generated style output.
+
+Honored on every surface.
+
+<a id="testingMode"></a>
+### `testingMode`
+
+**Type:** boolean · **Default:** `false`
+
+Tints live HTML text red so it is obvious which text is real HTML and which is baked into the background image.
+
+Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
 
 <a id="includeResizerCss"></a>
 ### `includeResizerCss`
 
-**Panel label:** `Container query CSS`
+**Type:** boolean · **Default:** `true` · **Panel label:** `Container query CSS`
 
 Adds the responsive CSS rules that switch between artboards at breakpoints.
 
-Leave it on for normal responsive exports. Turn it off only if you are deliberately replacing the generated CSS with your own responsive handling.
+Without this CSS, multi-artboard responsive output loses the generated container-query rules that show the right variant at the right width.
 
-Tradeoffs: the default generated CSS is convenient, but custom site integrations may prefer tighter control.
+Leave this on unless you are intentionally replacing the generated CSS.
+
+Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+
+<a id="includeResizerWidths"></a>
+### `includeResizerWidths`
+
+**Type:** boolean · **Default:** `true`
+
+Adds `data-min-width` / `data-max-width` attributes to each artboard so an external resizer script can pick the right variant.
+
+Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+
+<a id="responsiveImageMode"></a>
+### `responsiveImageMode`
+
+**Type:** one of `img-src`, `css-var` · **Default:** `"img-src"`
+
+How responsive background images are attached: as `<img src>` elements, or as CSS custom properties so only the visible artboard's image is fetched.
+
+Honored on: Figma plugin, all2html CLI, Browser converter.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| Illustrator | **no** | Illustrator always emits img-src images. |
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+
+<a id="useLazyLoader"></a>
+### `useLazyLoader`
+
+**Type:** boolean · **Default:** `true`
+
+Defers loading of background images and video until they are near the viewport.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| Illustrator | partial | Images get native loading="lazy". Videos are emitted with data-src and no src and no loader script is emitted, so a lazily-loaded video never plays; the emitter warns per video layer. Warned per affected element with the code `video:lazy-src-no-loader`. |
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | partial | Images get native loading="lazy". Videos are emitted with data-src and no src and no loader script is emitted, so a lazily-loaded video never plays; the emitter warns per video layer. Warned per affected element with the code `video:lazy-src-no-loader`. |
+| all2html CLI | partial | Images get native loading="lazy". Videos are emitted with data-src and no src and no loader script is emitted, so a lazily-loaded video never plays; the emitter warns per video layer. Warned per affected element with the code `video:lazy-src-no-loader`. |
+| Browser converter | partial | Images get native loading="lazy". Videos are emitted with data-src and no src and no loader script is emitted, so a lazily-loaded video never plays; the emitter warns per video layer. Warned per affected element with the code `video:lazy-src-no-loader`. |
 
 <a id="inlineSvg"></a>
 ### `inlineSvg`
 
-**Panel label:** `Inline SVG layers`
+**Type:** boolean · **Default:** `false` · **Panel label:** `Inline SVG layers`
 
 Keeps eligible SVG layers inline in the HTML instead of rasterizing them into background images.
 
-Use it when you need live vector layers in the markup for crispness or styling hooks. Leave it off when you want simpler HTML and more predictable cross-browser behavior.
+Inline SVG can make vector details stay crisp and stylable, but it also produces more verbose HTML and can reveal browser rendering differences.
 
-Tradeoffs: inline SVG can stay crisp and editable, but produces more verbose markup and can surface more browser differences.
+Leave this off unless you specifically need live vector layers in the markup.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| Illustrator | **no** | Tag individual layers with :svg,inline instead. The document-level setting is not read. |
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | **no** | Tag individual layers with :svg:inline instead. The document-level setting is not read. |
+| all2html CLI | **no** | Only the per-layer inline flag in the IR is read. |
+| Browser converter | **no** | Only the per-layer inline flag in the IR is read. |
+
+<a id="svgIdPrefix"></a>
+### `svgIdPrefix`
+
+**Type:** string — empty, or a CSS-safe identifier (letters, digits, `_`, `-`, not starting with a digit) · **Default:** `""`
+
+Prefix applied to ids inside inline SVG output, so several inline SVGs on one page cannot collide.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| Illustrator | **no** | SVG id prefixing is not implemented on any surface; ids are emitted unprefixed. |
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | **no** | SVG id prefixing is not implemented on any surface; ids are emitted unprefixed. |
+| all2html CLI | **no** | SVG id prefixing is not implemented on any surface; ids are emitted unprefixed. |
+| Browser converter | **no** | SVG id prefixing is not implemented on any surface; ids are emitted unprefixed. |
 
 <a id="svgEmbedImages"></a>
 ### `svgEmbedImages`
 
-**Panel label:** `Embed images in SVG`
+**Type:** boolean · **Default:** `false` · **Panel label:** `Embed images in SVG`
 
 Embeds image assets directly inside inline SVG output instead of referencing separate files.
 
-Use it when you need a self-contained SVG fragment. Leave it off when normal external image files are acceptable.
+This can make a self-contained SVG fragment, but it increases HTML size and duplicates binary image data.
 
-Tradeoffs: self-contained SVG is convenient, but increases HTML size and duplicates binary image data.
+Leave this off unless you need a fully self-contained SVG fragment.
 
-## Canonical Naming
+Honored on: Illustrator.
 
-Inside the IR and core config parsing, settings always use canonical camelCase keys. Tool-native snake_case belongs only on the tool side of the boundary.
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | **no** | Figma's SVG export takes no embed option, so linked images stay referenced. |
+| all2html CLI | **no** | Inline SVG keeps linked images referenced. |
+| Browser converter | **no** | Inline SVG keeps linked images referenced. |
+
+<a id="clickableLink"></a>
+### `clickableLink`
+
+**Type:** string · **Default:** `""`
+
+Wraps the whole graphic in a link to this URL.
+
+Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+
+<a id="createPromoImage"></a>
+### `createPromoImage`
+
+**Type:** boolean · **Default:** `false`
+
+Also exports a standalone promo/social image alongside the normal output.
+
+Honored on: Illustrator.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | **no** | Promo image generation is implemented in the Illustrator exporter only. |
+| all2html CLI | **no** | Promo image generation is implemented in the Illustrator exporter only. |
+| Browser converter | **no** | Promo image generation is implemented in the Illustrator exporter only. |
+
+<a id="promoImageWidth"></a>
+### `promoImageWidth`
+
+**Type:** positive integer · **Default:** `1024`
+
+Width in pixels of the exported promo image.
+
+Honored on: Illustrator.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | **no** | Promo image generation is implemented in the Illustrator exporter only. |
+| all2html CLI | **no** | Promo image generation is implemented in the Illustrator exporter only. |
+| Browser converter | **no** | Promo image generation is implemented in the Illustrator exporter only. |
+
+<a id="localPreviewTemplate"></a>
+### `localPreviewTemplate`
+
+**Type:** string · **Default:** `""`
+
+Path to a template file that the standalone emitter wraps the output in, instead of its built-in page shell.
+
+Honored on: all2html CLI.
+
+| Surface | Support | What actually happens |
+|---|---|---|
+| Illustrator | **no** | Illustrator emits an HTML fragment only, so the standalone preview template is never applied. |
+| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
+| Figma plugin | **no** | The browser standalone emitter reads the template only to discard it. |
+| Browser converter | **no** | The browser standalone emitter reads the template only to discard it. |
+
+## Not Settings
+
+These keys are frequently mistaken for settings. They live in `metadata` on the IR document, not in `settings`, and setting them under `settings` does nothing:
+
+- `slug`
+- `lang`
+- `headline`
+- `leadin`
+- `summary`
+- `notes`
+- `sources`
+- `credit`
+- `altText`
+- `imageAltText`
+- `ariaRole`
+
+`metadata` also accepts arbitrary extra keys. The core pipeline never reads them; they are passthrough for emitters and downstream consumers.
 
 ## Where Settings Come From
 
-Depending on the surface, settings can come from:
+Depending on the surface, settings can arrive from a document text block, a config file, panel UI state, plugin UI controls, or CLI config. They all resolve into the same settings object before anything is emitted.
 
-- document annotations
-- config files
-- panel UI state
-- plugin UI controls
-- CLI config
-
-The important point is that they all resolve to the same final settings object before emitting output.
+See also: [Support Matrix](support-matrix.md) for output formats and special-layer tags per surface.
