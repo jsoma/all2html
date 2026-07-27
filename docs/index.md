@@ -5,7 +5,7 @@ description: Release-first docs for installing, exporting, and understanding all
 
 # all2html
 
-all2html turns design documents into responsive web output. It started as a clean-room ai2html-style exporter for Illustrator and now includes After Effects, Figma, and SVG import paths that all meet at the same canonical IR and rendering pipeline.
+all2html turns design documents into responsive web output. It started as a clean-room ai2html-style exporter for Illustrator and now includes Figma and SVG import paths that all meet at the same canonical IR and rendering pipeline. After Effects is a separate, limited path: one comp at a time, video plus timed HTML overlays, and it does not run the shared pipeline, so most canonical settings do not apply to it.
 
 This project is **pre-launch** right now. Try everything. Some paths are more polished than others, but the point of this site is to make the current options understandable, downloadable, and easy to test.
 
