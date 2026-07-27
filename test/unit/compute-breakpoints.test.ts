@@ -130,6 +130,110 @@ describe("computeBreakpoints", () => {
     });
   });
 
+  /**
+   * Equal widths in *different* groups are legal and covered above. Equal widths
+   * in the *same* group are not: the ranges are derived from the order of the
+   * sorted widths, so a tie made "which variant is the phone layout" a function
+   * of array order. `plugins/figma/` already threw on this at extraction; the
+   * rule now lives in the core so Illustrator, the CLI and SVG import inherit it
+   * instead of each guessing.
+   */
+  describe("duplicate widths inside one responsive group", () => {
+    function docWith(widths: [string, number][], output: "one-file" | "multiple-files") {
+      const raw = JSON.parse(
+        readFileSync(resolve(fixturesDir, "multiple-files-output.json"), "utf-8"),
+      );
+      const [source] = raw.artboards;
+      raw.settings.output = output;
+      raw.artboards = widths.map(([name, width], i) => {
+        const copy = JSON.parse(JSON.stringify(source));
+        copy.name = name;
+        copy.width = width;
+        copy.id = `artboard:${name}-${i + 1}`;
+        copy.source = { ...copy.source, name, width };
+        for (const layer of copy.layers) layer.id = `${copy.id}:layer:${layer.name}`;
+        return copy;
+      });
+      return resolveSettings(loadAndValidateIR(raw));
+    }
+
+    it("fails the export instead of guessing which 600px variant is the phone layout", () => {
+      expect(() =>
+        computeBreakpoints(
+          docWith(
+            [
+              ["chart", 300],
+              ["chart", 600],
+              ["chart", 600],
+            ],
+            "multiple-files",
+          ),
+        ),
+      ).toThrow(/Responsive artboards named "chart" must have unique widths/);
+    });
+
+    it("names both artboards, the width, and the two ways out", () => {
+      let message = "";
+      try {
+        computeBreakpoints(
+          docWith(
+            [
+              ["chart", 600],
+              ["chart", 600],
+            ],
+            "multiple-files",
+          ),
+        );
+      } catch (error) {
+        message = (error as Error).message;
+      }
+      // A desk has to be able to act on this without reading the code: the ids
+      // are what tells two identically-named artboards apart.
+      expect(message).toContain("duplicate width 600");
+      expect(message).toContain('"chart" (artboard:chart-1)');
+      expect(message).toContain('"chart" (artboard:chart-2)');
+      expect(message).toContain("different width");
+      expect(message).toContain("own responsive group");
+    });
+
+    it("applies in one-file mode too, where every artboard is one group", () => {
+      let message = "";
+      try {
+        computeBreakpoints(
+          docWith(
+            [
+              ["chart", 600],
+              ["map", 600],
+            ],
+            "one-file",
+          ),
+        );
+      } catch (error) {
+        message = (error as Error).message;
+      }
+      expect(message).toContain("Artboards on a single page must have unique widths");
+      expect(message).toContain('"chart" (artboard:chart-1)');
+      expect(message).toContain('"map" (artboard:map-2)');
+      // The remedy differs: renaming alone does nothing while everything is on
+      // one page.
+      expect(message).toContain('"output" to "multiple-files"');
+    });
+
+    it("still accepts the same width in two different groups", () => {
+      expect(() =>
+        computeBreakpoints(
+          docWith(
+            [
+              ["chart", 600],
+              ["map", 600],
+            ],
+            "multiple-files",
+          ),
+        ),
+      ).not.toThrow();
+    });
+  });
+
   it("never stores a non-finite number in any breakpoint", () => {
     for (const name of ["single-artboard-basic.json", "multi-artboard-responsive.json"]) {
       const doc = loadAndProcess(name);

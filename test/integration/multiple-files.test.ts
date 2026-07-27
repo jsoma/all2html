@@ -249,14 +249,19 @@ describe("duplicate artboard names resolve by stable id", () => {
   });
 
   it("scopes a grouped emit to the requested artboard id", () => {
+    // The widths differ only because `computeBreakpoints` now refuses two
+    // artboards of the same width on one page — it cannot say which is the
+    // narrow variant. What this test is about is the *id*: the two artboards
+    // have different names and different assets, and the emit must follow the
+    // id it was handed rather than a name or a position.
     const raw = docWith(
       [
         artboard("artboard:first", 640, 360, "card"),
-        artboard("artboard:second", 640, 360, "card copy"),
+        artboard("artboard:second", 960, 540, "card copy"),
       ],
       {
         "first.png": asset("first.png", "artboard:first", 640, 360),
-        "second.png": asset("second.png", "artboard:second", 640, 360),
+        "second.png": asset("second.png", "artboard:second", 960, 540),
       },
       "duplicate-scope",
     );

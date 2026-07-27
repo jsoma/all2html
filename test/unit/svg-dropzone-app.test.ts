@@ -56,14 +56,21 @@ function createDocument(artboardNames: string[] = ["story"]): Document {
       htmlOutputPath: "",
     },
     fonts: [],
-    artboards: artboardNames.map((name) => ({
-      id: `artboard:${name}`,
-      name,
-      width: 320,
-      height: 180,
-      source: { tool: "svg", id: `${name}.svg`, name: `${name}.svg`, width: 320, height: 180 },
-      layers: [],
-    })),
+    // Widths increase per artboard because `computeBreakpoints` refuses two
+    // artboards of the same width on one page — it has no way to say which is
+    // the narrow variant. A single-artboard document is still 320 wide, which is
+    // what every other test here reads.
+    artboards: artboardNames.map((name, index) => {
+      const width = 320 * (index + 1);
+      return {
+        id: `artboard:${name}`,
+        name,
+        width,
+        height: 180,
+        source: { tool: "svg", id: `${name}.svg`, name: `${name}.svg`, width, height: 180 },
+        layers: [],
+      };
+    }),
     customBlocks: [],
     assets: {},
     metadata: { slug: "story" },
