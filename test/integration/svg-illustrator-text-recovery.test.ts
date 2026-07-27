@@ -68,9 +68,16 @@ describe("Illustrator SVG live text recovery", () => {
   // ai2html settings block) and the remaining 143 are single-glyph fragments
   // placed far off-canvas. Correct behaviour is therefore still zero live text —
   // but it must now be zero for the right reason, with usable alt text.
+  //
+  // The input is a FROZEN copy exported by Illustrator 30.3.0, which wraps
+  // hidden text in display:none groups; 29.8.9 emits bare <text> elements
+  // instead, so re-exporting the countries fixture on a different Illustrator
+  // silently changed what this test was testing. Adversarial importer inputs
+  // live here, in a directory nothing regenerates — never point this at
+  // data/all2html-output/, which every live fixture re-export overwrites.
   it("rasterizes the countries layer export but no longer ships an empty alt attribute", async () => {
     const { result, html, texts } = await importAndEmit(
-      resolve(repoRoot, "data/all2html-output/countries/countries-artboard-4-interactions.svg"),
+      resolve(repoRoot, "test/fixtures/svg/illustrator/countries-artboard-4-interactions.svg"),
     );
 
     expect(texts).toHaveLength(0);
