@@ -1,5 +1,5 @@
+import { type FontEntry, normalizeFontEntry } from "../shared/types.js";
 import { getUserDataPath } from "./lib/utils/bolt.js";
-import { normalizeFontEntry, type FontEntry } from "../shared/types.js";
 
 export interface StoredDefaults<TSettings> {
   version: string;
@@ -15,9 +15,7 @@ export function normalizeStoredFonts(fonts: FontEntry[] | undefined): FontEntry[
   return (fonts || []).map(normalizeFontEntry);
 }
 
-export function readStoredDefaults<TSettings>(
-  fileName: string,
-): StoredDefaults<TSettings> | null {
+export function readStoredDefaults<TSettings>(fileName: string): StoredDefaults<TSettings> | null {
   try {
     const fs = getFs();
     const path = getUserDataPath() + fileName;

@@ -30,9 +30,7 @@ async function reloadWatchedHostState<TInfo>(
   options.onAbsent();
 }
 
-async function runPanelTask<TResult>(
-  options: RunPanelTaskOptions<TResult>,
-): Promise<void> {
+async function runPanelTask<TResult>(options: RunPanelTaskOptions<TResult>): Promise<void> {
   if (options.isRunning) return;
 
   options.setRunning(true);
@@ -68,7 +66,9 @@ function resolveResultOutputPath(
   const explicit = String(resultOutputPath || "").trim();
   if (explicit) return explicit;
 
-  const basePath = String(documentPath || "").trim().replace(/[\\/]+$/, "");
+  const basePath = String(documentPath || "")
+    .trim()
+    .replace(/[\\/]+$/, "");
   const fallback = String(configuredOutputPath || "").trim();
   if (!basePath || !fallback) return null;
 

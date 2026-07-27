@@ -11,9 +11,7 @@ interface PollingWatcher<T> {
   stop: () => void;
 }
 
-export function createPollingWatcher<T>(
-  options: PollingWatcherOptions<T>,
-): PollingWatcher<T> {
+export function createPollingWatcher<T>(options: PollingWatcherOptions<T>): PollingWatcher<T> {
   let currentKey = options.resetKey;
   let intervalId: ReturnType<typeof setInterval> | null = null;
   let generation = 0;

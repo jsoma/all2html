@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { RunResult } from "../../shared/types";
+  import { normalizeGroupedWarnings, type RunResult } from "../../shared/types";
   import { openFolder } from "../bridge";
   import Collapsible from "../components/Collapsible.svelte";
   import WarningList from "../components/WarningList.svelte";
@@ -17,10 +17,12 @@
   let diagnosticsOpen = $state(false);
   let initializedForKey = $state("");
 
-  const warningCount = $derived.by(() =>
-    result.warnings
-      ? Object.values(result.warnings).reduce((sum, items) => sum + items.length, 0)
-      : 0,
+  // The host payload is ExtendScript output, so it is normalized before it is
+  // counted or rendered — `Object.values()` over a string that was declared to be
+  // a grouped object counts characters. See `normalizeGroupedWarnings`.
+  const warnings = $derived(normalizeGroupedWarnings(result.warnings));
+  const warningCount = $derived(
+    Object.values(warnings).reduce((sum, items) => sum + items.length, 0),
   );
 
   const hasWarnings = $derived(warningCount > 0);
@@ -86,7 +88,7 @@
 
     {#if hasWarnings}
       {#key resultKey}
-        <WarningList warnings={result.warnings!} bind:open={warningListOpen} />
+        <WarningList warnings={warnings} bind:open={warningListOpen} />
       {/key}
     {/if}
   </Collapsible>

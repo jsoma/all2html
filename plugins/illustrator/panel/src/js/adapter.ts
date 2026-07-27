@@ -56,9 +56,7 @@ export function exporterToPanelKey(exporterKey: string): PanelSettingKey | undef
  * Only includes keys that are explicitly set (not undefined).
  * All values become strings (matching ai2html-settings text block format).
  */
-export function panelToExporterSettings(
-  panel: PanelSettings,
-): Record<string, string> {
+export function panelToExporterSettings(panel: PanelSettings): Record<string, string> {
   const out: Record<string, string> = {};
 
   for (const [panelKey, exporterKey] of Object.entries(KEY_MAP)) {
@@ -75,9 +73,7 @@ export function panelToExporterSettings(
  * Convert exporter snake_case settings back to panel camelCase format.
  * Used when loading settings from config files.
  */
-export function exporterToPanelSettings(
-  exporter: Record<string, unknown>,
-): PanelSettings {
+export function exporterToPanelSettings(exporter: Record<string, unknown>): PanelSettings {
   const panel: Record<string, unknown> = {};
 
   for (const [exporterKey, value] of Object.entries(exporter)) {

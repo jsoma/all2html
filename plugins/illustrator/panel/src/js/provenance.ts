@@ -1,7 +1,7 @@
 import {
-  panelDefaults,
   type PanelSettingKey,
   type PanelSettings,
+  panelDefaults,
   type SettingSource,
 } from "../shared/types.js";
 
@@ -17,10 +17,7 @@ const panelValueDefaults: Partial<Record<PanelSettingKey, unknown>> = {
   ariaRole: "",
 };
 
-function getComparableValue(
-  settings: PanelSettings,
-  key: PanelSettingKey,
-): unknown {
+function getComparableValue(settings: PanelSettings, key: PanelSettingKey): unknown {
   const value = settings[key];
   if (value !== undefined) return value;
   return panelValueDefaults[key];
@@ -41,7 +38,10 @@ export function getEditedKeys(
   const edited: PanelSettingKey[] = [];
   for (const key of allKeys) {
     if (locked.has(key)) continue;
-    if (JSON.stringify(getComparableValue(current, key)) !== JSON.stringify(getComparableValue(inherited, key))) {
+    if (
+      JSON.stringify(getComparableValue(current, key)) !==
+      JSON.stringify(getComparableValue(inherited, key))
+    ) {
       edited.push(key);
     }
   }

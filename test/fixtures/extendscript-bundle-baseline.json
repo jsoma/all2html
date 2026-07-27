@@ -1,0 +1,79 @@
+{
+  "note": "Size baselines for the two ExtendScript artifacts. `core` is the ES5 bundle produced by build:extendscript; `assembled` is dist/all2html.js — json2 + core + exporter.jsx — which is the file users actually install, and which had no budget at all until 2026-07-24. test/integration/extendscript-bundle.test.ts prints current size, delta against `bytes`, and how much of the tolerance the delta consumes on every run, and fails when an artifact grows more than growthTolerance above `bytes`. Sub-tolerance growth is allowed but never silent: any nonzero delta is reported as UNATTRIBUTED DRIFT, because that is how 3,752 B (69% of the core allowance) was spent between the 2026-07-24 records without anyone deciding to spend it. Re-recording is a deliberate, reviewed commit: the last `history` entry must state the new `bytes`, and the test fails if it does not match. Measured with removeComments:true in tsconfig.extendscript.json — that stays on because comments are dead weight in a shipped artifact, not because the budget depends on it.",
+  "artifacts": {
+    "core": {
+      "artifact": "dist/extendscript/all2html-core.js",
+      "build": "build:extendscript",
+      "bytes": 108993,
+      "recordedAt": "2026-07-27",
+      "growthTolerance": 0.05,
+      "history": [
+        {
+          "bytes": 98226,
+          "reason": "First recorded baseline, replacing a fixed 102,400-byte cliff that had already been breached mid-session at 103,592 B."
+        },
+        {
+          "bytes": 102171,
+          "reason": "+3,945 B (+4.0%) for the escaping and injection fixes: single-sourced escape module, escapeStyleContent, escapeScriptContent, isSafeUrl scheme allowlist, and CSS font-family validation. Deliberate — this closed two confirmed XSS holes (</style> breakout via font mappings, and the <!--<script> document swallow). Re-recorded rather than trimmed further: the implementation was already optimized twice to fit under the old cliff, and squeezing harder would have traded real safety for bytes."
+        },
+        {
+          "bytes": 109260,
+          "reason": "+7,089 B (+6.9%) for structured warnings and surface capability declarations (SPEC 12.5 / 12.7). Breakdown measured in the built bundle: 1,565 B Illustrator capability declaration, 3,529 B declaration checker, 1,162 B structured-warning module, ~830 B of call-site codes. Deliberate: this is what makes 30 silently-dead settings cells warn instead of no-oping, including `output: multiple-files` and `imageFormat: svg` on Illustrator. Trimmed first rather than re-recorded first — the feature tables were split out of SurfaceCapabilities and the browser declaration was rewritten from an IIFE to a literal so rollup could tree-shake the non-Illustrator surfaces, together worth ~2.8 KB. What remains is the declaration prose users read in the warning and the checker itself; cutting either would trade the fix for bytes."
+        },
+        {
+          "bytes": 104306,
+          "reason": "-4,954 B net (-4.5%), and the first entry that both attributes prior drift and reclaims. Attribution of the 3,752 B that had accumulated above 109,260 without a record (69% of the tolerance, spent silently): +2,111 B core/json-purity.js, now on the ExtendScript path at the resolve and emitter-ready boundaries where it previously had zero coverage (D21); +458 B emitters/shared/lazy-video.ts, the single-sourced video lazy-loading warning both HTML emitters call (D31); the residual ~1,183 B is the divergesAtDefault comparison in the capability checker plus the widened Figma/CLI declarations (D25). All measured as rollup renderedLength in the built bundle. Reclaim: -8,706 B by moving the `help` prose out of SETTING_DEFINITIONS into src/ir/setting-help.ts. SETTING_DEFINITIONS is imported by schema.ts, defaults.ts and core/capabilities.ts, so it reaches the bundle, and rollup cannot tree-shake properties out of object literals inside an array literal — every byte of panel-only copy shipped into Illustrator. Only the CEP panel and scripts/generate-settings-docs.ts read it, and neither is in the ExtendScript entry graph. The prior note estimated ~11.8 KB from source bytes; the real bundled cost was 8,706 B. The test now asserts the bundle contains no help copy, so it cannot creep back in."
+        },
+        {
+          "bytes": 105989,
+          "reason": "+1,683 B (+1.6%) for src/core/artboard-dimensions.ts, the input guard that closes the stringified-sentinel gap in D21. Attributed rather than absorbed. The entry+exit purity assertions were claimed to catch every sentinel reaching the emitter; they do not. compute-positions.ts divides by artboard width/height and immediately stringifies, so `width: 0` produced `left:Infinity%` with zero warnings on the ExtendScript path, which has no Zod validation — the exact path the guard exists for. Rejecting suspicious strings at the boundary was considered and refused: the walk covers user text, so it would throw on a chart label reading \"NaN\" or an artboard named \"Infinity Pool\". Artboard width/height are the only divisors in the ExtendScript-bound transforms, so validating them at entry covers the whole class."
+        },
+        {
+          "bytes": 106777,
+          "reason": "+788 B (+0.7%) for the one-emitter collapse (SPEC 12.6 / D23): html.ts and html-string.ts became one builder (emitters/html-tree.ts) over a serializable node tree plus one ES3-safe serializer (emitters/shared/html-node.ts). Measured as rollup renderedLength: the old html-string.js was 19,693 B; html-tree.js + html-node.js are 20,481 B. Growth rather than reclaim, and the reason is that this bundle only ever carried ONE of the two duplicated emitters — the string one, in which the builder and the serializer were fused, so nothing here was duplicated to delete. What the 788 B buys inside Illustrator specifically: attribute order is now a property of the data (an array of pairs) rather than of Object.keys iteration order, which ES3 does not define and which this bundle's for-in polyfill therefore left unspecified; and the </script / </style neutralizations and all four escaping grammars now live in the serializer, so no future call site in the ExtendScript path can forget one. Repo-wide the change removes 239 lines and a whole parallel implementation. Reclaim was considered and refused: the only material savings available were re-fusing the serializer back into the builder or returning attributes to object literals, which is exactly the duplication and the unspecified ordering the change exists to remove."
+        },
+        {
+          "bytes": 106540,
+          "reason": "-237 B (-0.2%). Reclaim. `GOOGLE_FONTS_LINK_MARKER` and `stripGoogleFontsLinkTags()` were removed from emitters/shared/google-fonts.ts. The marker existed so the Svelte and React emitters could regex the font `<link>` tags back out of serialized HTML; since the one-emitter collapse those emitters consume the node tree and never build the links at all (shared/component-tree.ts carries the href out separately), so nothing had read the attribute since. Illustrator paid for it twice: the constant and the dead stripper in the bundle, and a `data-all2html-google-fonts=\"true\"` attribute on every `<link>` in every exported page with `googleFonts: \"link\"`."
+        },
+        {
+          "bytes": 108993,
+          "reason": "+2,453 B (+2.3%), measured in two parts. +1,610 B: isValidCssFontFamily in compute-styles.ts is now a linear hand-written scan instead of a regex. The regex it replaced hung Illustrator — a single .test() against `arial,helvetica,sans-serif` did not finish in 300s, so every export using a mapped font was unusable, while V8 answered the same call in 56us and the whole suite passed. The replacement is byte-identical in behavior over a 200k-input fuzz against the old pattern, and test/integration/extendscript-regex-safety.test.ts now fails the build on any nested-quantifier regex in a shipped artifact. Bytes were not negotiable here: the alternative was a correct regex, and no regex of this grammar is safe on that engine. +843 B: per-transform phase timing in extendscript/index.ts, reported through the diagnostics hook. That is what localized the hang to computeStyles; without it the core is one opaque span and the Node reproduction is clean, so the bug looks like it is somewhere else."
+        }
+      ]
+    },
+    "assembled": {
+      "artifact": "dist/all2html.js",
+      "build": "build:illustrator",
+      "bytes": 194181,
+      "recordedAt": "2026-07-27",
+      "growthTolerance": 0.05,
+      "history": [
+        {
+          "bytes": 189139,
+          "reason": "First recorded baseline for the shipped artifact. Only the intermediate core bundle had been guarded, so exporter.jsx and json2.js — together roughly 45% of what users install — could grow without limit. Recorded after the SETTING_DEFINITIONS help reclaim (core 113,012 -> 104,306), so this number already reflects it: the same file measured 197,845 B before."
+        },
+        {
+          "bytes": 191339,
+          "reason": "+2,200 B (+1.2%). Carries the core's +1,683 B artboard-dimension guard, plus ~517 B in exporter.jsx: the error path now returns the same grouped-warning envelope as the success path. That mismatch was live — the error path returned a raw string[] where the panel expected GroupedWarnings, and nothing type-checks .jsx, so a single 48-character warning followed by a throw made the panel report \"48 warnings\" (summing character counts) and render 48 one-character rows."
+        },
+        {
+          "bytes": 192127,
+          "reason": "+788 B (+0.4%), carried entirely from the core's one-emitter collapse (SPEC 12.6 / D23). Nothing in exporter.jsx or json2.js changed; see the core history entry for the attribution and for why it is growth rather than reclaim."
+        },
+        {
+          "bytes": 190921,
+          "reason": "-1,206 B (-0.6%). Reclaim, not a feature. -1,202 B from plugins/illustrator/exporter.jsx: findClippedTextFrames and isClippedFrame were removed. They had zero call sites, so masked text was never filtered out of an export and this changes no output; they were deleted rather than wired because the implementation excluded every text frame in a clipping group whether or not it was clipped, and did it by selecting and locking every mask in the document (D16 deletion, replacement named in PROGRESS.md \"Known Limitations\" and in the comment left at the removal site). The prose kept in exporter.jsx is deliberately short: comments are not stripped from the .jsx half of this artifact, so the first draft of that comment cost more than the code it replaced and put the bundle 43 B ABOVE baseline. The remaining -4 B is carried from the core artifact and is not attributed here; see the core history."
+        },
+        {
+          "bytes": 190688,
+          "reason": "-233 B (-0.1%). Carried from the core's Google Fonts marker reclaim (-237 B); nothing in exporter.jsx or json2.js changed. The 4 B difference against the core delta is the same carry discrepancy noted in the previous entry and is not attributed separately."
+        },
+        {
+          "bytes": 194181,
+          "reason": "+3,493 B (+1.8%). +2,453 B carried from the core (see its history entry). The remaining +1,040 B is plugins/illustrator/exporter.jsx: app.userInteractionLevel is suppressed for the duration of the export, restores moved to a LIFO stack of closures pushed at the point of mutation, and log() now tees to the diagnostics hook. Save-for-Web asks the host to interact with the user before writing each file; driven over AppleEvents nothing answers, so every exportFile() blocked for the full ~120s interaction timeout — a one-artboard, two-image document took 241.5s and now takes 0.2s."
+        }
+      ]
+    }
+  }
+}

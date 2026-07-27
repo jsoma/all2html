@@ -207,6 +207,19 @@
       .replace(/\u2029/g, "\\u2029");
   }
 
+  // String.replace interprets $-patterns ($$, $&, ...) in the replacement,
+  // which corrupts substituted content containing them (e.g. overlay text
+  // inside the model JSON). Splice literally instead.
+  function replaceFirstLiteral(str, token, replacement) {
+    var idx = str.indexOf(token);
+    if (idx === -1) return str;
+    return str.slice(0, idx) + replacement + str.slice(idx + token.length);
+  }
+
+  function normalizeLineBreaks(value) {
+    return String(value).replace(/\r\n?/g, "\n");
+  }
+
   function getProperty(group, name) {
     return group ? group.property(name) : null;
   }
@@ -638,8 +651,8 @@
         end: end,
         type: "text",
         text: {
-          content: String(textDocument.text || ""),
-          altText: String(textDocument.text || ""),
+          content: normalizeLineBreaks(textDocument.text || ""),
+          altText: normalizeLineBreaks(textDocument.text || ""),
           style: buildTextStyle(textDocument, fontMappings)
         },
         "static": {
@@ -1024,21 +1037,21 @@
     var fontMarkup = buildGoogleFontMarkup(googleFontsMode, fontMappings || []);
     var hasLinkPlaceholder = template.indexOf("__GOOGLE_FONT_LINKS__") !== -1;
     var hasImportPlaceholder = template.indexOf("__GOOGLE_FONT_IMPORT__") !== -1;
-    template = template.replace("__GOOGLE_FONT_LINKS__", fontMarkup.links);
-    template = template.replace("__GOOGLE_FONT_IMPORT__", fontMarkup.importCss);
+    template = replaceFirstLiteral(template, "__GOOGLE_FONT_LINKS__", fontMarkup.links);
+    template = replaceFirstLiteral(template, "__GOOGLE_FONT_IMPORT__", fontMarkup.importCss);
 
     if (!hasLinkPlaceholder && fontMarkup.links) {
       template = fontMarkup.links + "\n" + template;
     }
     if (!hasImportPlaceholder && fontMarkup.importCss) {
       if (template.indexOf("<style>") !== -1) {
-        template = template.replace("<style>", "<style>\n" + fontMarkup.importCss);
+        template = replaceFirstLiteral(template, "<style>", "<style>\n" + fontMarkup.importCss);
       } else {
         template = "<style>\n" + fontMarkup.importCss + "\n</style>\n" + template;
       }
     }
 
-    return template.replace("__MODEL_JSON__", json);
+    return replaceFirstLiteral(template, "__MODEL_JSON__", json);
   }
 
   function getOutputRoot(config, panelSettings) {
@@ -1074,6 +1087,11 @@
     try {
       logDiagnostic("info", "Starting After Effects export");
       var startedAt = new Date().getTime();
+      var scriptFile = new File($.fileName);
+      var baseFolder = scriptFile.parent.fsName;
+      // JSON must be available before settings/config parsing — standalone
+      // runs have no native JSON and would otherwise silently drop both.
+      ensureJsonGlobal(baseFolder);
       var panelSettings = loadPanelSettings();
       var projectConfig = loadProjectConfig();
       var comp = findCompById(panelSettings.targetCompId) || app.project.activeItem;
@@ -1085,8 +1103,6 @@
       var preferredPosterTemplate = getPosterTemplatePreference(projectConfig, panelSettings);
       var googleFontsMode = getGoogleFontsMode(projectConfig, panelSettings);
 
-      var scriptFile = new File($.fileName);
-      var baseFolder = scriptFile.parent.fsName;
       var slug = safeCompName(comp.name);
       var outFolder = outputRoot + "/" + slug;
       var templatePath = baseFolder + "/player-template.html";
@@ -1097,7 +1113,6 @@
       var summaryName = slug + "-summary.json";
 
       ensureFolder(outFolder);
-      ensureJsonGlobal(baseFolder);
 
       var fontMappings = loadFontMappings(projectConfig);
       var model = buildModel(comp, videoName, fontMappings, overlayPrefix);

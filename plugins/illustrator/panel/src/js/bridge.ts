@@ -4,6 +4,7 @@
  */
 
 import { HOST_COMMANDS } from "../shared/host-contract.js";
+import type { DocumentInfo, FontEntry, RunResult, XmpData } from "../shared/types.js";
 import {
   callHostCommand,
   clearHostDiagnostics,
@@ -12,12 +13,6 @@ import {
   openHostFolder,
   parseHostObjectResult,
 } from "./bridge-shared.js";
-import type {
-  DocumentInfo,
-  FontEntry,
-  RunResult,
-  XmpData,
-} from "../shared/types.js";
 
 /** Get info about the active Illustrator document. */
 export async function getDocumentInfo(): Promise<DocumentInfo | null> {
@@ -57,9 +52,7 @@ export async function getDocumentFonts(): Promise<string[]> {
 }
 
 /** Get fonts used in the document but not in the provided config. */
-export async function getMissingFonts(
-  fonts: FontEntry[],
-): Promise<string[]> {
+export async function getMissingFonts(fonts: FontEntry[]): Promise<string[]> {
   const result = await callHostCommand(HOST_COMMANDS.getMissingFonts, fonts);
   return normalizeStringListResult(result, "Unexpected getMissingFonts response");
 }
@@ -83,9 +76,6 @@ export async function readSettingsBlock(): Promise<Record<string, unknown>> {
 }
 
 /** Run all2html export with the given settings. */
-export async function runExport(
-  settingsJson: string,
-  fontsJson: string,
-): Promise<RunResult> {
+export async function runExport(settingsJson: string, fontsJson: string): Promise<RunResult> {
   return callHostCommand(HOST_COMMANDS.runExport, settingsJson, fontsJson);
 }

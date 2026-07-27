@@ -26,7 +26,8 @@ function collectDocumentFonts(): string[] {
 
   var names: string[] = [];
   for (var key in fontSet) {
-    if (fontSet.hasOwnProperty(key)) {
+    // ExtendScript is an ES3-era runtime: no Object.hasOwn, no Object.keys.
+    if (Object.prototype.hasOwnProperty.call(fontSet, key)) {
       names.push(key);
     }
   }

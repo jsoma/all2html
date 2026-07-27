@@ -1,24 +1,41 @@
-import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { processDocument } from "../../src/core/pipeline.js";
 import { emitHTMLString } from "../../src/emitters/html-string.js";
 import type { Document } from "../../src/ir/types.js";
+import { ensureFreshArtifact } from "../helpers/extendscript-build.js";
 
-const bundlePath = resolve(import.meta.dirname, "../../dist/extendscript/all2html-core.js");
+const bundleRelativePath = "dist/extendscript/all2html-core.js";
+const bundlePath = resolve(import.meta.dirname, "../..", bundleRelativePath);
 const fixturesDir = resolve(import.meta.dirname, "../fixtures/ir");
+const baselinePath = resolve(import.meta.dirname, "../fixtures/extendscript-bundle-baseline.json");
 
+/** Rebuilds the bundle when it is missing or older than its inputs. */
 function ensureBundleExists(): void {
-  if (existsSync(bundlePath)) {
-    return;
-  }
+  ensureFreshArtifact(bundleRelativePath, "build:extendscript");
+}
 
-  const command = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
-  execFileSync(command, ["build:extendscript"], {
-    cwd: resolve(import.meta.dirname, "../.."),
-    stdio: "inherit",
-  });
+interface SizeBaseline {
+  artifact: string;
+  build: string;
+  bytes: number;
+  recordedAt: string;
+  growthTolerance: number;
+  history: { bytes: number; reason: string }[];
+}
+
+interface SizeBaselines {
+  note: string;
+  artifacts: Record<"core" | "assembled", SizeBaseline>;
+}
+
+function loadBaselines(): SizeBaselines {
+  return JSON.parse(readFileSync(baselinePath, "utf-8"));
+}
+
+function bytes(value: number): string {
+  return `${value.toLocaleString("en-US")} B`;
 }
 
 function loadFixture(name: string): Document {
@@ -35,12 +52,93 @@ function loadBundle(): {
   return fn();
 }
 
+/**
+ * Reports an artifact's size against its recorded baseline and fails past the
+ * growth tolerance.
+ *
+ * The old guard was a fixed 100KB cliff. `removeComments: true` was added to
+ * tsconfig.extendscript.json to squeeze back under it — a one-time trick that
+ * cannot be repeated, after which the guard tracked nothing but the distance to
+ * the next failing build. A baseline plus tolerance replaced it.
+ *
+ * That still let growth hide: the tolerance *permits* sub-budget drift, and only
+ * re-records land in git history, so 3,752 B — 69% of the core allowance —
+ * accumulated with nobody deciding to spend it. So any nonzero delta is now
+ * reported as UNATTRIBUTED DRIFT with the share of tolerance it consumes, and a
+ * re-record must carry a matching `history` entry to be accepted.
+ */
+function assertSizeBudget(label: string, baseline: SizeBaseline): void {
+  const artifactPath = ensureFreshArtifact(baseline.artifact, baseline.build);
+  const size = readFileSync(artifactPath).length;
+  const budget = Math.round(baseline.bytes * (1 + baseline.growthTolerance));
+  const delta = size - baseline.bytes;
+  const allowance = budget - baseline.bytes;
+  const headroom = budget - size;
+  const percent = (value: number): string =>
+    `${value >= 0 ? "+" : ""}${((value / baseline.bytes) * 100).toFixed(1)}%`;
+
+  const lines = [
+    `${label} (${baseline.artifact}): ${bytes(size)}`,
+    `  baseline ${bytes(baseline.bytes)} (recorded ${baseline.recordedAt}) — ` +
+      `${delta >= 0 ? "+" : "−"}${bytes(Math.abs(delta))} ${percent(delta)}`,
+    `  budget   ${bytes(budget)} (${percent(allowance)}) — ${bytes(headroom)} headroom left`,
+  ];
+  if (delta > 0) {
+    lines.push(
+      `  UNATTRIBUTED DRIFT: ${bytes(delta)} above the recorded baseline, ` +
+        `${((delta / allowance) * 100).toFixed(0)}% of the ${bytes(allowance)} tolerance. ` +
+        'Attribute it in "history" and re-record "bytes", or reclaim it.',
+    );
+  }
+  console.log(lines.join("\n"));
+
+  if (size < baseline.bytes * (1 - baseline.growthTolerance)) {
+    console.warn(
+      `${label} is ${bytes(-delta)} smaller than the baseline. Re-record ` +
+        `${baseline.bytes} → ${size} in test/fixtures/extendscript-bundle-baseline.json ` +
+        "so the budget keeps tracking real size.",
+    );
+  }
+
+  // A re-record without an attribution is the thing this guard exists to stop.
+  const last = baseline.history.at(-1);
+  expect(
+    last?.bytes,
+    `The last "history" entry for ${label} records ${last?.bytes ?? "nothing"} but "bytes" is ` +
+      `${baseline.bytes}. Every re-record needs an entry naming what the bytes bought.`,
+  ).toBe(baseline.bytes);
+
+  expect(size).toBeGreaterThan(0);
+  expect(
+    size,
+    `${label} is ${bytes(size)}, over the ${bytes(budget)} budget ` +
+      `(baseline ${bytes(baseline.bytes)} ${percent(delta)}). If the growth is intended, ` +
+      `update "bytes" to ${size}, "recordedAt", and add a "history" entry in ` +
+      "test/fixtures/extendscript-bundle-baseline.json in the same commit.",
+  ).toBeLessThanOrEqual(budget);
+}
+
 describe("ExtendScript bundle", () => {
-  it("bundle file exists and is under 100KB", () => {
+  it("core bundle stays within its size budget", () => {
+    assertSizeBudget("ExtendScript core bundle", loadBaselines().artifacts.core);
+  });
+
+  // dist/all2html.js is what users install: json2 + the core bundle +
+  // exporter.jsx. Guarding only the intermediate core left roughly 45% of the
+  // shipped file — including every byte of the exporter — with no budget.
+  it("assembled Illustrator bundle stays within its size budget", () => {
+    assertSizeBudget("Assembled Illustrator bundle", loadBaselines().artifacts.assembled);
+  });
+
+  // The panel `help` copy was moved out of SETTING_DEFINITIONS into
+  // src/ir/setting-help.ts precisely because it cost 8,706 B here and only the
+  // CEP panel and the docs generator read it. Nothing in the ExtendScript entry
+  // graph may import that module again.
+  it("does not ship panel help prose", () => {
     ensureBundleExists();
-    const stat = readFileSync(bundlePath);
-    expect(stat.length).toBeLessThan(100 * 1024);
-    expect(stat.length).toBeGreaterThan(0);
+    const code = readFileSync(bundlePath, "utf-8");
+    expect(code).not.toContain("docsAnchor");
+    expect(code).not.toContain("Palette-based PNG");
   });
 
   it("exports processAndEmit function", () => {
@@ -48,11 +146,11 @@ describe("ExtendScript bundle", () => {
     expect(typeof bundle.processAndEmit).toBe("function");
   });
 
-  it("does not emit ExtendScript reserved local variable names", () => {
-    ensureBundleExists();
-    const code = readFileSync(bundlePath, "utf-8");
-    expect(code).not.toMatch(/\bvar\s+char\b/);
-  });
+  // The reserved-word guard used to live here and scanned this one file with
+  // five regexes. It moved to `extendscript-reserved-words.test.ts`, which parses
+  // every ExtendScript-executed artifact and every ExtendScript-bound source with
+  // the real ES3 reserved vocabulary — the version here could not see a function
+  // name, a second declarator, an object key, or the hand-written exporters.
 
   it("does not emit Map or Set constructors into the ExtendScript bundle", () => {
     ensureBundleExists();

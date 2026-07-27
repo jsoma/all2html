@@ -10,7 +10,9 @@ const distDir = resolve(root, "dist/after-effects");
 const packageJson = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 
 function jsStringLiteral(value) {
-  return JSON.stringify(value).replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+  return JSON.stringify(value)
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
 }
 
 const exporter = readFileSync(resolve(pluginDir, "exporter.jsx"), "utf8");
@@ -42,9 +44,9 @@ writeFileSync(resolve(distDir, "README.md"), readme, "utf8");
 const zipData = zipSync(
   {
     "all2html-after-effects/all2html-ae.jsx": strToU8(assembled),
-    "all2html-after-effects/README.md": strToU8(readme)
+    "all2html-after-effects/README.md": strToU8(readme),
   },
-  { level: 9 }
+  { level: 9 },
 );
 
 const zipPath = resolve(root, "dist/all2html-after-effects.zip");

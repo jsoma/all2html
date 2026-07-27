@@ -1,7 +1,7 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
-import { tmpdir } from "node:os";
 import { execFileSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 
 type HostTarget = "illustrator" | "after-effects";
 
@@ -29,7 +29,7 @@ try {
     writeDiagnosticsOutput(JSON.stringify({ entries: [], lastError: "Host diagnostics command is unavailable." }));
   } else {
     var result = ns.getDiagnostics();
-    ${clearAfterRead ? 'if (ns.clearDiagnostics) ns.clearDiagnostics();' : ""}
+    ${clearAfterRead ? "if (ns.clearDiagnostics) ns.clearDiagnostics();" : ""}
     writeDiagnosticsOutput(result);
   }
 } catch (e) {
@@ -43,9 +43,7 @@ try {
 }
 
 function readDiagnostics(target: HostTarget, clearAfterRead: boolean): string {
-  const hostscriptPath = resolve(
-    "plugins/illustrator/panel/dist/cep/jsx/hostscript.js",
-  );
+  const hostscriptPath = resolve("plugins/illustrator/panel/dist/cep/jsx/hostscript.js");
 
   const tmpDir = mkdtempSync(join(tmpdir(), "all2html-cep-diagnostics-"));
   const scriptPath = join(tmpDir, "probe.jsx");
@@ -57,10 +55,7 @@ function readDiagnostics(target: HostTarget, clearAfterRead: boolean): string {
   );
 
   try {
-    const appName =
-      target === "illustrator"
-        ? "Adobe Illustrator"
-        : "Adobe After Effects 2026";
+    const appName = target === "illustrator" ? "Adobe Illustrator" : "Adobe After Effects 2026";
 
     const appleScript =
       target === "illustrator"
@@ -90,7 +85,9 @@ const targetArg = String(process.argv[2] || "").trim();
 const clearAfterRead = process.argv.includes("--clear");
 
 if (targetArg !== "illustrator" && targetArg !== "after-effects") {
-  console.error("Usage: pnpm exec tsx scripts/read-cep-diagnostics.ts <illustrator|after-effects> [--clear]");
+  console.error(
+    "Usage: pnpm exec tsx scripts/read-cep-diagnostics.ts <illustrator|after-effects> [--clear]",
+  );
   process.exit(1);
 }
 

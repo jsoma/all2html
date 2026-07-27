@@ -1,15 +1,11 @@
+import type { AeConfigData, AePanelSettings, FontEntry } from "../shared/types.js";
 import { readAeConfigFile } from "./ae-bridge.js";
 import {
   normalizeStoredFonts,
   readStoredDefaults,
-  writeStoredDefaults,
   type StoredDefaults,
+  writeStoredDefaults,
 } from "./default-storage.js";
-import type {
-  AeConfigData,
-  AePanelSettings,
-  FontEntry,
-} from "../shared/types.js";
 
 const DEFAULTS_FILE = "ae-defaults.json";
 const SCHEMA_VERSION = "1.0.0";
@@ -44,10 +40,7 @@ export function loadAeAppDefaults(): AeAppDefaults | null {
   return readStoredDefaults<AePanelSettings>(DEFAULTS_FILE);
 }
 
-export function saveAeAppDefaults(
-  settings: AePanelSettings,
-  fonts: FontEntry[],
-): void {
+export function saveAeAppDefaults(settings: AePanelSettings, fonts: FontEntry[]): void {
   writeStoredDefaults(
     DEFAULTS_FILE,
     SCHEMA_VERSION,
@@ -108,20 +101,14 @@ export function normalizeAeConfigData(raw: unknown): AeConfigData | null {
   const parsed = parseSerializedConfig(raw);
   if (!parsed) return null;
 
-  const settings = isRecordLike(parsed.settings)
-    ? normalizeAeSettings(parsed.settings)
-    : {};
-  const fonts = Array.isArray(parsed.fonts)
-    ? normalizeFonts(parsed.fonts as FontEntry[])
-    : [];
-  const version = typeof parsed.version === "string"
-    ? parsed.version
-    : SCHEMA_VERSION;
+  const settings = isRecordLike(parsed.settings) ? normalizeAeSettings(parsed.settings) : {};
+  const fonts = Array.isArray(parsed.fonts) ? normalizeFonts(parsed.fonts as FontEntry[]) : [];
+  const version = typeof parsed.version === "string" ? parsed.version : SCHEMA_VERSION;
 
   if (
-    typeof parsed.version !== "string"
-    && Object.keys(settings).length === 0
-    && fonts.length === 0
+    typeof parsed.version !== "string" &&
+    Object.keys(settings).length === 0 &&
+    fonts.length === 0
   ) {
     return null;
   }

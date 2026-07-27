@@ -130,7 +130,11 @@ function aeListOutputModuleTemplates(compId: string | null): {
   if (!comp) {
     return {
       outputModuleTemplates: [],
-      canQueueInAME: !!(app.project && app.project.renderQueue && app.project.renderQueue.canQueueInAME),
+      canQueueInAME: !!(
+        app.project &&
+        app.project.renderQueue &&
+        app.project.renderQueue.canQueueInAME
+      ),
     };
   }
 
@@ -155,7 +159,11 @@ function aeListOutputModuleTemplates(compId: string | null): {
   } catch (e) {
     return {
       outputModuleTemplates: [],
-      canQueueInAME: !!(app.project && app.project.renderQueue && app.project.renderQueue.canQueueInAME),
+      canQueueInAME: !!(
+        app.project &&
+        app.project.renderQueue &&
+        app.project.renderQueue.canQueueInAME
+      ),
     };
   } finally {
     if (rqItem) {
@@ -270,7 +278,8 @@ function aeCollectCompFonts(compId: string | null): string[] {
 
   var names = [];
   for (var key in fontSet) {
-    if (fontSet.hasOwnProperty(key)) names.push(key);
+    // ExtendScript is an ES3-era runtime: no Object.hasOwn, no Object.keys.
+    if (Object.prototype.hasOwnProperty.call(fontSet, key)) names.push(key);
   }
   names.sort();
   return names;

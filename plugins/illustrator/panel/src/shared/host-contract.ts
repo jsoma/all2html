@@ -1,9 +1,9 @@
 import type {
   AeCompInfo,
-  DiagnosticsPayload,
   AeProjectInfo,
   AeRunResult,
   AeTemplateCatalog,
+  DiagnosticsPayload,
   DocumentInfo,
   FontEntry,
   RunResult,

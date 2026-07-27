@@ -6,12 +6,13 @@
  */
 
 import {
-  xmpGetVariable,
-  xmpSetVariable,
-  xmpDeleteVariable,
-  XMP_DATA_KEY,
-} from "./xmp";
-import { collectDocumentFonts, findMissingFonts } from "./fonts";
+  AE_HOST_COMMANDS,
+  COMMON_HOST_COMMANDS,
+  HOST_NAMESPACE,
+  type HostCommandArgs,
+  type HostCommandName,
+  ILLUSTRATOR_HOST_COMMANDS,
+} from "../shared/host-contract";
 import {
   aeFindMissingFonts,
   aeGetProjectInfo,
@@ -21,14 +22,6 @@ import {
   aeSaveConfigFile,
 } from "./after-effects";
 import {
-  AE_HOST_COMMANDS,
-  COMMON_HOST_COMMANDS,
-  HOST_NAMESPACE,
-  ILLUSTRATOR_HOST_COMMANDS,
-  type HostCommandArgs,
-  type HostCommandName,
-} from "../shared/host-contract";
-import {
   attachDiagnosticsToResult,
   clearDiagnostics,
   getDiagnosticsSnapshot,
@@ -37,6 +30,8 @@ import {
   uninstallExporterDiagnosticSink,
 } from "./diagnostics";
 import { runPanelExport } from "./export-runner";
+import { collectDocumentFonts, findMissingFonts } from "./fonts";
+import { XMP_DATA_KEY, xmpDeleteVariable, xmpGetVariable, xmpSetVariable } from "./xmp";
 
 // ============================================================
 // Namespace registration — bolt-cep convention
@@ -45,7 +40,7 @@ import { runPanelExport } from "./export-runner";
 ($ as any)[HOST_NAMESPACE] = {};
 
 function getHostGlobalState(): any {
-  return ($.global as any);
+  return $.global as any;
 }
 
 type SerializedHostCommandArgs<K extends HostCommandName> = {
@@ -205,7 +200,7 @@ function readActiveDocumentInfo(): {
   }
 }
 
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentInfo, function (): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentInfo, (): string => {
   var info = readActiveDocumentInfo();
   if (!info) {
     return "null";
@@ -213,7 +208,7 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentInfo, function (): stri
   return JSON.stringify(info);
 });
 
-registerHostCommand(AE_HOST_COMMANDS.getAeProjectInfo, function (): string {
+registerHostCommand(AE_HOST_COMMANDS.getAeProjectInfo, (): string => {
   try {
     return JSON.stringify(aeGetProjectInfo());
   } catch (e) {
@@ -221,7 +216,7 @@ registerHostCommand(AE_HOST_COMMANDS.getAeProjectInfo, function (): string {
   }
 });
 
-registerHostCommand(AE_HOST_COMMANDS.listAeComps, function (): string {
+registerHostCommand(AE_HOST_COMMANDS.listAeComps, (): string => {
   try {
     return JSON.stringify(aeListComps());
   } catch (e) {
@@ -229,7 +224,7 @@ registerHostCommand(AE_HOST_COMMANDS.listAeComps, function (): string {
   }
 });
 
-registerHostCommand(AE_HOST_COMMANDS.getAeOutputTemplates, function (compId: string): string {
+registerHostCommand(AE_HOST_COMMANDS.getAeOutputTemplates, (compId: string): string => {
   try {
     return JSON.stringify(aeListOutputModuleTemplates(unwrapBridgeStringArg(compId) || null));
   } catch (e) {
@@ -240,7 +235,7 @@ registerHostCommand(AE_HOST_COMMANDS.getAeOutputTemplates, function (compId: str
 /**
  * Get the document directory path.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentPath, function (): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentPath, (): string => {
   try {
     return app.activeDocument.path.fsName;
   } catch (e) {
@@ -251,7 +246,7 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentPath, function (): stri
 /**
  * Open a folder in the OS file browser.
  */
-registerHostCommand(COMMON_HOST_COMMANDS.openFolder, function (folderPath: string): string {
+registerHostCommand(COMMON_HOST_COMMANDS.openFolder, (folderPath: string): string => {
   try {
     var normalizedPath = unwrapBridgeStringArg(folderPath);
     var folder = new Folder(normalizedPath);
@@ -273,7 +268,10 @@ registerHostCommand(COMMON_HOST_COMMANDS.openFolder, function (folderPath: strin
       }
 
       if (resolvedFolder.execute()) {
-        return JSON.stringify({ success: true, path: resolvedFolder.fsName || resolvedFolder.fullName });
+        return JSON.stringify({
+          success: true,
+          path: resolvedFolder.fsName || resolvedFolder.fullName,
+        });
       }
 
       return JSON.stringify({
@@ -288,11 +286,11 @@ registerHostCommand(COMMON_HOST_COMMANDS.openFolder, function (folderPath: strin
   }
 });
 
-registerHostCommand(COMMON_HOST_COMMANDS.getDiagnostics, function (): string {
-  return JSON.stringify(getDiagnosticsSnapshot(getHostGlobalState()));
-});
+registerHostCommand(COMMON_HOST_COMMANDS.getDiagnostics, (): string =>
+  JSON.stringify(getDiagnosticsSnapshot(getHostGlobalState())),
+);
 
-registerHostCommand(COMMON_HOST_COMMANDS.clearDiagnostics, function (): string {
+registerHostCommand(COMMON_HOST_COMMANDS.clearDiagnostics, (): string => {
   clearDiagnostics(getHostGlobalState());
   return JSON.stringify({ success: true });
 });
@@ -304,7 +302,7 @@ registerHostCommand(COMMON_HOST_COMMANDS.clearDiagnostics, function (): string {
 /**
  * Load all XMP panel data from the active document.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.loadXmpSettings, function (): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.loadXmpSettings, (): string => {
   try {
     var data = xmpGetVariable(XMP_DATA_KEY);
     return data || "null";
@@ -316,7 +314,7 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.loadXmpSettings, function (): stri
 /**
  * Save XMP panel data to the active document.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.saveXmpSettings, function (dataJson: string): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.saveXmpSettings, (dataJson: string): string => {
   try {
     xmpSetVariable(XMP_DATA_KEY, unwrapBridgeStringArg(dataJson));
     return JSON.stringify({ success: true });
@@ -328,7 +326,7 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.saveXmpSettings, function (dataJso
 /**
  * Clear all XMP panel data from the active document.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.clearXmpSettings, function (): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.clearXmpSettings, (): string => {
   try {
     xmpDeleteVariable(XMP_DATA_KEY);
     return JSON.stringify({ success: true });
@@ -344,7 +342,7 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.clearXmpSettings, function (): str
 /**
  * Get all fonts used in the active document.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentFonts, function (): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentFonts, (): string => {
   try {
     return JSON.stringify(collectDocumentFonts());
   } catch (e) {
@@ -355,7 +353,7 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentFonts, function (): str
 /**
  * Get fonts used in the document but not in the provided config.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getMissingFonts, function (fontConfigJson: string): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getMissingFonts, (fontConfigJson: string): string => {
   try {
     return JSON.stringify(findMissingFonts(fontConfigJson));
   } catch (e) {
@@ -363,13 +361,18 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getMissingFonts, function (fontCon
   }
 });
 
-registerHostCommand(AE_HOST_COMMANDS.getAeMissingFonts, function (fontConfigJson: string, compId: string): string {
-  try {
-    return JSON.stringify(aeFindMissingFonts(fontConfigJson, unwrapBridgeStringArg(compId) || null));
-  } catch (e) {
-    return "[]";
-  }
-});
+registerHostCommand(
+  AE_HOST_COMMANDS.getAeMissingFonts,
+  (fontConfigJson: string, compId: string): string => {
+    try {
+      return JSON.stringify(
+        aeFindMissingFonts(fontConfigJson, unwrapBridgeStringArg(compId) || null),
+      );
+    } catch (e) {
+      return "[]";
+    }
+  },
+);
 
 // ============================================================
 // Config file operations
@@ -378,13 +381,10 @@ registerHostCommand(AE_HOST_COMMANDS.getAeMissingFonts, function (fontConfigJson
 /**
  * Read all2html.config.json from the document directory.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.readConfigFile, function (): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.readConfigFile, (): string => {
   try {
     var docPath = app.activeDocument.path.fsName + "/";
-    var paths = [
-      docPath + "all2html.config.json",
-      docPath + "ai2html-config.json",
-    ];
+    var paths = [docPath + "all2html.config.json", docPath + "ai2html-config.json"];
 
     for (var i = 0; i < paths.length; i++) {
       var f = new File(paths[i]);
@@ -403,18 +403,16 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.readConfigFile, function (): strin
   }
 });
 
-registerHostCommand(AE_HOST_COMMANDS.readAeConfigFile, function (): string {
-  return aeReadConfigFile();
-});
+registerHostCommand(AE_HOST_COMMANDS.readAeConfigFile, (): string => aeReadConfigFile());
 
-registerHostCommand(AE_HOST_COMMANDS.saveAeConfigFile, function (configJson: string): string {
-  return aeSaveConfigFile(unwrapBridgeStringArg(configJson));
-});
+registerHostCommand(AE_HOST_COMMANDS.saveAeConfigFile, (configJson: string): string =>
+  aeSaveConfigFile(unwrapBridgeStringArg(configJson)),
+);
 
 /**
  * Check if the document has an ai2html-settings text block.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.hasSettingsBlock, function (): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.hasSettingsBlock, (): string => {
   try {
     if (findSettingsBlock()) {
       return "true";
@@ -458,18 +456,12 @@ function parseSettingsBlock(tf: TextFrame): { [key: string]: string } {
 function createExportRunnerEnv() {
   return {
     globalState: getHostGlobalState(),
-    createFile: function (path: string): File {
-      return new File(path);
-    },
-    evalFile: function (file: File): void {
+    createFile: (path: string): File => new File(path),
+    evalFile: (file: File): void => {
       $.evalFile(file);
     },
-    getCurrentScriptPath: function (): string {
-      return decodeURI($.fileName as string);
-    },
-    getTempDirPath: function (): string {
-      return Folder.temp.fsName;
-    },
+    getCurrentScriptPath: (): string => decodeURI($.fileName as string),
+    getTempDirPath: (): string => Folder.temp.fsName,
   };
 }
 
@@ -484,7 +476,7 @@ function getIllustratorFallbackScriptPath(): string | null {
 /**
  * Read parsed ai2html-settings values from the active document.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.readSettingsBlock, function (): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.readSettingsBlock, (): string => {
   try {
     var tf = findSettingsBlock();
     if (!tf) {
@@ -506,62 +498,60 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.readSettingsBlock, function (): st
  * Writes settings to a temp file, sets globals for the exporter to read,
  * then $.evalFile()s the assembled all2html.js script.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.runExport, function (
-  settingsJson: string,
-  fontsJson: string,
-): string {
-  var globalState = getHostGlobalState();
-  installExporterDiagnosticSink(globalState);
-  try {
-    return runPanelExport(createExportRunnerEnv(), {
-      settingsJson: unwrapBridgeStringArg(settingsJson),
-      fontsJson: unwrapBridgeStringArg(fontsJson),
-      scriptFileName: "all2html.js",
-      missingScriptError: "Cannot find all2html.js. Expected at: ",
-      failurePrefix: "Export failed: ",
-      settingsPathGlobalKey: "__ALL2HTML_PANEL_SETTINGS_PATH__",
-      tempSettingsFileName: "all2html-panel-settings.json",
-      fallbackScriptPaths: [getIllustratorFallbackScriptPath()],
-      onClearDiagnostics: function (): void {
-        clearDiagnostics(globalState);
-      },
-      onLog: function (level, message, detail): void {
-        logDiagnostic(globalState, "host", level, message, detail);
-      },
-      attachDiagnostics: function (resultText, fallbackError): string {
-        return attachDiagnosticsToResult(resultText, globalState, fallbackError);
-      },
-    });
-  } finally {
-    uninstallExporterDiagnosticSink(globalState);
-  }
-});
+registerHostCommand(
+  ILLUSTRATOR_HOST_COMMANDS.runExport,
+  (settingsJson: string, fontsJson: string): string => {
+    var globalState = getHostGlobalState();
+    installExporterDiagnosticSink(globalState);
+    try {
+      return runPanelExport(createExportRunnerEnv(), {
+        settingsJson: unwrapBridgeStringArg(settingsJson),
+        fontsJson: unwrapBridgeStringArg(fontsJson),
+        scriptFileName: "all2html.js",
+        missingScriptError: "Cannot find all2html.js. Expected at: ",
+        failurePrefix: "Export failed: ",
+        settingsPathGlobalKey: "__ALL2HTML_PANEL_SETTINGS_PATH__",
+        tempSettingsFileName: "all2html-panel-settings.json",
+        fallbackScriptPaths: [getIllustratorFallbackScriptPath()],
+        onClearDiagnostics: (): void => {
+          clearDiagnostics(globalState);
+        },
+        onLog: (level, message, detail): void => {
+          logDiagnostic(globalState, "host", level, message, detail);
+        },
+        attachDiagnostics: (resultText, fallbackError): string =>
+          attachDiagnosticsToResult(resultText, globalState, fallbackError),
+      });
+    } finally {
+      uninstallExporterDiagnosticSink(globalState);
+    }
+  },
+);
 
-registerHostCommand(AE_HOST_COMMANDS.runAeExport, function (
-  settingsJson: string,
-  fontsJson: string,
-): string {
-  var globalState = getHostGlobalState();
-  installExporterDiagnosticSink(globalState);
-  try {
-    return runPanelExport(createExportRunnerEnv(), {
-      settingsJson: unwrapBridgeStringArg(settingsJson),
-      fontsJson: unwrapBridgeStringArg(fontsJson),
-      scriptFileName: "all2html-ae.jsx",
-      missingScriptError: "Cannot find all2html-ae.jsx. Expected at: ",
-      failurePrefix: "AE export failed: ",
-      settingsValueGlobalKey: "__ALL2HTML_AE_PANEL_SETTINGS__",
-      onClearDiagnostics: function (): void {
-        clearDiagnostics(globalState);
-      },
-      onLog: function (level, message, detail): void {
-        logDiagnostic(globalState, "host", level, message, detail);
-      },
-      attachDiagnostics: function (resultText, fallbackError): string {
-        return attachDiagnosticsToResult(resultText, globalState, fallbackError);
-      },
-    });
-  } finally {
-    uninstallExporterDiagnosticSink(globalState);
-  }
-});
+registerHostCommand(
+  AE_HOST_COMMANDS.runAeExport,
+  (settingsJson: string, fontsJson: string): string => {
+    var globalState = getHostGlobalState();
+    installExporterDiagnosticSink(globalState);
+    try {
+      return runPanelExport(createExportRunnerEnv(), {
+        settingsJson: unwrapBridgeStringArg(settingsJson),
+        fontsJson: unwrapBridgeStringArg(fontsJson),
+        scriptFileName: "all2html-ae.jsx",
+        missingScriptError: "Cannot find all2html-ae.jsx. Expected at: ",
+        failurePrefix: "AE export failed: ",
+        settingsValueGlobalKey: "__ALL2HTML_AE_PANEL_SETTINGS__",
+        onClearDiagnostics: (): void => {
+          clearDiagnostics(globalState);
+        },
+        onLog: (level, message, detail): void => {
+          logDiagnostic(globalState, "host", level, message, detail);
+        },
+        attachDiagnostics: (resultText, fallbackError): string =>
+          attachDiagnosticsToResult(resultText, globalState, fallbackError),
+      });
+    } finally {
+      uninstallExporterDiagnosticSink(globalState);
+    }
+  },
+);

@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 
 const rootDir = resolve(import.meta.dirname, "../..");
 const pluginTemplatePath = resolve(rootDir, "plugins/after-effects/player-template.html");
-const prototypeTemplatePath = resolve(rootDir, "temp/ae-prototype/player-template.html");
 
 function readTemplate(path: string): string {
   return readFileSync(path, "utf8");
@@ -35,7 +34,8 @@ describe("after effects player template", () => {
     assertScopedEmbedContract(readTemplate(pluginTemplatePath));
   });
 
-  it("keeps the prototype template aligned with the plugin template contract", () => {
-    assertScopedEmbedContract(readTemplate(prototypeTemplatePath));
-  });
+  // Removed: "keeps the prototype template aligned with the plugin template
+  // contract". `temp/ae-prototype/player-template.html` was a byte-identical
+  // copy of the file above, so the assertion could never fail independently.
+  // The prototype is untracked; `plugins/after-effects/` replaces it.
 });

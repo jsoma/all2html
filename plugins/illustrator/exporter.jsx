@@ -7,8 +7,18 @@
 // ============================================================
 
 var warnings = [];
-var objectsToRelock = [];
-var textFramesToUnhide = [];
+// Structured mirror of `warnings`, in the same order. Every entry carries the
+// stable code and the category its call site declared, plus the surface, and
+// core warnings are appended verbatim from result.structuredWarnings. Nothing
+// here is ever derived from message text.
+var structuredWarnings = [];
+// LIFO stack of restore closures. Push one at the exact moment a document
+// mutation happens so restores always run in inverse order of mutation
+// (e.g. an item is always unhidden before it is relocked — setting .hidden
+// on a relocked item throws).
+var restoreActions = [];
+var unlockedObjectCount = 0;
+var docToMarkSaved = null;
 
 function logDiagnostic(level, message, detail) {
   try {
@@ -18,9 +28,31 @@ function logDiagnostic(level, message, detail) {
   } catch (e) {}
 }
 
-function warn(msg) {
+// code and category are assigned here, at the call site, exactly as
+// src/core/warnings.ts requires. category must be one of the core
+// WarningCategory values (see WARNING_CATEGORY_ORDER below).
+function warn(msg, code, category) {
   warnings.push(msg);
+  structuredWarnings.push({
+    code: code || "illustrator:other",
+    category: category || "other",
+    message: msg,
+    surface: "illustrator"
+  });
   logDiagnostic("warn", msg);
+}
+
+// Appends the core's structured warnings verbatim, keeping the plain-string
+// list in the same order.
+function pushCoreWarnings(result) {
+  var messages = result.warnings || [];
+  for (var i = 0; i < messages.length; i++) {
+    warnings.push(messages[i]);
+  }
+  var structured = result.structuredWarnings || [];
+  for (var j = 0; j < structured.length; j++) {
+    structuredWarnings.push(structured[j]);
+  }
 }
 
 // ============================================================
@@ -139,7 +171,8 @@ function unlockObjects(doc) {
     if (o.hidden === true || o.visible === false) return;
     if (o.locked) {
       o.locked = false;
-      objectsToRelock.push(o);
+      unlockedObjectCount++;
+      pushRelockRestore(o);
     }
     // Unlock clipping paths
     var pathCount = 0;
@@ -151,7 +184,8 @@ function unlockObjects(doc) {
           var item = o.pathItems[i];
           if (!item.hidden && item.clipping && item.locked) {
             item.locked = false;
-            objectsToRelock.push(item);
+            unlockedObjectCount++;
+            pushRelockRestore(item);
             break;
           }
         } catch(e) {}
@@ -176,9 +210,44 @@ function unlockObjects(doc) {
   }
 }
 
-function relockObjects() {
-  for (var i = objectsToRelock.length - 1; i >= 0; i--) {
-    try { objectsToRelock[i].locked = true; } catch(e) {}
+// Save-for-Web asks the host to interact with the user before writing each
+// file. Driven over AppleEvents nothing answers, so every exportFile() blocked
+// for the full ~120s interaction timeout. Suppressing alerts removes the
+// handshake. Restore is pushed first so it runs last: cleanup stays
+// non-interactive, and the level is back before any completion dialog.
+function suppressUserInteraction() {
+  try {
+    var previousLevel = app.userInteractionLevel;
+    app.userInteractionLevel = UserInteractionLevel.DONTDISPLAYALERTS;
+    pushInteractionLevelRestore(previousLevel);
+  } catch(e) {}
+}
+
+function pushInteractionLevelRestore(previousLevel) {
+  restoreActions.push(function() { app.userInteractionLevel = previousLevel; });
+}
+
+// Restore helpers. Each pusher is a separate function so the captured item is
+// bound per call (ExtendScript has no block scope).
+function pushRelockRestore(item) {
+  restoreActions.push(function() { item.locked = true; });
+}
+
+function pushUnhideRestore(item) {
+  restoreActions.push(function() { item.hidden = false; });
+}
+
+// Runs every pending restore in LIFO order. Failures are reported through the
+// warning system instead of being silently swallowed — a failed restore leaves
+// the user's .ai file mutated (e.g. a permanently hidden ai2html-settings block).
+function runRestoreActions() {
+  while (restoreActions.length > 0) {
+    var action = restoreActions.pop();
+    try {
+      action();
+    } catch(e) {
+      warn("Could not restore document state after export: " + (e.message || e.toString()), "illustrator:restore-failed", "other");
+    }
   }
 }
 
@@ -207,7 +276,7 @@ function parseSpecialBlocks(doc) {
       if (blockType === "settings") {
         throw new Error("Found a hidden ai2html-settings text block. Please unhide it.");
       }
-      warn("Skipping hidden ai2html-" + blockType + " block.");
+      warn("Skipping hidden ai2html-" + blockType + " block.", "block:hidden", "markup");
       continue;
     }
 
@@ -238,7 +307,7 @@ function parseSpecialBlocks(doc) {
         content = straightenCurlyQuotesInAngleBrackets(content);
       }
       if (!trim(content)) {
-        warn("Skipping empty ai2html-" + blockType + " block.");
+        warn("Skipping empty ai2html-" + blockType + " block.", "block:empty", "markup");
         continue;
       }
       customBlocks.push({ type: blockType, content: content });
@@ -248,10 +317,11 @@ function parseSpecialBlocks(doc) {
     if (blockOverlapsArtboard(doc, tf)) {
       if (tf.locked) {
         tf.locked = false;
-        objectsToRelock.push(tf);
+        unlockedObjectCount++;
+        pushRelockRestore(tf);
       }
       tf.hidden = true;
-      textFramesToUnhide.push(tf);
+      pushUnhideRestore(tf);
     }
   }
   return { settings: settings, customBlocks: customBlocks };
@@ -387,61 +457,13 @@ function extractLayers(doc) {
   return layers;
 }
 
-// ============================================================
-// Clipping mask detection (best-effort)
-// ============================================================
-
-function findClippedTextFrames(doc) {
-  var clippedFrames = [];
-  try {
-    // Select all clipping masks via menu command
-    app.executeMenuCommand("Clipping Masks menu item");
-    // Convert selection to plain array (ExtendScript collections don't have .slice)
-    var masks = [];
-    if (doc.selection) {
-      for (var si = 0; si < doc.selection.length; si++) {
-        masks.push(doc.selection[si]);
-      }
-    }
-    doc.selection = null;
-
-    if (masks.length === 0) return clippedFrames;
-
-    // Lock all masks, then process each
-    for (var i = 0; i < masks.length; i++) {
-      try { masks[i].locked = true; } catch(e) {}
-    }
-
-    for (var i = 0; i < masks.length; i++) {
-      var mask = masks[i];
-      try {
-        // Check if mask's parent group contains text frames
-        var parent = mask.parent;
-        if (parent && parent.typename === "GroupItem") {
-          // Find text frames inside this group
-          for (var j = 0; j < parent.textFrames.length; j++) {
-            clippedFrames.push(parent.textFrames[j]);
-          }
-        }
-      } catch(e) {}
-    }
-
-    // Unlock all masks
-    for (var i = 0; i < masks.length; i++) {
-      try { masks[i].locked = false; } catch(e) {}
-    }
-  } catch(e) {
-    warn("Clipping mask detection failed: " + e.message + ". Some masked text may appear in output.");
-  }
-  return clippedFrames;
-}
-
-function isClippedFrame(tf, clippedFrames) {
-  for (var i = 0; i < clippedFrames.length; i++) {
-    if (clippedFrames[i] === tf) return true;
-  }
-  return false;
-}
+// Clipping-mask filtering: not implemented. Masked text still exports. The
+// uncalled findClippedTextFrames/isClippedFrame helpers were removed here
+// rather than wired: they excluded every text frame in a clipping group, not
+// just the clipped ones, and did it by selecting and locking every mask in the
+// document. A real filter belongs in extractTextFramesForArtboard's loop,
+// comparing visibleBounds against the mask path the way boundsIntersect
+// already compares against artboards. See PROGRESS.md, "Known Limitations".
 
 // ============================================================
 // Text frame extraction
@@ -481,7 +503,7 @@ function convertColor(c) {
       return { r: v, g: v, b: v };
     }
     if (c.typename === "NoColor") {
-      warn("Found a text element with no fill color. Using green as placeholder.");
+      warn("Found a text element with no fill color. Using green as placeholder.", "text:no-fill", "text");
       return { r: 0, g: 255, b: 0 };
     }
   } catch(e) {}
@@ -717,7 +739,7 @@ function extractTextFramesForArtboard(doc, artboard, layers, settings) {
 
     // Check for overset text
     if (checkOversetText(tf)) {
-      warn("Overset text detected in frame \"" + (tf.name || element.id) + "\". Hidden text will appear in HTML output.");
+      warn("Overset text detected in frame \"" + (tf.name || element.id) + "\". Hidden text will appear in HTML output.", "text:overset", "text");
     }
 
     if (element.paragraphs.length > 0 && defaultLayer) {
@@ -754,7 +776,7 @@ function extractLayerContent(doc, artboard, layers, settings, assets) {
           }
         }
         if (!validVideoFound) {
-          warn('Layer "' + layer.name + '" tagged :video does not contain a usable HTTPS .mp4 URL.');
+          warn('Layer "' + layer.name + '" tagged :video does not contain a usable HTTPS .mp4 URL.', "video:invalid-url", "markup");
         }
       } catch(e) {}
     }
@@ -771,7 +793,7 @@ function extractLayerContent(doc, artboard, layers, settings, assets) {
           }
         }
         if (!htmlContentFound) {
-          warn('Layer "' + layer.name + '" tagged :' + layer.type + " has no usable HTML content.");
+          warn('Layer "' + layer.name + '" tagged :' + layer.type + " has no usable HTML content.", "html-hook:empty", "markup");
         }
       } catch(e) {}
     }
@@ -781,7 +803,7 @@ function extractLayerContent(doc, artboard, layers, settings, assets) {
       try {
         extractShapesFromLayer(aiLayer, layer, abRect);
       } catch(e) {
-        warn("Shape detection failed on layer \"" + layer.name + "\": " + e.message);
+        warn("Shape detection failed on layer \"" + layer.name + "\": " + e.message, "shape:detection-failed", "geometry");
       }
     }
 
@@ -818,7 +840,7 @@ function extractLayerContent(doc, artboard, layers, settings, assets) {
           }
         }
       } catch(e) {
-        warn("SVG export failed on layer \"" + layer.name + "\": " + e.message);
+        warn("SVG export failed on layer \"" + layer.name + "\": " + e.message, "image:svg-export-failed", "image");
       }
     }
 
@@ -849,7 +871,7 @@ function extractLayerContent(doc, artboard, layers, settings, assets) {
           exportParams: { format: "png", scale: settings.use2xImages ? 2 : 1, transparent: true }
         };
       } catch(e) {
-        warn("PNG layer export failed on layer \"" + layer.name + "\": " + e.message);
+        warn("PNG layer export failed on layer \"" + layer.name + "\": " + e.message, "image:png-export-failed", "image");
       }
     }
   }
@@ -1089,11 +1111,12 @@ function resolveImageFormat(doc, artboard, settings) {
   return "png";
 }
 
-function hideTextFramesForExport(doc, artboard, settings) {
+// `hidden` is an accumulator supplied by the caller so already-hidden frames
+// are still restorable if this loop throws partway through.
+function hideTextFramesForExport(doc, artboard, settings, hidden) {
   // When render_text_as is "image" or testing_mode is on, keep all text visible for raster capture
-  if (settings.renderTextAs === "image" || settings.testingMode) return [];
+  if (settings.renderTextAs === "image" || settings.testingMode) return hidden;
   var abRect = artboard._aiRect;
-  var hidden = [];
   for (var i = 0; i < doc.textFrames.length; i++) {
     var tf = doc.textFrames[i];
     if (tf.hidden) continue;
@@ -1107,8 +1130,12 @@ function hideTextFramesForExport(doc, artboard, settings) {
 }
 
 function restoreHiddenFrames(frames) {
-  for (var i = 0; i < frames.length; i++) {
-    try { frames[i].hidden = false; } catch(e) {}
+  for (var i = frames.length - 1; i >= 0; i--) {
+    try {
+      frames[i].hidden = false;
+    } catch(e) {
+      warn("Could not unhide a text frame after image export: " + (e.message || e.toString()), "illustrator:restore-failed", "other");
+    }
   }
 }
 
@@ -1136,10 +1163,11 @@ function exportArtboardImage(doc, path, format, settings) {
   }
 }
 
-function hideSpecialLayersForExport(doc, artboard) {
+// `hidden` is an accumulator supplied by the caller so already-hidden layers
+// are still restorable if this loop throws partway through.
+function hideSpecialLayersForExport(doc, artboard, hidden) {
   // Any layer with ":" in its name is a special layer that gets its own export.
   // Hide them before capturing the background artboard image.
-  var hidden = [];
   var knownTags = ["svg", "png", "symbol", "div", "video", "html-before", "html-after", "svg,inline", "inline"];
   for (var i = 0; i < doc.layers.length; i++) {
     var layer = doc.layers[i];
@@ -1154,7 +1182,7 @@ function hideSpecialLayersForExport(doc, artboard) {
         if (tag === knownTags[j]) { recognized = true; break; }
       }
       if (!recognized) {
-        warn("Unrecognized layer tag \":" + tag + "\" on layer \"" + name + "\". Layer will be hidden from background image.");
+        warn("Unrecognized layer tag \":" + tag + "\" on layer \"" + name + "\". Layer will be hidden from background image.", "layer:unknown-tag", "markup");
       }
       layer.visible = false;
       hidden.push(layer);
@@ -1164,8 +1192,12 @@ function hideSpecialLayersForExport(doc, artboard) {
 }
 
 function restoreHiddenLayers(layers) {
-  for (var i = 0; i < layers.length; i++) {
-    try { layers[i].visible = true; } catch(e) {}
+  for (var i = layers.length - 1; i >= 0; i--) {
+    try {
+      layers[i].visible = true;
+    } catch(e) {
+      warn("Could not restore layer visibility after image export: " + (e.message || e.toString()), "illustrator:restore-failed", "other");
+    }
   }
 }
 
@@ -1176,69 +1208,77 @@ function exportImages(doc, artboards, settings) {
 
   for (var i = 0; i < artboards.length; i++) {
     var ab = artboards[i];
-    var hiddenText = hideTextFramesForExport(doc, ab, settings);
-    var hiddenLayers = hideSpecialLayersForExport(doc, ab);
+    // Accumulators are created before the try so a throw inside either hide
+    // pass still restores whatever was already hidden.
+    var hiddenText = [];
+    var hiddenLayers = [];
 
-    doc.artboards.setActiveArtboardIndex(ab._aiIndex);
-
-    var format = resolveImageFormat(doc, ab, settings);
-
-    // Warn about large exports that may exceed Illustrator limits
-    var scaleFactor = settings.use2xImages ? 2 : 1;
-    var pxW = Math.round(ab.actualWidth * scaleFactor);
-    var pxH = Math.round(ab.actualHeight * scaleFactor);
-    var pxCount = pxW * pxH;
-    var mpThreshold = (format === "jpg") ? 32000000 : 5000000;
-    if (pxCount > mpThreshold) {
-      warn("Large " + format.toUpperCase() + " export for '" + ab.name + "' (" + pxW + "\u00d7" + pxH + " = " + Math.round(pxCount / 1000000) + "MP). Consider disabling 2x or reducing artboard size.");
-    }
-
-    var imageName = makeAssetName([
-      slug,
-      ab.source && ab.source.name ? ab.source.name : ab.name
-    ]);
-    if (assets[imageName]) {
-      imageName = makeAssetName([imageName, ab._aiIndex + 1]);
-    }
-    var exportPath = outputPath + imageName;
-
-    exportArtboardImage(doc, exportPath, format, settings);
-
-    // Clean up Illustrator export artifacts (hex-named temp PNGs)
     try {
-      var outFolder = new Folder(outputPath);
-      var junk = outFolder.getFiles(function(f) {
-        return /^[0-9A-F]{16}\.png$/i.test(f.name);
-      });
-      for (var ji = 0; ji < junk.length; ji++) {
-        try { junk[ji].remove(); } catch(e) {}
-      }
-    } catch(e) {}
+      hideTextFramesForExport(doc, ab, settings, hiddenText);
+      hideSpecialLayersForExport(doc, ab, hiddenLayers);
 
-    // Illustrator adds the extension automatically
-    var ext = format === "jpg" ? ".jpg" : ".png";
-    assets[imageName] = {
-      id: imageName,
-      path: imageName + ext,
-      mimeType: format === "jpg" ? "image/jpeg" : "image/png",
-      width: ab.actualWidth * (settings.use2xImages ? 2 : 1),
-      height: ab.actualHeight * (settings.use2xImages ? 2 : 1),
-      artboardId: ab.id,
-      source: {
-        tool: "illustrator",
-        name: ab.source && ab.source.name ? ab.source.name : ab.name
-      },
-      exportParams: {
-        format: format,
-        scale: settings.use2xImages ? 2 : 1,
-        transparent: settings.pngTransparent || false,
-        quality: settings.jpgQuality || 85,
-        colors: settings.pngNumberOfColors || 128
-      }
-    };
+      doc.artboards.setActiveArtboardIndex(ab._aiIndex);
 
-    restoreHiddenFrames(hiddenText);
-    restoreHiddenLayers(hiddenLayers);
+      var format = resolveImageFormat(doc, ab, settings);
+
+      // Warn about large exports that may exceed Illustrator limits
+      var scaleFactor = settings.use2xImages ? 2 : 1;
+      var pxW = Math.round(ab.actualWidth * scaleFactor);
+      var pxH = Math.round(ab.actualHeight * scaleFactor);
+      var pxCount = pxW * pxH;
+      var mpThreshold = (format === "jpg") ? 32000000 : 5000000;
+      if (pxCount > mpThreshold) {
+        warn("Large " + format.toUpperCase() + " export for '" + ab.name + "' (" + pxW + "\u00d7" + pxH + " = " + Math.round(pxCount / 1000000) + "MP). Consider disabling 2x or reducing artboard size.", "image:large-export", "image");
+      }
+
+      var imageName = makeAssetName([
+        slug,
+        ab.source && ab.source.name ? ab.source.name : ab.name
+      ]);
+      if (assets[imageName]) {
+        imageName = makeAssetName([imageName, ab._aiIndex + 1]);
+      }
+      var exportPath = outputPath + imageName;
+
+      exportArtboardImage(doc, exportPath, format, settings);
+
+      // Clean up Illustrator export artifacts (hex-named temp PNGs)
+      try {
+        var outFolder = new Folder(outputPath);
+        var junk = outFolder.getFiles(function(f) {
+          return /^[0-9A-F]{16}\.png$/i.test(f.name);
+        });
+        for (var ji = 0; ji < junk.length; ji++) {
+          try { junk[ji].remove(); } catch(e) {}
+        }
+      } catch(e) {}
+
+      // Illustrator adds the extension automatically
+      var ext = format === "jpg" ? ".jpg" : ".png";
+      assets[imageName] = {
+        id: imageName,
+        path: imageName + ext,
+        mimeType: format === "jpg" ? "image/jpeg" : "image/png",
+        width: ab.actualWidth * (settings.use2xImages ? 2 : 1),
+        height: ab.actualHeight * (settings.use2xImages ? 2 : 1),
+        artboardId: ab.id,
+        source: {
+          tool: "illustrator",
+          name: ab.source && ab.source.name ? ab.source.name : ab.name
+        },
+        exportParams: {
+          format: format,
+          scale: settings.use2xImages ? 2 : 1,
+          transparent: settings.pngTransparent || false,
+          quality: settings.jpgQuality || 85,
+          colors: settings.pngNumberOfColors || 128
+        }
+      };
+    } finally {
+      // Inverse order of mutation: layers were hidden last, so restore first.
+      restoreHiddenLayers(hiddenLayers);
+      restoreHiddenFrames(hiddenText);
+    }
   }
 
   return assets;
@@ -1271,7 +1311,7 @@ function ensureFolder(path) {
       if (!f.exists) {
         var created = f.create();
         if (!created) {
-          warn("Could not create folder: " + current);
+          warn("Could not create folder: " + current, "output:folder-failed", "other");
         }
       }
     }
@@ -1353,6 +1393,9 @@ function log(msg) {
   var elapsed = ((new Date().getTime() - _logStart) / 1000).toFixed(2);
   var line = "[" + elapsed + "s] all2html: " + msg;
   try { $.writeln(line); } catch(e) {}
+  // $.writeln reaches only the ExtendScript console, which neither the panel nor
+  // an AppleEvent caller can read. Diagnostics is where these are looked for.
+  logDiagnostic("info", line);
 }
 
 function logSpan(name) {
@@ -1366,16 +1409,27 @@ function logSpan(name) {
   };
 }
 
-function groupWarnings(warnings) {
-  var groups = { fonts: [], masks: [], rotation: [], overset: [], settings: [], other: [] };
-  for (var i = 0; i < warnings.length; i++) {
-    var w = warnings[i];
-    if (w.indexOf("font") >= 0 || w.indexOf("Font") >= 0) groups.fonts.push(w);
-    else if (w.indexOf("mask") >= 0 || w.indexOf("clip") >= 0) groups.masks.push(w);
-    else if (w.indexOf("rotat") >= 0 || w.indexOf("skew") >= 0) groups.rotation.push(w);
-    else if (w.indexOf("overset") >= 0 || w.indexOf("overflow") >= 0) groups.overset.push(w);
-    else if (w.indexOf("setting") >= 0 || w.indexOf("parameter") >= 0) groups.settings.push(w);
-    else groups.other.push(w);
+// Categories and their display order come from src/core/warnings.ts. Grouping
+// reads the declared category and never inspects the message.
+//
+// This replaces a substring classifier that filed the core's category:"setting"
+// warnings under "other", because it matched lowercase "setting" against
+// messages that begin with a capitalized "Setting". Do not reintroduce one:
+// codes and categories are assigned at the call site on both sides of the
+// boundary, so there is nothing left to guess.
+var WARNING_CATEGORY_ORDER = ["setting", "font", "text", "image", "geometry", "markup", "template", "other"];
+
+function groupStructuredWarnings(list) {
+  var groups = {};
+  for (var i = 0; i < WARNING_CATEGORY_ORDER.length; i++) {
+    groups[WARNING_CATEGORY_ORDER[i]] = [];
+  }
+  for (var j = 0; j < list.length; j++) {
+    var entry = list[j];
+    if (!entry) continue;
+    var category = entry.category;
+    if (!hasOwn(groups, category)) category = "other";
+    groups[category].push(entry.message);
   }
   return groups;
 }
@@ -1524,11 +1578,16 @@ function normalizeFontEntries(fonts) {
 function runExporter() {
   // Reset global state (ExtendScript may persist globals across runs)
   warnings = [];
-  objectsToRelock = [];
-  textFramesToUnhide = [];
+  structuredWarnings = [];
+  restoreActions = [];
+  unlockedObjectCount = 0;
+  docToMarkSaved = null;
 
   var startTime = new Date().getTime();
   var span;
+
+  // Must come before any exportFile() call. See suppressUserInteraction().
+  suppressUserInteraction();
 
   span = logSpan("validateDocument");
   var doc = validateDocument();
@@ -1539,7 +1598,7 @@ function runExporter() {
 
   span = logSpan("unlockObjects");
   unlockObjects(doc);
-  span.end(objectsToRelock.length + " unlocked");
+  span.end(unlockedObjectCount + " unlocked");
 
   span = logSpan("loadConfigFiles");
   var configFile = loadConfigFiles(docPath);
@@ -1568,7 +1627,7 @@ function runExporter() {
       }
     }
   } catch(e) {
-    warn("Panel settings injection failed: " + e.message);
+    warn("Panel settings injection failed: " + e.message, "setting:panel-injection-failed", "setting");
   }
 
   // CEP panel font injection
@@ -1592,7 +1651,7 @@ function runExporter() {
       }
     }
   } catch(e) {
-    warn("Panel font injection failed: " + e.message);
+    warn("Panel font injection failed: " + e.message, "font:panel-injection-failed", "font");
   }
 
   // Resolve settings with explicit precedence:
@@ -1642,7 +1701,7 @@ function runExporter() {
   var canonicalIrSettings = buildCanonicalIrSettings(docSettings);
 
   if (settings.imageFormat && settings.imageFormat.length > 1) {
-    warn("Multiple image formats specified; currently only the first is used: " + settings.imageFormat[0]);
+    warn("Multiple image formats specified; currently only the first is used: " + settings.imageFormat[0], "setting:multiple-image-formats", "setting");
   }
 
   ensureFolder(outputPath);
@@ -1748,9 +1807,7 @@ function runExporter() {
   var result = All2Html.processAndEmit(irDoc, {
     fonts: normalizeFontEntries(configFile.fonts || [])
   });
-  for (var w = 0; w < result.warnings.length; w++) {
-    warnings.push(result.warnings[w]);
-  }
+  pushCoreWarnings(result);
   span.end(warnings.length + " warnings");
 
   // Write HTML
@@ -1783,7 +1840,7 @@ function runExporter() {
       promoOpts.colorCount = 256;
       doc.exportFile(promoFile, ExportType.PNG8, promoOpts);
     } catch(e) {
-      warn("Promo image generation failed: " + e.message);
+      warn("Promo image generation failed: " + e.message, "image:promo-failed", "image");
     }
   }
 
@@ -1809,9 +1866,10 @@ function runExporter() {
     } catch(e) {}
   }
 
-  // Restore document state
+  // Document saved-flag restore happens in executeAll2Html, after
+  // relock/unhide — restoring it here would be undone by those mutations.
   if (docSaved) {
-    try { doc.saved = true; } catch(e) {}
+    docToMarkSaved = doc;
   }
 
   return {
@@ -1838,24 +1896,33 @@ function executeAll2Html() {
     logDiagnostic("info", "Starting Illustrator export");
     result = runExporter();
   } catch(e) {
-    // Restore state on error
-    relockObjects();
-    for (var i = 0; i < textFramesToUnhide.length; i++) {
-      try { textFramesToUnhide[i].hidden = false; } catch(ex) {}
-    }
+    // Restore state on error (LIFO: inverse order of mutation)
+    runRestoreActions();
     var errMsg = (e.name === "UserError" || e.message) ? e.message : e.toString();
     logDiagnostic("error", "Illustrator export failed", errMsg);
     if (ALL2HTML_AUTOMATED) {
-      return JSON.stringify({ error: errMsg, warnings: warnings });
+      // Same envelope as the success path below: `warnings` is the grouped
+      // object the panel's RunResult type declares, never the plain string
+      // array. Returning the raw array here made the panel read a string as a
+      // category list — "48 warnings" for one 48-character message, one row per
+      // character. Nothing type-checks this file, so the shape is asserted in
+      // test/unit/illustrator-warning-plumbing.test.ts instead.
+      return JSON.stringify({
+        success: false,
+        error: errMsg,
+        warnings: groupStructuredWarnings(structuredWarnings),
+        structuredWarnings: structuredWarnings
+      });
     }
     alert("all2html error:\n\n" + errMsg);
     return;
   }
 
-  // Restore state on success
-  relockObjects();
-  for (var i = 0; i < textFramesToUnhide.length; i++) {
-    try { textFramesToUnhide[i].hidden = false; } catch(e) {}
+  // Restore state on success (LIFO: inverse order of mutation)
+  runRestoreActions();
+  if (docToMarkSaved) {
+    try { docToMarkSaved.saved = true; } catch(e) {}
+    docToMarkSaved = null;
   }
 
   var elapsed = ((new Date().getTime() - result.startTime) / 1000).toFixed(1);
@@ -1869,7 +1936,11 @@ function executeAll2Html() {
     artboardCount: result.artboardCount,
     imageCount: result.imageCount,
     elapsed: elapsed + "s",
-    warnings: ALL2HTML_AUTOMATED ? groupWarnings(warnings) : warnings
+    // Automated callers get the warnings grouped by declared category; the
+    // full structured list travels with them so codes, categories, and the
+    // core's setting/artboard/layer context survive the boundary.
+    warnings: ALL2HTML_AUTOMATED ? groupStructuredWarnings(structuredWarnings) : warnings,
+    structuredWarnings: structuredWarnings
   };
 
   if (ALL2HTML_AUTOMATED) {

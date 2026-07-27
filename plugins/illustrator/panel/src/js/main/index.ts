@@ -1,7 +1,7 @@
-import App from "./App.svelte";
+import { mount } from "svelte";
 import AeApp from "../ae-main/AeApp.svelte";
 import { getHostApplicationId, initBolt } from "../lib/utils/bolt";
-import { mount } from "svelte";
+import App from "./App.svelte";
 
 function loadScript(src: string): Promise<void> {
   if (typeof (globalThis as { CSInterface?: unknown }).CSInterface === "function") {
@@ -9,16 +9,12 @@ function loadScript(src: string): Promise<void> {
   }
 
   return new Promise((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>(
-      `script[src="${src}"]`,
-    );
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${src}"]`);
     if (existing) {
       existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener(
-        "error",
-        () => reject(new Error(`Failed to load ${src}`)),
-        { once: true },
-      );
+      existing.addEventListener("error", () => reject(new Error(`Failed to load ${src}`)), {
+        once: true,
+      });
       return;
     }
 
@@ -26,11 +22,9 @@ function loadScript(src: string): Promise<void> {
     script.src = src;
     script.async = false;
     script.addEventListener("load", () => resolve(), { once: true });
-    script.addEventListener(
-      "error",
-      () => reject(new Error(`Failed to load ${src}`)),
-      { once: true },
-    );
+    script.addEventListener("error", () => reject(new Error(`Failed to load ${src}`)), {
+      once: true,
+    });
     document.head.appendChild(script);
   });
 }

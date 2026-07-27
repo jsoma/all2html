@@ -11,7 +11,7 @@ This README is for repo-local development and packaging.
 ## Build From Source
 
 ```bash
-pnpm package:after-effects
+pnpm build:after-effects
 ```
 
 This writes:

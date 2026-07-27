@@ -1,4 +1,3 @@
-import { evalTS } from "./lib/utils/bolt.js";
 import {
   HOST_COMMANDS,
   type HostCommandArgs,
@@ -7,6 +6,7 @@ import {
   type OpenFolderResult,
 } from "../shared/host-contract.js";
 import type { DiagnosticsPayload } from "../shared/types.js";
+import { evalTS } from "./lib/utils/bolt.js";
 
 export function callHostCommand<K extends HostCommandName>(
   command: K,
@@ -15,10 +15,7 @@ export function callHostCommand<K extends HostCommandName>(
   return evalTS<HostCommandResult<K>>(command, ...args);
 }
 
-export function normalizeStringListResult(
-  result: unknown,
-  errorLabel: string,
-): string[] {
+export function normalizeStringListResult(result: unknown, errorLabel: string): string[] {
   if (Array.isArray(result)) {
     return result.filter(
       (entry): entry is string => typeof entry === "string" && entry.trim().length > 0,
@@ -41,10 +38,7 @@ function isRecordLike(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
-export function parseHostObjectResult<T extends object>(
-  raw: unknown,
-  maxDepth = 2,
-): T | null {
+export function parseHostObjectResult<T extends object>(raw: unknown, maxDepth = 2): T | null {
   let current = raw;
 
   for (let depth = 0; depth <= maxDepth; depth += 1) {
@@ -75,7 +69,9 @@ function canUseNodeFolderOpen(): boolean {
 }
 
 function normalizeFolderPath(path: string): string {
-  const trimmed = String(path || "").trim().replace(/^"(.*)"$/, "$1");
+  const trimmed = String(path || "")
+    .trim()
+    .replace(/^"(.*)"$/, "$1");
 
   if (!canUseNodeFolderOpen()) {
     return trimmed;
@@ -112,20 +108,10 @@ async function openFolderViaNode(path: string): Promise<boolean> {
     throw new Error("Folder not found");
   }
 
-  const command =
-    platform === "win32"
-      ? "cmd.exe"
-      : platform === "darwin"
-        ? "open"
-        : "xdg-open";
+  const command = platform === "win32" ? "cmd.exe" : platform === "darwin" ? "open" : "xdg-open";
   const args =
     platform === "win32"
-      ? [
-          "/d",
-          "/s",
-          "/c",
-          `start "" "${normalizedPath.replace(/\//g, "\\").replace(/"/g, '""')}"`,
-        ]
+      ? ["/d", "/s", "/c", `start "" "${normalizedPath.replace(/\//g, "\\").replace(/"/g, '""')}"`]
       : [normalizedPath];
 
   await new Promise<void>((resolve, reject) => {

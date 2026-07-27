@@ -11,15 +11,19 @@
   let copyLabel = $state("Copy");
   let copyResetTimer: number | undefined = undefined;
 
-  const totalCount = $derived(
-    Object.values(warnings).reduce((sum, arr) => sum + arr.length, 0),
+  // `Array.isArray` rather than a truthiness check: a caller that hands over a raw
+  // ExtendScript payload would otherwise render a *string* one character per row
+  // (`Object.values("abc")` is `["a","b","c"]`). Callers should pass
+  // `normalizeGroupedWarnings(...)`; this makes the failure impossible rather than
+  // merely unlikely.
+  const categories = $derived(
+    (Object.entries(warnings) as [string, unknown][])
+      .filter((entry): entry is [string, string[]] => Array.isArray(entry[1]))
+      .map(([category, items]) => [category, items.filter((i) => typeof i === "string")] as const)
+      .filter(([, items]) => items.length > 0),
   );
 
-  const categories = $derived(
-    (Object.entries(warnings) as [string, string[]][]).filter(
-      ([, items]) => items.length > 0,
-    ),
-  );
+  const totalCount = $derived(categories.reduce((sum, [, items]) => sum + items.length, 0));
 
   function setCopyLabel(label: string): void {
     copyLabel = label;

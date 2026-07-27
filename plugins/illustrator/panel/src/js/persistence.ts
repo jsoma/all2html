@@ -8,22 +8,22 @@
  * Priority: text block > document XMP > config file > app defaults > core defaults
  */
 
-import { loadXmpSettings, readConfigFile, readSettingsBlock } from "./bridge.js";
-import { parseHostObjectResult } from "./bridge-shared.js";
-import { exporterToPanelKey, exporterToPanelSettings } from "./adapter.js";
-import {
-  normalizeStoredFonts,
-  readStoredDefaults,
-  writeStoredDefaults,
-  type StoredDefaults,
-} from "./default-storage.js";
 import type {
+  FontEntry,
   PanelSettingKey,
   PanelSettings,
-  FontEntry,
   SettingSource,
   XmpData,
 } from "../shared/types.js";
+import { exporterToPanelKey, exporterToPanelSettings } from "./adapter.js";
+import { loadXmpSettings, readConfigFile, readSettingsBlock } from "./bridge.js";
+import { parseHostObjectResult } from "./bridge-shared.js";
+import {
+  normalizeStoredFonts,
+  readStoredDefaults,
+  type StoredDefaults,
+  writeStoredDefaults,
+} from "./default-storage.js";
 
 const DEFAULTS_FILE = "defaults.json";
 const SCHEMA_VERSION = "1.0.0";
@@ -40,10 +40,7 @@ export function loadAppDefaults(): AppDefaults | null {
 }
 
 /** Save global app defaults to the user data directory. */
-export function saveAppDefaults(
-  settings: PanelSettings,
-  fonts: FontEntry[],
-): void {
+export function saveAppDefaults(settings: PanelSettings, fonts: FontEntry[]): void {
   writeStoredDefaults(
     DEFAULTS_FILE,
     SCHEMA_VERSION,
@@ -86,9 +83,7 @@ function assignSettingSources(
     PanelSettings[PanelSettingKey],
   ][]) {
     if (value === undefined) continue;
-    (
-      target as Partial<Record<PanelSettingKey, PanelSettings[PanelSettingKey]>>
-    )[key] = value;
+    (target as Partial<Record<PanelSettingKey, PanelSettings[PanelSettingKey]>>)[key] = value;
     fieldSources[key] = source;
   }
 }
@@ -110,7 +105,8 @@ export function summarizeSettingSources(
   }
 
   if (meaningfulSources.size === 0) return "core-defaults";
-  if (meaningfulSources.size === 1) return meaningfulSources.values().next().value ?? "core-defaults";
+  if (meaningfulSources.size === 1)
+    return meaningfulSources.values().next().value ?? "core-defaults";
   return "mixed";
 }
 
@@ -122,9 +118,7 @@ export interface ResolveSettingsLayersInput {
   textBlockRaw?: Record<string, unknown>;
 }
 
-export function resolveSettingsLayers(
-  input: ResolveSettingsLayersInput,
-): ResolvedSettings {
+export function resolveSettingsLayers(input: ResolveSettingsLayersInput): ResolvedSettings {
   const resolvedSettings: PanelSettings = {};
   const fieldSources: Partial<Record<PanelSettingKey, SettingSource>> = {};
   let fonts: FontEntry[] = [];
@@ -140,24 +134,14 @@ export function resolveSettingsLayers(
   }
 
   if (input.configSettings) {
-    assignSettingSources(
-      resolvedSettings,
-      fieldSources,
-      input.configSettings,
-      "config-file",
-    );
+    assignSettingSources(resolvedSettings, fieldSources, input.configSettings, "config-file");
     if ((input.configFonts || []).length > 0) {
       fonts = normalizeFonts(input.configFonts);
     }
   }
 
   if (input.xmpData?.settings && Object.keys(input.xmpData.settings).length > 0) {
-    assignSettingSources(
-      resolvedSettings,
-      fieldSources,
-      input.xmpData.settings,
-      "document-xmp",
-    );
+    assignSettingSources(resolvedSettings, fieldSources, input.xmpData.settings, "document-xmp");
     if ((input.xmpData.fonts || []).length > 0) {
       fonts = normalizeFonts(input.xmpData.fonts);
     }

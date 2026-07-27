@@ -94,12 +94,12 @@ function attachDiagnosticsToResult(
 }
 
 function installExporterDiagnosticSink(globalState: any): void {
-  globalState.__ALL2HTML_LOG__ = function (
+  globalState.__ALL2HTML_LOG__ = (
     scope: DiagnosticScope,
     level: DiagnosticLevel,
     message: string,
     detail?: string,
-  ): void {
+  ): void => {
     logDiagnostic(globalState, scope, level, message, detail);
   };
 }

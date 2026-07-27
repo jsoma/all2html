@@ -3,9 +3,7 @@ type FontConfigEntry = {
   aifont?: string;
 };
 
-function parseFontConfigEntries(
-  configFontsInput: string | FontConfigEntry[],
-): FontConfigEntry[] {
+function parseFontConfigEntries(configFontsInput: string | FontConfigEntry[]): FontConfigEntry[] {
   var parsed = configFontsInput;
 
   for (var depth = 0; depth < 2 && typeof parsed === "string"; depth += 1) {
@@ -23,9 +21,9 @@ function parseFontConfigEntries(
   return parsed;
 }
 
-function buildConfiguredFontLookup(
-  configFontsInput: string | FontConfigEntry[],
-): { [name: string]: boolean } {
+function buildConfiguredFontLookup(configFontsInput: string | FontConfigEntry[]): {
+  [name: string]: boolean;
+} {
   var configFonts = parseFontConfigEntries(configFontsInput);
   var configured: { [name: string]: boolean } = {};
 
@@ -55,8 +53,4 @@ function findMissingConfiguredFonts(
   return missing;
 }
 
-export {
-  buildConfiguredFontLookup,
-  findMissingConfiguredFonts,
-  parseFontConfigEntries,
-};
+export { buildConfiguredFontLookup, findMissingConfiguredFonts, parseFontConfigEntries };

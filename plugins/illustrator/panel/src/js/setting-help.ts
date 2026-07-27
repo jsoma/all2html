@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { getSettingDefinition } from "../../../../../src/ir/settings-definitions.js";
+import { getSettingHelpDefinition } from "../../../../../src/ir/setting-help.js";
 import type { PanelSettingKey } from "../shared/types.js";
 
 export interface SettingHelpEntry {
@@ -15,7 +15,7 @@ export const SETTING_HELP_DOCS_BASE_URL = "https://jsoma.github.io/all2html";
 export const openSettingHelpId = writable<string | null>(null);
 
 export function getSettingHelp(key: PanelSettingKey): SettingHelpEntry | undefined {
-  const help = getSettingDefinition(key)?.help;
+  const help = getSettingHelpDefinition(key);
   if (!help) return undefined;
   return {
     summary: help.summary,
