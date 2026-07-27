@@ -437,16 +437,19 @@ describe("browser pipeline surface", () => {
    * (`unsupportedFormats: ["standalone"]`) could never fire for direct callers.
    */
   it("threads the target format into the default surface context", () => {
+    // `htmlOutputExtension` is the probe because it is format-scoped: only the
+    // html emitter reads it, and standalone hardcodes `.html`. (`output` used to
+    // be the probe, back when the standalone emitter discarded artboard groups.)
     const doc = createDocument();
-    doc.settings = { ...doc.settings, output: "multiple-files" };
+    doc.settings = { ...doc.settings, htmlOutputExtension: ".php" };
 
     const asHtml = processDocumentInBrowser(structuredClone(doc), { format: "html" });
     const asStandalone = processDocumentInBrowser(structuredClone(doc), { format: "standalone" });
 
-    expect(asHtml.structuredWarnings.some((warning) => warning.setting === "output")).toBe(false);
-    expect(asStandalone.structuredWarnings.some((warning) => warning.setting === "output")).toBe(
-      true,
-    );
+    const forSetting = (result: { structuredWarnings: { setting?: string }[] }) =>
+      result.structuredWarnings.some((warning) => warning.setting === "htmlOutputExtension");
+    expect(forSetting(asHtml)).toBe(false);
+    expect(forSetting(asStandalone)).toBe(true);
   });
 
   it("still defaults to the browser converter, whose declaration differs from the CLI's", () => {

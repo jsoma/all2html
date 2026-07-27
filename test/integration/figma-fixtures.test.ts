@@ -237,14 +237,14 @@ describe("Figma extracted-frame fixtures", () => {
     const html = entryText(exported.html.bundle.entries, "news-special-video.html");
     const standalone = entryText(exported.standalone.bundle.entries, "news-special-video.html");
 
-    // The one fixture with a video, so the one fixture that gets the emitter's
-    // lazy-video warning: useLazyLoader defaults on, the markup is data-src
-    // only, and no surface emits a loader.
-    expect(fixtureWarnings(exported.html.bundle.warnings)).toEqual([
-      'Layer "hero-video" emits a lazy <video> with data-src and no src, and no loader script is emitted, so the video never plays. Set useLazyLoader: false to emit a direct src.',
-    ]);
+    // The one fixture with a video. `useLazyLoader` defaults on, so the markup
+    // is `data-src` only — and the export now carries the loader that turns it
+    // into a `src`, which is why there is no warning left to expect.
+    expect(fixtureWarnings(exported.html.bundle.warnings)).toEqual([]);
     expect(html).toContain("<video");
     expect(html).toContain('data-src="https://cdn.example.com/night-service.mp4"');
+    expect(html).toContain('data-all2html="lazy-video-loader"');
+    expect(standalone).toContain('data-all2html="lazy-video-loader"');
     expect(html).toContain(
       "Night crews test a new bus lane while cameras stream the first rush-hour run",
     );

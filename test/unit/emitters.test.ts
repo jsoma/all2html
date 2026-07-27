@@ -97,7 +97,7 @@ describe("React emitter", () => {
     const doc = loadAndProcess("single-artboard-basic.json");
     const { jsx } = emitReact(doc);
     // The HTML is injected via dangerouslySetInnerHTML — it must use standard HTML attributes
-    expect(jsx).toContain('class="ai2html"');
+    expect(jsx).toContain('class="ai2html g-all2html"');
     expect(jsx).not.toMatch(/className="ai2html"/);
   });
 

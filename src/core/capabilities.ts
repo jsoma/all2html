@@ -26,9 +26,6 @@
  * `src/extendscript/` references them.
  */
 
-// Leaf module (its only dependency is core/warnings), imported here so the
-// declaration and the emitter that actually raises the warning cannot drift.
-import { LAZY_VIDEO_NO_LOADER_CODE } from "../emitters/shared/lazy-video.js";
 import { SETTING_DEFINITIONS } from "../ir/settings-definitions.js";
 import type { Settings } from "../ir/types.js";
 import {
@@ -142,30 +139,21 @@ export interface SurfaceContext {
 /* Shared entries                                                      */
 /* ------------------------------------------------------------------ */
 
-/**
- * D31 — honored for images, dead for video, on every surface.
- *
- * Images get native `loading="lazy"`, which works. Videos get `data-src` and no
- * `src` (`html-tree.ts`, the `video` layer arm) and no loader script exists
- * anywhere in `src/`, so a lazily-loaded video never plays. Which case applies
- * is a property of the *document*, so this defers to the emitter rather than
- * warning on every export at the default — see `warnedByEmitter`.
- *
- * Shared because every surface emits through those two emitters, and declared
- * before the surface tables because they reference it: a `const` is in its
- * temporal dead zone until this line runs.
+/*
+ * D31 is retired: `useLazyLoader` used to be honored for images and dead for
+ * video — the markup carried `data-src` and no `src`, and no surface emitted a
+ * loader — so it was declared `partial` here with
+ * `warnedByEmitter: "video:lazy-src-no-loader"`. `src/emitters/shared/lazy-video.ts`
+ * now ships the loader on every format (a `<script>` for html/standalone, a
+ * lifecycle effect for svelte/react), so there is no divergence left to declare
+ * and the setting falls through to each surface's `defaultStatus` of "honored".
  */
-const LAZY_LOADER: SettingSupport = {
-  status: "partial",
-  warnedByEmitter: LAZY_VIDEO_NO_LOADER_CODE,
-  note: 'Images get native loading="lazy". Videos are emitted with data-src and no src and no loader script is emitted, so a lazily-loaded video never plays; the emitter warns per video layer.',
-};
 
 /**
  * Matrix footnote 5 — the extension is an `html` emitter concept only.
  *
- * `registry-shared.ts:50` is the single reader; `:64` forces `.svelte`, `:77`
- * forces `.jsx`/`.tsx`, and `:90` hardcodes `.html` for standalone. Declared
+ * `registry-shared.ts:52` is the single reader; `:66` forces `.svelte`, `:79`
+ * forces `.jsx`/`.tsx`, and `:93` hardcodes `.html` for standalone. Declared
  * `partial` with the three formats that ignore it, so a non-default extension
  * warns exactly when the run is targeting one of them — and an untouched
  * `.html` stays silent on every format, because that is what those formats
@@ -235,8 +223,6 @@ export const illustratorCapabilities: SurfaceCapabilities = {
       status: "unsupported",
       note: "Illustrator emits an HTML fragment only, so the standalone preview template is never applied.",
     },
-    // D31
-    useLazyLoader: LAZY_LOADER,
   },
 };
 
@@ -260,7 +246,7 @@ export const illustratorFeatures: SurfaceFeatures = {
   "text-hyperlinks": { status: "honored", note: "" },
   "custom-blocks": {
     status: "honored",
-    note: "Matches ai2html- prefixed block names only; all2html- prefixed names do not match.",
+    note: "Matches all2html- and ai2html- prefixed block names; all2html- wins key-by-key when a document carries both settings blocks.",
   },
   "promo-image": { status: "honored", note: "" },
   "text-effects": {
@@ -400,14 +386,6 @@ export const figmaCapabilities: SurfaceCapabilities = {
       status: "unsupported",
       note: "The browser standalone emitter reads the template only to discard it.",
     },
-    // Table B — the standalone emitter discards artboard groups.
-    output: {
-      status: "partial",
-      unsupportedFormats: ["standalone"],
-      note: "The standalone emitter collapses every artboard group into a single file.",
-    },
-    // D31
-    useLazyLoader: LAZY_LOADER,
   },
 };
 
@@ -502,12 +480,6 @@ const NODE_PROMO_IMAGE: SettingSupport = {
   status: "unsupported",
   note: "Promo image generation is implemented in the Illustrator exporter only.",
 };
-// Table B — the standalone emitter discards artboard groups.
-const STANDALONE_COLLAPSES_GROUPS: SettingSupport = {
-  status: "partial",
-  unsupportedFormats: ["standalone"],
-  note: "The standalone emitter collapses every artboard group into a single file.",
-};
 // D30 — the one place the browser dropzone diverges from the Node CLI.
 const BROWSER_PREVIEW_TEMPLATE: SettingSupport = {
   status: "unsupported",
@@ -531,8 +503,6 @@ const CLI_SETTINGS: { [key: string]: SettingSupport } = {
   svgEmbedImages: NODE_SVG_EMBED_IMAGES,
   createPromoImage: NODE_PROMO_IMAGE,
   promoImageWidth: NODE_PROMO_IMAGE,
-  output: STANDALONE_COLLAPSES_GROUPS,
-  useLazyLoader: LAZY_LOADER,
 };
 
 /** Same table as the CLI, plus the one divergence recorded in D30. */
@@ -552,8 +522,6 @@ const BROWSER_SETTINGS: { [key: string]: SettingSupport } = {
   svgEmbedImages: NODE_SVG_EMBED_IMAGES,
   createPromoImage: NODE_PROMO_IMAGE,
   promoImageWidth: NODE_PROMO_IMAGE,
-  output: STANDALONE_COLLAPSES_GROUPS,
-  useLazyLoader: LAZY_LOADER,
   localPreviewTemplate: BROWSER_PREVIEW_TEMPLATE,
 };
 

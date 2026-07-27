@@ -13,7 +13,6 @@ import { processDocument } from "../../src/core/pipeline.js";
 import type { SurfaceId } from "../../src/core/warnings.js";
 import { emitHTML } from "../../src/emitters/html.js";
 import { emitHTMLString } from "../../src/emitters/html-string.js";
-import { LAZY_VIDEO_NO_LOADER_CODE } from "../../src/emitters/shared/lazy-video.js";
 import { createDefaultSettings, SETTING_DEFINITIONS } from "../../src/ir/settings-definitions.js";
 import type { Settings } from "../../src/ir/types.js";
 
@@ -351,19 +350,19 @@ describe("declarations match what the code actually does", () => {
     expect(browser.localPreviewTemplate.status).toBe("unsupported");
   });
 
-  it("output is honored for html but collapses for standalone", () => {
-    // Matrix table B: registry-shared.ts discards groups for standalone.
+  it("output is honored on every emitted format, standalone included", () => {
+    // Matrix table B used to record the opposite: `registry-shared.ts` named the
+    // standalone descriptor's group parameter `_groups` and emitted one file
+    // regardless. It runs through `perGroup` like the other three now, so there
+    // is no format-scoped divergence left to declare — and nothing to warn about.
     const base = { surface: "cli", path: "render" } as const;
-    const asHtml = checkCapabilitiesForSurface(settingsWith("output", "multiple-files"), {
-      ...base,
-      format: "html",
-    });
-    const asStandalone = checkCapabilitiesForSurface(settingsWith("output", "multiple-files"), {
-      ...base,
-      format: "standalone",
-    });
-    expect(asHtml).toEqual([]);
-    expect(asStandalone.map((warning) => warning.setting)).toEqual(["output"]);
+    for (const format of ["html", "standalone", "svelte", "react"]) {
+      const warnings = checkCapabilitiesForSurface(settingsWith("output", "multiple-files"), {
+        ...base,
+        format,
+      }).filter((warning) => warning.setting === "output");
+      expect(warnings, `${format} warned about output`).toEqual([]);
+    }
   });
 
   it("htmlOutputExtension is honored for html only, and silent at its default", () => {
@@ -452,22 +451,29 @@ describe("declarations match what the code actually does", () => {
 });
 
 /**
- * D31 — `useLazyLoader` is dead at its default, but only for video: images get
- * native `loading="lazy"`, which works. Whether a document is affected is a
- * property of the document, not of the settings, so the declaration defers to
- * the emitter and the emitter warns at the call site that produces the broken
- * markup. Warning from the settings checker would fire on every export ever
- * made, including the image-only ones where the claim would be false.
+ * D31, retired.
+ *
+ * `useLazyLoader` used to be honored for images and dead for video: the markup
+ * carried `data-src` and no `src`, and nothing anywhere swapped them in, so a
+ * lazily-loaded video never played. The declaration recorded that as `partial`
+ * with `warnedByEmitter`, and both HTML emitters warned per video layer.
+ *
+ * `src/emitters/shared/lazy-video.ts` now ships the loader, so the divergence is
+ * gone and so is the warning. These tests are the inverse of the ones they
+ * replace: nothing may declare the gap, nothing may warn about it, and the
+ * loader has to actually be in the output.
  */
-describe("D31: lazy video has no loader", () => {
+describe("D31 retired: lazy video ships a loader", () => {
   const lazySurfaces = ["illustrator", "figma", "cli", "browser"] as const;
 
-  it("is declared partial on every surface and deferred to the emitter", () => {
+  it("declares no useLazyLoader divergence on any surface", () => {
     for (const surface of lazySurfaces) {
-      const support = getSurfaceCapabilities(surface).settings.useLazyLoader;
-      expect(support, `${surface} does not declare useLazyLoader`).toBeDefined();
-      expect(support.status).toBe("partial");
-      expect(support.warnedByEmitter).toBe(LAZY_VIDEO_NO_LOADER_CODE);
+      const declaration = getSurfaceCapabilities(surface);
+      expect(
+        declaration.settings.useLazyLoader,
+        `${surface} still declares a useLazyLoader divergence`,
+      ).toBeUndefined();
+      expect(declaration.defaultStatus).toBe("honored");
     }
   });
 
@@ -482,17 +488,11 @@ describe("D31: lazy video has no loader", () => {
     }
   });
 
-  it("no loader script exists anywhere in src/, which is why this is dead", () => {
-    for (const needle of ["IntersectionObserver", "lazyload", "loadImages"]) {
-      // lazy-video.ts is the module that documents the absence.
-      const mentions = sourceMentions(needle).filter(
-        (file) => !file.endsWith("shared/lazy-video.ts"),
-      );
-      expect(mentions, `${needle} appeared; re-check the declaration`).toEqual([]);
-    }
+  it("keeps the loader single-sourced, with no forked copy in src/", () => {
+    expect(sourceMentions("IntersectionObserver")).toEqual(["src/emitters/shared/lazy-video.ts"]);
   });
 
-  it("warns once per lazy video layer, from both HTML emitters identically", () => {
+  it("emits the loader instead of warning, from both HTML emitters identically", () => {
     const doc = JSON.parse(
       readFileSync(join(repoRoot, "test/fixtures/ir/video-layer.json"), "utf-8"),
     );
@@ -505,19 +505,16 @@ describe("D31: lazy video has no loader", () => {
     const string = emitHTMLString(document);
 
     for (const result of [hast, string]) {
-      const lazy = result.structuredWarnings.filter(
-        (warning) => warning.code === LAZY_VIDEO_NO_LOADER_CODE,
-      );
-      expect(lazy).toHaveLength(1);
-      expect(lazy[0].category).toBe("markup");
-      expect(lazy[0].setting).toBe("useLazyLoader");
-      expect(lazy[0].layerId).toBeDefined();
+      expect(
+        result.structuredWarnings.filter((warning) => warning.setting === "useLazyLoader"),
+      ).toEqual([]);
       expect(result.html).toContain("data-src=");
+      expect(result.html).toContain("IntersectionObserver");
     }
     expect(hast.structuredWarnings).toEqual(string.structuredWarnings);
   });
 
-  it("says nothing when the user opts out, because a direct src is emitted", () => {
+  it("says nothing and ships no loader when the user opts out", () => {
     const doc = JSON.parse(
       readFileSync(join(repoRoot, "test/fixtures/ir/video-layer.json"), "utf-8"),
     );
@@ -527,11 +524,12 @@ describe("D31: lazy video has no loader", () => {
     });
     const result = emitHTMLString(document);
 
-    expect(
-      result.structuredWarnings.some((warning) => warning.code === LAZY_VIDEO_NO_LOADER_CODE),
-    ).toBe(false);
+    expect(result.structuredWarnings.some((warning) => warning.setting === "useLazyLoader")).toBe(
+      false,
+    );
     expect(result.html).toContain("src=");
     expect(result.html).not.toContain("data-src=");
+    expect(result.html).not.toContain("IntersectionObserver");
   });
 });
 
@@ -617,18 +615,20 @@ describe("the pipeline warns for the active surface", () => {
     expect(result.structuredWarnings.some((warning) => warning.setting === "output")).toBe(false);
   });
 
-  it("warns about output: multiple-files on Figma standalone but not Figma html", () => {
-    const asHtml = processDocument(structuredClone(ir), {
-      surface: { surface: "figma", format: "html" },
-    });
-    const asStandalone = processDocument(structuredClone(ir), {
-      surface: { surface: "figma", format: "standalone" },
-    });
-
-    expect(asHtml.structuredWarnings.some((warning) => warning.setting === "output")).toBe(false);
-    expect(asStandalone.structuredWarnings.some((warning) => warning.setting === "output")).toBe(
-      true,
-    );
+  it("says nothing about output: multiple-files on either Figma format", () => {
+    // Figma emits html and standalone, and both now write one file per artboard
+    // group. The standalone warning that used to fire here described a real bug
+    // (`registry-shared.ts` dropped the groups); the bug is fixed, so the
+    // warning would now be false.
+    for (const format of ["html", "standalone"]) {
+      const result = processDocument(structuredClone(ir), {
+        surface: { surface: "figma", format },
+      });
+      expect(
+        result.structuredWarnings.some((warning) => warning.setting === "output"),
+        `figma/${format} warned about output`,
+      ).toBe(false);
+    }
   });
 
   it("keeps the plain-string projection in sync with the structured warnings", () => {

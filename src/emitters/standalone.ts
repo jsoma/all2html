@@ -4,6 +4,7 @@ import { applyTemplate, rawTemplateValue, type TemplateValue } from "../core/tem
 import { createWarning, type StructuredWarning, warningMessages } from "../core/warnings.js";
 import type { EmitterReadyDocument } from "../ir/types.js";
 import { emitHTML } from "./html.js";
+import type { EmitGroupOptions } from "./html-tree.js";
 import { renderDefaultStandaloneHTML } from "./standalone-shared.js";
 import type { EmitterOptions } from "./types.js";
 
@@ -18,11 +19,19 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+/**
+ * `groupOptions` is the same artboard-subset + slug override every other emitter
+ * takes. It used to be missing, which made `output: "multiple-files"` a silent
+ * no-op on this format: the registry passed the groups in and standalone dropped
+ * them, emitting one file containing every artboard while `html`, `svelte` and
+ * `react` emitted one per group.
+ */
 export function emitStandalone(
   doc: EmitterReadyDocument,
+  groupOptions?: EmitGroupOptions,
   options?: EmitterOptions,
 ): EmitStandaloneResult {
-  const { html: fragment, structuredWarnings } = emitHTML(doc, undefined, options);
+  const { html: fragment, structuredWarnings } = emitHTML(doc, groupOptions, options);
   const warnings = [...structuredWarnings];
   const settings = doc.settings;
 

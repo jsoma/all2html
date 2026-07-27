@@ -43,6 +43,7 @@ import {
   jsStringLiteral,
   sanitizeIdentifier,
 } from "./shared/js-identifier.js";
+import { lazyVideoLoaderCall } from "./shared/lazy-video.js";
 import type { ComponentSegment } from "./shared/replaceable-nodes.js";
 import type { ReactEmitterOptions } from "./types.js";
 
@@ -274,6 +275,28 @@ export function emitReact(
     .join("\n");
 
   const isTypeScript = options?.typescript === true;
+
+  // Lazy `<video>` loader. Chunks are injected with `dangerouslySetInnerHTML`,
+  // and a `<script>` set that way is inserted but never executed, so the loader
+  // runs as an effect over the component root instead. `safePath` is the
+  // dependency because it is what rebuilds the chunks — and therefore replaces
+  // the video elements the observer is holding.
+  const reactHooks = tree.hasLazyVideo ? "useEffect, useMemo, useRef" : "useMemo";
+  const lazyVideoEffect = tree.hasLazyVideo
+    ? `
+  // Lazy <video> loader. A <script> set via dangerouslySetInnerHTML is inserted
+  // but never runs, so this graphic's videos are swapped from data-src to src
+  // here instead. safePath is the dependency because it rebuilds the chunks,
+  // and with them the video elements.
+  useEffect(() => {
+    if (rootRef.current) return ${lazyVideoLoaderCall("rootRef.current", "    ")}
+  }, [safePath]);
+`
+    : "";
+  const lazyVideoRef = tree.hasLazyVideo
+    ? `  const rootRef = useRef${isTypeScript ? "<HTMLDivElement | null>" : ""}(null);\n`
+    : "";
+  const rootRefAttr = tree.hasLazyVideo ? " ref={rootRef}" : "";
   const propTypes = [
     "  assetsPath?: string;",
     "  className?: string;",
@@ -318,13 +341,13 @@ export function emitReact(
 
   const header = isTypeScript
     ? `${reactTypeImport}
-import { useMemo } from "react";
+import { ${reactHooks} } from "react";
 
 interface ${componentName}Props {
 ${propTypes.join("\n")}
 }
 `
-    : `import React, { useMemo } from "react";
+    : `import React, { ${reactHooks} } from "react";
 `;
 
   const signature = isTypeScript
@@ -347,9 +370,9 @@ ${signature}
     () => htmlChunks.map((chunk) => chunk.split(ASSET_TOKEN).join(safePath)),
     [safePath]
   );
-
+${lazyVideoRef}${lazyVideoEffect}
   return (
-    <div className={className}>
+    <div className={className}${rootRefAttr}>
       {googleFontsHref ? (
         <>
           <link rel="preconnect" href="https://fonts.googleapis.com" />

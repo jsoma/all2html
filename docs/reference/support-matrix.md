@@ -110,7 +110,7 @@ Everything else the surfaces differ on.
 - **2x (retina) raster export · all2html CLI** — Import path only.
 - **2x (retina) raster export · Browser converter** — Import path only.
 - **Hyperlinks on text runs · Figma plugin** — URL hyperlinks only; node-level links are dropped with a warning.
-- **Custom CSS/JS/HTML blocks · Illustrator** — Matches ai2html- prefixed block names only; all2html- prefixed names do not match.
+- **Custom CSS/JS/HTML blocks · Illustrator** — Matches all2html- and ai2html- prefixed block names; all2html- wins key-by-key when a document carries both settings blocks.
 - **Custom CSS/JS/HTML blocks · Figma plugin** — Advanced JSONC only; there is no direct UI control.
 - **Custom CSS/JS/HTML blocks · all2html CLI** — Read from the IR; SVG import produces none.
 - **Custom CSS/JS/HTML blocks · Browser converter** — Read from the IR; SVG import produces none.

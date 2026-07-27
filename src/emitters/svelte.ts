@@ -29,6 +29,7 @@ import { escapeAttr } from "./shared/escape.js";
 import type { HtmlAttrs } from "./shared/html-node.js";
 import { serializeHtml } from "./shared/html-node.js";
 import { jsStringLiteral } from "./shared/js-identifier.js";
+import { lazyVideoLoaderCall } from "./shared/lazy-video.js";
 import type { ComponentSegment } from "./shared/replaceable-nodes.js";
 import type { SvelteEmitterOptions } from "./types.js";
 
@@ -243,6 +244,27 @@ export function emitSvelte(
 
   const body = renderSegments(tree.segments, "  ").join("\n");
 
+  // Lazy `<video>` loader. The markup ships through `{@html}`, which inserts a
+  // `<script>` without executing it, so the loader has to be a component effect.
+  // The `resolveHtml("")` read is load-bearing: it makes the effect depend on
+  // `assetsPath`, which is what rebuilds the `{@html}` chunks and therefore
+  // replaces the very video elements the loader is observing.
+  const lazyVideoScript = tree.hasLazyVideo
+    ? `
+  // Lazy <video> loader. A <script> inside {@html} is inserted but never runs,
+  // so this graphic's videos are swapped from data-src to src here instead. The
+  // resolveHtml call makes the effect re-run when assetsPath changes, which is
+  // when the markup — and the video elements — are rebuilt.
+  let rootEl = $state(null);
+
+  $effect(() => {
+    resolveHtml("");
+    if (rootEl) return ${lazyVideoLoaderCall("rootEl", "    ")}
+  });
+`
+    : "";
+  const rootBinding = tree.hasLazyVideo ? " bind:this={rootEl}" : "";
+
   const prepared = prepareGlobalCss(tree.css, doc.customBlocks);
   for (const warning of prepared.warnings) structuredWarnings.push(warning);
 
@@ -259,9 +281,9 @@ ${propDocs.length > 0 ? `${propDocs.join("\n")}\n` : ""}
     const safePath = assetsPath.replace(/\\/+$/, "");
     return html.split(ASSET_TOKEN).join(safePath);
   }
-</script>
+${lazyVideoScript}</script>
 
-${fontHead}<div class={className}>
+${fontHead}<div class={className}${rootBinding}>
 ${body}
 </div>
 

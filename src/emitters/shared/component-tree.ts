@@ -27,6 +27,7 @@ import { buildHTMLTree, type EmitGroupOptions } from "../html-tree.js";
 import type { EmitterOptions } from "../types.js";
 import { buildGoogleFontsUrl } from "./google-fonts.js";
 import { type HtmlNode, neutralizeRawText } from "./html-node.js";
+import { LAZY_VIDEO_SCRIPT_ATTR, LAZY_VIDEO_SCRIPT_ATTR_VALUE } from "./lazy-video.js";
 import {
   type BindingMarker,
   type ComponentSegment,
@@ -54,6 +55,14 @@ export interface ComponentTree {
   bindings: BindingMarker[];
   propNameRenames: PropNameRename[];
   structuredWarnings: StructuredWarning[];
+  /**
+   * The tree carried at least one `<video data-src>`.
+   *
+   * The loader `<script>` the HTML tree carries has been removed (see
+   * `takeLazyVideoLoader`); the emitter is expected to run the same loader from
+   * a lifecycle effect instead.
+   */
+  hasLazyVideo: boolean;
 }
 
 /**
@@ -87,6 +96,31 @@ function takeStylesheet(nodes: HtmlNode[]): { css: string; rest: HtmlNode[] } {
   return { css, rest };
 }
 
+/**
+ * Drop the lazy-video loader `<script>`.
+ *
+ * A `<script>` inside `{@html}` / `dangerouslySetInnerHTML` is inserted as
+ * markup and never executes, so leaving it in the chunk would ship a loader that
+ * silently does nothing — the exact failure this whole change set is closing.
+ * The emitters re-run the same loader source from `$effect` / `useEffect`.
+ */
+function takeLazyVideoLoader(nodes: HtmlNode[]): HtmlNode[] {
+  const rest: HtmlNode[] = [];
+  for (const node of nodes) {
+    if (node.kind === "element" && node.tag === "script") {
+      let isLoader = false;
+      for (const [name, value] of node.attrs) {
+        if (name === LAZY_VIDEO_SCRIPT_ATTR && value === LAZY_VIDEO_SCRIPT_ATTR_VALUE) {
+          isLoader = true;
+        }
+      }
+      if (isLoader) continue;
+    }
+    rest.push(node);
+  }
+  return rest;
+}
+
 export function buildComponentTree(
   doc: EmitterReadyDocument,
   groupOptions?: EmitGroupOptions,
@@ -104,9 +138,13 @@ export function buildComponentTree(
     },
   };
 
-  const { nodes, structuredWarnings } = buildHTMLTree(tokenizedDoc, groupOptions, options);
+  const { nodes, structuredWarnings, lazyVideoCount } = buildHTMLTree(
+    tokenizedDoc,
+    groupOptions,
+    options,
+  );
   const { css, rest } = takeStylesheet(nodes);
-  const segments = segmentTree(rest);
+  const segments = segmentTree(takeLazyVideoLoader(rest));
   // Assigns the final prop names into the markers `segments` carries, so this
   // must run before anything renders them.
   const { snippets, bindings, propNameRenames } = collectReplaceables(segments);
@@ -119,6 +157,7 @@ export function buildComponentTree(
     bindings,
     propNameRenames,
     structuredWarnings,
+    hasLazyVideo: lazyVideoCount > 0,
   };
 }
 

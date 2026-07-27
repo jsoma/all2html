@@ -103,6 +103,67 @@ describe("multiple-files output mode", () => {
     expect(mapHtml).toContain("#g-multi-file-test-map-box");
   });
 
+  /**
+   * The standalone descriptor used to name its group parameter `_groups` and
+   * emit a single file containing every artboard, while html, svelte and react
+   * emitted one per group off the same `groups` array. `output:
+   * "multiple-files"` was therefore silently a no-op on exactly one format —
+   * and Figma, which offers html and standalone only, was half broken.
+   */
+  it("emits one standalone file per group, like every other format", () => {
+    const raw = loadFixture("multiple-files-output.json");
+    const { document: doc, groups } = processDocument(raw);
+
+    const html = getEmitter("html").emitAll(doc, groups);
+    const standalone = getEmitter("standalone").emitAll(doc, groups);
+
+    expect(standalone.files).toHaveLength(html.files.length);
+    expect(standalone.files.map((file) => file.slug).sort()).toEqual(
+      html.files.map((file) => file.slug).sort(),
+    );
+    expect([...new Set(standalone.files.map((file) => file.extension))]).toEqual([".html"]);
+  });
+
+  it("puts each group's content in its own standalone file and nowhere else", () => {
+    const raw = loadFixture("multiple-files-output.json");
+    const { document: doc, groups } = processDocument(raw);
+    const { files } = getEmitter("standalone").emitAll(doc, groups);
+
+    const chart = files.find((file) => file.slug === "multi-file-test-chart")?.output;
+    const map = files.find((file) => file.slug === "multi-file-test-map")?.output;
+
+    for (const output of [chart, map]) {
+      // Still a whole document, not a fragment — that is what standalone means.
+      expect(output).toContain("<!DOCTYPE html>");
+      expect(output).toContain("</html>");
+    }
+
+    expect(chart).toContain("Chart Title");
+    expect(chart).not.toContain("Map Title");
+    expect(map).toContain("Map Title");
+    expect(map).not.toContain("Chart Title");
+
+    // The DOM ids and the stylesheet follow the group slug, exactly as they do
+    // for the html emitter.
+    expect(chart).toContain('id="g-multi-file-test-chart-box"');
+    expect(chart).toContain("#g-multi-file-test-chart-box");
+    expect(chart).not.toContain("g-multi-file-test-map");
+    expect(map).toContain('id="g-multi-file-test-map-box"');
+    expect(map).not.toContain("g-multi-file-test-chart");
+  });
+
+  it("still emits a single standalone file in one-file mode", () => {
+    const raw = loadFixture("multiple-files-output.json");
+    raw.settings.output = "one-file";
+    const { document: doc, groups } = processDocument(raw);
+    const { files } = getEmitter("standalone").emitAll(doc, groups);
+
+    expect(files).toHaveLength(1);
+    expect(files[0].slug).toBe("multi-file-test");
+    expect(files[0].output).toContain("Chart Title");
+    expect(files[0].output).toContain("Map Title");
+  });
+
   it("one-file mode puts all artboards in single group", () => {
     const raw = loadFixture("single-artboard-basic.json");
     const { groups } = processDocument(raw);

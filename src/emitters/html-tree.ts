@@ -47,7 +47,11 @@ import {
   serializeHtml,
   text,
 } from "./shared/html-node.js";
-import { lazyVideoWarning } from "./shared/lazy-video.js";
+import {
+  LAZY_VIDEO_SCRIPT_ATTR,
+  LAZY_VIDEO_SCRIPT_ATTR_VALUE,
+  lazyVideoLoaderScript,
+} from "./shared/lazy-video.js";
 import { applyEmitterOptions } from "./shared/options.js";
 import type { EmitterOptions } from "./types.js";
 
@@ -65,6 +69,17 @@ export interface EmitHTMLTreeResult {
   /** The serializable node tree. Render with `serializeHtml()` or `toHast()`. */
   nodes: HtmlNode[];
   structuredWarnings: StructuredWarning[];
+  /**
+   * How many `<video data-src>` elements the tree carries. Non-zero means the
+   * tree also carries the loader `<script>`; the framework emitters read it to
+   * decide whether to emit a lifecycle effect in its place.
+   */
+  lazyVideoCount: number;
+}
+
+/** Mutable per-build tallies. Emitter-local — never part of the document. */
+interface RenderTally {
+  lazyVideos: number;
 }
 
 export interface EmitGroupOptions {
@@ -91,6 +106,7 @@ function positionToStyleString(pos: ComputedPosition): string {
 function renderTextElement(
   element: EmitterReadyTextElement,
   ns: string,
+  idPrefix: string,
   layerName: string,
   warnings: StructuredWarning[],
 ): HtmlNode {
@@ -166,8 +182,15 @@ function renderTextElement(
     paragraphs.push(el("p", paraAttrs, runs));
   }
 
+  // Element ids are namespaced with the same `{ns}{slug}-` prefix the container
+  // and artboard ids already carry (D7). Exporters mint document-local ids —
+  // Illustrator's are literally `g-ai0-1` — so two all2html graphics on one CMS
+  // page would otherwise emit duplicate ids. Nothing in the generated CSS
+  // selects an element id (see `shared/css.ts`: only the container and artboard
+  // ids appear in selectors), so this is an emit-time rename with no stylesheet
+  // counterpart to keep in sync.
   const attrs: HtmlAttrs = [
-    ["id", element.id],
+    ["id", idPrefix + element.id],
     ["class", classes.join(" ")],
     ["style", fullStyle],
   ];
@@ -207,9 +230,11 @@ function renderArtboard(
   assetIdx: ScopedAssetIndex,
   cssVarImages: boolean,
   warnings: StructuredWarning[],
+  tally: RenderTally,
 ): HtmlNode {
   const settings = doc.settings;
-  const abId = ns + slug + "-" + makeArtboardKey(ab, doc.artboards);
+  const idPrefix = ns + slug + "-";
+  const abId = idPrefix + makeArtboardKey(ab, doc.artboards);
   const responsiveness = ab.responsiveness ?? settings.responsiveness;
   const bp = ab.breakpoint;
 
@@ -326,10 +351,7 @@ function renderArtboard(
         for (const element of layer.elements) {
           if (element.type === "video") {
             if (settings.useLazyLoader) {
-              pushUniqueStructuredWarning(
-                warnings,
-                lazyVideoWarning(layer.name, { artboardId: ab.id, layerId: layer.id }),
-              );
+              tally.lazyVideos++;
             }
             children.push(
               el("video", [
@@ -385,7 +407,7 @@ function renderArtboard(
       case "default":
         for (const element of layer.elements) {
           if (element.type === "text" && element.renderAs === "html") {
-            children.push(renderTextElement(element, ns, layer.name, warnings));
+            children.push(renderTextElement(element, ns, idPrefix, layer.name, warnings));
           }
           if (element.type === "snippet") {
             children.push(
@@ -426,6 +448,7 @@ export function buildHTMLTree(
   options?: EmitterOptions,
 ): EmitHTMLTreeResult {
   const warnings: StructuredWarning[] = [];
+  const tally: RenderTally = { lazyVideos: 0 };
   const resolvedDoc = applyEmitterOptions(doc, options);
   const settings = resolvedDoc.settings;
   const ns = settings.namespace;
@@ -464,9 +487,14 @@ export function buildHTMLTree(
   nodes.push(el("style", [["media", "screen,print"]], [text("\n" + css + "\n")]));
   nodes.push(raw("\n"));
 
+  // `ai2html` is kept verbatim for parity: newsroom CMS templates, embed
+  // wrappers and resizer scripts written against ai2html select it, and dropping
+  // it would break those pages silently. The namespaced class is *added*
+  // alongside it so a page carrying more than one graphic — or a mix of ai2html
+  // and all2html output — can address ours specifically.
   const containerAttrs: HtmlAttrs = [
     ["id", containerId],
-    ["class", "ai2html"],
+    ["class", "ai2html " + ns + "all2html"],
   ];
   if (resolvedDoc.metadata.ariaRole) {
     containerAttrs.push(["role", resolvedDoc.metadata.ariaRole]);
@@ -550,7 +578,7 @@ export function buildHTMLTree(
   );
   for (const ab of sortedAbs) {
     target.push(comment("Artboard: " + ab.name));
-    target.push(renderArtboard(ab, scopedDoc, ns, slug, assetIdx, cssVarMode, warnings));
+    target.push(renderArtboard(ab, scopedDoc, ns, slug, assetIdx, cssVarMode, warnings, tally));
   }
 
   // Custom HTML after
@@ -576,6 +604,23 @@ export function buildHTMLTree(
 
   nodes.push(el("div", containerAttrs, containerChildren));
 
+  // Lazy `<video>` loader, emitted only when a lazy video was actually written.
+  // It goes in as a normal `text` child of a `script` element, so the
+  // serializer's `escapeScriptContent()` covers it exactly like a custom JS
+  // block — deliberately not a `raw()` node.
+  if (tally.lazyVideos > 0) {
+    nodes.push(
+      el(
+        "script",
+        [
+          ["type", "text/javascript"],
+          [LAZY_VIDEO_SCRIPT_ATTR, LAZY_VIDEO_SCRIPT_ATTR_VALUE],
+        ],
+        [text(lazyVideoLoaderScript())],
+      ),
+    );
+  }
+
   // Custom JS. Raw-text element again: the serializer neutralizes `</script` and
   // `<!--` so a block cannot break out or swallow the rest of the document.
   for (const block of resolvedDoc.customBlocks) {
@@ -587,7 +632,7 @@ export function buildHTMLTree(
   nodes.push(raw("\n"));
   nodes.push(comment("End all2html"));
 
-  return { nodes: nodes, structuredWarnings: warnings };
+  return { nodes: nodes, structuredWarnings: warnings, lazyVideoCount: tally.lazyVideos };
 }
 
 /** Build the tree and serialize it. The shared implementation of every HTML emit. */

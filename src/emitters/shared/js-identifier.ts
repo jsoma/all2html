@@ -159,6 +159,7 @@ const GENERATED_IDENTIFIERS = [
   // Svelte.
   "resolveHtml",
   "ASSET_TOKEN",
+  "rootEl",
   // React.
   "CONTENTS",
   "JSX",
@@ -169,7 +170,10 @@ const GENERATED_IDENTIFIERS = [
   "googleFontsHref",
   "htmlChunks",
   "props",
+  "rootRef",
+  "useEffect",
   "useMemo",
+  "useRef",
 ];
 
 /**

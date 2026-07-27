@@ -2,6 +2,7 @@ import type { ArtboardGroup } from "../core/group-artboards.js";
 import { type StructuredWarning, warningMessages } from "../core/warnings.js";
 import type { EmitterReadyDocument } from "../ir/types.js";
 import { emitHTML } from "./html.js";
+import type { EmitGroupOptions } from "./html-tree.js";
 import { emitReact } from "./react.js";
 import { emitSvelte } from "./svelte.js";
 import type { EmitterConfig, EmitterOptions } from "./types.js";
@@ -37,6 +38,7 @@ export interface StandaloneEmitterResult {
 export function createBuiltinEmitters(
   emitStandaloneLike: (
     doc: EmitterReadyDocument,
+    groupOptions?: EmitGroupOptions,
     options?: EmitterOptions,
   ) => StandaloneEmitterResult,
 ): Record<string, SharedEmitterDescriptor> {
@@ -81,17 +83,21 @@ export function createBuiltinEmitters(
         });
       },
     },
+    // Standalone is group-aware like the other three. The extension stays
+    // `.html` regardless of `htmlOutputExtension` — a full document with a
+    // `.svelte` name would be a lie — which is what `HTML_ONLY_OUTPUT_EXTENSION`
+    // in `src/core/capabilities.ts` declares.
     standalone: {
       name: "standalone",
-      emitAll: (doc, _groups, emitterConfig) => {
-        const result = emitStandaloneLike(doc, emitterConfig?.standalone);
-        const slug = doc.settings.projectName || doc.metadata.slug;
-        return {
-          files: [{ slug, extension: ".html", output: result.html }],
-          warnings: result.warnings,
-          structuredWarnings: result.structuredWarnings,
-        };
-      },
+      emitAll: (doc, groups, emitterConfig) =>
+        perGroup(doc, groups, ".html", (d, g) => {
+          const result = emitStandaloneLike(
+            d,
+            { artboards: g.artboards, slug: g.slug },
+            emitterConfig?.standalone,
+          );
+          return { output: result.html, warnings: result.structuredWarnings };
+        }),
     },
   };
 }

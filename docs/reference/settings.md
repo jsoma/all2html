@@ -14,7 +14,7 @@ description: Every canonical setting, its type, its default, and which surfaces 
 
 all2html keeps one canonical settings model even though each source tool exposes it differently. This page is generated from the setting definitions and the per-surface capability declarations in the source tree, so it cannot describe behavior the code does not have.
 
-Settings always use canonical camelCase keys inside the IR and in `all2html.config.json`. Tool-native spellings such as `image_format` or `html_output_path` are accepted only on the tool side of the boundary — in an Illustrator `ai2html-settings` text block — and are normalized before they reach the pipeline.
+Settings always use canonical camelCase keys inside the IR and in `all2html.config.json`. Tool-native spellings such as `image_format` or `html_output_path` are accepted only on the tool side of the boundary — in an Illustrator `all2html-settings` text block (the legacy `ai2html-settings` name still works) — and are normalized before they reach the pipeline.
 
 There are 33 settings.
 
@@ -54,7 +54,7 @@ A surface that warns tells you, during the export itself, whenever you asked for
 | [`cacheBustToken`](#cacheBustToken) | yes | n/a | yes | yes | yes |
 | [`namespace`](#namespace) | yes | n/a | yes | yes | yes |
 | [`projectName`](#projectName) | yes | n/a | yes | yes | yes |
-| [`output`](#output) | **no** | n/a | partial | partial | partial |
+| [`output`](#output) | **no** | n/a | yes | yes | yes |
 | [`htmlOutputPath`](#htmlOutputPath) | yes | n/a | **no** | **no** | **no** |
 | [`htmlOutputExtension`](#htmlOutputExtension) | yes | n/a | partial | partial | partial |
 | [`imageOutputPath`](#imageOutputPath) | yes | n/a | partial | yes | yes |
@@ -70,7 +70,7 @@ A surface that warns tells you, during the export itself, whenever you asked for
 | [`includeResizerCss`](#includeResizerCss) | yes | n/a | yes | yes | yes |
 | [`includeResizerWidths`](#includeResizerWidths) | yes | n/a | yes | yes | yes |
 | [`responsiveImageMode`](#responsiveImageMode) | **no** | n/a | yes | yes | yes |
-| [`useLazyLoader`](#useLazyLoader) | partial | n/a | partial | partial | partial |
+| [`useLazyLoader`](#useLazyLoader) | yes | n/a | yes | yes | yes |
 | [`inlineSvg`](#inlineSvg) | **no** | n/a | **no** | **no** | **no** |
 | [`svgIdPrefix`](#svgIdPrefix) | **no** | n/a | **no** | **no** | **no** |
 | [`svgEmbedImages`](#svgEmbedImages) | yes | n/a | **no** | **no** | **no** |
@@ -242,13 +242,12 @@ Use Single file for one graphic with breakpoints; use Per artboard when each art
 - **Single file** — Emits one HTML file that can contain responsive artboard variants together.
 - **Per artboard** — Writes separate output files instead of bundling all artboards into one result.
 
+Honored on: Figma plugin, all2html CLI, Browser converter.
+
 | Surface | Support | What actually happens |
 |---|---|---|
 | Illustrator | **no** | Illustrator always emits a single HTML file. Artboard grouping is deliberately not wired into the ExtendScript bundle yet. |
 | After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
-| Figma plugin | partial | Not honored for the `standalone` format. The standalone emitter collapses every artboard group into a single file. |
-| all2html CLI | partial | Not honored for the `standalone` format. The standalone emitter collapses every artboard group into a single file. |
-| Browser converter | partial | Not honored for the `standalone` format. The standalone emitter collapses every artboard group into a single file. |
 
 <a id="htmlOutputPath"></a>
 ### `htmlOutputPath`
@@ -503,13 +502,11 @@ Honored on: Figma plugin, all2html CLI, Browser converter.
 
 Defers loading of background images and video until they are near the viewport.
 
+Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
+
 | Surface | Support | What actually happens |
 |---|---|---|
-| Illustrator | partial | Images get native loading="lazy". Videos are emitted with data-src and no src and no loader script is emitted, so a lazily-loaded video never plays; the emitter warns per video layer. Warned per affected element with the code `video:lazy-src-no-loader`. |
 | After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
-| Figma plugin | partial | Images get native loading="lazy". Videos are emitted with data-src and no src and no loader script is emitted, so a lazily-loaded video never plays; the emitter warns per video layer. Warned per affected element with the code `video:lazy-src-no-loader`. |
-| all2html CLI | partial | Images get native loading="lazy". Videos are emitted with data-src and no src and no loader script is emitted, so a lazily-loaded video never plays; the emitter warns per video layer. Warned per affected element with the code `video:lazy-src-no-loader`. |
-| Browser converter | partial | Images get native loading="lazy". Videos are emitted with data-src and no src and no loader script is emitted, so a lazily-loaded video never plays; the emitter warns per video layer. Warned per affected element with the code `video:lazy-src-no-loader`. |
 
 <a id="inlineSvg"></a>
 ### `inlineSvg`
