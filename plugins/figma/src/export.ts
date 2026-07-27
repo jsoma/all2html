@@ -1,5 +1,6 @@
 import { strToU8, zipSync } from "fflate";
 import {
+  assertSafeBundleEntryPath,
   createOutputBundle,
   getBrowserEmitter,
   processDocumentInBrowser,
@@ -81,10 +82,18 @@ export function buildExportBundle(
   };
 }
 
+/**
+ * This is the sink that actually ships a ZIP to a machine — the user downloads
+ * it from the plugin and extracts it — and it builds its entry names from
+ * `FigmaExportBundle.entries` rather than calling `bundleToZipBytes()`, so the
+ * containment `createOutputBundle()` enforces at construction is re-asserted
+ * here. Same relationship as `resolveInsideOutputDir()` on the CLI: one rule,
+ * stated where the paths are built, backstopped at the write.
+ */
 export function createZipArchive(bundle: FigmaExportBundle): Uint8Array {
   const zipEntries: Record<string, Uint8Array> = {};
   for (const entry of bundle.entries) {
-    zipEntries[entry.path] =
+    zipEntries[assertSafeBundleEntryPath(entry.path)] =
       typeof entry.content === "string" ? strToU8(entry.content) : new Uint8Array(entry.content);
   }
   return zipSync(zipEntries, { level: 0 });

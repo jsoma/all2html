@@ -107,6 +107,7 @@ export type {
 export { CURRENT_IR_VERSION } from "./ir/types.js";
 export { loadAndValidateIR } from "./ir/validate.js";
 export {
+  assertSafeBundleEntryPath,
   bundleToZipBytes,
   createOutputBundle,
   getBundleFile,

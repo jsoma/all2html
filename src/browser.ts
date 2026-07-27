@@ -30,6 +30,7 @@ import {
 } from "./importers/svg/rasterizer-browser.js";
 import type { EmitterReadyDocument } from "./ir/types.js";
 import {
+  assertSafeBundleEntryPath,
   bundleToZipBytes,
   createOutputBundle,
   getBundleFile,
@@ -203,6 +204,7 @@ export function getAvailableBrowserFormats(): string[] {
 }
 
 export {
+  assertSafeBundleEntryPath,
   type BrowserResvgModule,
   type BrowserSvgRasterizerOptions,
   bundleToZipBytes,

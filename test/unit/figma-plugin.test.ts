@@ -508,6 +508,54 @@ describe("Figma plugin foundation", () => {
     });
 
     /**
+     * The hostile half of the same `it.each`. Figma is the surface that actually
+     * ships a ZIP to a machine — the user downloads and extracts it — so an entry
+     * name containing `..` is a zip-slip, and `imageOutputPath` is user text in
+     * the plugin's JSONC.
+     *
+     * These refuse at construction rather than falling back to a safe prefix:
+     * `imageOutputPath` is applied twice and the two must agree
+     * (`resolveAssetPath()` → `src`, `assetRoot` → ZIP layout), so any
+     * substituted value would ship HTML pointing at entries the ZIP does not
+     * contain. Refusing is what keeps the invariant above absolute — *every*
+     * bundle that exists has its `src` paths present as entries.
+     */
+    it.each([
+      "../../evil/",
+      "..",
+      "a/../../b",
+      "img/../../../etc/",
+      "C:/evil/",
+      "img\u0000evil/",
+    ])("refuses to build a bundle for hostile imageOutputPath %j", (imageOutputPath) => {
+      const ir = buildDocument([makeFrame()], {
+        slug: "figma-story",
+        settings: { imageOutputPath, projectName: "figma-story" },
+      });
+
+      expect(() =>
+        buildExportBundle(ir, { format: "html", assetFiles: makeFrame().assets ?? [] }),
+      ).toThrow(/Refusing to build an output bundle/);
+    });
+
+    /**
+     * `createZipArchive` builds ZIP entry names from `FigmaExportBundle.entries`
+     * instead of calling `bundleToZipBytes`, so it re-asserts the rule at the
+     * write rather than trusting the assembled list.
+     */
+    it("refuses to zip an entry list that escapes the bundle root", () => {
+      const ir = buildDocument([makeFrame()], { slug: "figma-story" });
+      const bundle = buildExportBundle(ir, { format: "html" });
+
+      expect(() =>
+        createZipArchive({
+          ...bundle,
+          entries: [...bundle.entries, { path: "../../evil.png", content: "x" }],
+        }),
+      ).toThrow(/Refusing to build an output bundle/);
+    });
+
+    /**
      * `emitAll` was called with no emitter config, so every shipped emitter
      * option was unreachable from Figma. The CLI passes `parsedConfig.emit`
      * straight through (`src/cli/index.ts`); the plugin now reads the same
