@@ -98,6 +98,17 @@ function makeKeyword(name) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+// The rule src/ir/settings-definitions.ts declares for the `string-safe`
+// settings (projectName, namespace, svgIdPrefix), which reach CSS selectors and
+// generated ids unescaped. Restated here because ExtendScript cannot import the
+// TypeScript module and because the check has to run *before* ir.json is
+// written — see sanitizeCanonicalIdentifierSettings.
+var SAFE_SETTING_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+
+function isSafeSettingIdentifier(value) {
+  return SAFE_SETTING_IDENTIFIER.test(value);
+}
+
 function makeStableId(prefix, name, index) {
   var keyword = makeKeyword(String(name || ""));
   if (!keyword) keyword = "item";
@@ -1622,6 +1633,43 @@ function buildCanonicalIrSettings(docSettings) {
   return settings;
 }
 
+/**
+ * Makes the canonical settings bag safe to *persist*, not just safe to render.
+ *
+ * ir.json is written before All2Html.processAndEmit() runs, so the core's own
+ * sanitizeIdentifierSettings only ever repaired its in-memory copy. The file on
+ * disk kept whatever the ai2html-settings text block said — a project_name of
+ * "../../pwn" was written verbatim — which made ir.json a document we produced
+ * ourselves and loadAndValidateIR rejects. That is the contract break; the
+ * emitted HTML was already safe.
+ *
+ * project_name gets one repair attempt rather than being dropped, because its
+ * keyword form is already the effective value: the slug below runs makeKeyword
+ * on the same string and metadata.slug carries the result, so persisting the
+ * keyword form changes no emitted byte. namespace and svg_id_prefix have no such
+ * shadow — keyword-casing "g-}body{display:none}." into a plausible-looking CSS
+ * prefix would silently honor a value the desk did not type — so an unusable one
+ * is dropped and the declared default applies, which is exactly what the core
+ * did with it.
+ */
+function sanitizeCanonicalIdentifierSettings(settings) {
+  var keys = ["projectName", "namespace", "svgIdPrefix"];
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    var raw = settings[key];
+    if (raw === undefined || raw === "") continue;
+    var value = key === "projectName" ? makeKeyword(String(raw)) : String(raw);
+    if (value !== "" && isSafeSettingIdentifier(value)) {
+      settings[key] = value;
+      continue;
+    }
+    delete settings[key];
+    var message = 'Setting "' + key + '" must be a CSS-safe identifier (letters, digits, "_", "-"); "' +
+      raw + '" is not. Using the default instead.';
+    warn(message, "setting:invalid-value", "setting");
+  }
+}
+
 function getFontSourceKey(font) {
   return font && (font.sourceFont || font.aifont) ? String(font.sourceFont || font.aifont) : "";
 }
@@ -1775,6 +1823,9 @@ function runExporter() {
   };
 
   var canonicalIrSettings = buildCanonicalIrSettings(docSettings);
+  // Before irDoc is built, because irDoc is written to disk below and has to
+  // satisfy the canonical schema on its own.
+  sanitizeCanonicalIdentifierSettings(canonicalIrSettings);
 
   if (settings.imageFormat && settings.imageFormat.length > 1) {
     warn("Multiple image formats specified; currently only the first is used: " + settings.imageFormat[0], "setting:multiple-image-formats", "setting");

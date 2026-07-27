@@ -4,7 +4,7 @@ Emitters take an `EmitterReadyDocument` and produce output in a specific format.
 
 ## Registry (`registry.ts`)
 
-Emitters are registered in an internal `Map` through `registerEmitter`. Built-ins use the same path as future internal emitters. Each descriptor has `emitAll(doc, groups)` returning `{ files: EmitFile[], warnings, structuredWarnings }`. Emitters build `StructuredWarning[]` internally (code + category assigned at the call site, see `src/core/warnings.ts`); `warnings` is the plain-string projection kept for the manifest and the surface UIs. The CLI uses `getEmitter(format)` for dispatch — no if/else chain. The `perGroup()` helper handles the group loop for **every** emitter, standalone included (`registry-shared.ts:93`) — standalone used to discard `groups` and emit one file whatever `output` said, which is the bug that made `output: multiple-files` a lie on that format. Extensions are normalized (leading dot ensured); note that only the html emitter reads `htmlOutputExtension` — svelte/react force `.svelte` and `.jsx`/`.tsx`, and standalone hardcodes `.html`.
+Emitters are registered in an internal `Map` through `registerEmitter`. Built-ins use the same path as future internal emitters. Each descriptor has `emitAll(doc, groups)` returning `{ files: EmitFile[], warnings, structuredWarnings }`. Emitters build `StructuredWarning[]` internally (code + category assigned at the call site, see `src/core/warnings.ts`); `warnings` is the plain-string projection kept for the manifest and the surface UIs. The CLI uses `getEmitter(format)` for dispatch — no if/else chain. The `perGroup()` helper handles the group loop for **every** emitter, standalone included (`registry-shared.ts:93`) — standalone used to discard `groups` and emit one file whatever `output` said, which is the bug that made `output: multiple-files` a lie on that format. Extensions go through `resolveOutputExtension()` in `src/core/output-extension.ts` (leading dot ensured, anything that is not a filename suffix rejected with `setting:invalid-value` and replaced by the default) — the extension is a filename component, and "add a dot if missing" turned `/../../outside.txt` into a path that resolved above `-o`. Only the html emitter reads `htmlOutputExtension` — svelte/react force `.svelte` and `.jsx`/`.tsx`, and standalone hardcodes `.html`. `formatDictatedExtension(format, emitterConfig)` is the single statement of that per-format rule; callers pass its result as `SurfaceContext.formatExtension` so the capability checker compares a requested extension against the one file name the run will actually write.
 Common emitter options must be wired end-to-end through the registry; don't leave typed options as dead config.
 
 ## HTML emitter (`html-tree.ts` + `shared/html-node.ts`)
@@ -135,6 +135,13 @@ runs.
 ## Standalone emitter (`standalone.ts`)
 
 Full HTML document. Supports `local_preview_template` setting via the template system.
+
+`applyTemplate` returns `{ output, warnings }`. Those warnings must reach the emitter's
+result: a slot the template system refused (attribute name, tag name, unquoted attribute
+value, `script`/`style` raw text) is left unsubstituted, and `emit:template-unsafe-slot`
+is the only signal the author gets that their template has an unsafe placeholder in it.
+The emitter passes `{ setting: "localPreviewTemplate" }` as the warning context, because
+`src/core/template.ts` does not know which setting the file came from.
 
 Two entry points, on purpose:
 

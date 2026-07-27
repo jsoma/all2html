@@ -57,13 +57,18 @@ export type { FontMapping, GoogleFontLinkTag };
  *     does not escape them, and either one inside an overlay string is a
  *     SyntaxError in the exported page.
  *
- * The `</` rule is broader than `</script` on purpose: a backslash there is
- * inert inside a JSON string literal, and blanket-escaping it means no
- * end-tag-open sequence of any kind survives into script data.
+ * **Every** `<` is escaped, not just `</`. `<` is ordinary JSON string
+ * syntax \u2014 it parses back to `<`, so the model the player reads is unchanged \u2014
+ * and it removes the HTML tokenizer's only entry into the script-data *escaped*
+ * states. Neutralizing `</` alone was not enough: an overlay string containing
+ * `<!--<script>` put the tokenizer into script-data-double-escaped, after which
+ * the template's own `</script>` at `plugins/after-effects/player-template.html`
+ * was consumed as text and the whole player script was swallowed into the JSON
+ * element. Escaping `<` subsumes the `</` rule, so there is one rule, not two.
  */
 export function escapeInlineJson(json: string): string {
   return String(json)
-    .replace(/<\//g, "<\\/")
+    .replace(/</g, "\\u003c")
     .replace(/\u2028/g, "\\u2028")
     .replace(/\u2029/g, "\\u2029");
 }
@@ -82,9 +87,12 @@ export function googleFontsUrl(fonts: readonly FontMapping[]): string {
 /**
  * The `<link>` tags for `googleFonts: "link"`, as data.
  *
- * The After Effects player template splices its own markup (it still carries
- * the `data-all2html-google-fonts` marker the static emitters dropped, and it
- * joins with newlines), so this hands back the tags rather than a string.
+ * The After Effects exporter joins the tags with newlines, because it splices
+ * them into a hand-written template a person reads, while
+ * `renderGoogleFontsLinkTags` joins with `""` for the static emitters. That
+ * separator is now the *only* difference between the two — the
+ * `data-all2html-google-fonts` marker AE used to add is gone — so this hands
+ * back the tags as data rather than a string.
  */
 export function googleFontsLinkTags(fonts: readonly FontMapping[]): GoogleFontLinkTag[] {
   return getGoogleFontsLinkTags(fonts);

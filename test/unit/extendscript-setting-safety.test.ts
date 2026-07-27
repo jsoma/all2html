@@ -9,6 +9,7 @@ import {
   SAFE_IDENTIFIER_SETTING_KEYS,
 } from "../../src/ir/settings-definitions.js";
 import type { Document } from "../../src/ir/types.js";
+import { loadAndValidateIR } from "../../src/ir/validate.js";
 
 /**
  * `namespace` and `projectName` are declared `string-safe` and Zod refuses a
@@ -144,5 +145,132 @@ describe("the document slug cannot escape the output directory", () => {
     const result = processAndEmit(doc);
 
     expect(result.structuredWarnings.filter((w) => w.code === "setting:invalid-value")).toEqual([]);
+  });
+});
+
+/**
+ * Everything above guards the document the *core* renders. `exporter.jsx` also
+ * writes `ir.json` to disk, and it writes it **before** `processAndEmit` runs —
+ * so the core's repair never reached the file. With `project_name: "../../pwn"`
+ * the emitted HTML was safe and the persisted document still carried the raw
+ * value, which means `loadAndValidateIR` rejects a document all2html produced
+ * itself. That is the contract break, and it can only be caught on the exporter
+ * side.
+ *
+ * The exporter is ExtendScript and cannot be imported, so this evaluates the
+ * real functions out of the shipped file — the same technique
+ * `illustrator-warning-plumbing.test.ts` uses, and for the same reason: a
+ * re-implementation here would drift from what ships.
+ */
+describe("the ir.json exporter.jsx persists is canonical", () => {
+  const exporterSource = readFileSync(
+    resolve(import.meta.dirname, "../../plugins/illustrator/exporter.jsx"),
+    "utf-8",
+  );
+
+  function extract(pattern: RegExp): string {
+    const match = exporterSource.match(pattern);
+    if (!match) throw new Error(`Could not find ${pattern} in exporter.jsx`);
+    return match[0];
+  }
+
+  interface CanonicalBuild {
+    settings: Record<string, unknown>;
+    warnings: string[];
+  }
+
+  const buildCanonicalSettings = new Function(
+    "docSettings",
+    [
+      "var warnings = [];",
+      "function warn(message) { warnings.push(message); }",
+      extract(/function hasOwn\(obj, key\) \{[\s\S]*?\n\}/),
+      extract(/function makeKeyword\(name\) \{[\s\S]*?\n\}/),
+      extract(/var SAFE_SETTING_IDENTIFIER = .*;/),
+      extract(/function isSafeSettingIdentifier\(value\) \{[\s\S]*?\n\}/),
+      extract(/function readBoolSetting\(obj, key\) \{[\s\S]*?\n\}/),
+      extract(/function readIntSetting\(obj, key\) \{[\s\S]*?\n\}/),
+      extract(/function readNullableIntSetting\(obj, key\) \{[\s\S]*?\n\}/),
+      extract(/function readStringSetting\(obj, key\) \{[\s\S]*?\n\}/),
+      extract(/function buildCanonicalIrSettings\(docSettings\) \{[\s\S]*?\n\}/),
+      extract(/function sanitizeCanonicalIdentifierSettings\(settings\) \{[\s\S]*?\n\}/),
+      "var settings = buildCanonicalIrSettings(docSettings);",
+      "sanitizeCanonicalIdentifierSettings(settings);",
+      "return { settings: settings, warnings: warnings };",
+    ].join("\n"),
+  ) as (docSettings: Record<string, string>) => CanonicalBuild;
+
+  /** The document the exporter would write, assembled the way `runExporter` does. */
+  function persistedDocument(docSettings: Record<string, string>): {
+    doc: unknown;
+    warnings: string[];
+  } {
+    const built = buildCanonicalSettings(docSettings);
+    const doc = loadDoc();
+    // metadata.slug is `makeKeyword(project_name || docName)` at the write site.
+    doc.metadata = {
+      ...doc.metadata,
+      slug: built.settings.projectName ? String(built.settings.projectName) : "sample",
+    };
+    return {
+      doc: { ...doc, settings: built.settings as Document["settings"] },
+      warnings: built.warnings,
+    };
+  }
+
+  it("keeps a traversal project_name out of the file it writes", () => {
+    const { doc, warnings } = persistedDocument({ project_name: "../../pwn" });
+
+    // The whole point: our own validator accepts the document we just wrote.
+    const validated = loadAndValidateIR(doc);
+    expect(validated.settings.projectName).toBe("pwn");
+    expect(JSON.stringify(validated.settings)).not.toContain("..");
+    // Keyword-casing is what `slug` already did, so no warning is owed and the
+    // emitted output is unchanged.
+    expect(warnings).toEqual([]);
+  });
+
+  it("drops a namespace it cannot repair, and says so", () => {
+    const { doc, warnings } = persistedDocument({ namespace: INJECTION });
+
+    const validated = loadAndValidateIR(doc);
+    // Absent, not keyword-cased into a prefix nobody asked for: the declared
+    // default applies, exactly as the core's sanitizer does with it.
+    expect("namespace" in validated.settings).toBe(false);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("namespace");
+    expect(warnings[0]).toContain(INJECTION);
+  });
+
+  it("drops a project_name with no identifier left in it", () => {
+    // makeKeyword("2020 election") is "2020-election", which is a *legal slug*
+    // and an *illegal* CSS identifier — the leading digit is the case a plain
+    // keyword-casing would have persisted unvalidated.
+    for (const value of ["2020 election", "///"]) {
+      const { doc, warnings } = persistedDocument({ project_name: value });
+      expect(() => loadAndValidateIR(doc)).not.toThrow();
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]).toContain("projectName");
+    }
+  });
+
+  it("leaves every already-canonical value exactly as typed", () => {
+    const { doc, warnings } = persistedDocument({
+      project_name: "countries-2024",
+      namespace: "g-",
+      svg_id_prefix: "svg_",
+    });
+
+    const validated = loadAndValidateIR(doc);
+    expect(validated.settings.projectName).toBe("countries-2024");
+    expect(validated.settings.namespace).toBe("g-");
+    expect(validated.settings.svgIdPrefix).toBe("svg_");
+    expect(warnings).toEqual([]);
+  });
+
+  it("rejects the document the exporter used to write, so this test can fail", () => {
+    // The pre-fix behavior, spelled out: the raw value straight into settings.
+    const doc = { ...loadDoc(), settings: { projectName: "../../pwn" } };
+    expect(() => loadAndValidateIR(doc)).toThrow();
   });
 });

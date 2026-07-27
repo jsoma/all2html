@@ -393,9 +393,18 @@
   // attribute escaper all live in the shared bundle now
   // (src/emitters/shared/google-fonts.ts + escape.ts, re-exported through
   // src/extendscript/ae-index.ts). ~185 lines of hand-copied ES5 were deleted
-  // here; only the markup shape below is After Effects-specific, because the
-  // player template still carries the data-all2html-google-fonts marker the
-  // static emitters dropped and joins the tags with newlines.
+  // here; the tags are built rather than taken from the shared
+  // `renderGoogleFontsLinkTags` only because this surface joins them with
+  // newlines (the markup is spliced into a hand-written template that a person
+  // reads), while the static emitters join with "". Nothing else differs.
+  //
+  // The tags carried a `data-all2html-google-fonts` marker attribute until now.
+  // It was never read here: it existed so the Svelte and React emitters could
+  // regex the link tags back out of serialized HTML, and since the one-emitter
+  // collapse (SPEC §12.6 / D23) those emitters consume the node tree and never
+  // build the links at all. It was dropped from the emitters earlier and kept
+  // here only to hold AE output byte-identical across the bundle-slot
+  // migration; that migration is done, so it goes.
   function buildGoogleFontMarkup(mode, fontMappings) {
     var core = requireCore();
     var url = mode === "none" ? "" : core.googleFontsUrl(fontMappings || []);
@@ -409,7 +418,7 @@
     var i;
     for (i = 0; i < tags.length; i += 1) {
       rendered.push(
-        '<link data-all2html-google-fonts="true" rel="' +
+        '<link rel="' +
           tags[i].rel +
           '" href="' +
           core.escapeAttr(tags[i].href) +
