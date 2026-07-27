@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { SETTING_DEFINITIONS, type SettingDefinition } from "./settings-definitions.js";
+import {
+  SAFE_SETTING_IDENTIFIER_RE,
+  SETTING_DEFINITIONS,
+  type SettingDefinition,
+} from "./settings-definitions.js";
 import { CURRENT_IR_VERSION } from "./types.js";
 
 // Recursive JSON-serializable value schema
@@ -202,7 +206,9 @@ export const AssetSchema = z.object({
   }),
 });
 
-export const SAFE_SETTING_IDENTIFIER_RE = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+// Single source of truth: defined in `settings-definitions.ts` so the Zod-free
+// ExtendScript path can apply the same rule. Re-exported for existing importers.
+export { SAFE_SETTING_IDENTIFIER_RE };
 
 function settingSchemaFor(definition: SettingDefinition): z.ZodTypeAny {
   switch (definition.kind) {

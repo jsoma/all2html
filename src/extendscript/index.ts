@@ -12,9 +12,14 @@ import { computeStyles } from "../core/compute-styles.js";
 import { deduplicateStyles } from "../core/deduplicate-styles.js";
 import { assertJsonPure } from "../core/json-purity.js";
 import { resolveSettingsPure } from "../core/resolve-settings-pure.js";
-import { type StructuredWarning, warningMessages } from "../core/warnings.js";
+import { createWarning, type StructuredWarning, warningMessages } from "../core/warnings.js";
 import { emitHTMLString } from "../emitters/html-string.js";
 import { defaultSettings } from "../ir/defaults.js";
+import {
+  getSettingDefault,
+  SAFE_IDENTIFIER_SETTING_KEYS,
+  SAFE_SETTING_IDENTIFIER_RE,
+} from "../ir/settings-definitions.js";
 import type { Document, FontMapping, Settings } from "../ir/types.js";
 import { installPolyfills } from "./polyfills.js";
 
@@ -81,6 +86,49 @@ function phase(name: string): void {
   }
 }
 
+/**
+ * `namespace`, `projectName` and `svgIdPrefix` reach CSS selectors and ids
+ * **unescaped** (`src/emitters/shared/css.ts` concatenates `settings.namespace`
+ * straight into every rule), so a value such as `g-}body{display:none}.` injects
+ * arbitrary CSS. Zod rejects that at the `string-safe` boundary — but the
+ * production Illustrator surface never runs Zod: `exporter.jsx` copies the value
+ * out of the `ai2html-settings` text block directly into `settings`. Every
+ * Zod-free caller enters through this bundle, so the check belongs here rather
+ * than in one exporter.
+ *
+ * A rejected value falls back to its declared default instead of aborting: the
+ * desk gets the graphic plus a named warning, not a dead export.
+ *
+ * Mutates in place, and takes the settings bag rather than the document, because
+ * the only caller hands it the object `resolveDocumentSettings` allocated one
+ * line earlier and nothing else holds a reference. A clone here costs `__assign`
+ * twice in a bundle that is measured in bytes.
+ */
+function sanitizeIdentifierSettings(settings: Settings, warnings: StructuredWarning[]): void {
+  for (let i = 0; i < SAFE_IDENTIFIER_SETTING_KEYS.length; i++) {
+    const key = SAFE_IDENTIFIER_SETTING_KEYS[i];
+    const value = settings[key];
+    if (typeof value !== "string") continue;
+    if (value === "" || SAFE_SETTING_IDENTIFIER_RE.test(value)) continue;
+    const fallback = getSettingDefault(key);
+    settings[key] = fallback;
+    warnings.push(
+      createWarning(
+        "setting:invalid-value",
+        "setting",
+        'Setting "' +
+          key +
+          '" must be a CSS-safe identifier (letters, digits, "_", "-"); "' +
+          value +
+          '" is not. Using "' +
+          fallback +
+          '" instead.',
+        { setting: key, surface: "illustrator" },
+      ),
+    );
+  }
+}
+
 export function processAndEmit(
   irDoc: Document,
   config?: { fonts?: FontMapping[]; settings?: Partial<Settings> },
@@ -96,6 +144,9 @@ export function processAndEmit(
 
   const resolved = resolveSettingsPure(irDoc, config);
   phase("resolveSettingsPure");
+  // Before any transform reads them: there is no Zod on this path, so a
+  // metacharacter in `namespace`/`projectName` would be concatenated into CSS.
+  sanitizeIdentifierSettings(resolved.settings, warnings);
   assertJsonPure(resolved, "resolveSettings");
   phase("assertJsonPure:resolved");
   // Illustrator declares what it honors like every other surface; anything the

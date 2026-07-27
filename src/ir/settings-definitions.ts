@@ -83,6 +83,40 @@ export const SETTING_DEFINITIONS = [
   { key: "localPreviewTemplate", defaultValue: "", kind: "string" },
 ] as const satisfies readonly SettingDefinition[];
 
+/**
+ * The rule for `string-safe` settings (`namespace`, `projectName`, `svgIdPrefix`):
+ * they are concatenated into CSS selectors and generated identifiers
+ * **unescaped**, so any metacharacter is an injection vector.
+ *
+ * It lives here, next to the `string-safe` kind it defines, rather than in
+ * `schema.ts`, because `schema.ts` imports Zod and the ExtendScript bundle must
+ * apply the identical rule without dragging Zod into Illustrator. `schema.ts`
+ * re-exports it so there is exactly one pattern, not two that can drift.
+ */
+export const SAFE_SETTING_IDENTIFIER_RE = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+
+/** The settings declared `string-safe`, derived from the table rather than restated. */
+export type SafeIdentifierSettingKey = Extract<
+  (typeof SETTING_DEFINITIONS)[number],
+  { kind: "string-safe" }
+>["key"];
+
+// A plain loop, not `filter().map()`: this runs at module-evaluation time, and in
+// the ExtendScript bundle every imported module body executes *before*
+// `installPolyfills()` in `src/extendscript/index.ts`. ES3 has neither method.
+function collectSafeIdentifierSettingKeys(): SafeIdentifierSettingKey[] {
+  const keys: SafeIdentifierSettingKey[] = [];
+  for (let i = 0; i < SETTING_DEFINITIONS.length; i++) {
+    const definition = SETTING_DEFINITIONS[i];
+    if (definition.kind === "string-safe") keys.push(definition.key);
+  }
+  return keys;
+}
+
+/** Setting keys whose values must satisfy `SAFE_SETTING_IDENTIFIER_RE` (or be empty). */
+export const SAFE_IDENTIFIER_SETTING_KEYS: readonly SafeIdentifierSettingKey[] =
+  collectSafeIdentifierSettingKeys();
+
 function isArrayValue(value: unknown): value is unknown[] {
   return Object.prototype.toString.call(value) === "[object Array]";
 }
