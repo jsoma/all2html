@@ -63,11 +63,12 @@ export interface SettingSupport {
    * list says which formats ignore the request, the map says what they do. A
    * format absent from both honors the request verbatim.
    *
-   * The value is a list of acceptable actuals because a format may legitimately
-   * produce more than one — react emits `.jsx` or `.tsx` depending on
-   * `emitterConfig.react.typescript`, which the settings-only checker cannot
-   * see, and warning at `.tsx` would be a false positive. A request matching any
-   * entry is silent.
+   * The value is a list because a setting's value can itself be a list
+   * (`imageFormat`), so "one actual" and "a list of actuals" have to stay
+   * distinguishable. Every entry declared today is a single actual: react used
+   * to declare `[".jsx", ".tsx"]` because the checker could not see
+   * `emitterConfig.react.typescript`, and that list silently accepted `.tsx` on
+   * a run emitting `.jsx`. It can see it now — see `producedIsFormatExtension`.
    *
    * The **documented default is also silent**, unlike `divergesAtDefault`. A
    * format-dictated setting has no promise to break at its default: choosing
@@ -81,6 +82,19 @@ export interface SettingSupport {
    * every format.
    */
   producedByFormat?: { readonly [format: string]: readonly unknown[] };
+  /**
+   * This setting names the emitted file's **extension**, so when the caller
+   * supplies `SurfaceContext.formatExtension` — the exact extension this run
+   * will write, decided by `formatDictatedExtension` in
+   * `src/emitters/registry-shared.ts` — that value replaces the declared
+   * `producedByFormat` entry for the active format.
+   *
+   * One flag on the one declaration that names a filename, rather than a
+   * per-setting branch in the checker. Without it the declaration has to stand
+   * in for an emitter configuration it cannot see, which is how react came to
+   * declare two acceptable actuals and accept the wrong one of them.
+   */
+  producedIsFormatExtension?: boolean;
   /**
    * The setting is honored for some document content and not for other content,
    * so a settings-only check cannot decide it. The emitter that produces the
@@ -166,6 +180,19 @@ export interface SurfaceContext {
   path?: SurfacePath;
   /** Emitter format the run is targeting, when known. */
   format?: string;
+  /**
+   * The exact filename extension the active format will write, when the caller
+   * knows it. The emitter registry owns that decision —
+   * `formatDictatedExtension()` in `src/emitters/registry-shared.ts` — because
+   * react writes `.tsx` or `.jsx` depending on `emitterConfig.react.typescript`,
+   * which resolved settings do not carry.
+   *
+   * Supply it whenever a format was selected: it is what makes the extension
+   * check compare against the one file name this run produces instead of
+   * against the format's declared possibilities. `undefined` for the `html`
+   * format, which writes `htmlOutputExtension` itself.
+   */
+  formatExtension?: string;
 }
 
 /* ------------------------------------------------------------------ */
@@ -211,10 +238,16 @@ const HTML_ONLY_OUTPUT_EXTENSION: SettingSupport = {
   producedByFormat: {
     standalone: [".html"],
     svelte: [".svelte"],
-    // `.tsx` when `emitterConfig.react.typescript` is set; the checker sees
-    // settings only, so both are acceptable actuals.
-    react: [".jsx", ".tsx"],
+    // The default react configuration. `.tsx` when
+    // `emitterConfig.react.typescript` is set, which the caller states through
+    // `SurfaceContext.formatExtension` — every runtime caller that can select
+    // the react format supplies it. This entry used to read `[".jsx", ".tsx"]`
+    // so that neither answer could be wrong; the cost was that `.tsx` requested
+    // against the default config warned about nothing while the run wrote
+    // `.jsx`.
+    react: [".jsx"],
   },
+  producedIsFormatExtension: true,
   note: "Only the html emitter uses this extension. The svelte and react emitters force .svelte and .jsx/.tsx, and the standalone emitter always writes .html.",
 };
 
@@ -723,16 +756,25 @@ function valuesAreHonored(value: unknown, honored: readonly string[]): boolean {
  */
 function producedValues(
   support: SettingSupport,
-  format: string | undefined,
+  context: SurfaceContext,
 ): readonly unknown[] | null {
   const map = support.producedByFormat;
+  const format = context.format;
   if (!map || format === undefined) return null;
   // The lookup is on a plain object literal, so an inherited key would answer:
   // a format named `constructor` or `toString` resolves off `Object.prototype`.
   // The type check rejects those — every declared entry is an array — without
   // `Object.hasOwn`, which is ES2022 and outside this bundle's ES3 runtime.
   const produced = map[format];
-  return isArrayValue(produced) ? produced : null;
+  if (!isArrayValue(produced)) return null;
+  // The declaration says what the format writes by default; the caller, when it
+  // knows, says what *this run* writes. The caller wins — that is the whole
+  // point of threading it through, and it is the difference between "react
+  // might write .tsx" and "this react run writes .jsx".
+  if (support.producedIsFormatExtension && context.formatExtension !== undefined) {
+    return [context.formatExtension];
+  }
+  return produced;
 }
 
 function containsValue(list: readonly unknown[], value: unknown): boolean {
@@ -805,7 +847,9 @@ function unhonoredReason(
  * Where the real behavior depends on the emitter format rather than the surface
  * — `htmlOutputExtension` is written verbatim by `html`, forced to `.svelte` by
  * `svelte`, `.jsx`/`.tsx` by `react` and `.html` by `standalone` — the
- * declaration says so with `producedByFormat`, and that wins over both. Treating
+ * declaration says so with `producedByFormat` (refined to the exact extension by
+ * `context.formatExtension` when the caller supplies it), and that wins over
+ * both. Treating
  * the global default as the reality on every format was the same D25 mistake one
  * level down: asking for `.svelte` on a svelte render warned while producing
  * exactly `.svelte`, and leaving `.html` there produced `.svelte` in silence.
@@ -850,7 +894,7 @@ export function checkSurfaceCapabilities(
     // declared output, then `divergesAtDefault` (`null` means it produces
     // nothing comparable, so every request is a divergence), then the documented
     // default.
-    const produced = producedValues(support, context.format);
+    const produced = producedValues(support, context);
     let behavior: string;
     if (produced) {
       // Silent when the request is what the format writes — and when the value

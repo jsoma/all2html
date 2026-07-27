@@ -13,6 +13,8 @@ import { processDocument } from "../../src/core/pipeline.js";
 import type { SurfaceId } from "../../src/core/warnings.js";
 import { emitHTML } from "../../src/emitters/html.js";
 import { emitHTMLString } from "../../src/emitters/html-string.js";
+import { formatDictatedExtension, getEmitter } from "../../src/emitters/registry.js";
+import type { EmitterConfig } from "../../src/emitters/types.js";
 import { createDefaultSettings, SETTING_DEFINITIONS } from "../../src/ir/settings-definitions.js";
 import type { Settings } from "../../src/ir/types.js";
 
@@ -450,14 +452,23 @@ describe("declarations match what the code actually does", () => {
       html: [],
       standalone: [".html"],
       svelte: [".svelte"],
-      react: [".jsx", ".tsx"],
+      // One actual per format, not a list of maybes. React's entry used to read
+      // `[".jsx", ".tsx"]` because the checker could not see
+      // `emitterConfig.react.typescript`; `formatExtension` carries it now.
+      react: [".jsx"],
     };
 
-    const forFormat = (surface: SurfaceId, format: string, value: string) =>
+    const forFormat = (
+      surface: SurfaceId,
+      format: string,
+      value: string,
+      formatExtension?: string,
+    ) =>
       checkCapabilitiesForSurface(settingsWith("htmlOutputExtension", value), {
         surface,
         path: "render",
         format,
+        formatExtension,
       }).filter((warning) => warning.setting === "htmlOutputExtension");
 
     it("keeps the declaration and the checker telling one story", () => {
@@ -469,6 +480,82 @@ describe("declarations match what the code actually does", () => {
       );
       for (const format of support.unsupportedFormats ?? []) {
         expect(support.producedByFormat?.[format]).toEqual(PRODUCED[format]);
+      }
+      // ...and it declares that the caller's resolved extension outranks the
+      // list, which is what makes the react entry a single value.
+      expect(support.producedIsFormatExtension).toBe(true);
+    });
+
+    /**
+     * The declaration is not allowed to invent an extension: whatever it names
+     * for a format has to be the extension that format's emitter actually
+     * writes, and `formatDictatedExtension` has to agree with both.
+     *
+     * This is the assertion the two-entry react list made impossible — a list
+     * containing the right answer and the wrong one agrees with any run.
+     */
+    it("agrees with the extension each emitter actually writes", () => {
+      const doc = processDocument(
+        JSON.parse(
+          readFileSync(join(repoRoot, "test/fixtures/ir/single-artboard-basic.json"), "utf-8"),
+        ),
+        { surface: { surface: "cli", path: "render", format: "html" } },
+      );
+      const cases: Array<{ format: string; emitterConfig?: EmitterConfig; expected: string }> = [
+        { format: "standalone", expected: ".html" },
+        { format: "svelte", expected: ".svelte" },
+        { format: "react", expected: ".jsx" },
+        { format: "react", emitterConfig: { react: { typescript: false } }, expected: ".jsx" },
+        { format: "react", emitterConfig: { react: { typescript: true } }, expected: ".tsx" },
+      ];
+
+      for (const testCase of cases) {
+        const emitted = getEmitter(testCase.format).emitAll(
+          doc.document,
+          doc.groups,
+          testCase.emitterConfig,
+        );
+        expect(
+          [...new Set(emitted.files.map((file) => file.extension))],
+          `${testCase.format} emitted an unexpected extension`,
+        ).toEqual([testCase.expected]);
+        expect(formatDictatedExtension(testCase.format, testCase.emitterConfig)).toBe(
+          testCase.expected,
+        );
+      }
+
+      // `html` is the one format whose extension is the setting, so nothing is
+      // dictated and the caller passes `undefined`.
+      expect(formatDictatedExtension("html", undefined)).toBeUndefined();
+    });
+
+    /**
+     * The reviewer's repro: `.tsx` requested against the default React config
+     * produced no warning and emitted `.jsx`.
+     */
+    it("compares against the extension the emitter config selects, not both", () => {
+      // Default config: this run writes `.jsx`, so `.tsx` is a divergence...
+      const defaultConfig = forFormat("cli", "react", ".tsx", ".jsx");
+      expect(defaultConfig).toHaveLength(1);
+      expect(defaultConfig[0].message).toContain("it writes .jsx");
+      // ...and `.jsx` is not.
+      expect(forFormat("cli", "react", ".jsx", ".jsx")).toEqual([]);
+
+      // typescript: true flips both answers.
+      expect(forFormat("cli", "react", ".tsx", ".tsx")).toEqual([]);
+      const jsxOnTs = forFormat("cli", "react", ".jsx", ".tsx");
+      expect(jsxOnTs).toHaveLength(1);
+      expect(jsxOnTs[0].message).toContain("it writes .tsx");
+    });
+
+    it("is threaded from the CLI and the browser, the two surfaces that can select react", () => {
+      // A declaration the callers do not populate is decoration; both entry
+      // points build the context from `formatDictatedExtension`.
+      for (const file of ["src/cli/index.ts", "src/browser.ts"]) {
+        const source = readFileSync(join(repoRoot, file), "utf-8");
+        expect(source, `${file} does not thread formatExtension`).toContain(
+          "formatExtension: formatDictatedExtension(",
+        );
       }
     });
 
@@ -484,6 +571,11 @@ describe("declarations match what the code actually does", () => {
             expect(
               forFormat(surface, format, produced),
               `${surface}/${format} warned about ${produced}, which is what it writes`,
+            ).toEqual([]);
+            // Same answer when the caller states the extension explicitly.
+            expect(
+              forFormat(surface, format, produced, produced),
+              `${surface}/${format} warned about its own resolved extension`,
             ).toEqual([]);
           }
         }

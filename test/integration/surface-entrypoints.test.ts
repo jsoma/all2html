@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -196,6 +196,38 @@ describe("CLI entry point (src/cli/index.ts render)", () => {
       const single = readFileSync(join(dir, "one", "entrypoints.html"), "utf-8");
       expect(single).toContain("Chart Title");
       expect(single).toContain("Map Title");
+    });
+  }, 60_000);
+
+  /**
+   * The sink, not the setting.
+   *
+   * `htmlOutputExtension` is sanitized in the emitter now, so this asserts the
+   * belt as well as the braces: with a hostile extension the run still succeeds,
+   * every file lands inside `-o`, and nothing appears in the parent directory.
+   * The old normalization turned `/../../outside.txt` into `./../../outside.txt`
+   * and `join()` walked straight out of the chosen folder.
+   */
+  it("cannot be made to write outside -o by htmlOutputExtension", () => {
+    withTempDir((dir) => {
+      const irPath = join(dir, "ir.json");
+      const doc = multiGroupDocument("multiple-files");
+      doc.settings.htmlOutputExtension = "/../../outside.txt";
+      writeFileSync(irPath, JSON.stringify(doc), "utf-8");
+
+      const outputDir = join(dir, "nested", "out");
+      const result = runCli(irPath, outputDir, "html");
+
+      expect(result.status, result.stderr).toBe(0);
+      expect(readdirSync(outputDir).sort()).toEqual([
+        "entrypoints-chart.html",
+        "entrypoints-map.html",
+      ]);
+      // Nothing above the output directory, at either level.
+      expect(readdirSync(join(dir, "nested"))).toEqual(["out"]);
+      expect(readdirSync(dir).sort()).toEqual(["ir.json", "nested"]);
+      // And the user is told, rather than silently getting .html.
+      expect(result.stderr).toContain("htmlOutputExtension");
     });
   }, 60_000);
 

@@ -1,4 +1,5 @@
 import type { ArtboardGroup } from "../core/group-artboards.js";
+import { resolveOutputExtension } from "../core/output-extension.js";
 import { type StructuredWarning, warningMessages } from "../core/warnings.js";
 import type { EmitterReadyDocument } from "../ir/types.js";
 import { emitHTML } from "./html.js";
@@ -50,11 +51,16 @@ export function createBuiltinEmitters(
   return {
     html: {
       name: "html",
-      emitAll: (doc, groups, emitterConfig) =>
-        perGroup(
+      emitAll: (doc, groups, emitterConfig) => {
+        // The only emitter that reads the setting, and the setting is a filename
+        // component: an unsafe value is rejected here (with a warning) rather
+        // than carried to whichever sink writes the file.
+        const settingWarnings: StructuredWarning[] = [];
+        const extension = resolveOutputExtension(doc.settings.htmlOutputExtension, settingWarnings);
+        return perGroup(
           doc,
           groups,
-          normalizeExtension(doc.settings.htmlOutputExtension || ".html"),
+          extension,
           (d, g) => {
             const result = emitHTML(
               d,
@@ -63,12 +69,14 @@ export function createBuiltinEmitters(
             );
             return { output: result.html, warnings: result.structuredWarnings };
           },
-        ),
+          settingWarnings,
+        );
+      },
     },
     svelte: {
       name: "svelte",
       emitAll: (doc, groups, emitterConfig) =>
-        perGroup(doc, groups, ".svelte", (d, g) => {
+        perGroup(doc, groups, SVELTE_EXTENSION, (d, g) => {
           const result = emitSvelte(
             d,
             { artboards: g.artboards, slug: g.slug },
@@ -81,8 +89,7 @@ export function createBuiltinEmitters(
       name: "react",
       emitAll: (doc, groups, emitterConfig) => {
         const reactOptions = emitterConfig?.react;
-        const extension = reactOptions?.typescript ? ".tsx" : ".jsx";
-        return perGroup(doc, groups, extension, (d, g) => {
+        return perGroup(doc, groups, reactOutputExtension(emitterConfig), (d, g) => {
           const result = emitReact(d, { artboards: g.artboards, slug: g.slug }, reactOptions);
           return { output: result.jsx, warnings: result.structuredWarnings };
         });
@@ -95,7 +102,7 @@ export function createBuiltinEmitters(
     standalone: {
       name: "standalone",
       emitAll: (doc, groups, emitterConfig) =>
-        perGroup(doc, groups, ".html", (d, g) => {
+        perGroup(doc, groups, STANDALONE_EXTENSION, (d, g) => {
           const result = emitStandaloneLike(
             d,
             { artboards: g.artboards, slug: g.slug },
@@ -107,8 +114,33 @@ export function createBuiltinEmitters(
   };
 }
 
-function normalizeExtension(ext: string): string {
-  return ext.startsWith(".") ? ext : `.${ext}`;
+const SVELTE_EXTENSION = ".svelte";
+const STANDALONE_EXTENSION = ".html";
+
+/** The single statement of the react rule; `formatDictatedExtension` reuses it. */
+function reactOutputExtension(emitterConfig?: EmitterConfig): string {
+  return emitterConfig?.react?.typescript ? ".tsx" : ".jsx";
+}
+
+/**
+ * The extension `format` writes **regardless of `htmlOutputExtension`**, or
+ * `undefined` for `html`, which writes the (sanitized) setting itself.
+ *
+ * This exists so the capability checker can compare a requested extension
+ * against the one file name the run will actually produce. It used to be stated
+ * twice — once by the react arm above and once as the list `[".jsx", ".tsx"]` in
+ * `src/core/capabilities.ts` — and the list version accepted `.tsx` silently on
+ * a run that emitted `.jsx`. Callers that select a format pass the result as
+ * `SurfaceContext.formatExtension`.
+ */
+export function formatDictatedExtension(
+  format: string,
+  emitterConfig?: EmitterConfig,
+): string | undefined {
+  if (format === "svelte") return SVELTE_EXTENSION;
+  if (format === "react") return reactOutputExtension(emitterConfig);
+  if (format === "standalone") return STANDALONE_EXTENSION;
+  return undefined;
 }
 
 function perGroup(
@@ -119,9 +151,11 @@ function perGroup(
     doc: EmitterReadyDocument,
     group: ArtboardGroup,
   ) => { output: string; warnings: StructuredWarning[] },
+  /** Warnings raised once for the whole emit, before any group is rendered. */
+  seedWarnings?: StructuredWarning[],
 ): EmitResult {
   const files: EmitFile[] = [];
-  const warnings: StructuredWarning[] = [];
+  const warnings: StructuredWarning[] = seedWarnings ? seedWarnings.slice() : [];
   for (const group of groups) {
     const result = emit(doc, group);
     files.push({ slug: group.slug, extension, output: result.output });

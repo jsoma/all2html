@@ -1,20 +1,21 @@
 #!/usr/bin/env node
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { parseConfigText } from "../core/config.js";
 import type { ArtboardGroup } from "../core/group-artboards.js";
 import { createConsoleLogger, noopLogger } from "../core/logger.js";
 import { processDocument } from "../core/pipeline.js";
 import { formatGroupedWarnings, groupWarnings, type StructuredWarning } from "../core/warnings.js";
 import type { EmitResult } from "../emitters/registry.js";
-import { getAvailableFormats, getEmitter } from "../emitters/registry.js";
+import { formatDictatedExtension, getAvailableFormats, getEmitter } from "../emitters/registry.js";
 import type { EmitterConfig } from "../emitters/types.js";
 import { getImporter } from "../importers/registry.js";
 import { loadSVGImportFiles } from "../importers/svg/node.js";
 import type { EmitterReadyDocument } from "../ir/types.js";
 import { loadAndValidateIR } from "../ir/validate.js";
 import { createOutputBundle } from "../output-bundle.js";
+import { resolveInsideOutputDir } from "./output-paths.js";
 
 function usage() {
   const formats = getAvailableFormats().join("|");
@@ -48,7 +49,7 @@ function emitAndWrite(
   reportWarnings(result.structuredWarnings);
   const absOutputDir = resolve(outputDir);
   for (const file of result.files) {
-    const outPath = join(absOutputDir, `${file.slug}${file.extension}`);
+    const outPath = resolveInsideOutputDir(absOutputDir, `${file.slug}${file.extension}`);
     writeFileSync(outPath, file.output, "utf-8");
     console.log(`Written: ${outPath}`);
   }
@@ -108,6 +109,12 @@ async function main() {
     try {
       const logger = verbose ? createConsoleLogger() : noopLogger;
       const raw = JSON.parse(readFileSync(resolve(irPath), "utf-8"));
+      // Read before the pipeline runs: the capability check needs the extension
+      // this run will actually write, and for react that depends on the emitter
+      // configuration rather than on any setting.
+      const emitterConfig = configPath
+        ? parseConfigText(readFileSync(resolve(configPath), "utf-8"), configPath).emit
+        : undefined;
       const {
         document: doc,
         groups,
@@ -115,11 +122,13 @@ async function main() {
       } = processDocument(raw, {
         configPath,
         logger,
-        surface: { surface: "cli", path: "render", format },
+        surface: {
+          surface: "cli",
+          path: "render",
+          format,
+          formatExtension: formatDictatedExtension(format, emitterConfig),
+        },
       });
-      const emitterConfig = configPath
-        ? parseConfigText(readFileSync(resolve(configPath), "utf-8"), configPath).emit
-        : undefined;
 
       reportWarnings(structuredWarnings);
 
@@ -188,7 +197,12 @@ async function main() {
       } = processDocument(imported.document, {
         inlineConfig: parsedConfig,
         logger,
-        surface: { surface: "cli", path: "import", format },
+        surface: {
+          surface: "cli",
+          path: "import",
+          format,
+          formatExtension: formatDictatedExtension(format, parsedConfig?.emit),
+        },
       });
       const emitterConfig = parsedConfig?.emit;
 
@@ -206,10 +220,10 @@ async function main() {
       });
       const emittedPaths = new Set(emitResult.files.map((file) => `${file.slug}${file.extension}`));
       for (const file of bundle.files) {
-        const outPath = join(resolve(outputDir), file.path);
         if (emittedPaths.has(file.path)) {
           continue;
         }
+        const outPath = resolveInsideOutputDir(resolve(outputDir), file.path);
         mkdirSync(dirname(outPath), { recursive: true });
         writeFileSync(outPath, file.bytes);
         console.log(`Written: ${outPath}`);
@@ -248,6 +262,9 @@ async function main() {
       try {
         const logger = verbose ? createConsoleLogger() : noopLogger;
         const raw = JSON.parse(readFileSync(resolve(irPath), "utf-8"));
+        const emitterConfig = configPath
+          ? parseConfigText(readFileSync(resolve(configPath), "utf-8"), configPath).emit
+          : undefined;
         const {
           document: doc,
           groups,
@@ -256,11 +273,13 @@ async function main() {
         } = processDocument(raw, {
           configPath,
           logger,
-          surface: { surface: "cli", path: "render", format },
+          surface: {
+            surface: "cli",
+            path: "render",
+            format,
+            formatExtension: formatDictatedExtension(format, emitterConfig),
+          },
         });
-        const emitterConfig = configPath
-          ? parseConfigText(readFileSync(resolve(configPath), "utf-8"), configPath).emit
-          : undefined;
         mkdirSync(resolve(outputDir), { recursive: true });
         reportWarnings(structuredWarnings);
         const emitResult = emitAndWrite(doc, groups, format, outputDir, emitterConfig);

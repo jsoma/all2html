@@ -5,7 +5,11 @@ import type { ObservableLogger } from "./core/logger.js";
 import { processDocumentShared } from "./core/pipeline-shared.js";
 import { resolveSettingsPure } from "./core/resolve-settings-pure.js";
 import type { StructuredWarning } from "./core/warnings.js";
-import { createBuiltinEmitters, type EmitResult } from "./emitters/registry-shared.js";
+import {
+  createBuiltinEmitters,
+  type EmitResult,
+  formatDictatedExtension,
+} from "./emitters/registry-shared.js";
 import { emitStandaloneBrowserGroup } from "./emitters/standalone-browser.js";
 import type { EmitterConfig } from "./emitters/types.js";
 import { loadSVGImportFilesFromBrowser } from "./importers/svg/browser.js";
@@ -123,11 +127,19 @@ export async function convertLoadedSvgFilesInBrowser(
     settings: options.parsedConfig?.settings,
     rasterizer: options.rasterizer,
   });
+  const emitterConfig = getEmitterConfig(options.parsedConfig);
   const processed = process(imported.document, {
     inlineConfig: options.parsedConfig,
-    surface: { surface: "browser", path: "import", format: options.format },
+    surface: {
+      surface: "browser",
+      path: "import",
+      format: options.format,
+      // What this run writes, not what the format might write: react is `.tsx`
+      // or `.jsx` depending on the emitter config, and the settings the checker
+      // sees do not carry that.
+      formatExtension: formatDictatedExtension(options.format, emitterConfig),
+    },
   });
-  const emitterConfig = getEmitterConfig(options.parsedConfig);
   const emitResult = emitter(options.format).emitAll(
     processed.document,
     processed.groups,

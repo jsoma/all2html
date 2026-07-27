@@ -12,6 +12,7 @@ import { computeStyles } from "../core/compute-styles.js";
 import { deduplicateStyles } from "../core/deduplicate-styles.js";
 import { groupArtboards } from "../core/group-artboards.js";
 import { assertJsonPure } from "../core/json-purity.js";
+import { resolveOutputExtension } from "../core/output-extension.js";
 import { resolveSettingsPure } from "../core/resolve-settings-pure.js";
 import { createWarning, type StructuredWarning, warningMessages } from "../core/warnings.js";
 import { emitHTMLString } from "../emitters/html-string.js";
@@ -211,6 +212,16 @@ export function processAndEmit(
   // concatenated into output file paths. Sanitizing only the setting left
   // "../../pwn" reaching the write site through the fallback.
   sanitizeDocumentSlug(resolved, warnings);
+  // The other half of the same filename: `exporter.jsx` writes
+  // `outputPath + slug + extension`, so an extension of "/../../outside.txt"
+  // escaped the chosen folder even with a safe slug. Normalized in place, so
+  // every later reader — including the file records handed back to the exporter
+  // — sees the value that was accepted rather than the one that was requested.
+  resolved.settings.htmlOutputExtension = resolveOutputExtension(
+    resolved.settings.htmlOutputExtension,
+    warnings,
+    "illustrator",
+  );
   assertJsonPure(resolved, "resolveSettings");
   phase("assertJsonPure:resolved");
   // Illustrator declares what it honors like every other surface; anything the
@@ -248,10 +259,9 @@ export function processAndEmit(
   // emitter would have defaulted to.
   const groups = groupArtboards(ready);
   phase("groupArtboards");
-  // Written verbatim, exactly as `exporter.jsx` did when it owned the filename:
-  // no dot is inserted for a malformed value, because that would rename files for
-  // documents that export fine today.
-  const extension = ready.settings.htmlOutputExtension || ".html";
+  // Already normalized and containment-checked above, so the exporter can
+  // concatenate it into a path without a second rule of its own.
+  const extension = ready.settings.htmlOutputExtension;
   const files: ProcessFile[] = [];
   for (let i = 0; i < groups.length; i++) {
     const group = groups[i];
