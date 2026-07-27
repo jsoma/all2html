@@ -27,7 +27,7 @@ interface SizeBaseline {
 
 interface SizeBaselines {
   note: string;
-  artifacts: Record<"core" | "assembled", SizeBaseline>;
+  artifacts: Record<"core" | "assembled" | "afterEffects", SizeBaseline>;
 }
 
 function loadBaselines(): SizeBaselines {
@@ -129,6 +129,18 @@ describe("ExtendScript bundle", () => {
   it("assembled Illustrator bundle stays within its size budget", () => {
     assertSizeBudget("Assembled Illustrator bundle", loadBaselines().artifacts.assembled);
   });
+
+  // dist/after-effects/all2html-ae.jsx had no budget at all while it was a
+  // standalone .jsx with hand-copied helpers. It now concatenates a real bundle
+  // (D13), which is exactly when an artifact starts growing for reasons nobody
+  // reviews.
+  //
+  // The 300 s budget: this is the first case in the file that can shell out to
+  // `build:after-effects`, and it may also be queued behind another worker
+  // holding the build lock (whose own deadline is 300 s).
+  it("assembled After Effects script stays within its size budget", () => {
+    assertSizeBudget("Assembled After Effects script", loadBaselines().artifacts.afterEffects);
+  }, 300_000);
 
   // The panel `help` copy was moved out of SETTING_DEFINITIONS into
   // src/ir/setting-help.ts precisely because it cost 8,706 B here and only the

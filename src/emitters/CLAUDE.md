@@ -198,10 +198,17 @@ byte-identically as proof.
 - double-quoted attribute values (`escapeAttr`) → NUL, `"`, `&`, `'`, backtick
 - comments → `sanitizeCommentText()` breaks `<!--` / `-->` / `--!>` **before** the value
   reaches hast, so hast's own comment encoder never fires and both paths agree
-- inline `<script>` → `escapeScriptContent()` rewrites `</script` and `<!--` with a
-  backslash. `<!--` enters *script-data-escaped* and a following `<script` enters
-  *script-data-double-escaped*, where `</script>` stops closing the element and swallows
-  the rest of the document; breaking `<!--` makes that state unreachable.
+- inline `<script>` → `escapeScriptContent()` backslash-escapes `</script` (provably inert
+  in every JS context, since a bare `/` would already have ended a regex literal) and, when
+  the content contains `<!--`, **appends `\n-->`**. It no longer rewrites `<!--` itself:
+  in Unicode mode neither `<\!--` nor `<!\--` parses, so the old rewrite turned a valid
+  author regex like `/<!--/u` into a SyntaxError, and telling the corrupting case apart
+  needs a real JS lexer in a module that ships to ExtendScript. Containment does not
+  require removing `<!--`, only that the tokenizer be back in *script data* when the
+  serializer writes its own `</script>` — and LF `-` `-` `>` returns there from
+  script-data-escaped, double-escaped, and both dash states. The appended text is inert JS
+  (`SingleLineHTMLCloseComment`, Annex B), which is unavailable in *module* code; every
+  script these emitters produce is a classic `type="text/javascript"` script.
 - inline `<style>` → `escapeStyleContent()` rewrites `</style` and `<!--`. Applied by the
   serializer to any `text` child of a `style` element, so it cannot be forgotten.
 

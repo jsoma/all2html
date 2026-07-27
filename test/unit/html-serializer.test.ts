@@ -157,12 +157,16 @@ describe("raw-text elements", () => {
     expect(render(el("style", [], [text("/* <!-- */")]))).toBe("<style>/* <\\!-- */</style>");
   });
 
-  it("neutralizes `</script` and `<!--` inside script", () => {
+  it("neutralizes `</script` and returns the tokenizer to script data after `<!--`", () => {
     const out = render(el("script", [], [text('var p = "</script><img src=x>";')]));
     expect(out.match(/<\/script>/g)?.length).toBe(1);
     expect(out).toContain("<\\/script>");
+    // `<!--` is left exactly as the author wrote it — rewriting it to `<\!--`
+    // turned `/<!--/u` into a SyntaxError. Containment comes from the appended
+    // HTML close comment, which exits script-data-escaped/double-escaped state
+    // before the real `</script>` is written.
     expect(render(el("script", [], [text("var q = '<!--<script>';")]))).toBe(
-      "<script>var q = '<\\!--<script>';</script>",
+      "<script>var q = '<!--<script>';\n--></script>",
     );
   });
 

@@ -1239,9 +1239,11 @@ The rule binds consumers too, not just the model: `extractBreakpointData()` carr
 
 ### 12.8 Surfaces load the core, or they are not surfaces
 
-**Evidence.** The After Effects exporter never loads the core bundle (`grep -c All2Html` → 0) and carries forked copies of the google-fonts helpers and escaping, which have already drifted. It generates CSS directly, which §2.1 assigns to the core.
+**Evidence (pre-fix).** The After Effects exporter never loaded the core bundle (`grep -c All2Html` → 0) and carried forked copies of the google-fonts helpers and escaping, which had already drifted. It generates CSS directly, which §2.1 assigns to the core.
 
-**Target.** Any surface claiming to be part of this pipeline loads the shared bundle. Tool-agnostic logic is exported from `src/extendscript/index.ts`, never hand-copied. Both build scripts already concatenate string literals, so this costs one extra slot each.
+**Target.** Any surface claiming to be part of this pipeline loads the shared bundle. Tool-agnostic logic is exported from an `src/extendscript/` bundle entry, never hand-copied. Both build scripts already concatenate string literals, so this costs one extra slot each.
+
+**Status: half done, and the halves are separable.** The helper half shipped (D13): `build:after-effects` concatenates `dist/extendscript/all2html-ae-core.js` — ES5 polyfills plus `emitters/shared/escape.ts` and `emitters/shared/google-fonts.ts`, rolled up from `src/extendscript/ae-index.ts` — and the forks are deleted. It is a *second* entry rather than `index.ts` because AE constructs no IR, and importing the pipeline measured 118 KB against the helper bundle's 13.5 KB. What has not shipped: AE still generates CSS directly and still runs no transform, so §2.1's assignment is still violated and `runtimeChecked` is still `false`. Closing that is the temporal-scene work, not another build slot.
 
 ### 12.9 The product boundary is the embed, not the artboard
 

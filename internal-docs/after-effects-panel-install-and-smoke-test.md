@@ -98,6 +98,18 @@ Confirm these behaviors during the smoke run:
 4. A bad explicit template selection fails clearly instead of silently falling back.
 5. Failed exports or bad template selections surface diagnostics in-panel, not just a generic error.
 6. `Open folder` works from the CEP panel after a successful export.
+7. **New since the exporter got the bundle slot (D13):** `all2html-ae.jsx` now concatenates
+   `dist/extendscript/all2html-ae-core.js` ahead of `exporter.jsx`, and that bundle installs the
+   ES5 polyfills and owns the escaping and Google Fonts helpers. Nothing in the repo can prove it
+   evaluates inside ExtendScript's ES3 engine, so the host run has to:
+   - export once with `googleFonts: "link"` and once with `"import"`, and confirm the exported HTML
+     carries the three `<link>` tags / the `@import url(...)` rule with a real fonts.googleapis.com
+     URL. An empty result means `All2HtmlAE` did not load or the ES5 lowering broke.
+   - export a comp with an `overlay:` layer whose text contains `</script>` and a `$&`, and confirm
+     the player renders it rather than breaking out of the inline `<script>`.
+   - confirm no `[all2html-ae] The all2html core helper bundle is missing` error, which is what a
+     mis-ordered or missing concatenation now produces instead of a silent `ReferenceError`.
+   `pnpm diagnostics:after-effects` is the documented probe if any of these fail.
 
 ## Current Gaps
 

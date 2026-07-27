@@ -68,7 +68,7 @@ The panel also shows where values are coming from and lets you save defaults.
 
 Names in an `all2html-settings` text block are snake_case (`image_format`); everywhere else — `all2html.config.json`, `ir.json`, the panel — they are camelCase (`imageFormat`). Both resolve to the same setting.
 
-Two of these do less than they look like they do on Illustrator: `image_format` only distinguishes `jpg` from everything else (`png24` and `svg` both come out as 8-bit PNG), and `output: multiple-files` still emits a single HTML file. The export warns when you ask for something Illustrator will not produce. The full list is in the [Settings Reference](../reference/settings.md).
+One of these does less than it looks like it does on Illustrator: `image_format` only distinguishes `jpg` from everything else, so `png24` and `svg` both come out as 8-bit PNG. The export warns when you ask for something Illustrator will not produce. (`output: multiple-files` now works — the exporter writes one HTML file per responsive group.) The full list is in the [Settings Reference](../reference/settings.md).
 
 ## Text Blocks
 
