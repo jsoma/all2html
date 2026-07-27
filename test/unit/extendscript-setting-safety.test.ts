@@ -102,3 +102,47 @@ describe("the ExtendScript path rejects unsafe identifier settings (no Zod runs 
     expect(result.html).toContain('class="ns_1-artboard"');
   });
 });
+
+/**
+ * The slug is not a setting, but `groupArtboards` falls back to
+ * `metadata.slug` when `projectName` is absent — including when the sanitizer
+ * above just cleared an invalid one — and the exporter concatenates the
+ * resulting per-file slug into the output path at its write site. So an unsafe
+ * slug was a path traversal, not just a CSS problem: clearing `projectName`
+ * routed the attack straight to the fallback.
+ */
+describe("the document slug cannot escape the output directory", () => {
+  const TRAVERSAL = "../../pwn";
+
+  it("sanitizes a traversal slug and warns", () => {
+    const doc = loadDoc();
+    doc.metadata = { ...doc.metadata, slug: TRAVERSAL };
+    const result = processAndEmit(doc);
+
+    for (const file of result.files) {
+      expect(file.slug).not.toContain("..");
+      expect(file.slug).not.toContain("/");
+    }
+    expect(result.structuredWarnings.some((w) => w.code === "setting:invalid-value")).toBe(true);
+  });
+
+  it("closes the projectName-cleared fallback route", () => {
+    // Both carry the attack, exactly as exporter.jsx used to produce them:
+    // project_name was copied raw into settings.projectName AND metadata.slug.
+    const doc = loadDoc({ projectName: TRAVERSAL });
+    doc.metadata = { ...doc.metadata, slug: TRAVERSAL };
+    const result = processAndEmit(doc);
+
+    for (const file of result.files) {
+      expect(file.slug).not.toMatch(/\.\.|\//);
+    }
+  });
+
+  it("leaves an already-safe slug alone", () => {
+    const doc = loadDoc();
+    doc.metadata = { ...doc.metadata, slug: "countries-2024" };
+    const result = processAndEmit(doc);
+
+    expect(result.structuredWarnings.filter((w) => w.code === "setting:invalid-value")).toEqual([]);
+  });
+});

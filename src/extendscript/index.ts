@@ -155,6 +155,39 @@ function sanitizeIdentifierSettings(settings: Settings, warnings: StructuredWarn
   }
 }
 
+/**
+ * The slug is a filename component, so an unsafe value is a path traversal at
+ * the exporter's write site, not just a CSS-selector problem. Illustrator now
+ * keyword-cases it at the source; this is the backstop for every other Zod-free
+ * producer, and it runs after `sanitizeIdentifierSettings` because clearing an
+ * invalid `projectName` is exactly what makes grouping fall through to here.
+ */
+function sanitizeDocumentSlug(
+  doc: { metadata: { slug?: string } },
+  warnings: StructuredWarning[],
+): void {
+  const slug = doc.metadata.slug;
+  if (typeof slug !== "string" || slug === "") return;
+  if (SAFE_SETTING_IDENTIFIER_RE.test(slug)) return;
+  const safe = slug
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  doc.metadata.slug = safe || "graphic";
+  warnings.push(
+    createWarning(
+      "setting:invalid-value",
+      "setting",
+      'Document slug "' +
+        slug +
+        '" is not a safe identifier (letters, digits, "_", "-"); it names output files, so it was replaced with "' +
+        doc.metadata.slug +
+        '".',
+      { setting: "projectName", surface: "illustrator" },
+    ),
+  );
+}
+
 export function processAndEmit(
   irDoc: Document,
   config?: { fonts?: FontMapping[]; settings?: Partial<Settings> },
@@ -173,6 +206,11 @@ export function processAndEmit(
   // Before any transform reads them: there is no Zod on this path, so a
   // metacharacter in `namespace`/`projectName` would be concatenated into CSS.
   sanitizeIdentifierSettings(resolved.settings, warnings);
+  // metadata.slug is not a setting, but groupArtboards falls back to it when
+  // projectName is absent or was just cleared above — and the slug is
+  // concatenated into output file paths. Sanitizing only the setting left
+  // "../../pwn" reaching the write site through the fallback.
+  sanitizeDocumentSlug(resolved, warnings);
   assertJsonPure(resolved, "resolveSettings");
   phase("assertJsonPure:resolved");
   // Illustrator declares what it honors like every other surface; anything the

@@ -1743,7 +1743,15 @@ function runExporter() {
   }
 
   // Resolve settings
-  var slug = docSettings.project_name || makeKeyword(docName);
+  // makeKeyword applies to project_name too, not just the document-name
+  // fallback. The slug is concatenated into the output file path, so a
+  // project_name of "../../pwn" was a path traversal at the write site, and CSS
+  // metacharacters in it reached selectors. makeKeyword is idempotent on names
+  // that were already safe, so ordinary project names are unaffected. The core
+  // sanitizes settings.projectName as well, but grouping falls back to
+  // metadata.slug, which is this value — it has to be safe at the source.
+  var slug = makeKeyword(docSettings.project_name || docName);
+  if (!slug) slug = makeKeyword(docName) || "graphic";
   var rawOutputPath = docSettings.html_output_path || docSettings.image_output_path || "all2html-output/";
   // Strip leading slash — output path is relative to document
   if (rawOutputPath.charAt(0) === "/") rawOutputPath = rawOutputPath.substring(1);
@@ -1854,12 +1862,16 @@ function runExporter() {
       summary: docSettings.summary || "",
       notes: docSettings.notes || "",
       sources: docSettings.sources || "",
-      credit: docSettings.credit || "",
-      altText: docSettings.alt_text || undefined,
-      imageAltText: docSettings.image_alt_text || undefined,
-      ariaRole: docSettings.aria_role || undefined
+      credit: docSettings.credit || ""
+      // altText / imageAltText / ariaRole are assigned below, not here: an
+      // absent value must omit the key, never carry `undefined`. The document
+      // model has to survive a JSON round-trip and assertJsonPure enforces it,
+      // so `altText: undefined` aborts the export outright.
     }
   };
+  if (docSettings.alt_text) irDoc.metadata.altText = docSettings.alt_text;
+  if (docSettings.image_alt_text) irDoc.metadata.imageAltText = docSettings.image_alt_text;
+  if (docSettings.aria_role) irDoc.metadata.ariaRole = docSettings.aria_role;
 
   span.end();
 
