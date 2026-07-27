@@ -111,6 +111,28 @@ Confirm these behaviors during the smoke run:
      mis-ordered or missing concatenation now produces instead of a silent `ReferenceError`.
    `pnpm diagnostics:after-effects` is the documented probe if any of these fail.
 
+   **Run 2026-07-27, After Effects 2026 (host build 33415), and what it settled.** The bundle was
+   evaluated in the real ES3 engine via `DoScriptFile` and every helper exercised directly:
+
+   | Check | Result |
+   |---|---|
+   | `$.evalFile(all2html-ae-core.js)` → `typeof All2HtmlAE` | `object` — it loads |
+   | The five exports are callable | all `function` |
+   | Polyfills installed by the bundle (`map`, `indexOf`, `trim`, `Number.isNaN`) | all `function` |
+   | `googleFontsUrl([{sourceFont,family:"Roboto",weight:"700"}])` | `https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap` |
+   | `googleFontsLinkTags(...)` | 3 tags, first `rel=preconnect` |
+   | `escapeInlineJson` on `<!--<script>alert(1)</script>` | no raw `<` survives; every one is `<` |
+   | `escapeAttr` / `escapeHtml` | correct per grammar |
+   | `new Function(all2html-ae.jsx)` — the assembled 79,337-byte artifact | parses |
+
+   That closes the "does it evaluate / did ES5 lowering break" question, which is the part no repo
+   test can reach, and confirms the inline-JSON `<` fix in the host rather than only in jsdom.
+
+   **Still not done here:** a full comp export producing a rendered video plus a playable page. That
+   exercises the render queue and output modules rather than the bundle slot, and needs a real
+   project file. Do it before any AE release; the escaping bullet above is already covered both in
+   the host (table) and by the jsdom test that parses the real player template with the payload.
+
 ## Current Gaps
 
 - No batch export
