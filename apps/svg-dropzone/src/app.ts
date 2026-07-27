@@ -2,19 +2,19 @@
 
 import wasmUrl from "@resvg/resvg-wasm/index_bg.wasm?url";
 import {
+  type BrowserSvgConversionResult,
   bundleToZipBytes,
   convertLoadedSvgFilesInBrowser,
   createBrowserSvgRasterizer,
   createOutputBundle,
-  getBundleFile,
   getBrowserEmitter,
+  getBundleFile,
   importSVGFilesWithRasterizer,
+  type LoadedSVGImportFiles,
   loadSVGImportFilesFromBrowser,
+  type OutputBundle,
   parseConfigText,
   processDocumentInBrowser,
-  type BrowserSvgConversionResult,
-  type LoadedSVGImportFiles,
-  type OutputBundle,
   type SvgRasterizer,
 } from "../../../src/browser.js";
 import "./styles.css";
@@ -179,8 +179,12 @@ export function mountSvgDropzoneApp(
   const outputFileSelect = root.querySelector<HTMLSelectElement>("[data-output-file]")!;
   const downloadButton = root.querySelector<HTMLButtonElement>("[data-download]")!;
 
-  root.querySelector<HTMLElement>("[data-pick-files]")!.addEventListener("click", () => fileInput.click());
-  root.querySelector<HTMLElement>("[data-pick-folder]")!.addEventListener("click", () => folderInput.click());
+  root
+    .querySelector<HTMLElement>("[data-pick-files]")!
+    .addEventListener("click", () => fileInput.click());
+  root
+    .querySelector<HTMLElement>("[data-pick-folder]")!
+    .addEventListener("click", () => folderInput.click());
   root.querySelector<HTMLElement>("[data-generate]")!.addEventListener("click", async () => {
     await generate();
   });
@@ -271,7 +275,9 @@ export function mountSvgDropzoneApp(
       return;
     }
 
-    summaryList.innerHTML = currentRun.artboardSummary.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+    summaryList.innerHTML = currentRun.artboardSummary
+      .map((item) => `<li>${escapeHtml(item)}</li>`)
+      .join("");
     warningList.innerHTML =
       currentRun.importWarnings.length === 0 && currentRun.renderWarnings.length === 0
         ? "<li>No warnings.</li>"
@@ -295,7 +301,7 @@ export function mountSvgDropzoneApp(
     if (!selectedFile?.text) {
       viewerBody.innerHTML = `<div class="empty-state">No preview available for ${escapeHtml(selectedPath)}.</div>`;
     } else if (currentRun.format === "html" || currentRun.format === "standalone") {
-      viewerBody.innerHTML = `<iframe class="preview-frame" title="all2html preview"></iframe>`;
+      viewerBody.innerHTML = `<iframe class="preview-frame" title="all2html preview" sandbox="allow-scripts"></iframe>`;
       const frame = viewerBody.querySelector<HTMLIFrameElement>("iframe")!;
       frame.srcdoc = selectedFile.text;
     } else {

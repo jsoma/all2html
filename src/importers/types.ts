@@ -1,3 +1,4 @@
+import type { StructuredWarning } from "../core/warnings.js";
 import type { Document, Settings } from "../ir/types.js";
 
 export interface ImportedFile {
@@ -15,7 +16,9 @@ export interface ImportedAssetFile {
 export interface ImportResult {
   document: Document;
   assetFiles: ImportedAssetFile[];
+  /** Plain-string projection of `structuredWarnings`. */
   warnings: string[];
+  structuredWarnings: StructuredWarning[];
 }
 
 export interface ImportOptions {

@@ -1,16 +1,23 @@
 import type {
+  BreakpointedDocument,
   CharacterRun,
   Color,
   ComputedTextStyle,
   Paragraph,
-  ResolvedDocument,
   StyledArtboard,
   StyledDocument,
+  StyledElement,
   StyledLayer,
   StyledTextElement,
   TextElement,
 } from "../ir/types.js";
 import { createFontMap, type FontLookupResult } from "./font-map.js";
+import {
+  createWarning,
+  pushUniqueStructuredWarning,
+  type StructuredWarning,
+  type WarningContext,
+} from "./warnings.js";
 
 const RGB_BLACK_THRESHOLD = 36;
 const CSS_PRECISION = 4;
@@ -31,17 +38,167 @@ function formatColor(color: Color): string {
   return `rgb(${r},${g},${b})`;
 }
 
+// A CSS <family-name> is either a quoted string or a whitespace-separated run of
+// identifiers. Font mappings arrive from `all2html.config.json`, document XMP and
+// the panel font editor, so a value that is not a legal family name must never be
+// concatenated into the stylesheet — `X}</style><svg onload=alert(1)>{a` would
+// otherwise close the <style> element and become live markup.
+// Validated by a hand-written scan, not a regex. Any pattern that nests
+// quantifiers backtracks exponentially in ExtendScript's engine where V8 does
+// not — an equivalent regex here hung Illustrator for minutes per call.
+// Enforced by test/integration/extendscript-regex-safety.test.ts.
+const FALLBACK_FONT_FAMILY = "sans-serif";
+
+// font-weight / font-style are keyword-or-number values from the same sources.
+// This one has no nested quantifier — a single character class over the whole
+// string is linear in every engine.
+const CSS_KEYWORD_VALUE = /^[a-zA-Z0-9%. -]*$/;
+
+// `[_a-zA-Z\u00A0-\uFFFF]` from the original grammar. The upper range admits
+// non-ASCII family names and deliberately starts at U+00A0 — above every
+// character that could break out of a declaration or the <style> element.
+function isFamilyIdentStart(ch: string): boolean {
+  return (ch >= "a" && ch <= "z") || (ch >= "A" && ch <= "Z") || ch === "_" || ch >= "\u00A0";
+}
+
+function isFamilyIdentChar(ch: string): boolean {
+  return isFamilyIdentStart(ch) || (ch >= "0" && ch <= "9") || ch === "-";
+}
+
+/** One comma-separated component: either a quoted string or space-separated idents. */
+function isValidFamilyName(raw: string): boolean {
+  const name = raw.replace(/^[ \t]+/, "").replace(/[ \t]+$/, "");
+  if (name.length === 0) return false;
+
+  const quote = name.charAt(0);
+  if (quote === '"' || quote === "'") {
+    if (name.length < 2 || name.charAt(name.length - 1) !== quote) return false;
+    const inner = name.slice(1, -1);
+    for (let i = 0; i < inner.length; i++) {
+      const ch = inner.charAt(i);
+      // The characters that could end the attribute, the <style> element, or the
+      // declaration if they reached the stylesheet.
+      if (
+        ch === '"' ||
+        ch === "'" ||
+        ch === "<" ||
+        ch === ">" ||
+        ch === "\\" ||
+        ch === "\r" ||
+        ch === "\n"
+      ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Unquoted: `-?ident( ident)*`, where each ident starts with a letter.
+  let i = 0;
+  if (name.charAt(0) === "-") i = 1;
+  let atWordStart = true;
+  let sawWord = false;
+  for (; i < name.length; i++) {
+    const ch = name.charAt(i);
+    if (ch === " " || ch === "\t") {
+      // The separator was `[ \t]+`, so a run of them is one separator. An
+      // earlier draft rejected the second space and diverged on "Helvetica  Neue".
+      if (!sawWord) return false; // separator before any word
+      atWordStart = true;
+      continue;
+    }
+    if (atWordStart) {
+      if (!isFamilyIdentStart(ch)) return false;
+      atWordStart = false;
+      sawWord = true;
+      continue;
+    }
+    if (!isFamilyIdentChar(ch)) return false;
+  }
+  return sawWord;
+}
+
+export function isValidCssFontFamily(value: string): boolean {
+  if (typeof value !== "string") return false;
+  const parts = value.split(",");
+  for (let i = 0; i < parts.length; i++) {
+    if (!isValidFamilyName(parts[i])) return false;
+  }
+  return true;
+}
+
+/** Keep `value` if it is a legal CSS value, otherwise warn (naming the font) and
+ *  substitute `fallback`, so no source-controlled garbage reaches the stylesheet. */
+function guardCssValue(
+  property: string,
+  value: string,
+  valid: boolean,
+  fallback: string,
+  fontName: string,
+  warnings: StructuredWarning[],
+  context: WarningContext,
+): string {
+  if (valid) return value;
+  warnings.push(
+    createWarning(
+      "font:invalid-css-value",
+      "font",
+      `Invalid CSS ${property} for font "${fontName}": ${JSON.stringify(value)}. Using ${fallback} instead.`,
+      context,
+    ),
+  );
+  return fallback;
+}
+
 function computeRunStyle(
   run: CharacterRun,
   paragraph: Paragraph,
   element: TextElement,
   fontLookup: (name: string) => FontLookupResult,
-): { style: ComputedTextStyle; warning?: string } {
+  context: WarningContext,
+): { style: ComputedTextStyle; warnings: StructuredWarning[] } {
   const { info, matched } = fontLookup(run.fontName);
-  let warning: string | undefined;
+  const warnings: StructuredWarning[] = [];
   if (!matched) {
-    warning = `Missing a rule for converting font: ${run.fontName}. Sample text: "${run.text.slice(0, 30)}"`;
+    warnings.push(
+      createWarning(
+        "font:unmapped",
+        "font",
+        `Missing a rule for converting font: ${run.fontName}. Sample text: "${run.text.slice(0, 30)}"`,
+        context,
+      ),
+    );
   }
+
+  const weight = info.weight || "normal";
+  const styleName = info.style || "normal";
+  const fontFamily = guardCssValue(
+    "font-family",
+    info.family,
+    isValidCssFontFamily(info.family),
+    FALLBACK_FONT_FAMILY,
+    run.fontName,
+    warnings,
+    context,
+  );
+  const fontWeight = guardCssValue(
+    "font-weight",
+    weight,
+    CSS_KEYWORD_VALUE.test(weight),
+    "normal",
+    run.fontName,
+    warnings,
+    context,
+  );
+  const fontStyle = guardCssValue(
+    "font-style",
+    styleName,
+    CSS_KEYWORD_VALUE.test(styleName),
+    "normal",
+    run.fontName,
+    warnings,
+    context,
+  );
 
   let fontSize = run.fontSize;
   const isSuperSub = run.baselineShift !== "normal";
@@ -50,10 +207,10 @@ function computeRunStyle(
   }
 
   const style: ComputedTextStyle = {
-    fontFamily: info.family,
+    fontFamily,
     fontSize: `${fontSize}px`,
-    fontWeight: info.weight || "normal",
-    fontStyle: info.style || "normal",
+    fontWeight,
+    fontStyle,
     color: formatColor(run.color),
     lineHeight: `${paragraph.leading}px`,
   };
@@ -109,48 +266,59 @@ function computeRunStyle(
     }
   }
 
-  return { style, warning };
+  return { style, warnings };
 }
 
-export function computeStyles(doc: ResolvedDocument): {
+export function computeStyles(doc: BreakpointedDocument): {
   document: StyledDocument;
-  warnings: string[];
+  warnings: StructuredWarning[];
 } {
-  const warnings: string[] = [];
+  const warnings: StructuredWarning[] = [];
   const fontLookup = createFontMap(doc.fonts);
 
   const artboards: StyledArtboard[] = doc.artboards.map((ab) => {
     const layers: StyledLayer[] = ab.layers.map((layer) => {
-      const elements: StyledLayer["elements"] = layer.elements.map((el) => {
-        if (el.type !== "text" || el.renderAs === "image")
-          return el as StyledLayer["elements"][number];
+      const elements: StyledElement[] = layer.elements.map((el) => {
+        if (el.type !== "text") return el;
+        // Image-rendered text is its own variant, so the "not styled" branch returns a
+        // named type instead of asserting one (SPEC §12.1).
+        if (el.renderAs === "image") return el;
 
+        // A font problem is a document-level problem, so identical messages are
+        // collapsed; the context recorded is where it was first seen.
+        const context: WarningContext = {
+          artboardId: ab.id,
+          layerId: layer.id,
+          elementId: el.id,
+        };
         const computedParagraphStyles: ComputedTextStyle[] = [];
         const computedRunStyles: ComputedTextStyle[][] = [];
 
         for (const para of el.paragraphs) {
           const firstRun = para.runs[0];
-          const { style: paraStyle, warning: paraWarning } = computeRunStyle(
+          const { style: paraStyle, warnings: paraWarnings } = computeRunStyle(
             firstRun,
             para,
             el,
             fontLookup,
+            context,
           );
-          if (paraWarning && !warnings.includes(paraWarning)) {
-            warnings.push(paraWarning);
+          for (const warning of paraWarnings) {
+            pushUniqueStructuredWarning(warnings, warning);
           }
           computedParagraphStyles.push(paraStyle);
 
           const runStyles: ComputedTextStyle[] = [];
           for (const run of para.runs) {
-            const { style: runStyle, warning: runWarning } = computeRunStyle(
+            const { style: runStyle, warnings: runWarnings } = computeRunStyle(
               run,
               para,
               el,
               fontLookup,
+              context,
             );
-            if (runWarning && !warnings.includes(runWarning)) {
-              warnings.push(runWarning);
+            for (const warning of runWarnings) {
+              pushUniqueStructuredWarning(warnings, warning);
             }
             runStyles.push(runStyle);
           }
@@ -169,5 +337,5 @@ export function computeStyles(doc: ResolvedDocument): {
     return { ...ab, layers };
   });
 
-  return { document: { ...doc, artboards }, warnings };
+  return { document: { ...doc, pipelinePhase: "styled", artboards }, warnings };
 }

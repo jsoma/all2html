@@ -2,7 +2,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 import { mountSvgDropzoneApp } from "../../apps/svg-dropzone/src/app.js";
-import { convertLoadedSvgFilesInBrowser } from "../../src/browser.js";
+import { convertLoadedSvgFilesInBrowser, processDocumentInBrowser } from "../../src/browser.js";
 import { processDocument } from "../../src/core/pipeline.js";
 import { CURRENT_IR_VERSION, type Document } from "../../src/ir/types.js";
 import { createOutputBundle } from "../../src/output-bundle.js";
@@ -79,6 +79,7 @@ function createImportResult({
     document: createDocument(artboardNames),
     assetFiles,
     warnings,
+    structuredWarnings: [],
   };
 }
 
@@ -188,6 +189,7 @@ describe("svg dropzone app", () => {
                 },
               ],
               warnings: [],
+              structuredWarnings: [],
             };
           },
         };
@@ -259,6 +261,7 @@ describe("svg dropzone app", () => {
                 { slug: "story", extension: ".jsx", output: "export default function Story() {}" },
               ],
               warnings: [],
+              structuredWarnings: [],
             };
           },
         };
@@ -323,6 +326,7 @@ describe("svg dropzone app", () => {
             return {
               files: [{ slug: "story", extension: ".html", output: "<div>preview</div>" }],
               warnings: [],
+              structuredWarnings: [],
             };
           },
         };
@@ -393,6 +397,7 @@ describe("svg dropzone app", () => {
             return {
               files: [],
               warnings: [],
+              structuredWarnings: [],
             };
           },
         };
@@ -422,5 +427,39 @@ describe("svg dropzone app", () => {
     expect(root.querySelector("iframe")).toBeNull();
 
     document.body.innerHTML = "";
+  });
+});
+
+describe("browser pipeline surface", () => {
+  /**
+   * `processDocumentInBrowser` used to build its default surface context
+   * without a format, so format-qualified declarations
+   * (`unsupportedFormats: ["standalone"]`) could never fire for direct callers.
+   */
+  it("threads the target format into the default surface context", () => {
+    const doc = createDocument();
+    doc.settings = { ...doc.settings, output: "multiple-files" };
+
+    const asHtml = processDocumentInBrowser(structuredClone(doc), { format: "html" });
+    const asStandalone = processDocumentInBrowser(structuredClone(doc), { format: "standalone" });
+
+    expect(asHtml.structuredWarnings.some((warning) => warning.setting === "output")).toBe(false);
+    expect(asStandalone.structuredWarnings.some((warning) => warning.setting === "output")).toBe(
+      true,
+    );
+  });
+
+  it("still defaults to the browser converter, whose declaration differs from the CLI's", () => {
+    const doc = createDocument();
+    // D30: the browser standalone emitter discards localPreviewTemplate; the
+    // Node CLI applies it. Getting this warning proves the default context is
+    // `browser`, not `cli`.
+    doc.settings = { ...doc.settings, localPreviewTemplate: "preview.html" };
+
+    const result = processDocumentInBrowser(doc, { format: "html" });
+    const warning = result.structuredWarnings.find(
+      (entry) => entry.setting === "localPreviewTemplate",
+    );
+    expect(warning?.surface).toBe("browser");
   });
 });

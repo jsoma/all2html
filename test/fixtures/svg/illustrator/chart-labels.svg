@@ -1,0 +1,127 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" viewBox="0 0 800 1060" width="800" height="1060" overflow="visible"><g id="chart" transform="translate(40 540)"><path fill="none" stroke="#333333" stroke-width="1.5" stroke-linejoin="round" d="M30.133-63.262" />
+	<path fill="none" stroke="#333333" stroke-width="1.5" stroke-linejoin="round" d="M238.692-63.262" />
+	<path fill="none" stroke="#333333" stroke-width="1.5" stroke-linejoin="round" d="M447.251-63.262" />
+	<path fill="none" stroke="#333333" stroke-width="1.5" stroke-linejoin="round" d="M655.81-63.262" />
+	<text transform="matrix(1 0 0 1 25.04 -68.7382)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">0</text>
+	<text transform="matrix(1 0 0 1 210.6855 -68.7382)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">20,000</text>
+	<text transform="matrix(1 0 0 1 419.2451 -68.7382)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">40,000</text>
+	<text transform="matrix(1 0 0 1 622.7119 -68.7382)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">$60,000</text>
+	<path fill="none" stroke="#000000" stroke-width="0.8" stroke-linejoin="round" d="M701.946-163.252h27.961" />
+	<path fill="none" d="M0-163.252" />
+	<text transform="matrix(1 0 0 1 708.8271 -170.41)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">40</text>
+	<path fill="none" stroke="#000000" stroke-width="0.8" stroke-linejoin="round" d="M701.946-317.082h27.961" />
+	<path fill="none" d="M0-317.082" />
+	<text transform="matrix(1 0 0 1 708.8271 -324.2401)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">60</text>
+	<path fill="none" stroke="#000000" stroke-width="0.8" stroke-linejoin="round" d="M701.946-470.912h27.961" />
+	<path fill="none" d="M0-470.912" />
+	<text transform="matrix(1 0 0 1 708.8271 -478.0683)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">80 years</text>
+	<path fill="none" stroke="#000000" stroke-linejoin="round" d="M27.918-86.337h701.989" />
+	<path fill="none" stroke="#000000" stroke-linejoin="round" d="M701.946-240.167h27.961" />
+	<path fill="none" stroke="#000000" stroke-linejoin="round" d="M701.946-393.997h27.961" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M37.046-270.789c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795c0-1.799-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795c0,1.798,0.715,3.524,1.986,4.795   C33.523-271.503,35.248-270.789,37.046-270.789z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M259.704-421.804c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795s-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986s-3.524,0.715-4.795,1.986   c-1.272,1.272-1.986,2.997-1.986,4.795s0.715,3.524,1.986,4.795C256.18-422.518,257.906-421.804,259.704-421.804z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M41.343-351.134c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795s-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795s0.715,3.524,1.986,4.795   C37.819-351.849,39.544-351.134,41.343-351.134z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M60.603-312.661c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795s-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795s0.715,3.524,1.986,4.795   C57.08-313.376,58.805-312.661,60.603-312.661z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M530.883-432.802c1.799,0,3.524-0.715,4.795-1.986   s1.986-2.997,1.986-4.795c0-1.799-0.715-3.524-1.986-4.795s-2.997-1.986-4.795-1.986s-3.524,0.715-4.795,1.986   s-1.986,2.997-1.986,4.795c0,1.798,0.715,3.524,1.986,4.795S529.085-432.802,530.883-432.802z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M40.373-325.914c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795s-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795s0.715,3.524,1.986,4.795   C36.849-326.628,38.574-325.914,40.373-325.914z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M65.661-403.552c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795c0-1.799-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795c0,1.798,0.715,3.524,1.986,4.795   C62.137-404.266,63.862-403.552,65.661-403.552z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M342.679-466.907c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795s-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.798,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795s0.715,3.524,1.986,4.795   C339.156-467.621,340.881-466.907,342.679-466.907z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M47.318-326.675c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795c0-1.798-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795c0,1.799,0.715,3.524,1.986,4.795   C43.794-327.39,45.519-326.675,47.318-326.675z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M58.434-366.363c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795s-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986s-3.524,0.715-4.795,1.986   c-1.272,1.272-1.986,2.997-1.986,4.795s0.715,3.524,1.986,4.795C54.91-367.078,56.636-366.363,58.434-366.363z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M119.813-384.223c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795c0-1.798-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   s-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795c0,1.799,0.715,3.524,1.986,4.795   C116.289-384.938,118.015-384.223,119.813-384.223z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M71.333-393.714c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795c0-1.798-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795c0,1.799,0.715,3.524,1.986,4.795   C67.81-394.429,69.535-393.714,71.333-393.714z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M268.245-454.516c1.798,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795c0-1.798-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795c0,1.799,0.715,3.524,1.986,4.795   S266.446-454.516,268.245-454.516z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M327.945-474.513c1.798,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795s-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795s0.715,3.524,1.986,4.795   C324.421-475.228,326.146-474.513,327.945-474.513z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M68.341-400.475c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795c0-1.799-0.715-3.524-1.986-4.795s-2.997-1.986-4.795-1.986c-1.799,0-3.524,0.715-4.795,1.986   c-1.272,1.272-1.986,2.997-1.986,4.795c0,1.798,0.715,3.524,1.986,4.795C64.817-401.19,66.542-400.475,68.341-400.475z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M86.089-337.32c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795c0-1.799-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795c0,1.798,0.715,3.524,1.986,4.795   C82.565-338.035,84.291-337.32,86.089-337.32z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M47.745-350.842c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795s-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795s0.715,3.524,1.986,4.795   C44.222-351.556,45.947-350.842,47.745-350.842z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M207.356-434.241c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795s-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795s0.715,3.524,1.986,4.795   C203.832-434.955,205.557-434.241,207.356-434.241z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M409.679-411.312c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795c0-1.798-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.798,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795c0,1.799,0.715,3.524,1.986,4.795   C406.155-412.027,407.88-411.312,409.679-411.312z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M46.056-358.233c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795s-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795s0.715,3.524,1.986,4.795   C42.533-358.948,44.258-358.233,46.056-358.233z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M45.962-323.291c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795c0-1.799-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986s-1.986,2.997-1.986,4.795c0,1.798,0.715,3.524,1.986,4.795   C42.439-324.006,44.164-323.291,45.962-323.291z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M90.563-421.127c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795c0-1.799-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795c0,1.798,0.715,3.524,1.986,4.795   C87.039-421.841,88.764-421.127,90.563-421.127z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M264.887-445.878c1.798,0,3.524-0.715,4.795-1.986   s1.986-2.997,1.986-4.795c0-1.798-0.715-3.524-1.986-4.795s-2.997-1.986-4.795-1.986c-1.799,0-3.524,0.715-4.795,1.986   c-1.272,1.272-1.986,2.997-1.986,4.795c0,1.799,0.715,3.524,1.986,4.795C261.363-446.593,263.088-445.878,264.887-445.878z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M136.091-408.828c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795s-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986s-3.524,0.715-4.795,1.986   c-1.272,1.272-1.986,2.997-1.986,4.795s0.715,3.524,1.986,4.795C132.567-409.543,134.293-408.828,136.091-408.828z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M65.932-381.669c1.799,0,3.524-0.715,4.795-1.986   s1.986-2.997,1.986-4.795s-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986c-1.799,0-3.524,0.715-4.795,1.986   c-1.272,1.272-1.986,2.997-1.986,4.795s0.715,3.524,1.986,4.795C62.408-382.384,64.133-381.669,65.932-381.669z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M51.166-332.421c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795c0-1.799-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795c0,1.798,0.715,3.524,1.986,4.795   C47.642-333.135,49.367-332.421,51.166-332.421z" />
+	<path fill="#FFE816" fill-opacity="0.502" d="M40.915-326.245c1.799,0,3.524-0.715,4.795-1.986   c1.272-1.272,1.986-2.997,1.986-4.795c0-1.799-0.715-3.524-1.986-4.795c-1.272-1.272-2.997-1.986-4.795-1.986   c-1.799,0-3.524,0.715-4.795,1.986c-1.272,1.272-1.986,2.997-1.986,4.795c0,1.798,0.715,3.524,1.986,4.795   C37.392-326.959,39.117-326.245,40.915-326.245z" />
+	<text transform="matrix(1 0 0 1 708.8271 -93.9159)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">30</text>
+	<text transform="matrix(1 0 0 1 708.8271 -247.746)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">50</text>
+	<text transform="matrix(1 0 0 1 708.8271 -401.5761)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">70</text>
+	<text transform="matrix(1 0 0 1 134.0379 -506.0967)" font-family="'ArialMT'" font-size="14px">Africa</text>
+	<text transform="matrix(1 0 0 1 203.7023 -506.0972)" font-family="'ArialMT'" font-size="14px">Asia</text>
+	<text transform="matrix(1 0 0 1 55.0148 -506.0963)" font-family="'ArialMT'" font-size="14px">Europe</text>
+	<text transform="matrix(1 0 0 1 475.7643 -506.0969)" font-family="'ArialMT'" font-size="14px">N</text>
+	<text transform="matrix(1 0 0 1 485.8746 -506.0969)" font-family="'ArialMT'" font-size="14px">o</text>
+	<text transform="matrix(1 0 0 1 493.6608 -506.0969)" font-family="'ArialMT'" font-size="14px">r</text>
+	<text transform="matrix(1 0 0 1 498.3229 -506.0969)" font-family="'ArialMT'" font-size="14px">t</text>
+	<text transform="matrix(1 0 0 1 502.2125 -506.0969)" font-family="'ArialMT'" font-size="14px">h</text>
+	<text transform="matrix(1 0 0 1 509.9987 -506.0969)" font-family="'ArialMT'" font-size="14px"> </text>
+	<text transform="matrix(1 0 0 1 513.1158 -506.0969)" font-family="'ArialMT'" font-size="14px">A</text>
+	<text transform="matrix(1 0 0 1 522.4537 -506.0969)" font-family="'ArialMT'" font-size="14px">m</text>
+	<text transform="matrix(1 0 0 1 534.1158 -506.0969)" font-family="'ArialMT'" font-size="14px">e</text>
+	<text transform="matrix(1 0 0 1 541.902 -506.0969)" font-family="'ArialMT'" font-size="14px">r</text>
+	<text transform="matrix(1 0 0 1 546.5641 -506.0969)" font-family="'ArialMT'" font-size="14px">i</text>
+	<text transform="matrix(1 0 0 1 549.6744 -506.0969)" font-family="'ArialMT'" font-size="14px">c</text>
+	<text transform="matrix(1 0 0 1 556.6744 -506.0969)" font-family="'ArialMT'" font-size="14px">a</text>
+	<text transform="matrix(1 0 0 1 350.838 -506.0967)" font-family="'ArialMT'" font-size="14px">S</text>
+	<text transform="matrix(1 0 0 1 360.1759 -506.0967)" font-family="'ArialMT'" font-size="14px">o</text>
+	<text transform="matrix(1 0 0 1 367.962 -506.0967)" font-family="'ArialMT'" font-size="14px">u</text>
+	<text transform="matrix(1 0 0 1 375.7482 -506.0967)" font-family="'ArialMT'" font-size="14px">t</text>
+	<text transform="matrix(1 0 0 1 379.6378 -506.0967)" font-family="'ArialMT'" font-size="14px">h</text>
+	<text transform="matrix(1 0 0 1 387.424 -506.0967)" font-family="'ArialMT'" font-size="14px"> </text>
+	<text transform="matrix(1 0 0 1 390.5411 -506.0967)" font-family="'ArialMT'" font-size="14px">A</text>
+	<text transform="matrix(1 0 0 1 399.879 -506.0967)" font-family="'ArialMT'" font-size="14px">m</text>
+	<text transform="matrix(1 0 0 1 411.5411 -506.0967)" font-family="'ArialMT'" font-size="14px">e</text>
+	<text transform="matrix(1 0 0 1 419.3273 -506.0967)" font-family="'ArialMT'" font-size="14px">r</text>
+	<text transform="matrix(1 0 0 1 423.9894 -506.0967)" font-family="'ArialMT'" font-size="14px">i</text>
+	<text transform="matrix(1 0 0 1 427.0997 -506.0967)" font-family="'ArialMT'" font-size="14px">c</text>
+	<text transform="matrix(1 0 0 1 434.0997 -506.0967)" font-family="'ArialMT'" font-size="14px">a</text>
+	<text transform="matrix(1 0 0 1 264.8149 -506.0969)" font-family="'ArialMT'" font-size="14px">Oceania</text>
+	<text transform="matrix(1.0375 0 0 1 17.585 491.1925)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">0</text>
+	
+		<text transform="matrix(1.0375 0 0 1 104.8047 491.1925)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">20,000</text>
+	
+		<text transform="matrix(1.0375 0 0 1 212.9985 491.1925)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">40,000</text>
+	
+		<text transform="matrix(1.0375 0 0 1 316.5312 491.1925)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">$60,000</text>
+	<text transform="matrix(1.0375 0 0 1 370.293 389.5206)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">40</text>
+	<text transform="matrix(1.0375 0 0 1 370.293 235.6905)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">60</text>
+	<text transform="matrix(1.0375 0 0 1 370.8447 81.8624)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">80 years</text>
+	<text transform="matrix(1.0375 0 0 1 370.293 466.0147)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">30</text>
+	
+		<text transform="matrix(1.0375 0 0 1 370.293 312.1847)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">50</text>
+	
+		<text transform="matrix(1.0375 0 0 1 370.293 158.3546)" fill="#4D4D4D" font-family="'ArialMT'" font-size="14px">70</text>
+	<text transform="matrix(1 0 0 1 121.5445 22.6197)" font-family="'ArialMT'" font-size="14px">Africa</text>
+	<text transform="matrix(1 0 0 1 191.2089 22.6191)" font-family="'ArialMT'" font-size="14px">Asia</text>
+	<text transform="matrix(1 0 0 1 42.5214 22.62)" font-family="'ArialMT'" font-size="14px">Europe</text>
+	<text transform="matrix(1 0 0 1 166.8701 47.595)" font-family="'ArialMT'" font-size="14px">N</text>
+	<text transform="matrix(1 0 0 1 176.9804 47.595)" font-family="'ArialMT'" font-size="14px">o</text>
+	<text transform="matrix(1 0 0 1 184.7666 47.595)" font-family="'ArialMT'" font-size="14px">r</text>
+	<text transform="matrix(1 0 0 1 189.4287 47.595)" font-family="'ArialMT'" font-size="14px">t</text>
+	<text transform="matrix(1 0 0 1 193.3183 47.595)" font-family="'ArialMT'" font-size="14px">h</text>
+	<text transform="matrix(1 0 0 1 201.1044 47.595)" font-family="'ArialMT'" font-size="14px"> </text>
+	<text transform="matrix(1 0 0 1 204.2216 47.595)" font-family="'ArialMT'" font-size="14px">A</text>
+	<text transform="matrix(1 0 0 1 213.5595 47.595)" font-family="'ArialMT'" font-size="14px">m</text>
+	<text transform="matrix(1 0 0 1 225.2216 47.595)" font-family="'ArialMT'" font-size="14px">e</text>
+	<text transform="matrix(1 0 0 1 233.0078 47.595)" font-family="'ArialMT'" font-size="14px">r</text>
+	<text transform="matrix(1 0 0 1 237.6699 47.595)" font-family="'ArialMT'" font-size="14px">i</text>
+	<text transform="matrix(1 0 0 1 240.7802 47.595)" font-family="'ArialMT'" font-size="14px">c</text>
+	<text transform="matrix(1 0 0 1 247.7802 47.595)" font-family="'ArialMT'" font-size="14px">a</text>
+	<text transform="matrix(1 0 0 1 41.9438 47.5951)" font-family="'ArialMT'" font-size="14px">S</text>
+	<text transform="matrix(1 0 0 1 51.2817 47.5951)" font-family="'ArialMT'" font-size="14px">o</text>
+	<text transform="matrix(1 0 0 1 59.0678 47.5951)" font-family="'ArialMT'" font-size="14px">u</text>
+	<text transform="matrix(1 0 0 1 66.854 47.5951)" font-family="'ArialMT'" font-size="14px">t</text>
+	<text transform="matrix(1 0 0 1 70.7436 47.5951)" font-family="'ArialMT'" font-size="14px">h</text>
+	<text transform="matrix(1 0 0 1 78.5297 47.5951)" font-family="'ArialMT'" font-size="14px"> </text>
+	<text transform="matrix(1 0 0 1 81.6469 47.5951)" font-family="'ArialMT'" font-size="14px">A</text>
+	<text transform="matrix(1 0 0 1 90.9848 47.5951)" font-family="'ArialMT'" font-size="14px">m</text>
+	<text transform="matrix(1 0 0 1 102.6469 47.5951)" font-family="'ArialMT'" font-size="14px">e</text>
+	<text transform="matrix(1 0 0 1 110.4331 47.5951)" font-family="'ArialMT'" font-size="14px">r</text>
+	<text transform="matrix(1 0 0 1 115.0952 47.5951)" font-family="'ArialMT'" font-size="14px">i</text>
+	<text transform="matrix(1 0 0 1 118.2055 47.5951)" font-family="'ArialMT'" font-size="14px">c</text>
+	<text transform="matrix(1 0 0 1 125.2055 47.5951)" font-family="'ArialMT'" font-size="14px">a</text>
+	<text transform="matrix(1 0 0 1 252.3215 22.6194)" font-family="'ArialMT'" font-size="14px">Oceania</text>
+	</g><g id="ai2html-settings" display="none"><text transform="matrix(1 0 0 1 60 120)" font-size="12px" font-family="'MyriadPro-Regular'">settings text that must never reach the HTML</text></g><text transform="matrix(1 0 0 1 -452 -91.2626)" font-size="12px" font-family="'MyriadPro-Regular'">off-canvas production note</text></svg>

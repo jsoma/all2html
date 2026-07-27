@@ -1,0 +1,327 @@
+{
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "test",
+    "toolVersion": "1.0",
+    "adapterVersion": "0.1.0"
+  },
+  "settings": {
+    "namespace": "g-",
+    "responsiveness": "dynamic",
+    "clickableLink": "https://example.com/?a=1&b=2&q=<x>\"'`--></script",
+    "useLazyLoader": true,
+    "includeResizerWidths": true
+  },
+  "fonts": [
+    {
+      "sourceFont": "ArialMT",
+      "family": "X}</style><svg onload=alert(1)>{a",
+      "weight": "400}</style><svg onload=alert(2)>{",
+      "style": "normal}</style>{"
+    }
+  ],
+  "artboards": [
+    {
+      "id": "artboard:meta-small",
+      "name": "small <x>&\"'`--> <!-- --!> </script",
+      "width": 400,
+      "height": 300,
+      "source": {
+        "tool": "test",
+        "name": "small <x>&\"'`--> <!-- --!> </script",
+        "width": 400,
+        "height": 300
+      },
+      "layers": [
+        {
+          "id": "artboard:meta-small:layer:text",
+          "name": "text layer <x>&\"'`--> <!-- --!> </script",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "source": { "tool": "test", "name": "text layer" },
+          "elements": [
+            {
+              "type": "text",
+              "id": "el <x>&\"'`--> <!-- --!> </script",
+              "kind": "area",
+              "position": { "x": 10, "y": 10, "width": 300, "height": 40 },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "binding": {
+                "path": "path <x>&\"'`--> <!-- --!> </script",
+                "allowHtml": true
+              },
+              "paragraphs": [
+                {
+                  "text": "run <x>&\"'`--> <!-- --!> </script and more",
+                  "alignment": "left",
+                  "leading": 18,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "run <x>&\"'`--> <!-- --!> </script",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": { "r": 0, "g": 0, "b": 0 },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    },
+                    {
+                      "text": " and more",
+                      "fontName": "Arial-BoldMT",
+                      "fontSize": 14,
+                      "color": { "r": 200, "g": 0, "b": 0 },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0,
+                      "hyperlink": {
+                        "href": "https://example.com/?a=1&b=<x>\"'`--></script",
+                        "target": "_blank <x>&\"'`"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "text": "",
+                  "alignment": "left",
+                  "leading": 18,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "",
+                      "fontName": "ArialMT",
+                      "fontSize": 14,
+                      "color": { "r": 0, "g": 0, "b": 0 },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "snippet",
+              "key": "snip <x>&\"'`--> <!-- --!> </script",
+              "position": { "x": 10, "y": 60, "width": 200, "height": 100 }
+            },
+            {
+              "type": "rawHtml",
+              "content": "<span data-raw=\"kept-verbatim\">raw & <b>unescaped</b></span>"
+            }
+          ]
+        },
+        {
+          "id": "artboard:meta-small:layer:markers",
+          "name": "markers <x>&\"'`--> <!-- --!> </script",
+          "type": "symbol",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "source": { "tool": "test", "name": "markers" },
+          "elements": [
+            {
+              "type": "shape",
+              "shapeType": "circle",
+              "id": "shape <x>&\"'`--> <!-- --!> </script",
+              "position": { "x": 40, "y": 40, "width": 20, "height": 20 },
+              "fill": { "r": 255, "g": 0, "b": 0 },
+              "opacity": 80
+            }
+          ]
+        },
+        {
+          "id": "artboard:meta-small:layer:overlay",
+          "name": "overlay <x>&\"'`",
+          "type": "png",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 60,
+          "source": { "tool": "test", "name": "overlay" },
+          "elements": []
+        },
+        {
+          "id": "artboard:meta-small:layer:vector",
+          "name": "vector <x>&\"'`",
+          "type": "svg",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "source": { "tool": "test", "name": "vector" },
+          "elements": []
+        },
+        {
+          "id": "artboard:meta-small:layer:clip",
+          "name": "clip <x>&\"'`",
+          "type": "video",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "source": { "tool": "test", "name": "clip" },
+          "elements": [
+            {
+              "type": "video",
+              "url": "https://example.com/clip.mp4?a=1&b=<x>\"'`--></script"
+            }
+          ]
+        },
+        {
+          "id": "artboard:meta-small:layer:ai2html-html-before",
+          "name": "ai2html-html-before",
+          "type": "html-before",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "source": { "tool": "test", "name": "ai2html-html-before" },
+          "elements": [
+            {
+              "type": "rawHtml",
+              "content": "<aside data-hook=\"before\">hook & <em>raw</em></aside>"
+            }
+          ]
+        },
+        {
+          "id": "artboard:meta-small:layer:ai2html-html-after",
+          "name": "ai2html-html-after",
+          "type": "html-after",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "source": { "tool": "test", "name": "ai2html-html-after" },
+          "elements": [
+            {
+              "type": "rawHtml",
+              "content": "<aside data-hook=\"after\">hook & <em>raw</em></aside>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "artboard:meta-large",
+      "name": "large <x>&\"'`--> <!-- --!> </script",
+      "width": 900,
+      "height": 500,
+      "source": {
+        "tool": "test",
+        "name": "large <x>&\"'`--> <!-- --!> </script",
+        "width": 900,
+        "height": 500
+      },
+      "layers": [
+        {
+          "id": "artboard:meta-large:layer:text",
+          "name": "text layer <x>&\"'`--> <!-- --!> </script",
+          "type": "default",
+          "inlineSvg": false,
+          "visible": true,
+          "opacity": 100,
+          "source": { "tool": "test", "name": "text layer" },
+          "elements": [
+            {
+              "type": "text",
+              "id": "el2 <x>&\"'`--> <!-- --!> </script",
+              "kind": "point",
+              "position": { "x": 20, "y": 20, "width": 400, "height": 30 },
+              "opacity": 100,
+              "valign": "top",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "second <x>&\"'`--> <!-- --!> </script",
+                  "alignment": "center",
+                  "leading": 20,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "second <x>&\"'`--> <!-- --!> </script",
+                      "fontName": "ArialMT",
+                      "fontSize": 16,
+                      "color": { "r": 10, "g": 10, "b": 10 },
+                      "capitalization": "normal",
+                      "baselineShift": "normal",
+                      "letterSpacing": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customBlocks": [
+    {
+      "type": "css",
+      "content": ".custom { content: \"&<>\"; }\na{}</style><img src=x onerror=alert(1)>\n/* <!-- --> */"
+    },
+    {
+      "type": "js",
+      "content": "var payload = \"</script><img src=x onerror=alert(1)>\"; var swallow = '<!--<script>'; console.log(payload, swallow);"
+    },
+    {
+      "type": "html-before",
+      "content": "<div class=\"promo\">before & <b>raw</b></div>"
+    },
+    {
+      "type": "html-after",
+      "content": "<footer>after & <b>raw</b></footer>"
+    }
+  ],
+  "assets": {
+    "bg-small": {
+      "id": "bg-small",
+      "path": "bg small <x>&\"'`--> <!-- --!> </script.png",
+      "mimeType": "image/png",
+      "width": 400,
+      "height": 300,
+      "exportParams": { "format": "png", "scale": 1, "transparent": false },
+      "artboardId": "artboard:meta-small"
+    },
+    "bg-large": {
+      "id": "bg-large",
+      "path": "bg large <x>&\"'`.png",
+      "mimeType": "image/png",
+      "width": 900,
+      "height": 500,
+      "exportParams": { "format": "png", "scale": 1, "transparent": false },
+      "artboardId": "artboard:meta-large"
+    },
+    "overlay-png": {
+      "id": "overlay-png",
+      "path": "overlay <x>&\"'`--></script.png",
+      "mimeType": "image/png",
+      "width": 400,
+      "height": 300,
+      "exportParams": { "format": "png", "scale": 1, "transparent": true },
+      "artboardId": "artboard:meta-small",
+      "layerId": "artboard:meta-small:layer:overlay"
+    },
+    "vector-svg": {
+      "id": "vector-svg",
+      "path": "vector <x>&\"'`--></script.svg",
+      "mimeType": "image/svg+xml",
+      "width": 400,
+      "height": 300,
+      "exportParams": { "format": "svg", "scale": 1, "transparent": true },
+      "artboardId": "artboard:meta-small",
+      "layerId": "artboard:meta-small:layer:vector"
+    }
+  },
+  "metadata": {
+    "slug": "escaping <x>&\"'`--> <!-- --!> </script",
+    "lang": "en-US <x>&\"'`",
+    "headline": "headline <x>&\"'`--> <!-- --!> </script",
+    "altText": "alt <x>&\"'`--> <!-- --!> </script",
+    "imageAltText": "image alt <x>&\"'`--> <!-- --!> </script",
+    "ariaRole": "role <x>&\"'`--> <!-- --!> </script"
+  }
+}
