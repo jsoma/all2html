@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { applyTemplate } from "../core/template.js";
+import { applyTemplate, rawTemplateValue, type TemplateValue } from "../core/template.js";
 import { createWarning, type StructuredWarning, warningMessages } from "../core/warnings.js";
 import type { EmitterReadyDocument } from "../ir/types.js";
 import { emitHTML } from "./html.js";
@@ -32,16 +32,20 @@ export function emitStandalone(
       const templatePath = resolve(settings.localPreviewTemplate);
       const template = readFileSync(templatePath, "utf-8");
 
-      // Build replacements from settings + metadata
-      const replacements: Record<string, string> = {};
+      // Build replacements from settings + metadata. These are user text — a
+      // headline, a credit line — and land in an arbitrary position in someone
+      // else's template, so they go in raw and `applyTemplate` escapes them.
+      // The emitted fragment is the one value that IS markup, so it is the one
+      // value marked raw.
+      const replacements: Record<string, TemplateValue> = {};
       for (const [key, value] of Object.entries(settings)) {
         if (typeof value === "string") replacements[key] = value;
       }
       for (const [key, value] of Object.entries(doc.metadata)) {
         if (typeof value === "string") replacements[key] = value;
       }
-      replacements.ai2htmlPartial = fragment;
-      replacements.all2htmlPartial = fragment;
+      replacements.ai2htmlPartial = rawTemplateValue(fragment);
+      replacements.all2htmlPartial = rawTemplateValue(fragment);
 
       const html = applyTemplate(template, replacements);
       return { html, warnings: warningMessages(warnings), structuredWarnings: warnings };

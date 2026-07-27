@@ -1,5 +1,7 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 import { processDocument } from "../../src/core/pipeline.js";
 import { emitReact } from "../../src/emitters/react.js";
@@ -158,5 +160,70 @@ describe("Standalone emitter", () => {
     doc.metadata.lang = "ja";
     const { html } = emitStandalone(doc);
     expect(html).toContain('<html lang="ja">');
+  });
+});
+
+/**
+ * `localPreviewTemplate` substitutes `doc.metadata` and `doc.settings` strings
+ * into a file on disk. Those values used to be spliced in verbatim, so a
+ * headline carrying markup became live markup in the emitted page — the one
+ * metadata path in the product that did not escape.
+ */
+describe("Standalone emitter: local preview template substitution", () => {
+  const payload = `<img src=x onerror=alert(1)>`;
+
+  function renderWithTemplate(template: string, metadata: Record<string, string>) {
+    const dir = mkdtempSync(join(tmpdir(), "all2html-template-"));
+    const templatePath = join(dir, "preview.html");
+    writeFileSync(templatePath, template, "utf-8");
+    try {
+      const doc = loadAndProcess("single-artboard-basic.json");
+      doc.settings.localPreviewTemplate = templatePath;
+      Object.assign(doc.metadata, metadata);
+      return emitStandalone(doc);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+
+  it("escapes a metadata value into inert text instead of live markup", () => {
+    const { html, structuredWarnings } = renderWithTemplate("<h1>{{headline}}</h1>", {
+      headline: payload,
+    });
+
+    // The template was applied, not silently skipped.
+    expect(structuredWarnings.some((w) => w.code === "emit:template-error")).toBe(false);
+    expect(html).toContain("<h1>&lt;img src=x onerror=alert(1)&gt;</h1>");
+    expect(html).not.toContain(payload);
+
+    const document = new JSDOM(html).window.document;
+    expect(document.querySelector("h1")?.textContent).toBe(payload);
+    expect(document.querySelectorAll("img[onerror]")).toHaveLength(0);
+  });
+
+  it("escapes a metadata value substituted into an attribute", () => {
+    const { html } = renderWithTemplate('<meta name="x" content="{{headline}}">', {
+      headline: `" onload="alert(1)`,
+    });
+    const document = new JSDOM(html).window.document;
+    const meta = document.querySelector('meta[name="x"]');
+    expect(meta?.getAttribute("content")).toBe(`" onload="alert(1)`);
+    expect(meta?.hasAttribute("onload")).toBe(false);
+  });
+
+  it("leaves the emitted HTML fragment raw — the partial is markup, not text", () => {
+    const { html } = renderWithTemplate("<body>{{ai2htmlPartial}}</body>", {});
+    // The fragment reaches the page as markup, and its own escaping is not
+    // applied a second time.
+    expect(html).toContain("Headline Text Here");
+    expect(html).not.toContain("&lt;div");
+    const document = new JSDOM(html).window.document;
+    expect(document.querySelectorAll("[id^='g-']").length).toBeGreaterThan(0);
+  });
+
+  it("renders an ampersand in metadata as itself, not as a double-escaped entity", () => {
+    const { html } = renderWithTemplate("<p>{{credit}}</p>", { credit: "Smith & Sons" });
+    expect(html).toContain("<p>Smith &amp; Sons</p>");
+    expect(new JSDOM(html).window.document.querySelector("p")?.textContent).toBe("Smith & Sons");
   });
 });
