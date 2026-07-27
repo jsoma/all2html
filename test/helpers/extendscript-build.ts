@@ -36,6 +36,14 @@ const ILLUSTRATOR_INPUTS = [
   "scripts/assemble-illustrator.mjs",
 ];
 
+/** Inputs of `build:after-effects` (core bundle + the AE plugin sources). */
+const AFTER_EFFECTS_INPUTS = [
+  ...CORE_INPUTS,
+  "plugins/after-effects",
+  "plugins/illustrator/json2.js",
+  "scripts/package-after-effects.mjs",
+];
+
 const PANEL_INPUTS = [
   ...ILLUSTRATOR_INPUTS,
   "plugins/after-effects",
@@ -52,9 +60,10 @@ const PANEL_INPUTS = [
 const BUILDS: Record<string, { inputs: string[]; alsoRuns: string[] }> = {
   "build:extendscript": { inputs: CORE_INPUTS, alsoRuns: [] },
   "build:illustrator": { inputs: ILLUSTRATOR_INPUTS, alsoRuns: ["build:extendscript"] },
+  "build:after-effects": { inputs: AFTER_EFFECTS_INPUTS, alsoRuns: ["build:extendscript"] },
   "build:panel": {
     inputs: PANEL_INPUTS,
-    alsoRuns: ["build:extendscript", "build:illustrator"],
+    alsoRuns: ["build:extendscript", "build:illustrator", "build:after-effects"],
   },
 };
 
@@ -98,9 +107,21 @@ function sleepSync(ms: number): void {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 
-/** Cross-process mutex so parallel vitest workers do not build the same target. */
-function withBuildLock<T>(name: string, fn: () => T): T {
-  const lockDir = resolve(repoRoot, ".tmp/test-builds", `${name.replace(/[^\w.-]/g, "-")}.lock`);
+/**
+ * Cross-process mutex so parallel vitest workers do not build concurrently.
+ *
+ * **One lock for every target, not one per target.** A per-target lock only
+ * guards workers running the *same* build, and these builds are not
+ * independent: `build:panel` runs `build:illustrator` and `build:after-effects`,
+ * every one of them runs `build:extendscript`, and they all write into the same
+ * `dist/` tree. Two workers taking two different locks would then have one
+ * rewriting `dist/after-effects/all2html-ae.jsx` while the other reads it, which
+ * is a truncated read reported as a size-budget failure — a flake that reads
+ * exactly like a real finding. The serialization costs nothing real: the builds
+ * were already effectively serialized by their shared work.
+ */
+function withBuildLock<T>(fn: () => T): T {
+  const lockDir = resolve(repoRoot, ".tmp/test-builds", "extendscript.lock");
   mkdirSync(resolve(repoRoot, ".tmp/test-builds"), { recursive: true });
 
   const deadline = Date.now() + 5 * 60_000;
@@ -151,7 +172,7 @@ export function ensureFreshArtifact(relativePath: string, build: string): string
   if (previousFailure) throw previousFailure;
 
   try {
-    withBuildLock(build, () => {
+    withBuildLock(() => {
       // Re-checked under the lock: another worker may have just built this, and
       // holding the lock also keeps us from reading a half-written artifact.
       if (!isStale(full, build)) return;

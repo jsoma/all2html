@@ -11,9 +11,13 @@ import { describe, expect, it } from "vitest";
  * attribute position, so replacing it with the narrowed shared `escapeHtml`
  * would have opened a hole. Both browser surfaces now import the pair.
  *
- * One copy legitimately survives: the After Effects exporter is ExtendScript
- * evaluated by the host and cannot import TypeScript. It is allowlisted by
- * path, not by pattern, so a new fork anywhere else fails here.
+ * No copy survives. The last one was `plugins/after-effects/exporter.jsx`,
+ * allowlisted on the grounds that ExtendScript cannot import TypeScript — true
+ * of the *source*, but not of the shipped artifact: `build:after-effects` now
+ * concatenates `dist/extendscript/all2html-ae-core.js` (rolled up from
+ * `src/extendscript/ae-index.ts`) ahead of the exporter, so the exporter calls
+ * the shared `escapeAttr` instead of a local `escapeHtmlAttr`. The allowlist is
+ * down to the module itself, and a re-fork in the AE exporter now fails here.
  */
 const REPO_ROOT = resolve(import.meta.dirname, "../..");
 
@@ -23,11 +27,8 @@ const SCANNED_EXTENSIONS = [".ts", ".tsx", ".js", ".mjs", ".cjs", ".jsx", ".svel
 
 const SKIPPED_DIRECTORY_NAMES = new Set(["node_modules", "dist", "cep", ".vite", "build"]);
 
-/** The only two files allowed to define an HTML escaper. */
-const ALLOWED_DEFINITION_FILES = new Set([
-  "src/emitters/shared/escape.ts",
-  "plugins/after-effects/exporter.jsx",
-]);
+/** The only file allowed to define an HTML escaper. */
+const ALLOWED_DEFINITION_FILES = new Set(["src/emitters/shared/escape.ts"]);
 
 /**
  * `function escapeX(`, `const escapeX =`, `escapeX: function (` and the object
@@ -88,16 +89,28 @@ describe("HTML escaping is single-sourced", () => {
     expect(findEscapeDefinitions()).toEqual([]);
   });
 
-  it("still finds the two allowlisted definitions, so the scan is not vacuous", () => {
+  it("still finds the allowlisted definitions, so the scan is not vacuous", () => {
     const escapeModule = readFileSync(resolve(REPO_ROOT, "src/emitters/shared/escape.ts"), "utf-8");
     expect(escapeModule).toMatch(/export function escapeAttr\(/);
     expect(escapeModule).toMatch(/export function escapeHtml\(/);
+  });
+
+  it("would catch a re-fork in the After Effects exporter", () => {
+    // The file that used to be allowlisted. Asserting the pattern *would* match
+    // it keeps this from becoming a test that passes because the scanner is
+    // broken rather than because the fork is gone.
+    const planted = "  function escapeHtmlAttr(value) {\n    return value;\n  }\n";
+    DEFINITION_PATTERN.lastIndex = 0;
+    expect(DEFINITION_PATTERN.test(planted)).toBe(true);
+    expect(ALLOWED_DEFINITION_FILES.has("plugins/after-effects/exporter.jsx")).toBe(false);
 
     const afterEffects = readFileSync(
       resolve(REPO_ROOT, "plugins/after-effects/exporter.jsx"),
       "utf-8",
     );
-    expect(afterEffects).toMatch(/function escapeHtmlAttr\(/);
+    expect(afterEffects).not.toMatch(/function escapeHtmlAttr\(/);
+    // ...and it uses the shared one instead of quietly dropping the escaping.
+    expect(afterEffects).toMatch(/\.escapeAttr\(/);
   });
 
   it("scans a meaningful number of files", () => {

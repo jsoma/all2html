@@ -25,7 +25,7 @@
  * Not listed, deliberately: `dist/after-effects/all2html-ae.jsx` and the
  * `all2html-after-effects.zip` copy of it are byte-identical to the panel's
  * `jsx/all2html-ae.jsx` (vite copies that exact file), so scanning them again
- * would cost a second pass over 69 KB to assert the same bytes twice.
+ * would cost a second pass over 77 KB to assert the same bytes twice.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -71,9 +71,22 @@ export const ARTIFACTS: Artifact[] = [
     build: "build:panel",
   },
   {
+    label: "core After Effects helper bundle",
+    path: "dist/extendscript/all2html-ae-core.js",
+    polyfilled: true,
+    build: "build:illustrator",
+    // Never evaluated standalone: `build:after-effects` concatenates the json2
+    // string, the player template, this bundle and the exporter into
+    // `dist/after-effects/all2html-ae.jsx`.
+    jsonFromHost: true,
+  },
+  {
     label: "panel After Effects exporter bundle",
     path: "plugins/illustrator/panel/dist/cep/jsx/all2html-ae.jsx",
-    polyfilled: false,
+    // Since the After Effects exporter got the bundle slot (D13), this artifact
+    // concatenates `dist/extendscript/all2html-ae-core.js` ahead of
+    // `exporter.jsx`, and that bundle calls `installPolyfills()` at load.
+    polyfilled: true,
     build: "build:panel",
   },
   {
@@ -117,6 +130,17 @@ export function listFiles(dir: string, extensions: string[]): string[] {
 export const EXTENDSCRIPT_ENTRY = resolve(repoRoot, "src/extendscript/index.ts");
 
 /**
+ * Both bundle entry points. `index.ts` is the Illustrator pipeline;
+ * `ae-index.ts` is the helper-only bundle After Effects loads (D13). Every
+ * module either one reaches is scanned, so an AE-only helper cannot slip past
+ * the guards just because the Illustrator bundle never imports it.
+ */
+export const EXTENDSCRIPT_ENTRIES = [
+  EXTENDSCRIPT_ENTRY,
+  resolve(repoRoot, "src/extendscript/ae-index.ts"),
+];
+
+/**
  * Static import/export specifiers, anchored at statement starts so a specifier
  * quoted inside a doc comment (` * from "./x.js"`) is not mistaken for one.
  * `[^;]` keeps a lazy match from running past the end of its own statement.
@@ -149,9 +173,9 @@ function resolveModule(fromDir: string, specifier: string): string | null {
   return null;
 }
 
-export function collectReachableSources(entry: string): string[] {
+export function collectReachableSources(entries: string | string[]): string[] {
   const seen = new Set<string>();
-  const queue = [entry];
+  const queue = Array.isArray(entries) ? [...entries] : [entries];
   while (queue.length > 0) {
     const file = queue.pop() as string;
     if (seen.has(file)) continue;
@@ -171,7 +195,7 @@ export function collectReachableSources(entry: string): string[] {
   return Array.from(seen).sort();
 }
 
-export const EXTENDSCRIPT_SOURCES = collectReachableSources(EXTENDSCRIPT_ENTRY);
+export const EXTENDSCRIPT_SOURCES = collectReachableSources(EXTENDSCRIPT_ENTRIES);
 
 export interface SourceGroup {
   label: string;
@@ -194,7 +218,9 @@ export const SOURCE_GROUPS: SourceGroup[] = [
   {
     label: "After Effects exporter source",
     files: [resolve(repoRoot, "plugins/after-effects/exporter.jsx")],
-    polyfilled: false,
+    // Assembled after the After Effects helper bundle IIFE, which installs the
+    // polyfills. It was `false` while the exporter loaded nothing at all.
+    polyfilled: true,
   },
   {
     label: "Illustrator exporter source",

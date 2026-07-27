@@ -19,6 +19,27 @@
       : null;
   var ALL2HTML_AUTOMATED = $.global && $.global.ALL2HTML_AUTOMATED ? true : false;
 
+  // The shared ES5 helper bundle, concatenated ahead of this file by
+  // scripts/package-after-effects.mjs (built from src/extendscript/ae-index.ts).
+  // It installs the ES5 polyfills and owns the escaping and Google Fonts
+  // helpers this exporter used to carry hand-copied — see the "No forked
+  // helpers between exporters and core" rule in CLAUDE.md and decision D13.
+  //
+  // This is the helper slot only: the IR pipeline and the capability checker
+  // live in the *other* bundle (dist/extendscript/all2html-core.js) and are
+  // deliberately not loaded here. After Effects still does not construct IR.
+  var CORE = typeof All2HtmlAE !== "undefined" ? All2HtmlAE : null;
+
+  function requireCore() {
+    if (!CORE) {
+      fail(
+        "The all2html core helper bundle is missing. Run 'pnpm build:after-effects' and " +
+          "launch dist/after-effects/all2html-ae.jsx, not plugins/after-effects/exporter.jsx."
+      );
+    }
+    return CORE;
+  }
+
   function logDiagnostic(level, message, detail) {
     try {
       if ($.global && typeof $.global.__ALL2HTML_LOG__ === "function") {
@@ -200,13 +221,6 @@
     return Math.round(value * 10000) / 10000;
   }
 
-  function escapeInlineJson(json) {
-    return String(json)
-      .replace(/<\//g, "<\\/")
-      .replace(/\u2028/g, "\\u2028")
-      .replace(/\u2029/g, "\\u2029");
-  }
-
   // String.replace interprets $-patterns ($$, $&, ...) in the replacement,
   // which corrupts substituted content containing them (e.g. overlay text
   // inside the model JSON). Splice literally instead.
@@ -375,208 +389,36 @@
     return value === "import" || value === "link" ? value : "none";
   }
 
-  function stripWrappingQuotes(value) {
-    var trimmed = String(value || "").replace(/^\s+|\s+$/g, "");
-    if (trimmed.length < 2) return trimmed;
-    var first = trimmed.charAt(0);
-    var last = trimmed.charAt(trimmed.length - 1);
-    if ((first === "'" && last === "'") || (first === '"' && last === '"')) {
-      return trimmed.substring(1, trimmed.length - 1).replace(/\\(["'])/g, "$1");
-    }
-    return trimmed;
-  }
-
-  function getPrimaryCssFamily(cssFamily) {
-    var value = String(cssFamily || "");
-    var quote = "";
-    var start = 0;
-    var i;
-    for (i = 0; i < value.length; i += 1) {
-      var chr = value.charAt(i);
-      if (quote) {
-        if (chr === "\\" && i + 1 < value.length) {
-          i += 1;
-          continue;
-        }
-        if (chr === quote) quote = "";
-        continue;
-      }
-      if (chr === "'" || chr === '"') {
-        quote = chr;
-        continue;
-      }
-      if (chr === ",") {
-        var family = stripWrappingQuotes(value.substring(start, i));
-        if (family && !isSkippedGoogleFontFamily(family)) return family;
-        start = i + 1;
-      }
-    }
-    var lastFamily = stripWrappingQuotes(value.substring(start));
-    return lastFamily && !isSkippedGoogleFontFamily(lastFamily) ? lastFamily : "";
-  }
-
-  function isSkippedGoogleFontFamily(family) {
-    var normalized = String(family || "").replace(/^\s+|\s+$/g, "").toLowerCase();
-    var skipped = [
-      "arial",
-      "arial black",
-      "avenir",
-      "avenir next",
-      "blinkmacsystemfont",
-      "calibri",
-      "cambria",
-      "candara",
-      "comic sans ms",
-      "consolas",
-      "courier",
-      "courier new",
-      "didot",
-      "fantasy",
-      "futura",
-      "garamond",
-      "geneva",
-      "georgia",
-      "gill sans",
-      "helvetica",
-      "helvetica neue",
-      "impact",
-      "menlo",
-      "monaco",
-      "monospace",
-      "optima",
-      "palatino",
-      "sans",
-      "sans-serif",
-      "serif",
-      "system-ui",
-      "tahoma",
-      "times",
-      "times new roman",
-      "trebuchet ms",
-      "ui-monospace",
-      "ui-rounded",
-      "ui-sans-serif",
-      "ui-serif",
-      "verdana",
-      "-apple-system"
-    ];
-    var i;
-    if (!normalized || normalized.indexOf("var(") === 0) return true;
-    for (i = 0; i < skipped.length; i += 1) {
-      if (normalized === skipped[i]) return true;
-    }
-    return false;
-  }
-
-  function normalizeGoogleFontWeight(weight) {
-    var normalized = String(weight || "").replace(/^\s+|\s+$/g, "").toLowerCase();
-    if (!normalized || normalized === "normal" || normalized === "regular") return "400";
-    if (normalized === "bold") return "700";
-    var parsed = parseInt(normalized, 10);
-    if (isNaN(parsed)) return "400";
-    parsed = Math.round(parsed / 100) * 100;
-    if (parsed < 100) parsed = 100;
-    if (parsed > 900) parsed = 900;
-    return String(parsed);
-  }
-
-  function addUnique(values, value) {
-    var i;
-    for (i = 0; i < values.length; i += 1) {
-      if (values[i] === value) return;
-    }
-    values.push(value);
-  }
-
-  function findGoogleFontRequest(requests, family) {
-    var i;
-    for (i = 0; i < requests.length; i += 1) {
-      if (requests[i].family === family) return requests[i];
-    }
-    return null;
-  }
-
-  function compareWeights(a, b) {
-    return parseInt(a, 10) - parseInt(b, 10);
-  }
-
-  function encodeGoogleFontFamily(family) {
-    return encodeURIComponent(family).replace(/%20/g, "+");
-  }
-
-  function buildGoogleFontsUrl(fontMappings) {
-    var requests = [];
-    var i;
-
-    for (i = 0; i < fontMappings.length; i += 1) {
-      var family = getPrimaryCssFamily(fontMappings[i].family);
-      if (!family) continue;
-
-      var request = findGoogleFontRequest(requests, family);
-      if (!request) {
-        request = { family: family, normalWeights: [], italicWeights: [] };
-        requests.push(request);
-      }
-
-      var weight = normalizeGoogleFontWeight(fontMappings[i].weight);
-      if (/italic|oblique/i.test(String(fontMappings[i].style || ""))) {
-        addUnique(request.italicWeights, weight);
-      } else {
-        addUnique(request.normalWeights, weight);
-      }
-    }
-
-    if (requests.length === 0) return "";
-
-    var params = [];
-    for (i = 0; i < requests.length; i += 1) {
-      var r = requests[i];
-      r.normalWeights.sort(compareWeights);
-      r.italicWeights.sort(compareWeights);
-      var familyParam = "family=" + encodeGoogleFontFamily(r.family);
-      if (r.italicWeights.length === 0) {
-        var normalWeights = r.normalWeights.length > 0 ? r.normalWeights : ["400"];
-        familyParam += ":wght@" + normalWeights.join(";");
-      } else {
-        var pairs = [];
-        var j;
-        for (j = 0; j < r.normalWeights.length; j += 1) {
-          pairs.push("0," + r.normalWeights[j]);
-        }
-        for (j = 0; j < r.italicWeights.length; j += 1) {
-          pairs.push("1," + r.italicWeights[j]);
-        }
-        familyParam += ":ital,wght@" + pairs.join(";");
-      }
-      params.push(familyParam);
-    }
-    params.push("display=swap");
-    return "https://fonts.googleapis.com/css2?" + params.join("&");
-  }
-
-  function escapeHtmlAttr(value) {
-    return String(value || "")
-      .replace(/&/g, "&amp;")
-      .replace(/"/g, "&quot;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
-
+  // Google Fonts URL building, family parsing, weight normalization and the
+  // attribute escaper all live in the shared bundle now
+  // (src/emitters/shared/google-fonts.ts + escape.ts, re-exported through
+  // src/extendscript/ae-index.ts). ~185 lines of hand-copied ES5 were deleted
+  // here; only the markup shape below is After Effects-specific, because the
+  // player template still carries the data-all2html-google-fonts marker the
+  // static emitters dropped and joins the tags with newlines.
   function buildGoogleFontMarkup(mode, fontMappings) {
-    var url = mode === "none" ? "" : buildGoogleFontsUrl(fontMappings || []);
+    var core = requireCore();
+    var url = mode === "none" ? "" : core.googleFontsUrl(fontMappings || []);
     if (!url) return { links: "", importCss: "" };
     if (mode === "import") {
       return { links: "", importCss: '@import url("' + url + '");' };
     }
-    return {
-      links:
-        '<link data-all2html-google-fonts="true" rel="preconnect" href="https://fonts.googleapis.com">\n' +
-        '<link data-all2html-google-fonts="true" rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
-        '<link data-all2html-google-fonts="true" rel="stylesheet" href="' +
-        escapeHtmlAttr(url) +
-        '">',
-      importCss: ""
-    };
+
+    var tags = core.googleFontsLinkTags(fontMappings || []);
+    var rendered = [];
+    var i;
+    for (i = 0; i < tags.length; i += 1) {
+      rendered.push(
+        '<link data-all2html-google-fonts="true" rel="' +
+          tags[i].rel +
+          '" href="' +
+          core.escapeAttr(tags[i].href) +
+          '"' +
+          (tags[i].crossorigin ? " crossorigin" : "") +
+          ">"
+      );
+    }
+    return { links: rendered.join("\n"), importCss: "" };
   }
 
   function findFontMapping(fontMappings, sourceFont) {
@@ -1033,7 +875,7 @@
 
   function buildHtml(templatePath, model, googleFontsMode, fontMappings) {
     var template = EMBEDDED_PLAYER_TEMPLATE || readFile(templatePath);
-    var json = escapeInlineJson(JSON.stringify(model, null, 2));
+    var json = requireCore().escapeInlineJson(JSON.stringify(model, null, 2));
     var fontMarkup = buildGoogleFontMarkup(googleFontsMode, fontMappings || []);
     var hasLinkPlaceholder = template.indexOf("__GOOGLE_FONT_LINKS__") !== -1;
     var hasImportPlaceholder = template.indexOf("__GOOGLE_FONT_IMPORT__") !== -1;

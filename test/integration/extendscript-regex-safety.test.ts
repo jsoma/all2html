@@ -96,9 +96,23 @@ const ALLOWED: Record<string, string> = {
   "(?:^|:|,)(?:\\s*\\[)+": "json2.js JSON.parse guard; runs only over small tool-authored config",
 };
 
+/**
+ * `minSources` is a floor proving the extractor still finds patterns in this
+ * artifact at all — a silent extractor regression would otherwise turn the
+ * whole guard green. It is per-artifact because the After Effects helper bundle
+ * is one twentieth the size of the pipeline and legitimately carries far fewer.
+ */
 const ARTIFACTS = [
-  { path: "dist/extendscript/all2html-core.js", build: "build:extendscript" },
-  { path: "dist/all2html.js", build: "build:illustrator" },
+  { path: "dist/extendscript/all2html-core.js", build: "build:extendscript", minSources: 10 },
+  { path: "dist/all2html.js", build: "build:illustrator", minSources: 10 },
+  // The helper bundle After Effects loads (D13). Its modules are a subset of
+  // the core bundle's today, but it is a separate rollup entry point and there
+  // is no rule keeping it that way.
+  {
+    path: "dist/extendscript/all2html-ae-core.js",
+    build: "build:extendscript",
+    minSources: 5,
+  },
 ];
 
 describe("ExtendScript regex safety", () => {
@@ -122,7 +136,7 @@ describe("ExtendScript regex safety", () => {
     it(`${artifact.path} contains no nested-quantifier regex`, () => {
       const code = readFileSync(ensureFreshArtifact(artifact.path, artifact.build), "utf8");
       const sources = [...extractRegexLiterals(code), ...extractRegExpConstructorArgs(code)];
-      expect(sources.length).toBeGreaterThan(10); // the extractor still works
+      expect(sources.length).toBeGreaterThanOrEqual(artifact.minSources); // extractor still works
 
       const offenders = [...new Set(sources.filter(hasNestedQuantifier))].filter(
         (source) => !(source in ALLOWED),
