@@ -273,17 +273,22 @@ export const illustratorCapabilities: SurfaceCapabilities = {
       status: "unsupported",
       note: "Illustrator always writes image files.",
     },
-    // The exporter writes every image flat, next to the HTML, and never creates
-    // an imageOutputPath subfolder. processAndEmit forces the resolved value to
-    // "" before emit — after this check runs — so <img src> matches where the
-    // files actually land; without that override every live export shipped src
-    // prefixes pointing at a folder that does not exist (caught by CI's visual
-    // lane loading the refreshed fixture pages). Deliberately no
-    // divergesAtDefault: at the default the override makes the output
-    // self-consistent, so only an explicitly requested custom path warns.
+    // `exporter.jsx:1803-1806` computes ONE output directory —
+    // `docPath + (html_output_path || image_output_path || "all2html-output/")`
+    // — and writes the HTML and every image into it. So this setting does move
+    // where the images land, but only when `htmlOutputPath` is unset (that one
+    // wins), and it moves the HTML with them: there is no separate image
+    // folder, and the emitted `src` is always a bare filename
+    // (`assetBase: ""` in `src/extendscript/index.ts`).
+    //
+    // Deliberately no `divergesAtDefault`: at the default the requested
+    // directory is exactly the directory the exporter writes, so an untouched
+    // setting stays silent. Deliberately still `partial`: a user who sets it to
+    // something other than `htmlOutputPath` is asking for two directories and
+    // will get one.
     imageOutputPath: {
       status: "partial",
-      note: "Illustrator writes images next to the HTML and does not create a custom image folder, so the emitted src stays flat. Use imageSourcePath if your CMS serves assets from elsewhere.",
+      note: "Illustrator writes the HTML and its images into a single output directory, and htmlOutputPath takes precedence when set. This value can move that one directory, but it never creates a separate image folder, so the emitted src is always a bare filename. Use imageSourcePath if your CMS serves the images from a different URL.",
     },
     // D10 is retired: `src/extendscript/index.ts` imports `groupArtboards` and
     // emits one file per group, and `exporter.jsx` writes each one. No `output`
@@ -435,9 +440,9 @@ export const figmaCapabilities: SurfaceCapabilities = {
     // Matrix footnote 7 is retired: `imageOutputPath` used to move the <img src>
     // prefix without moving the ZIP layout, so any non-default value produced
     // HTML that pointed outside its own bundle. `plugins/figma/src/export.ts`
-    // now passes `assetRoot: document.settings.imageOutputPath || ""` into
-    // `createOutputBundle`, so the emitted `src` and the ZIP entry are built
-    // from the same value. No entry — Figma's `defaultStatus` is "honored".
+    // now reads it once and hands it to both sides — `withAssetBase()` for the
+    // emitted `src`, `assetRoot` for the ZIP entry — so the two are built from
+    // the same value. No entry — Figma's `defaultStatus` is "honored".
     // D13 — runtime-extract.ts:191 hardcodes renderAs:"html".
     renderTextAs: {
       status: "unsupported",

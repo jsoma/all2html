@@ -361,7 +361,12 @@ describe("declarations match what the code actually does", () => {
     // outside its own ZIP. Both halves are asserted — the wiring and the absence
     // of a declaration — because either could go stale without the other.
     const exportSource = readFileSync(join(repoRoot, "plugins/figma/src/export.ts"), "utf-8");
-    expect(exportSource).toContain("assetRoot: document.settings.imageOutputPath");
+    // One read, two applications: `assetBase` puts it in the emitted `src`,
+    // `assetRoot` puts it in the ZIP layout. Both have to come from this value
+    // or the HTML references entries the ZIP does not contain.
+    expect(exportSource).toContain('const assetRoot = document.settings.imageOutputPath || ""');
+    expect(exportSource).toContain("withAssetBase(options.emit, assetRoot)");
+    expect(exportSource).toContain("assetRoot,");
     expect(getSurfaceCapabilities("figma").settings.imageOutputPath).toBeUndefined();
     expect(
       checkCapabilitiesForSurface(settingsWith("imageOutputPath", "assets/"), {

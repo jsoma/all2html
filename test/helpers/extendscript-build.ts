@@ -210,11 +210,23 @@ export function buildArtifacts(): void {
     if (!isStale(resolve(repoRoot, artifact), build)) continue;
     if (needed.indexOf(build) === -1) needed.push(build);
   }
-  // `build:panel` subsumes the bundle builds; running both would rebuild twice.
-  // `build` is never subsumed and must lead, because it clears `dist/`.
-  const bundles = needed.filter((name) => name !== "build");
-  const collapsed = bundles.indexOf("build:panel") === -1 ? bundles : ["build:panel"];
-  const order = needed.indexOf("build") === -1 ? collapsed : ["build", ...collapsed];
+  const runsBuild = needed.indexOf("build") !== -1;
+
+  // `build` clears `dist/`, so staleness computed before it ran is void for
+  // everything downstream: a fresh `dist/all2html.js` is deleted by it and must
+  // be rebuilt regardless of what the pre-scan concluded. Manually running
+  // `pnpm build:illustrator` and then `pnpm test` hit exactly that — three
+  // tests failed with "does not exist" on an artifact that existed when the
+  // scan ran. So when `build` participates, every bundle build follows it.
+  const bundles = runsBuild
+    ? SUITE_ARTIFACTS.map((entry) => entry.build).filter((name) => name !== "build")
+    : needed;
+
+  // `build:panel` subsumes the other bundle builds; running both rebuilds twice.
+  const unique: string[] = [];
+  for (const name of bundles) if (unique.indexOf(name) === -1) unique.push(name);
+  const collapsed = unique.indexOf("build:panel") === -1 ? unique : ["build:panel"];
+  const order = runsBuild ? ["build", ...collapsed] : collapsed;
   for (const build of order) runBuild(build);
 }
 

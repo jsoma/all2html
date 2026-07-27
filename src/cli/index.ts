@@ -9,7 +9,7 @@ import { processDocument } from "../core/pipeline.js";
 import { formatGroupedWarnings, groupWarnings, type StructuredWarning } from "../core/warnings.js";
 import type { EmitResult } from "../emitters/registry.js";
 import { formatDictatedExtension, getAvailableFormats, getEmitter } from "../emitters/registry.js";
-import type { EmitterConfig } from "../emitters/types.js";
+import { type EmitterConfig, withAssetBase } from "../emitters/types.js";
 import { getImporter } from "../importers/registry.js";
 import { loadSVGImportFiles } from "../importers/svg/node.js";
 import type { EmitterReadyDocument } from "../ir/types.js";
@@ -45,7 +45,17 @@ function emitAndWrite(
   emitterConfig?: EmitterConfig,
 ): EmitResult {
   const emitter = getEmitter(format);
-  const result = emitter.emitAll(doc, groups, emitterConfig);
+  // Where this command puts the assets relative to the files it writes. Every
+  // CLI command writes the emitted files at the root of `-o` and — on `import`,
+  // via `createOutputBundle({ assetRoot })` — the assets under
+  // `imageOutputPath`, so that directory is the path from one to the other.
+  // `render` and `watch` copy no assets at all; they state the same layout so a
+  // rendered page and an imported bundle reference an image the same way.
+  const result = emitter.emitAll(
+    doc,
+    groups,
+    withAssetBase(emitterConfig, doc.settings.imageOutputPath || ""),
+  );
   reportWarnings(result.structuredWarnings);
   const absOutputDir = resolve(outputDir);
   for (const file of result.files) {

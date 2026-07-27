@@ -4,6 +4,7 @@ import { exportExtractedFrames, summarizeSelection } from "../../plugins/figma/s
 import type { ExtractedFrame, SelectionNodeLike } from "../../plugins/figma/src/types.js";
 import { processDocument } from "../../src/core/pipeline.js";
 import { getEmitter } from "../../src/emitters/registry.js";
+import { withAssetBase } from "../../src/emitters/types.js";
 import { loadAndValidateIR } from "../../src/ir/validate.js";
 
 function makeFrame(overrides: Partial<ExtractedFrame> = {}): ExtractedFrame {
@@ -123,7 +124,14 @@ describe("Figma canonical plugin pipeline", () => {
     expect(groups).toHaveLength(1);
     expect(groups[0].artboards).toHaveLength(2);
 
-    const htmlResult = getEmitter("html").emitAll(document, groups);
+    // The Figma surface's layout, stated the way `plugins/figma/src/export.ts`
+    // states it: emitted files at the ZIP root, assets under `imageOutputPath`,
+    // one value handed to both the emitters and the bundle.
+    const htmlResult = getEmitter("html").emitAll(
+      document,
+      groups,
+      withAssetBase(undefined, document.settings.imageOutputPath || ""),
+    );
     expect(htmlResult.files).toHaveLength(1);
     expect(htmlResult.files[0].output).toContain("Figma pipeline test");
     expect(htmlResult.files[0].output).toContain("https://example.com");

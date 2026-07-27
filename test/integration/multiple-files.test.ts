@@ -244,8 +244,11 @@ describe("duplicate artboard names resolve by stable id", () => {
     const { document: doc } = processDocument(raw);
     const { html } = emitHTML(doc);
 
-    expect(html).toContain('src="all2html-output/card-640.png"');
-    expect(html).toContain('src="all2html-output/card-960.png"');
+    // Bare filenames: no surface stated an `assetBase`, so the emitted file and
+    // its images are siblings. The prefix is a layout fact the surface supplies
+    // (`withAssetBase`), not something the emitter infers from `imageOutputPath`.
+    expect(html).toContain('src="card-640.png"');
+    expect(html).toContain('src="card-960.png"');
   });
 
   it("scopes a grouped emit to the requested artboard id", () => {
@@ -271,6 +274,6 @@ describe("duplicate artboard names resolve by stable id", () => {
 
     const { html } = emitHTML(doc, { artboards: [second], slug: "second-card" });
     expect(html).not.toContain("first.png");
-    expect(html).toContain('src="all2html-output/second.png"');
+    expect(html).toContain('src="second.png"');
   });
 });

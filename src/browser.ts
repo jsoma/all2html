@@ -11,7 +11,7 @@ import {
   formatDictatedExtension,
 } from "./emitters/registry-shared.js";
 import { emitStandaloneBrowserGroup } from "./emitters/standalone-browser.js";
-import type { EmitterConfig } from "./emitters/types.js";
+import { type ResolvedEmitterConfig, withAssetBase } from "./emitters/types.js";
 import { loadSVGImportFilesFromBrowser } from "./importers/svg/browser.js";
 import {
   importSVGFilesWithRasterizer,
@@ -64,7 +64,7 @@ export interface BrowserEmitterDescriptor {
   emitAll: (
     doc: EmitterReadyDocument,
     groups: ArtboardGroup[],
-    emitterConfig?: EmitterConfig,
+    emitterConfig?: ResolvedEmitterConfig,
   ) => EmitResult;
 }
 
@@ -141,10 +141,15 @@ export async function convertLoadedSvgFilesInBrowser(
       formatExtension: formatDictatedExtension(options.format, emitterConfig),
     },
   });
+  // `createOutputBundle` puts the emitted files at the bundle root and every
+  // asset at `assetRoot + asset.path`, so the path from an emitted file to an
+  // asset *is* `assetRoot`. One value, read once, handed to both sides — the
+  // emitted `src` and the bundle layout cannot disagree.
+  const assetRoot = processed.document.settings.imageOutputPath || "";
   const emitResult = emitter(options.format).emitAll(
     processed.document,
     processed.groups,
-    emitterConfig,
+    withAssetBase(emitterConfig, assetRoot),
   );
   if (emitResult.files.length === 0) {
     throw new Error(`No ${options.formatLabel ?? options.format} files were emitted.`);
@@ -154,7 +159,7 @@ export async function convertLoadedSvgFilesInBrowser(
     irDocument: imported.document,
     emittedFiles: emitResult.files,
     assetFiles: imported.assetFiles,
-    assetRoot: processed.document.settings.imageOutputPath || "",
+    assetRoot,
     emittedFormat: options.format,
     warnings: [...imported.warnings, ...renderWarnings],
   });

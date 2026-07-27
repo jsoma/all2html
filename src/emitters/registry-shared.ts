@@ -6,7 +6,7 @@ import { emitHTML } from "./html.js";
 import type { EmitGroupOptions } from "./html-tree.js";
 import { emitReact } from "./react.js";
 import { emitSvelte } from "./svelte.js";
-import type { EmitterConfig, EmitterOptions } from "./types.js";
+import type { EmitterOptions, ResolvedEmitterConfig } from "./types.js";
 
 export interface EmitFile {
   slug: string;
@@ -26,7 +26,7 @@ export interface SharedEmitterDescriptor {
   emitAll: (
     doc: EmitterReadyDocument,
     groups: ArtboardGroup[],
-    emitterConfig?: EmitterConfig,
+    emitterConfig?: ResolvedEmitterConfig,
   ) => EmitResult;
 }
 
@@ -118,7 +118,7 @@ const SVELTE_EXTENSION = ".svelte";
 const STANDALONE_EXTENSION = ".html";
 
 /** The single statement of the react rule; `formatDictatedExtension` reuses it. */
-function reactOutputExtension(emitterConfig?: EmitterConfig): string {
+function reactOutputExtension(emitterConfig?: ResolvedEmitterConfig): string {
   return emitterConfig?.react?.typescript ? ".tsx" : ".jsx";
 }
 
@@ -135,7 +135,7 @@ function reactOutputExtension(emitterConfig?: EmitterConfig): string {
  */
 export function formatDictatedExtension(
   format: string,
-  emitterConfig?: EmitterConfig,
+  emitterConfig?: ResolvedEmitterConfig,
 ): string | undefined {
   if (format === "svelte") return SVELTE_EXTENSION;
   if (format === "react") return reactOutputExtension(emitterConfig);

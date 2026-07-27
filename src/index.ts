@@ -27,8 +27,14 @@ export type {
   EmitterConfig,
   EmitterOptions,
   ReactEmitterOptions,
+  ResolvedEmitterConfig,
   SvelteEmitterOptions,
 } from "./emitters/types.js";
+// The surface's asset layout, stamped onto every format's options. Exported
+// because `EmitterDescriptor.emitAll` above names `ResolvedEmitterConfig`: a
+// consumer driving the emitters has to be able to state where it puts the
+// files, and it is not a value any user config can supply.
+export { withAssetBase } from "./emitters/types.js";
 export { getAvailableImporters, getImporter, registerImporter } from "./importers/registry.js";
 export { loadSVGImportFilesFromBrowser } from "./importers/svg/browser.js";
 export {

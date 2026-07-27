@@ -229,6 +229,7 @@ function renderArtboard(
   slug: string,
   assetIdx: ScopedAssetIndex,
   cssVarImages: boolean,
+  assetBase: string,
   warnings: StructuredWarning[],
   tally: RenderTally,
 ): HtmlNode {
@@ -287,7 +288,7 @@ function renderArtboard(
         ["id", abId + "-img"],
         ["class", ns + "aiImg"],
         ["alt", doc.metadata.imageAltText || ""],
-        ["src", resolveAssetPath(bgAsset, settings)],
+        ["src", resolveAssetPath(bgAsset, settings, assetBase)],
       ];
       if (settings.useLazyLoader) {
         imgAttrs.push(["loading", "lazy"]);
@@ -314,7 +315,7 @@ function renderArtboard(
             el("img", [
               ["class", ns + "aiImg"],
               ["alt", ""],
-              ["src", resolveAssetPath(pngAsset, settings)],
+              ["src", resolveAssetPath(pngAsset, settings, assetBase)],
               [
                 "style",
                 layer.opacity < 100 ? "opacity:" + (layer.opacity / 100).toFixed(2) : undefined,
@@ -336,7 +337,7 @@ function renderArtboard(
               el("img", [
                 ["class", ns + "aiImg"],
                 ["alt", ""],
-                ["src", resolveAssetPath(svgAsset, settings)],
+                ["src", resolveAssetPath(svgAsset, settings, assetBase)],
                 [
                   "style",
                   layer.opacity < 100 ? "opacity:" + (layer.opacity / 100).toFixed(2) : undefined,
@@ -451,6 +452,11 @@ export function buildHTMLTree(
   const tally: RenderTally = { lazyVideos: 0 };
   const resolvedDoc = applyEmitterOptions(doc, options);
   const settings = resolvedDoc.settings;
+  // Where this surface puts the assets relative to the file being emitted. A
+  // layout fact the surface states (`withAssetBase`); absent it, the emitted
+  // file and its images are siblings, which is what a bare relative reference
+  // means anyway.
+  const assetBase = options?.assetBase || "";
   const ns = settings.namespace;
   const slug = groupOptions?.slug || settings.projectName || resolvedDoc.metadata.slug;
   const containerId = ns + slug + "-box";
@@ -520,7 +526,7 @@ export function buildHTMLTree(
       if (bgAsset) {
         const keyword = makeArtboardKey(ab, scopedDoc.artboards);
         varParts.push(
-          "--" + keyword + "-img:" + toCssUrlValue(resolveAssetPath(bgAsset, settings)),
+          "--" + keyword + "-img:" + toCssUrlValue(resolveAssetPath(bgAsset, settings, assetBase)),
         );
       }
     }
@@ -578,7 +584,9 @@ export function buildHTMLTree(
   );
   for (const ab of sortedAbs) {
     target.push(comment("Artboard: " + ab.name));
-    target.push(renderArtboard(ab, scopedDoc, ns, slug, assetIdx, cssVarMode, warnings, tally));
+    target.push(
+      renderArtboard(ab, scopedDoc, ns, slug, assetIdx, cssVarMode, assetBase, warnings, tally),
+    );
   }
 
   // Custom HTML after

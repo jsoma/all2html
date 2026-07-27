@@ -291,7 +291,7 @@ Honored on: Illustrator.
 
 Folder where exported image assets are written.
 
-This is usually the same as the HTML output folder, but can differ if your build or CMS wants images in a separate location.
+Illustrator writes the HTML and its images into one folder, and HTML path wins when both are set — so this can move that folder, but it cannot put the images somewhere separate. To point the markup at a different location than the files were written to, use Image src prefix.
 
 Keep it aligned with HTML path unless you have a specific asset pipeline.
 
@@ -299,7 +299,7 @@ Honored on: Figma plugin, all2html CLI, Browser converter.
 
 | Surface | Support | What actually happens |
 |---|---|---|
-| Illustrator | partial | Illustrator writes images next to the HTML and does not create a custom image folder, so the emitted src stays flat. Use imageSourcePath if your CMS serves assets from elsewhere. |
+| Illustrator | partial | Illustrator writes the HTML and its images into a single output directory, and htmlOutputPath takes precedence when set. This value can move that one directory, but it never creates a separate image folder, so the emitted src is always a bare filename. Use imageSourcePath if your CMS serves the images from a different URL. |
 | After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
 
 <a id="imageSourcePath"></a>

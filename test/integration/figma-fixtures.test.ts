@@ -6,8 +6,30 @@ import { exportExtractedFrames } from "../../plugins/figma/src/main.js";
 import type { ExtractedFrame } from "../../plugins/figma/src/types.js";
 import { processDocument } from "../../src/core/pipeline.js";
 import { getEmitter } from "../../src/emitters/registry.js";
+import type { EmitterConfig } from "../../src/emitters/types.js";
+import { withAssetBase } from "../../src/emitters/types.js";
 
 const fixtureDir = resolve(import.meta.dirname, "../fixtures/figma");
+
+/**
+ * Emit the way the Figma surface does. `plugins/figma/src/export.ts` states one
+ * asset layout — the emitted files sit at the ZIP root, the assets under
+ * `imageOutputPath` — and hands the same value to the emitters (`assetBase`)
+ * and to `createOutputBundle` (`assetRoot`). Calling `emitAll` bare here would
+ * test an emitter nobody runs; `src` would be a bare filename while the ZIP
+ * puts the file in a subdirectory.
+ */
+function emitFigmaHtml(
+  document: Parameters<ReturnType<typeof getEmitter>["emitAll"]>[0],
+  groups: Parameters<ReturnType<typeof getEmitter>["emitAll"]>[1],
+  emit?: EmitterConfig,
+) {
+  return getEmitter("html").emitAll(
+    document,
+    groups,
+    withAssetBase(emit, document.settings.imageOutputPath || ""),
+  );
+}
 
 function loadFrames(name: string): ExtractedFrame[] {
   return JSON.parse(readFileSync(resolve(fixtureDir, name), "utf-8"));
@@ -62,7 +84,7 @@ describe("Figma extracted-frame fixtures", () => {
   it("processes the single-frame fixture", () => {
     const doc = buildDocument(loadFrames("single-frame.json"), { slug: "figma-single" });
     const { document, groups } = processDocument(doc);
-    const result = getEmitter("html").emitAll(document, groups);
+    const result = emitFigmaHtml(document, groups);
 
     expect(result.files).toHaveLength(1);
     expect(result.files[0].output).toContain("Single frame fixture");
@@ -74,7 +96,7 @@ describe("Figma extracted-frame fixtures", () => {
       settings: { output: "multiple-files", projectName: "figma-responsive" },
     });
     const { document, groups } = processDocument(doc);
-    const result = getEmitter("html").emitAll(document, groups);
+    const result = emitFigmaHtml(document, groups);
 
     expect(groups).toHaveLength(1);
     expect(result.files).toHaveLength(1);
@@ -92,7 +114,7 @@ describe("Figma extracted-frame fixtures", () => {
       settings: { output: "multiple-files", projectName: "figma-responsive" },
     });
     const { document, groups } = processDocument(doc);
-    const result = getEmitter("html").emitAll(document, groups, {
+    const result = emitFigmaHtml(document, groups, {
       html: { responsiveImageMode: "css-var" },
     });
 
@@ -104,7 +126,7 @@ describe("Figma extracted-frame fixtures", () => {
   it("preserves hyperlink text from extracted fixtures", () => {
     const doc = buildDocument(loadFrames("hyperlink-text.json"), { slug: "figma-links" });
     const { document, groups } = processDocument(doc);
-    const result = getEmitter("html").emitAll(document, groups);
+    const result = emitFigmaHtml(document, groups);
 
     expect(result.files[0].output).toContain("https://example.com/story");
   });
@@ -112,7 +134,7 @@ describe("Figma extracted-frame fixtures", () => {
   it("renders image-only fixtures without phantom text overlays", () => {
     const doc = buildDocument(loadFrames("image-only.json"), { slug: "figma-image-only" });
     const { document, groups } = processDocument(doc);
-    const result = getEmitter("html").emitAll(document, groups);
+    const result = emitFigmaHtml(document, groups);
 
     expect(result.files[0].output).toContain("all2html-output/photo.png");
     expect(result.files[0].output).not.toContain('class="g-content');
@@ -122,7 +144,7 @@ describe("Figma extracted-frame fixtures", () => {
   it("renders nested-frame extracted payloads without invalid positions", () => {
     const doc = buildDocument(loadFrames("nested-frame.json"), { slug: "figma-nested" });
     const { document, groups } = processDocument(doc);
-    const result = getEmitter("html").emitAll(document, groups);
+    const result = emitFigmaHtml(document, groups);
 
     expect(result.files[0].output).toContain("Nested frame text");
     expect(result.files[0].output).not.toContain("NaN");

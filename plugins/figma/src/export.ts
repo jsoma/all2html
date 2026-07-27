@@ -5,7 +5,7 @@ import {
   getBrowserEmitter,
   processDocumentInBrowser,
 } from "../../../src/browser.js";
-import type { EmitterConfig } from "../../../src/emitters/types.js";
+import { type EmitterConfig, withAssetBase } from "../../../src/emitters/types.js";
 import type { ImportedAssetFile } from "../../../src/importers/types.js";
 import type { Document } from "../../../src/ir/types.js";
 import type { ExtractedAsset, FigmaOutputFormat } from "./types.js";
@@ -56,17 +56,25 @@ export function buildExportBundle(
   } = processDocumentInBrowser(ir, {
     surface: { surface: "figma", path: "render", format: options.format },
   });
-  const emitted = getBrowserEmitter(options.format).emitAll(document, groups, options.emit);
+  // `createOutputBundle` below writes the emitted files at the ZIP root and the
+  // assets at `assetRoot + asset.path`, so the path from an emitted file to an
+  // asset is exactly `assetRoot`. Stated once, used by both sides.
+  const assetRoot = document.settings.imageOutputPath || "";
+  const emitted = getBrowserEmitter(options.format).emitAll(
+    document,
+    groups,
+    withAssetBase(options.emit, assetRoot),
+  );
   const warnings = [...pipelineWarnings, ...emitted.warnings];
   const bundle = createOutputBundle({
     irDocument: ir,
     emittedFiles: emitted.files,
     assetFiles: normalizeAssetFiles(options.assetFiles ?? []),
     // Asset records carry paths relative to the image output directory, so the
-    // bundle layout has to re-apply the same directory the emitted `src`
-    // attributes get from `resolveAssetPath()`. Omitting it is what made a
-    // non-default `imageOutputPath` produce HTML pointing outside the ZIP.
-    assetRoot: document.settings.imageOutputPath || "",
+    // bundle layout re-applies the same directory the emitted `src` attributes
+    // got through `assetBase`. Omitting it is what made a non-default
+    // `imageOutputPath` produce HTML pointing outside the ZIP.
+    assetRoot,
     emittedFormat: options.format,
     warnings,
   });

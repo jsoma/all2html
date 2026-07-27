@@ -52,13 +52,37 @@ export function getScopedLayerAsset(
 }
 
 /**
- * Resolve an asset path using the settings.
- * Used by HTML emitter for <img src="...">.
+ * The `<img src>` / CSS `url()` value for an asset.
+ *
+ * Two inputs, and they answer different questions:
+ *
+ *   - `settings.imageSourcePath` — the **user's** answer. Used verbatim when
+ *     set, because the user is deliberately pointing at a URL that need not
+ *     match the on-disk layout at all: a CDN, a site root, a build output
+ *     directory. ai2html splits these for exactly that reason
+ *     (`image_output_path` is a filesystem directory, `image_source_path` is
+ *     the `<img src>` prefix), and the NYT configs ship them set to different
+ *     values.
+ *   - `assetBase` — the **surface's** answer: where the surface writes the
+ *     assets relative to the emitted file. Supplied as an emitter option (see
+ *     `withAssetBase` in `../types.js`), never inferred here.
+ *
+ * `settings.imageOutputPath` deliberately does not appear. It is where the
+ * *files* go, which is only the same string as the `src` prefix on surfaces
+ * that put the emitted file at the root of that layout — true for the
+ * bundle-producing surfaces, false for Illustrator, which writes the HTML into
+ * the image directory itself. Reading it here was that guess, and it 404'd
+ * every image on every live Illustrator export.
+ *
+ * The base is concatenated unconditionally: `createOutputBundle()` joins
+ * `assetRoot + asset.path` with no "already prefixed?" test, and the two have
+ * to produce the same string or the HTML references entries the bundle does not
+ * contain.
  */
-export function resolveAssetPath(asset: Asset, settings: Settings): string {
-  const basePath = settings.imageSourcePath || settings.imageOutputPath || "";
+export function resolveAssetPath(asset: Asset, settings: Settings, assetBase?: string): string {
+  const basePath = settings.imageSourcePath || assetBase || "";
   let path = asset.path;
-  if (basePath && !path.startsWith(basePath)) {
+  if (basePath) {
     path = basePath + path;
   }
   if (settings.cacheBustToken != null) {

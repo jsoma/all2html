@@ -269,10 +269,12 @@ describe("Illustrator hardening fixtures", () => {
       // from two different artboard-name forms, shipping HTML that pointed at
       // files that were never written — name-agnostic existence is the
       // invariant, not any particular naming scheme.
-      // Saved fixture outputs are flat (the imageOutputPath prefix in the
-      // emitted src is not reproduced on disk), so compare by basename: the
-      // divergence being guarded was between the *filename* the exporter wrote
-      // and the filename the asset record claimed.
+      // Compared by basename because the src prefix is a surface layout fact
+      // and this emit states none: `emitHTML` here defaults to `assetBase: ""`,
+      // which is also what Illustrator itself uses (HTML and images share one
+      // directory), while `imageSourcePath` fixtures can point src anywhere.
+      // The divergence being guarded is between the *filename* the exporter
+      // wrote and the filename the asset record claimed.
       if (fixture.releaseBlocking) {
         const outputDir = getIllustratorFixtureOutputDir(rootDir, fixture);
         for (const match of html.matchAll(/(?:src|data-src)="([^"]+)"/g)) {

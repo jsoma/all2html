@@ -76,7 +76,7 @@ export const SETTING_HELP = {
     label: "Image path",
     summary: "Folder where exported image assets are written.",
     details:
-      "This is usually the same as the HTML output folder, but can differ if your build or CMS wants images in a separate location.",
+      "Illustrator writes the HTML and its images into one folder, and HTML path wins when both are set — so this can move that folder, but it cannot put the images somewhere separate. To point the markup at a different location than the files were written to, use Image src prefix.",
     defaultNote: "Keep it aligned with HTML path unless you have a specific asset pipeline.",
     docsAnchor: "imageOutputPath",
   },

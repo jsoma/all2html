@@ -210,8 +210,10 @@ function normalizeBundlePath(path: string): string {
  *     material and they are how a name gets truncated by one consumer and not
  *     another.
  *
- * A **leading `/` is not rejected**: `imageOutputPath` is simultaneously the
- * `<img src>` prefix, where `/all2html-output/` is an ordinary site-root URL
+ * A **leading `/` is not rejected**: on the bundle-producing surfaces
+ * `imageOutputPath` is simultaneously the `<img src>` prefix (it is what they
+ * pass as the emitters' `assetBase`), where `/all2html-output/` is an ordinary
+ * site-root URL
  * (`test/fixtures/golden-ir/multiple-files-test.json` ships one). Normalization
  * has always dropped it, which contains the entry under the root; that behavior
  * is kept, and the guarantee this function adds is that normalization now leaves
@@ -220,12 +222,13 @@ function normalizeBundlePath(path: string): string {
  * **Why throw rather than warn-and-fall-back** (`resolveOutputExtension()` warns
  * and falls back; `computeBreakpoints()` throws):
  *
- *   1. There is no fallback that stays correct. `imageOutputPath` is applied
- *      twice and the two applications must agree — `resolveAssetPath()` puts it
- *      in the emitted `src`, `assetRoot` puts it in the bundle layout. Any value
- *      substituted here changes only the second, shipping HTML that references
- *      entries the ZIP does not contain. That is exactly the desync the
- *      `assetRoot` wiring fixed; a "safe" fallback would re-open it under a
+ *   1. There is no fallback that stays correct. On these surfaces
+ *      `imageOutputPath` is applied twice and the two applications must agree —
+ *      the surface hands it to the emitters as `assetBase`, which puts it in the
+ *      emitted `src`, and to `assetRoot`, which puts it in the bundle layout.
+ *      Any value substituted here changes only the second, shipping HTML that
+ *      references entries the ZIP does not contain. That is exactly the desync
+ *      the `assetRoot` wiring fixed; a "safe" fallback would re-open it under a
  *      warning. `htmlOutputExtension` has one reader, so its fallback is whole.
  *   2. The repo already treats this input as fatal on the surface that has a
  *      filesystem: `resolveInsideOutputDir()` throws for `../x`. Warning in the

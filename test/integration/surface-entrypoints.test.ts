@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { convertLoadedSvgFilesInBrowser, getBrowserEmitter } from "../../src/browser.js";
 import { processDocument } from "../../src/core/pipeline.js";
 import { emitHTMLString } from "../../src/emitters/html-string.js";
-import { CURRENT_IR_VERSION, type Document } from "../../src/ir/types.js";
+import { CURRENT_IR_VERSION, type Document, type Settings } from "../../src/ir/types.js";
 import { ensureFreshArtifact } from "../helpers/extendscript-build.js";
 
 /**
@@ -104,6 +104,30 @@ function multiGroupDocument(output: "one-file" | "multiple-files"): Document {
   };
 }
 
+/**
+ * One artboard with one background image, for the other half of "what does this
+ * surface actually write": where the emitted `<img src>` points, relative to
+ * where the surface puts the file. The asset path is a bare filename, as every
+ * producer writes it — the directory is the surface's business, stated as the
+ * `assetBase` emitter option, never inferred from `imageOutputPath`.
+ */
+const assetFixture: Document = JSON.parse(
+  readFileSync(resolve(rootDir, "test/fixtures/ir/single-artboard-basic.json"), "utf-8"),
+);
+
+function assetDocument(settings: Partial<Settings>): Document {
+  const doc = structuredClone(assetFixture);
+  return {
+    ...doc,
+    settings: { ...doc.settings, ...settings },
+    irVersion: CURRENT_IR_VERSION,
+  };
+}
+
+function imageSrcs(html: string): string[] {
+  return Array.from(html.matchAll(/<img[^>]*\ssrc="([^"]+)"/g)).map((match) => match[1]);
+}
+
 function withTempDir<T>(run: (dir: string) => T): T {
   const dir = mkdtempSync(join(tmpdir(), "all2html-entrypoints-"));
   try {
@@ -165,6 +189,44 @@ describe("Illustrator entry point (ExtendScript bundle processAndEmit)", () => {
     const result = processAndEmit(raw);
 
     expect(result.files.map((file) => file.extension)).toEqual([".php", ".php"]);
+  });
+  /**
+   * `exporter.jsx:1803-1806` computes ONE output directory —
+   * `docPath + (html_output_path || image_output_path || "all2html-output/")` —
+   * and writes the HTML *and* every image into it. The page and its images are
+   * siblings, so the only `src` that resolves is a bare filename.
+   *
+   * The emitter used to derive the prefix from `imageOutputPath`, which is a
+   * filesystem directory and not a statement about the markup at all; on this
+   * surface it prefixed `src` with the directory the HTML was already inside and
+   * every image 404'd. That was papered over by clearing the setting before
+   * emit — a layout fact encoded by mutating a user-visible setting. Restoring
+   * the old fallback fails this test.
+   */
+  it("emits image src as a bare filename, whatever imageOutputPath says", () => {
+    const { processAndEmit } = loadExtendScriptBundle();
+
+    const result = processAndEmit(assetDocument({ imageOutputPath: "custom-images/" }));
+
+    expect(imageSrcs(result.html)).toEqual(["test-desktop.png"]);
+  });
+
+  /**
+   * The user's own prefix still wins, verbatim. That is ai2html's split:
+   * `image_output_path` is where the files go, `image_source_path` is what goes
+   * in `<img src>`, and the NYT configs ship them set to different values.
+   */
+  it("honors imageSourcePath verbatim, because that is the user's src prefix", () => {
+    const { processAndEmit } = loadExtendScriptBundle();
+
+    const result = processAndEmit(
+      assetDocument({
+        imageOutputPath: "custom-images/",
+        imageSourcePath: "https://cdn.example.com/_assets/",
+      }),
+    );
+
+    expect(imageSrcs(result.html)).toEqual(["https://cdn.example.com/_assets/test-desktop.png"]);
   });
 });
 
@@ -298,5 +360,74 @@ describe("browser entry point (convertLoadedSvgFilesInBrowser)", () => {
     const result = await convert("multiple-files", "standalone");
 
     expect(result.filePaths).toEqual(["entrypoints-chart.html", "entrypoints-map.html"]);
+  });
+
+  /**
+   * The bundle-producing half of the same question. `createOutputBundle` puts
+   * the emitted files at the bundle root and every asset at
+   * `assetRoot + asset.path`, with `assetRoot` coming from `imageOutputPath` —
+   * so here, and unlike Illustrator, that directory *is* the path from the page
+   * to the image. The orchestration reads it once and hands it to both sides;
+   * this asserts they agree, for a non-default value, through the real entry
+   * point.
+   */
+  async function convertWithAsset(settings: Partial<Settings>) {
+    return convertLoadedSvgFilesInBrowser({
+      loaded: {
+        slug: "entrypoints",
+        entrypointPaths: ["entrypoints.svg"],
+        files: [{ path: "entrypoints.svg", content: "<svg />", mimeType: "image/svg+xml" }],
+      },
+      format: "html",
+      rasterizer: {
+        rasterizeSvg() {
+          throw new Error("not used");
+        },
+      },
+      importFiles: async () => ({
+        document: assetDocument(settings),
+        assetFiles: [
+          {
+            path: "test-desktop.png",
+            bytes: new TextEncoder().encode("png-bytes"),
+            mimeType: "image/png",
+          },
+        ],
+        warnings: [],
+        structuredWarnings: [],
+      }),
+      emitter: getBrowserEmitter,
+    });
+  }
+
+  it("points every img src at a file the bundle actually contains", async () => {
+    const result = await convertWithAsset({ imageOutputPath: "img/nested/" });
+
+    const emitted = result.bundle.files.find((file) => file.path === result.emittedPath);
+    const srcs = imageSrcs(new TextDecoder().decode(emitted?.bytes));
+    expect(srcs).toEqual(["img/nested/test-desktop.png"]);
+    for (const src of srcs) {
+      expect(result.bundle.files.map((file) => file.path)).toContain(src);
+    }
+  });
+
+  /**
+   * The NYT shape: the two paths deliberately disagree, because one is a
+   * filesystem directory and the other is a URL. `src` follows the user's
+   * `imageSourcePath`; the bytes still ship under `imageOutputPath`.
+   */
+  it("lets imageSourcePath point src away from the bundle without moving the bytes", async () => {
+    const result = await convertWithAsset({
+      imageOutputPath: "public/_assets/",
+      imageSourcePath: "/_assets/",
+    });
+
+    const emitted = result.bundle.files.find((file) => file.path === result.emittedPath);
+    expect(imageSrcs(new TextDecoder().decode(emitted?.bytes))).toEqual([
+      "/_assets/test-desktop.png",
+    ]);
+    expect(result.bundle.files.map((file) => file.path)).toContain(
+      "public/_assets/test-desktop.png",
+    );
   });
 });

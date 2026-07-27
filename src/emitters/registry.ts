@@ -6,7 +6,7 @@ import {
   type SharedEmitterDescriptor,
 } from "./registry-shared.js";
 import { emitStandaloneGroup } from "./standalone.js";
-import type { EmitterConfig } from "./types.js";
+import type { ResolvedEmitterConfig } from "./types.js";
 
 export type { EmitFile, EmitResult } from "./registry-shared.js";
 export { formatDictatedExtension } from "./registry-shared.js";
@@ -16,7 +16,7 @@ export interface EmitterDescriptor {
   emitAll: (
     doc: EmitterReadyDocument,
     groups: ArtboardGroup[],
-    emitterConfig?: EmitterConfig,
+    emitterConfig?: ResolvedEmitterConfig,
   ) => EmitResult;
 }
 

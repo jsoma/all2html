@@ -233,12 +233,6 @@ export function processAndEmit(
   });
   for (let i = 0; i < capabilityWarnings.length; i++) warnings.push(capabilityWarnings[i]);
   phase("checkSurfaceCapabilities");
-  // After the capability check (which must see the user's request): the
-  // exporter writes every image flat next to the HTML and never creates an
-  // imageOutputPath subfolder, so the only src prefix that matches the files
-  // on disk is none at all. Leaving the resolved default ("all2html-output/")
-  // in place shipped HTML whose images 404 on every live export.
-  resolved.settings.imageOutputPath = "";
   const withBreakpoints = computeBreakpoints(resolved);
   phase("computeBreakpoints");
   const { document: styled, warnings: styleWarnings } = computeStyles(withBreakpoints);
@@ -265,6 +259,28 @@ export function processAndEmit(
   const files: ProcessFile[] = [];
   for (let i = 0; i < groups.length; i++) {
     const group = groups[i];
+    // Illustrator's asset layout is the emitters' `assetBase` **default**, and
+    // this call passes no emitter options on purpose.
+    //
+    // The layout: `exporter.jsx:1803-1806` computes ONE output directory —
+    // `docPath + (html_output_path || image_output_path || "all2html-output/")`
+    // — and writes the HTML *and* every image into it, so an image is a sibling
+    // of the page that references it and the `src` prefix is empty. That is
+    // exactly `assetBase: ""`, which is what `buildHTMLTree` uses when no
+    // surface states one. It used to be spelled by clearing
+    // `settings.imageOutputPath` before emit — a layout fact encoded by
+    // mutating a user-visible setting, which also left the capability
+    // declaration describing the workaround instead of the behavior.
+    //
+    // Why not state it anyway as `{ assetBase: "" }`: an emitter-options object
+    // here is non-`undefined`, so rollup can no longer prove
+    // `options.positionMode` and `options.allowUnsafeHtml` are unset, and
+    // `percentage-positions.ts` plus `suppressUnsafeBindingHtml` enter the
+    // shipped artifact — measured at +4,148 B (121,121 -> 125,269 B) of code no
+    // Illustrator export can reach, since neither is a setting and this surface
+    // has no emitter config. The statement lives in this comment, in the
+    // Illustrator `imageOutputPath` capability note, and — executably, through
+    // this exact entry point — in `test/integration/surface-entrypoints.test.ts`.
     const emitted = emitHTMLString(ready, { artboards: group.artboards, slug: group.slug });
     for (let j = 0; j < emitted.structuredWarnings.length; j++) {
       warnings.push(emitted.structuredWarnings[j]);

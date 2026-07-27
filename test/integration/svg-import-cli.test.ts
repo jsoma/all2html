@@ -42,10 +42,19 @@ describe("all2html import svg CLI", () => {
       );
       expect(existsSync(join(outputDir, "all2html-output", "story.png"))).toBe(true);
       expect(readFileSync(join(outputDir, "ir.json"), "utf-8")).toContain('"tool": "svg"');
-      expect(readFileSync(join(outputDir, "story.html"), "utf-8")).toContain("CLI import");
-      expect(readFileSync(join(outputDir, "story.html"), "utf-8")).toContain(
-        "all2html-output/story.png",
-      );
+      const html = readFileSync(join(outputDir, "story.html"), "utf-8");
+      expect(html).toContain("CLI import");
+      // Not two literals that happen to agree: every `src` the page emits is
+      // resolved against the directory the page was written into, and the file
+      // has to be there. `import` writes the emitted files at the root of `-o`
+      // and the assets under `imageOutputPath`, so that directory is the path
+      // from one to the other — which is exactly what the surface states as the
+      // emitters' `assetBase`.
+      const srcs = Array.from(html.matchAll(/<img[^>]*\ssrc="([^"]+)"/g)).map((match) => match[1]);
+      expect(srcs).toEqual(["all2html-output/story.png"]);
+      for (const src of srcs) {
+        expect(existsSync(join(outputDir, src)), `${src} is referenced but not written`).toBe(true);
+      }
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

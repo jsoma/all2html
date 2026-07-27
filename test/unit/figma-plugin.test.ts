@@ -470,19 +470,25 @@ describe("Figma plugin foundation", () => {
     /**
      * Figma used to bake `all2html-output/` into every asset path and omit
      * `assetRoot` from the bundle, so the two ways the output directory reaches
-     * the output — `resolveAssetPath()` for the emitted `src`, `assetRoot` for
-     * the ZIP layout — disagreed the moment `imageOutputPath` was not the
-     * default. The HTML pointed at a path the ZIP did not contain.
+     * the output — the emitted `src` and the ZIP layout — disagreed the moment
+     * `imageOutputPath` was not the default. The HTML pointed at a path the ZIP
+     * did not contain. `export.ts` now reads the setting once and hands it to
+     * both (`withAssetBase` → `src`, `assetRoot` → layout).
      *
      * The assertion is the agreement itself: every `src` the HTML references
      * must be an entry in the archive.
+     *
+     * **Scoped to an unset `imageSourcePath`**, which is what makes the
+     * invariant true rather than universal: `imageSourcePath` is the user
+     * deliberately pointing `src` at a URL that need not exist in the bundle at
+     * all — a CDN, a site root. The companion test below covers that case.
      */
     it.each([
       ["all2html-output/", "default"],
       ["img/", "non-default"],
       ["assets/graphics/", "nested non-default"],
       ["", "empty"],
-    ])("keeps HTML src paths and ZIP entries in sync for %s imageOutputPath", (imageOutputPath) => {
+    ])("keeps HTML src paths and ZIP entries in sync for %s imageOutputPath, with no imageSourcePath", (imageOutputPath) => {
       const ir = buildDocument([makeFrame()], {
         slug: "figma-story",
         settings: { imageOutputPath, projectName: "figma-story" },
@@ -505,6 +511,42 @@ describe("Figma plugin foundation", () => {
 
       // The manifest is the machine-readable inventory; it must agree too.
       expect(bundle.entries.map((entry) => entry.path)).toContain(srcPaths[0]);
+    });
+
+    /**
+     * The NYT shape: `image_output_path` and `image_source_path` set to
+     * *different* values on purpose (`../public/_assets/` on disk,
+     * `_assets/` in the markup — `research/ai2html-feature-spec.md` §16). This
+     * is the case that proves the two are separate contracts and neither can be
+     * derived from the other: `imageSourcePath` is the `<img src>` prefix and is
+     * used verbatim, `imageOutputPath` is where the files go.
+     */
+    it("honors imageSourcePath verbatim in src while the ZIP layout follows imageOutputPath", () => {
+      const ir = buildDocument([makeFrame()], {
+        slug: "figma-story",
+        settings: {
+          imageOutputPath: "public/_assets/",
+          imageSourcePath: "https://cdn.example.com/_assets/",
+          projectName: "figma-story",
+        },
+      });
+      const bundle = buildExportBundle(ir, {
+        format: "html",
+        assetFiles: makeFrame().assets ?? [],
+      });
+      const files = unzipSync(createZipArchive(bundle));
+
+      const htmlEntry = bundle.entries.find((entry) => entry.path.endsWith(".html"));
+      const html = htmlEntry?.content;
+      if (typeof html !== "string") throw new Error("Expected an emitted HTML entry.");
+
+      const srcPaths = Array.from(html.matchAll(/src="([^"]+\.png)"/g)).map((match) => match[1]);
+      expect(srcPaths).toEqual(["https://cdn.example.com/_assets/story-bg.png"]);
+      // The bytes still ship, under the directory the user asked for — the
+      // `src` simply does not describe the bundle any more, which is the point
+      // of setting it.
+      expect(Object.keys(files)).toContain("public/_assets/story-bg.png");
+      expect(strFromU8(files["public/_assets/story-bg.png"])).toBe("png-bytes");
     });
 
     /**
