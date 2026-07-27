@@ -2,13 +2,13 @@ import { execFileSync } from "node:child_process";
 import {
   cpSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
-  lstatSync,
-  statSync,
   readdirSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -18,8 +18,8 @@ import {
   getIllustratorFixtureGoldenIrPath,
   getIllustratorFixtureOutputDir,
   getIllustratorFixtureSummaryPath,
-  illustratorFixtures,
   type IllustratorFixture,
+  illustratorFixtures,
 } from "../test/fixtures/illustrator-fixtures.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -83,7 +83,9 @@ function copyFixtureOutput(sourceOutputDir: string, targetOutputDir: string): vo
 function findProducedOutputDir(sourceDir: string): string | null {
   const candidates = candidateOutputDirs(sourceDir)
     .filter((dir) => existsSync(resolve(dir, "ir.json")))
-    .sort((a, b) => statSync(resolve(b, "ir.json")).mtimeMs - statSync(resolve(a, "ir.json")).mtimeMs);
+    .sort(
+      (a, b) => statSync(resolve(b, "ir.json")).mtimeMs - statSync(resolve(a, "ir.json")).mtimeMs,
+    );
   return candidates[0] || null;
 }
 
@@ -169,7 +171,10 @@ try {
       if (!existsSync(sourceIrPath)) {
         throw new Error(`Missing ir.json for ${fixture.name}`);
       }
-      writeFileSync(getIllustratorFixtureGoldenIrPath(rootDir, fixture), readFileSync(sourceIrPath));
+      writeFileSync(
+        getIllustratorFixtureGoldenIrPath(rootDir, fixture),
+        readFileSync(sourceIrPath),
+      );
     }
 
     clearOutputDir(sourceOutputDir);

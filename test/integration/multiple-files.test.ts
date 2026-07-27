@@ -4,6 +4,12 @@ import { describe, expect, it } from "vitest";
 import { processDocument } from "../../src/core/pipeline.js";
 import { emitHTML } from "../../src/emitters/html.js";
 import { getEmitter } from "../../src/emitters/registry.js";
+import {
+  type Artboard,
+  type Asset,
+  CURRENT_IR_VERSION,
+  type Document,
+} from "../../src/ir/types.js";
 
 const fixturesDir = resolve(import.meta.dirname, "../fixtures/ir");
 
@@ -112,5 +118,93 @@ describe("multiple-files output mode", () => {
     // All artboards have different names, so in one-file mode they're all together
     expect(groups).toHaveLength(1);
     expect(groups[0].artboards).toHaveLength(3);
+  });
+});
+
+/**
+ * Artboards that share a *name* but not an id.
+ *
+ * These two came from `html-string-emitter.test.ts`, which was otherwise an
+ * emitter-vs-itself parity sweep (`emitHTMLString` is a re-export of `emitHTML`
+ * since the emitter collapse, SPEC §12.6 / D23) and has been deleted. The
+ * assertions below are the part of that file that tested something: background
+ * asset selection and group scoping key off the stable artboard id, not the
+ * display name, so duplicate names must not collapse into one another.
+ */
+describe("duplicate artboard names resolve by stable id", () => {
+  function artboard(id: string, width: number, height: number, sourceName: string): Artboard {
+    return {
+      id,
+      name: "card",
+      width,
+      height,
+      source: { tool: "test", name: sourceName, width, height },
+      layers: [],
+    };
+  }
+
+  function asset(id: string, artboardId: string, width: number, height: number): Asset {
+    return {
+      id,
+      path: id,
+      mimeType: "image/png",
+      width,
+      height,
+      artboardId,
+      exportParams: { format: "png", scale: 1, transparent: false },
+    };
+  }
+
+  function docWith(artboards: Artboard[], assets: Record<string, Asset>, slug: string): Document {
+    return {
+      irVersion: CURRENT_IR_VERSION,
+      source: { tool: "test", toolVersion: "1.0", adapterVersion: "0.1.0" },
+      settings: { namespace: "g-" },
+      fonts: [],
+      artboards,
+      customBlocks: [],
+      assets,
+      metadata: { slug },
+    };
+  }
+
+  it("gives each same-named artboard its own background image", () => {
+    const raw = docWith(
+      [
+        artboard("artboard:card-640", 640, 360, "card--640"),
+        artboard("artboard:card-960", 960, 540, "card--960"),
+      ],
+      {
+        "card-640.png": asset("card-640.png", "artboard:card-640", 640, 360),
+        "card-960.png": asset("card-960.png", "artboard:card-960", 960, 540),
+      },
+      "duplicate-assets",
+    );
+    const { document: doc } = processDocument(raw);
+    const { html } = emitHTML(doc);
+
+    expect(html).toContain('src="all2html-output/card-640.png"');
+    expect(html).toContain('src="all2html-output/card-960.png"');
+  });
+
+  it("scopes a grouped emit to the requested artboard id", () => {
+    const raw = docWith(
+      [
+        artboard("artboard:first", 640, 360, "card"),
+        artboard("artboard:second", 640, 360, "card copy"),
+      ],
+      {
+        "first.png": asset("first.png", "artboard:first", 640, 360),
+        "second.png": asset("second.png", "artboard:second", 640, 360),
+      },
+      "duplicate-scope",
+    );
+    const { document: doc } = processDocument(raw);
+    const second = doc.artboards.find((entry) => entry.id === "artboard:second");
+    if (!second) throw new Error("Missing second artboard");
+
+    const { html } = emitHTML(doc, { artboards: [second], slug: "second-card" });
+    expect(html).not.toContain("first.png");
+    expect(html).toContain('src="all2html-output/second.png"');
   });
 });
