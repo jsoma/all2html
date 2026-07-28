@@ -1674,6 +1674,43 @@ function sanitizeCanonicalSettings(settings) {
   }
 }
 
+/**
+ * The export-run view of the settings `sanitizeCanonicalSettings` just validated.
+ *
+ * There used to be two bags: the canonical one, validated and persisted, and a
+ * separate literal that re-parsed the same raw docSettings and drove image
+ * extraction. So `image_format: gif` was stripped from ir.json and still reached
+ * exportParams.format, and an out-of-range jpg_quality changed the exported JPEG
+ * while ir.json recorded the default — the bytes and the record describing them
+ * disagreed, and the file we wrote failed our own schema.
+ *
+ * An absent key here means the value was never set or was rejected; both mean the
+ * declared default applies, which is the core sanitizer's own fallback.
+ * `projectName` is passed in instead: it may legitimately be absent (a legal slug
+ * can be an illegal CSS identifier) while the asset-name base always needs one.
+ */
+function readCanonicalSetting(canonical, key) {
+  return hasOwn(canonical, key) ? canonical[key] : All2Html.defaultSettings[key];
+}
+
+function buildExportSettings(canonical, slug, outputPath) {
+  return {
+    projectName: slug,
+    outputPath: outputPath,
+    imageFormat: readCanonicalSetting(canonical, "imageFormat"),
+    pngTransparent: readCanonicalSetting(canonical, "pngTransparent"),
+    pngNumberOfColors: readCanonicalSetting(canonical, "pngNumberOfColors"),
+    jpgQuality: readCanonicalSetting(canonical, "jpgQuality"),
+    use2xImages: readCanonicalSetting(canonical, "use2xImages"),
+    createPromoImage: readCanonicalSetting(canonical, "createPromoImage"),
+    promoImageWidth: readCanonicalSetting(canonical, "promoImageWidth"),
+    renderTextAs: readCanonicalSetting(canonical, "renderTextAs"),
+    renderRotatedSkewedTextAs: readCanonicalSetting(canonical, "renderRotatedSkewedTextAs"),
+    testingMode: readCanonicalSetting(canonical, "testingMode"),
+    svgEmbedImages: readCanonicalSetting(canonical, "svgEmbedImages")
+  };
+}
+
 function getFontSourceKey(font) {
   return font && (font.sourceFont || font.aifont) ? String(font.sourceFont || font.aifont) : "";
 }
@@ -1806,26 +1843,14 @@ function runExporter() {
   if (!slug) slug = makeKeyword(docName) || "graphic";
   var outputPath = resolveDocumentOutputPath(docSettings, docPath);
 
-  var settings = {
-    projectName: slug,
-    outputPath: outputPath,
-    outputMode: docSettings.output || "one-file",
-    imageFormat: docSettings.image_format ? docSettings.image_format.split(/[,\s]+/) : ["auto"],
-    pngTransparent: docSettings.png_transparent === "true",
-    pngNumberOfColors: parseInt(docSettings.png_number_of_colors, 10) || 128,
-    jpgQuality: parseInt(docSettings.jpg_quality, 10) || 85,
-    use2xImages: docSettings.use_2x_images_if_possible !== "false",
-    createPromoImage: docSettings.create_promo_image === "true",
-    renderTextAs: (docSettings.render_text_as === "image") ? "image" : "html",
-    renderRotatedSkewedTextAs: (docSettings.render_rotated_skewed_text_as === "image") ? "image" : "html",
-    testingMode: docSettings.testing_mode === "true",
-    svgEmbedImages: docSettings.svg_embed_images === "true"
-  };
-
-  var canonicalIrSettings = buildCanonicalIrSettings(docSettings);
+  // Validate once, here, and derive everything downstream from the result.
   // Before irDoc is built, because irDoc is written to disk below and has to
-  // satisfy the canonical schema on its own.
+  // satisfy the canonical schema on its own — and before `settings`, because the
+  // export run must not act on a value the persisted document rejects.
+  var canonicalIrSettings = buildCanonicalIrSettings(docSettings);
   sanitizeCanonicalSettings(canonicalIrSettings);
+
+  var settings = buildExportSettings(canonicalIrSettings, slug, outputPath);
 
   if (settings.imageFormat && settings.imageFormat.length > 1) {
     warn("Multiple image formats specified; currently only the first is used: " + settings.imageFormat[0], "setting:multiple-image-formats", "setting");
@@ -1968,7 +1993,7 @@ function runExporter() {
         }
       }
       doc.artboards.setActiveArtboardIndex(largestAb._aiIndex);
-      var promoWidth = parseInt(docSettings.promo_image_width, 10) || 1024;
+      var promoWidth = settings.promoImageWidth;
       var promoScale = 100 * promoWidth / largestAb.actualWidth;
       var promoFile = new File(docPath + slug + "-promo");
       var promoOpts = new ExportOptionsPNG8();

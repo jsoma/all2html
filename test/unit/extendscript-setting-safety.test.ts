@@ -126,6 +126,38 @@ describe("the ExtendScript path rejects unsafe identifier settings (no Zod runs 
 });
 
 /**
+ * The other half of the settings boundary: a value that is perfectly *valid* and
+ * that this surface will not act on. "A surface must not accept a setting it does
+ * not honor" is enforced by `checkSurfaceCapabilities`, and `processAndEmit` is
+ * the only place the Illustrator surface calls it — but nothing asserted the call
+ * site. Replacing the push loop in `src/extendscript/index.ts` with
+ * `void capabilityWarnings;` left the whole suite green while every dead cell on
+ * the production surface went silent again.
+ *
+ * `capabilities.test.ts` covers the declaration table; this covers the wiring.
+ */
+describe("the Illustrator surface warns for settings it does not honor", () => {
+  it("emits a setting:unsupported warning per unhonored setting, tagged illustrator", () => {
+    const result = processAndEmit(loadDoc({ svgIdPrefix: "pfx", writeImageFiles: false }));
+
+    const unsupported = result.structuredWarnings.filter((w) => w.code === "setting:unsupported");
+    expect(unsupported.map((w) => w.setting).sort()).toEqual(["svgIdPrefix", "writeImageFiles"]);
+    for (const warning of unsupported) {
+      expect(warning.category).toBe("setting");
+      expect(warning.surface).toBe("illustrator");
+    }
+    // The plain-string projection carries them — that is what the panel renders.
+    expect(result.warnings.filter((message) => message.includes("does not honor"))).toHaveLength(2);
+  });
+
+  it("stays silent for a document that asks for nothing this surface refuses", () => {
+    const result = processAndEmit(loadDoc());
+
+    expect(result.structuredWarnings.filter((w) => w.code === "setting:unsupported")).toEqual([]);
+  });
+});
+
+/**
  * The slug is not a setting, but `groupArtboards` falls back to
  * `metadata.slug` when `projectName` is absent — including when the sanitizer
  * above just cleared an invalid one — and the exporter concatenates the
