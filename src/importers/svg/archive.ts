@@ -53,14 +53,17 @@ export function loadSVGImportFilesFromArchive(
   let declaredExpandedBytes = 0;
   unzipSync(archiveBytes, {
     filter(info) {
-      if (!isRetainedArchiveEntry(info.name)) {
-        return false;
-      }
+      // Every entry counts, retained or not: the cap bounds traversal work,
+      // and 100,000 __MACOSX/ entries cost two header walks whether or not
+      // any of them is kept.
       entryCount += 1;
       if (entryCount > maxEntries) {
         throw new Error(
-          `ZIP archive has too many entries: SVG import accepts at most ${maxEntries} files per archive.`,
+          `ZIP archive has too many entries: SVG import accepts at most ${maxEntries} entries per archive.`,
         );
+      }
+      if (!isRetainedArchiveEntry(info.name)) {
+        return false;
       }
       declaredExpandedBytes += info.originalSize;
       if (declaredExpandedBytes > maxExpandedBytes) {

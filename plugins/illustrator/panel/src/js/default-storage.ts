@@ -72,12 +72,17 @@ export function readStoredDefaults<TSettings>(
     if (!isRecordLike(parsed.settings)) {
       return { kind: "corrupt", error: "stored settings are not a JSON object" };
     }
+    if (parsed.fonts !== undefined && !Array.isArray(parsed.fonts)) {
+      // Defaulting to [] here silently discards the user's saved mappings;
+      // a fonts field of the wrong shape is corruption, not absence.
+      return { kind: "corrupt", error: "stored fonts are not a JSON array" };
+    }
     return {
       kind: "ok",
       value: {
         version: expectedVersion,
         settings: decodeSettings(parsed.settings),
-        fonts: Array.isArray(parsed.fonts) ? normalizeStoredFonts(parsed.fonts as FontEntry[]) : [],
+        fonts: parsed.fonts === undefined ? [] : normalizeStoredFonts(parsed.fonts as FontEntry[]),
       },
     };
   } catch (e) {

@@ -15,8 +15,10 @@ import type {
 /**
  * Image-only frame tokens.
  *
- * `image-only` is the documented spelling — it matches the IR field
- * (`Artboard.imageOnly`) and the vocabulary used everywhere else in the docs.
+ * `image-only` is the documented spelling — it matches the vocabulary used
+ * everywhere else in the docs. (The decision is extraction-local: its
+ * canonical IR trace is renderAs:"image" text plus the background asset, not
+ * an artboard field.)
  * `image` is the spelling this parser shipped with, so it stays accepted; a
  * frame already named `story:image` in a live file must not silently start
  * exporting live text.

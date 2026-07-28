@@ -761,8 +761,11 @@ function extractTextFramesForArtboard(doc, artboard, layers, settings) {
   });
 
   // Find the default layer to add elements to. Prefer a visible default
-  // layer, then any visible layer: the emitter skips `visible: false`
-  // layers, so content attached to an invisible layer vanishes from output.
+  // layer, then an invisible default layer (warned below): the emitter
+  // renders text only on `default`-type layers, so a visible `:div`/`:png`
+  // layer is NOT a better home than an invisible default — text attached
+  // there vanishes with no visibility warning to explain it. Tagged layers
+  // are a last resort only, and that attach warns too.
   var defaultLayer = null;
   for (var li = 0; li < layers.length; li++) {
     if (layers[li].type === "default" && layers[li].visible) {
@@ -771,9 +774,9 @@ function extractTextFramesForArtboard(doc, artboard, layers, settings) {
     }
   }
   if (!defaultLayer) {
-    for (var lv = 0; lv < layers.length; lv++) {
-      if (layers[lv].visible) {
-        defaultLayer = layers[lv];
+    for (var ld = 0; ld < layers.length; ld++) {
+      if (layers[ld].type === "default") {
+        defaultLayer = layers[ld];
         break;
       }
     }
@@ -782,6 +785,7 @@ function extractTextFramesForArtboard(doc, artboard, layers, settings) {
     defaultLayer = layers[0];
   }
   var warnedInvisibleLayer = false;
+  var warnedUnrenderableLayer = false;
 
   var abIndex = artboard._aiIndex;
   // Element ids already used on THIS artboard. Two frames with the same name
@@ -855,8 +859,12 @@ function extractTextFramesForArtboard(doc, artboard, layers, settings) {
 
     if (element.paragraphs.length > 0 && defaultLayer) {
       if (defaultLayer.visible === false && !warnedInvisibleLayer) {
-        warn('Text on artboard "' + artboard.name + '" was attached to invisible layer "' + defaultLayer.name + '" because no visible layer exists. It will not appear in the HTML output; show the layer to export it.', "layer:invisible-content", "text");
+        warn('Text on artboard "' + artboard.name + '" was attached to invisible layer "' + defaultLayer.name + '" because no visible default layer exists. It will not appear in the HTML output; show the layer to export it.', "layer:invisible-content", "text");
         warnedInvisibleLayer = true;
+      }
+      if (defaultLayer.type !== "default" && !warnedUnrenderableLayer) {
+        warn('Text on artboard "' + artboard.name + '" was attached to special layer "' + defaultLayer.name + '" because no default layer exists. The HTML output renders text only on plain layers, so it will not appear; add an untagged layer for text.', "layer:unrenderable-content", "text");
+        warnedUnrenderableLayer = true;
       }
       defaultLayer.elements.push(element);
     }

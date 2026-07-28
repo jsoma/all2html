@@ -488,11 +488,13 @@ describe("a valid zero survives to the export and the IR", () => {
 /**
  * The default-layer fallback used to take `layers[0]` with no visibility test,
  * silently attaching extracted text to a `visible: false` layer — content the
- * emitter will skip. It must prefer a visible layer and, when only an
- * invisible one exists, say so.
+ * emitter will skip. It must prefer a visible DEFAULT layer: the emitter
+ * renders text only on `default`-type layers, so a visible `:div` is not a
+ * better home than an invisible default — it just loses the text without the
+ * visibility warning. Every attach that will not render must warn.
  */
-describe("the default-layer fallback prefers a visible layer", () => {
-  it("attaches text to a visible tagged layer over an invisible default layer", () => {
+describe("the default-layer fallback prefers a visible default layer", () => {
+  it("keeps text on an invisible default layer over a visible tagged layer, and warns", () => {
     const result = run({
       layers: [{ name: "notes", visible: false }, { name: "art:div" }],
       textFrames: [{ contents: "Chart Title", layer: "art:div" }],
@@ -500,13 +502,26 @@ describe("the default-layer fallback prefers a visible layer", () => {
 
     expect(result.envelope.success, result.envelope.error).toBe(true);
     const validated = loadAndValidateIR(result.irDocument);
-    const [invisible, visible] = validated.artboards[0].layers;
+    const [invisible, tagged] = validated.artboards[0].layers;
     expect(invisible.visible).toBe(false);
-    expect(invisible.elements).toEqual([]);
-    expect(visible.visible).toBe(true);
-    expect(visible.elements).toHaveLength(1);
-    expect(result.envelope.structuredWarnings.map((warning) => warning.code)).not.toContain(
+    expect(invisible.elements).toHaveLength(1);
+    expect(tagged.elements).toEqual([]);
+    expect(result.envelope.structuredWarnings.map((warning) => warning.code)).toContain(
       "layer:invisible-content",
+    );
+  });
+
+  it("warns when text can only attach to a special layer the emitter renders no text on", () => {
+    const result = run({
+      layers: [{ name: "art:div" }],
+      textFrames: [{ contents: "Chart Title", layer: "art:div" }],
+    });
+
+    expect(result.envelope.success, result.envelope.error).toBe(true);
+    const validated = loadAndValidateIR(result.irDocument);
+    expect(validated.artboards[0].layers[0].elements).toHaveLength(1);
+    expect(result.envelope.structuredWarnings.map((warning) => warning.code)).toContain(
+      "layer:unrenderable-content",
     );
   });
 

@@ -96,6 +96,24 @@ describe("shared defaults storage", () => {
     expect(readStoredDefaults("defaults.json", "1.0.0", decodeSettings).kind).toBe("corrupt");
   });
 
+  it("reports a non-array fonts payload as corrupt instead of dropping saved mappings", () => {
+    fsMock.readFileSync.mockReturnValue(
+      JSON.stringify({ version: "1.0.0", settings: {}, fonts: "damaged" }),
+    );
+
+    const result = readStoredDefaults("defaults.json", "1.0.0", decodeSettings);
+    expect(result.kind).toBe("corrupt");
+    expect(result.kind === "corrupt" && result.error).toContain("fonts");
+  });
+
+  it("treats absent fonts as an empty list, not corruption", () => {
+    fsMock.readFileSync.mockReturnValue(JSON.stringify({ version: "1.0.0", settings: {} }));
+
+    const result = readStoredDefaults("defaults.json", "1.0.0", decodeSettings);
+    expect(result.kind).toBe("ok");
+    expect(result.kind === "ok" && result.value.fonts).toEqual([]);
+  });
+
   it("creates the directory and normalizes font aliases before writing", () => {
     fsMock.existsSync.mockReturnValue(false);
 

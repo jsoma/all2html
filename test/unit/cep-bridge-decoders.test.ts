@@ -86,17 +86,32 @@ describe("After Effects bridge decoders", () => {
     await expect(getAeProjectInfo()).rejects.toThrow(/Malformed project info/);
   });
 
-  it("decodes the comps list, dropping malformed entries, and rejects non-lists", async () => {
+  it("decodes the comps list and rejects malformed entries instead of dropping them", async () => {
     evalTSMock.mockResolvedValue([
       { id: "1", name: "Main", width: 600, height: 400, duration: 2, frameRate: 30 },
-      { id: 2, name: "Broken" },
     ]);
     await expect(listAeComps()).resolves.toEqual([
       { id: "1", name: "Main", width: 600, height: 400, duration: 2, frameRate: 30 },
     ]);
 
+    // A silently shortened list looks like the comp was deleted — a malformed
+    // entry is a broken host contract and must throw.
+    evalTSMock.mockResolvedValue([
+      { id: "1", name: "Main", width: 600, height: 400, duration: 2, frameRate: 30 },
+      { id: 2, name: "Broken" },
+    ]);
+    await expect(listAeComps()).rejects.toThrow(/Malformed comp entry/);
+
     evalTSMock.mockResolvedValue({ nope: true });
     await expect(listAeComps()).rejects.toThrow(/Malformed comps list/);
+  });
+
+  it("rejects a template catalog whose fields have the wrong shape", async () => {
+    evalTSMock.mockResolvedValue({ outputModuleTemplates: 42, canQueueInAME: "true" });
+    await expect(getAeOutputTemplates("1")).rejects.toThrow(/Malformed template catalog/);
+
+    evalTSMock.mockResolvedValue({ outputModuleTemplates: ["H.264"], canQueueInAME: "true" });
+    await expect(getAeOutputTemplates("1")).rejects.toThrow(/Malformed template catalog/);
   });
 
   it("surfaces a stale-comp template catalog as a thrown error, not an empty list", async () => {

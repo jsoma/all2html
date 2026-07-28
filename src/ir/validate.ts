@@ -46,10 +46,12 @@ function rejectProtoAssetKey(json: unknown): void {
   if (json === null || typeof json !== "object") return;
   const assets = (json as { assets?: unknown }).assets;
   if (assets === null || typeof assets !== "object") return;
-  // `hasOwn` from core/identifiers, not `Object.hasOwn`: this file compiles
-  // under tsconfig.extendscript.json and rides the ES5 bundle, where ES2022
-  // runtime APIs do not exist. The helper carries the one biome suppression —
-  // an inline hasOwnProperty.call here gets auto-"fixed" back at commit time.
+  // `hasOwn` from core/identifiers, not `Object.hasOwn`: this file typechecks
+  // under tsconfig.extendscript.json (its include sweeps src/, so ES2022 APIs
+  // fail the build there) even though the shipped bundle graph never imports
+  // it — Zod cannot ride the ES5 bundle. The helper also carries the one biome
+  // suppression; an inline hasOwnProperty.call gets auto-"fixed" back to
+  // Object.hasOwn at commit time.
   if (hasOwn(assets, "__proto__")) {
     throw new IRValidationError([
       {

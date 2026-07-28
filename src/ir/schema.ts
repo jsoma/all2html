@@ -245,7 +245,10 @@ export const AssetSchema = z
     width: finiteNumber.positive(),
     height: finiteNumber.positive(),
     artboardId: z.string().min(1),
-    layerId: z.string().optional(),
+    // min(1): the semantic checks scope by presence while the emitter's index
+    // scopes by truthiness, so `layerId: ""` would validate as a layer asset
+    // and then silently occupy the background slot.
+    layerId: z.string().min(1).optional(),
     altText: z.string().optional(),
     source: SourceMetadataSchema.optional(),
     exportParams: z
@@ -464,9 +467,13 @@ export const DocumentSchema = z
       });
 
       // Image-rendered text lives only in the artboard's background raster, so
-      // a missing background asset makes that text appear zero times.
-      const hasImageText = artboard.layers.some((layer) =>
-        layer.elements.some((element) => element.type === "text" && element.renderAs === "image"),
+      // a missing background asset makes that text appear zero times. Invisible
+      // layers are exempt, matching the visible-layer asset check above: their
+      // content produces nothing, so nothing can be missing.
+      const hasImageText = artboard.layers.some(
+        (layer) =>
+          layer.visible !== false &&
+          layer.elements.some((element) => element.type === "text" && element.renderAs === "image"),
       );
       if (hasImageText && !backgroundAssetByArtboard.has(artboard.id)) {
         ctx.addIssue({

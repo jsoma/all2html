@@ -33,7 +33,7 @@ describe("shared SVG archive loader", () => {
       entries[`file-${i}.svg`] = new Uint8Array(0);
     }
     expect(() => loadSVGImportFilesFromArchive(makeArchive(entries), { slug: "big" })).toThrow(
-      /at most 2000 files per archive/,
+      /at most 2000 entries per archive/,
     );
   });
 
@@ -66,15 +66,21 @@ describe("shared SVG archive loader", () => {
     ).toThrow(/512 KiB|expand past/);
   });
 
-  it("does not count skipped entries (directories, __MACOSX) against the entry cap", () => {
+  it("counts skipped entries (directories, __MACOSX) against the entry cap", () => {
+    // The cap bounds traversal work, and skipped entries still cost header
+    // walks — an archive padded with 100,000 __MACOSX/ rows must not pass.
     const archive = makeArchive({
       "story.svg": svgBytes(),
       "images/photo.png": Uint8Array.from([1, 2, 3]),
       "__MACOSX/._story.svg": Uint8Array.from([0]),
     });
+    expect(() =>
+      loadSVGImportFilesFromArchive(archive, { slug: "story", limits: { maxEntries: 2 } }),
+    ).toThrow(/too many entries/);
+
     const loaded = loadSVGImportFilesFromArchive(archive, {
       slug: "story",
-      limits: { maxEntries: 2 },
+      limits: { maxEntries: 3 },
     });
     expect(loaded.files.map((file) => file.path)).toEqual(["images/photo.png", "story.svg"]);
   });
@@ -146,10 +152,10 @@ describe("shared SVG archive loader", () => {
     try {
       const zipPath = join(root, "big.zip");
       writeFileSync(zipPath, archive);
-      expect(() => loadSVGImportFiles(zipPath)).toThrow(/at most 2000 files/);
+      expect(() => loadSVGImportFiles(zipPath)).toThrow(/at most 2000 entries/);
       await expect(
         loadSVGImportFilesFromBrowser([makeBrowserZipFile("big.zip", archive)]),
-      ).rejects.toThrow(/at most 2000 files/);
+      ).rejects.toThrow(/at most 2000 entries/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

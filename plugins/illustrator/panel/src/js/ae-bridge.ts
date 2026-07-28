@@ -68,9 +68,19 @@ function decodeAeCompList(raw: unknown): AeCompInfo[] {
   }
   const comps: AeCompInfo[] = [];
   for (const entry of value) {
-    if (!entry || typeof entry !== "object") continue;
+    // A malformed entry is a broken host contract, not a row to skip — a
+    // silently shortened comp list looks like the comp was deleted.
+    if (!entry || typeof entry !== "object") {
+      throw new Error(
+        `Malformed comps list from the After Effects host: ${describeHostResult(entry)}`,
+      );
+    }
     const comp = entry as Record<string, unknown>;
-    if (typeof comp.id !== "string" || typeof comp.name !== "string") continue;
+    if (typeof comp.id !== "string" || typeof comp.name !== "string") {
+      throw new Error(
+        `Malformed comp entry from the After Effects host: ${describeHostResult(entry)}`,
+      );
+    }
     comps.push({
       id: comp.id,
       name: comp.name,
@@ -98,12 +108,25 @@ function decodeAeTemplateCatalog(raw: unknown): AeTemplateCatalog {
     // e.g. a stale targetCompId — surface the host's real error.
     throw new Error(parsed.error);
   }
+  // Reject, don't default: normalizing a malformed field to []/false presents
+  // "no render route available" instead of surfacing the broken host contract.
+  if (
+    !Array.isArray(parsed.outputModuleTemplates) ||
+    parsed.outputModuleTemplates.some((entry) => typeof entry !== "string")
+  ) {
+    throw new Error(
+      `Malformed template catalog from the After Effects host: ${describeHostResult(raw)}`,
+    );
+  }
+  if (typeof parsed.canQueueInAME !== "boolean") {
+    throw new Error(
+      `Malformed template catalog from the After Effects host: ${describeHostResult(raw)}`,
+    );
+  }
   return {
-    outputModuleTemplates: normalizeStringListResult(
-      parsed.outputModuleTemplates,
-      "Unexpected getAeOutputTemplates response",
-    ),
-    canQueueInAME: parsed.canQueueInAME === true,
+    // Empty names are AE-side junk rows, not a broken contract — drop them.
+    outputModuleTemplates: parsed.outputModuleTemplates.filter((entry) => entry !== ""),
+    canQueueInAME: parsed.canQueueInAME,
   };
 }
 
