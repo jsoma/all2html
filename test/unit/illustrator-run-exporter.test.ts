@@ -298,3 +298,156 @@ describe("settings precedence through the real run", () => {
     expect(loadAndValidateIR(result.irDocument).settings.namespace).toBe("cfg-");
   });
 });
+
+/**
+ * The untyped-input boundary, executed.
+ *
+ * `all2html.config.json` is `JSON.parse`d and the CEP panel payloads are JSON;
+ * neither has a schema, and their values used to be read straight into typed
+ * operations at nine call sites. Every case below is a value that reached one of
+ * those sites and either persisted a schema-invalid `ir.json` or crashed the
+ * export. They assert the policy `normalizeIllustratorInputs` declares — export
+ * succeeds, a named warning is raised, the declared fallback applies — and the
+ * harness independently validates every persisted document.
+ */
+describe("untyped config values are normalized once, at the boundary", () => {
+  function warningCodes(result: ReturnType<typeof run>): string[] {
+    return result.envelope.structuredWarnings.map((warning) => warning.code);
+  }
+
+  it("rejects non-string font fields instead of persisting them", () => {
+    const result = run({
+      configFile: {
+        fonts: [{ aifont: "ArialMT", family: 700, style: 1 }],
+      },
+    });
+
+    expect(result.envelope.success, result.envelope.error).toBe(true);
+    expect(warningCodes(result)).toContain("font:invalid-mapping");
+    // family falls back to the source font; style is dropped, not stringified.
+    expect(loadAndValidateIR(result.irDocument).fonts).toEqual([
+      { sourceFont: "ArialMT", family: "ArialMT" },
+    ]);
+  });
+
+  it("accepts a numeric weight but never a numeric style", () => {
+    const result = run({
+      configFile: { fonts: [{ sourceFont: "ArialMT", family: "Arial", weight: 700, vshift: -2 }] },
+    });
+
+    expect(loadAndValidateIR(result.irDocument).fonts).toEqual([
+      { sourceFont: "ArialMT", family: "Arial", weight: "700", vshift: "-2" },
+    ]);
+  });
+
+  // `[]` is truthy but `String([])` is "", so a fallback applied before
+  // normalization lets an array through as exactly the empty string `min(1)`
+  // rejects. The check has to be on the normalized value.
+  it("does not let an array family become an empty family", () => {
+    const result = run({ configFile: { fonts: [{ sourceFont: "ArialMT", family: [] }] } });
+
+    expect(loadAndValidateIR(result.irDocument).fonts).toEqual([
+      { sourceFont: "ArialMT", family: "ArialMT" },
+    ]);
+  });
+
+  it("drops a mapping with no usable source font rather than keying on undefined", () => {
+    const result = run({ configFile: { fonts: [{ sourceFont: 42, family: "Arial" }, null] } });
+
+    expect(result.envelope.success, result.envelope.error).toBe(true);
+    expect(loadAndValidateIR(result.irDocument).fonts).toEqual([]);
+  });
+
+  // The one consumer that crashed rather than warned: compute-styles already
+  // guarded a non-string family, its Google Fonts sibling did not.
+  it("survives a malformed family with google_fonts enabled", () => {
+    const result = run({
+      settingsBlock: { google_fonts: "link" },
+      configFile: { fonts: [{ sourceFont: "ArialMT", family: 700 }] },
+    });
+
+    expect(result.envelope.success, result.envelope.error).toBe(true);
+  });
+
+  it("ignores structural metadata values instead of persisting [object Object]", () => {
+    const result = run({
+      configFile: { settings: { credit: { a: 1 }, headline: 42, alt_text: ["x"] } },
+    });
+
+    expect(result.envelope.success, result.envelope.error).toBe(true);
+    expect(warningCodes(result)).toContain("metadata:invalid-value");
+
+    const metadata = loadAndValidateIR(result.irDocument).metadata;
+    expect(metadata.credit).toBe("");
+    expect(metadata.headline).toBe("");
+    // An omitted-when-absent field must not appear at all.
+    expect("altText" in metadata).toBe(false);
+  });
+
+  it("keeps valid metadata strings untouched", () => {
+    const result = run({
+      configFile: { settings: { credit: "By Somebody", alt_text: "A chart" } },
+    });
+
+    const metadata = loadAndValidateIR(result.irDocument).metadata;
+    expect(metadata.credit).toBe("By Somebody");
+    expect(metadata.altText).toBe("A chart");
+  });
+
+  // Every one of these used to produce a different artifact name from the one
+  // recorded in settings, or no export at all.
+  for (const [label, value] of [
+    ["a number", 42],
+    ["null", null],
+    ["false", false],
+    ["zero", 0],
+    ["an object", { a: 1 }],
+  ] as const) {
+    it(`falls back to the document name when project_name is ${label}`, () => {
+      const result = run({ configFile: { settings: { project_name: value } } });
+
+      expect(result.envelope.success, result.envelope.error).toBe(true);
+      expect(warningCodes(result)).toContain("setting:invalid-value");
+
+      const validated = loadAndValidateIR(result.irDocument);
+      expect(validated.settings.projectName).toBeUndefined();
+      expect(validated.metadata.slug).toBe("countries");
+      expect(result.envelope.slug).toBe("countries");
+      expect([...emittedHtml(result).keys()]).toEqual(["countries.html"]);
+    });
+  }
+
+  // The whole point of the boundary: one accepted value names every artifact.
+  it("names settings, metadata, envelope, image and HTML file from one accepted value", () => {
+    const result = run({
+      settingsBlock: { project_name: "My Project", create_promo_image: "true" },
+    });
+
+    const validated = loadAndValidateIR(result.irDocument);
+    expect(validated.settings.projectName).toBe("my-project");
+    expect(validated.metadata.slug).toBe("my-project");
+    expect(result.envelope.slug).toBe("my-project");
+    expect([...emittedHtml(result).keys()]).toEqual(["my-project.html"]);
+
+    const imagePaths = result.exports.map((entry) => entry.path);
+    expect(imagePaths).toContain("/docs/all2html-output/my-project-chart");
+    // The promo image is written beside the .ai file, not under the output dir.
+    expect(imagePaths).toContain("/docs/my-project-promo");
+  });
+
+  // An output directory the persisted document rejected used to still choose
+  // where the run wrote.
+  it("does not write to an output path the settings boundary rejected", () => {
+    const result = run({ configFile: { settings: { html_output_path: 42 } } });
+
+    expect(result.envelope.success, result.envelope.error).toBe(true);
+    expect(result.envelope.outputPath).toBe("/docs/all2html-output/");
+    expect(loadAndValidateIR(result.irDocument).settings.htmlOutputPath).toBeUndefined();
+  });
+
+  it("honors write_ir as a boolean, not only as the string 'false'", () => {
+    expect(run({ configFile: { settings: { write_ir: false } } }).irPath).toBeUndefined();
+    expect(run({ settingsBlock: { write_ir: "false" } }).irPath).toBeUndefined();
+    expect(run().irPath).toBe("/docs/all2html-output/ir.json");
+  });
+});

@@ -136,6 +136,13 @@ function collectFamilyRequests(fonts: readonly FontMapping[]): FamilyRequest[] {
   const requests: FamilyRequest[] = [];
 
   for (const font of fonts) {
+    // The type is a claim, not a guarantee: Illustrator and After Effects reach
+    // this with no Zod between them and the file on disk. `compute-styles.ts`
+    // already checks a non-string family and falls back; this consumer did not,
+    // so the same malformed mapping that merely warned in the CSS path turned an
+    // optional Google Fonts feature into `cssFamily.charAt is not a function`
+    // and failed the whole export.
+    if (!font || typeof font.family !== "string") continue;
     const family = getPrimaryCssFamily(font.family);
     if (!family) continue;
 

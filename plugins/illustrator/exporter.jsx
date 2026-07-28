@@ -102,8 +102,10 @@ function trim(s) {
  * calling it, and a source-level grep would not notice either. See
  * `test/unit/extendscript-setting-safety.test.ts`.
  */
-function resolveDocumentOutputPath(docSettings, docPath) {
-  var rawOutputPath = docSettings.html_output_path || docSettings.image_output_path || "all2html-output/";
+function resolveDocumentOutputPath(settings, docPath) {
+  // The *validated* bag, not raw docSettings: a path sanitizeCanonicalSettings had
+  // rejected still chose the output directory, so the run wrote where ir.json denied.
+  var rawOutputPath = settings.htmlOutputPath || settings.imageOutputPath || "all2html-output/";
   // Construct a relative filesystem directory at the boundary. This shared
   // rule rejects traversal, drive prefixes and controls, contains leading
   // slashes under the document directory, and returns one trailing slash.
@@ -1553,9 +1555,23 @@ function readNullableIntSetting(obj, key) {
   return isNaN(value) ? undefined : value;
 }
 
+/**
+ * String settings accept strings, and nothing else. `String(obj[key])` ran here,
+ * which is how `project_name: null` became the literal slug "null" and emitted
+ * null.html while the raw `project_name || docName` path read the same key as
+ * falsy and put the document name in metadata.slug. Rejecting applies the
+ * declared default, which is what every other invalid setting already gets.
+ */
 function readStringSetting(obj, key) {
   if (!hasOwn(obj, key)) return undefined;
-  return String(obj[key]);
+  var value = obj[key];
+  if (typeof value === "string") return value;
+  warn('Setting "' + key + '" must be text. Using the default instead.', "setting:invalid-value", "setting");
+  return undefined;
+}
+
+function acceptString(value) {
+  return typeof value === "string" ? value : undefined;
 }
 
 function buildCanonicalIrSettings(docSettings) {
@@ -1721,22 +1737,127 @@ function getFontSourceKey(font) {
   return font && (font.sourceFont || font.aifont) ? String(font.sourceFont || font.aifont) : "";
 }
 
-function normalizeFontEntries(fonts) {
+/**
+ * One optional font field. `weight`/`vshift` accept finite numbers (a JSON config
+ * spelling a CSS weight as 700 is well-formed); `style` does not, since no number
+ * is a CSS font-style. Empty strings are kept — the panel writes them for "unset".
+ */
+function appendFontField(target, key, raw, sourceFont, allowNumber) {
+  if (raw === undefined || raw === null) return;
+  if (typeof raw === "string") {
+    target[key] = raw;
+    return;
+  }
+  if (allowNumber && typeof raw === "number" && isFinite(raw)) {
+    target[key] = String(raw);
+    return;
+  }
+  warn('Font mapping "' + sourceFont + '" has an invalid ' + key + '. Ignoring that field.', "font:invalid-mapping", "font");
+}
+
+/**
+ * Font mappings, normalized to what FontMappingSchema accepts. Per-field policy,
+ * not blind stringification: `String(value)` on a structural value persists
+ * "[object Object]" as a family — schema-valid, garbage CSS. The empty check on
+ * the *normalized* family is not redundant: `[]` is truthy but `String([])` is "",
+ * so a `family || sourceFont` fallback applied first lets an array through as
+ * exactly the empty string `min(1)` rejects.
+ */
+function normalizeFontMappings(fonts) {
   var normalized = [];
   for (var i = 0; i < fonts.length; i++) {
     var font = fonts[i];
-    var sourceFont = getFontSourceKey(font);
-    if (!sourceFont) continue;
-    var next = {
-      sourceFont: sourceFont,
-      family: font.family || sourceFont
-    };
-    if (font.weight !== undefined) next.weight = font.weight;
-    if (font.style !== undefined) next.style = font.style;
-    if (font.vshift !== undefined) next.vshift = font.vshift;
+    if (!font || typeof font !== "object") {
+      warn("Ignoring a font mapping that is not an object.", "font:invalid-mapping", "font");
+      continue;
+    }
+    var sourceFont = acceptString(font.sourceFont) || acceptString(font.aifont) || "";
+    if (!sourceFont) {
+      warn("Ignoring a font mapping with no usable source font name.", "font:invalid-mapping", "font");
+      continue;
+    }
+    var family = acceptString(font.family) || "";
+    if (!family) {
+      if (font.family !== undefined && font.family !== null && font.family !== "") {
+        warn('Font mapping "' + sourceFont + '" has an invalid family. Using the source font name.', "font:invalid-mapping", "font");
+      }
+      family = sourceFont;
+    }
+    var next = { sourceFont: sourceFont, family: family };
+    appendFontField(next, "weight", font.weight, sourceFont, true);
+    appendFontField(next, "style", font.style, sourceFont, false);
+    appendFontField(next, "vshift", font.vshift, sourceFont, true);
     normalized.push(next);
   }
   return normalized;
+}
+
+// [source key, canonical key, fallback]. A `null` fallback omits the key entirely
+// when absent or empty: the model must survive a JSON round-trip and assertJsonPure
+// aborts on `undefined`. Adding a metadata string is one row, not a new rule.
+var METADATA_FIELDS = [
+  ["headline", "headline", ""],
+  ["leadin", "leadin", ""],
+  ["summary", "summary", ""],
+  ["notes", "notes", ""],
+  ["sources", "sources", ""],
+  ["credit", "credit", ""],
+  ["alt_text", "altText", null],
+  ["image_alt_text", "imageAltText", null],
+  ["aria_role", "ariaRole", null]
+];
+
+function normalizeMetadataFields(docSettings, slug) {
+  var metadata = { slug: slug };
+  for (var i = 0; i < METADATA_FIELDS.length; i++) {
+    var sourceKey = METADATA_FIELDS[i][0];
+    var canonicalKey = METADATA_FIELDS[i][1];
+    var fallback = METADATA_FIELDS[i][2];
+    var raw = hasOwn(docSettings, sourceKey) ? docSettings[sourceKey] : undefined;
+    if (typeof raw === "string" && raw !== "") {
+      metadata[canonicalKey] = raw;
+      continue;
+    }
+    if (raw !== undefined && raw !== null && typeof raw !== "string") {
+      warn('Metadata "' + sourceKey + '" must be text. Ignoring it.', "metadata:invalid-value", "setting");
+    }
+    if (fallback !== null) metadata[canonicalKey] = fallback;
+  }
+  return metadata;
+}
+
+/**
+ * The one place untyped Illustrator input becomes typed exporter input.
+ *
+ * Three sources arrive with no schema: all2html.config.json (JSON.parse), the CEP
+ * panel payloads, and document text blocks. Their values were read into typed
+ * operations at nine call sites with ad-hoc rules or none, so a non-string
+ * project_name crashed makeKeyword before any settings boundary ran, and fonts and
+ * metadata persisted numbers and objects into typed IR string fields.
+ *
+ * After this call runExporter reads no raw docSettings key and no raw font entry.
+ * `inputs.settings` IS the canonical bag — built here, not copied — so this stays
+ * one validated settings object rather than becoming a second.
+ */
+function normalizeIllustratorInputs(docSettings, fonts, docName) {
+  var settings = buildCanonicalIrSettings(docSettings);
+  sanitizeCanonicalSettings(settings);
+
+  // From the project name that *survived* validation, never the raw key: the two
+  // disagree exactly when the raw value is malformed, and then name different files.
+  var slug = settings.projectName || makeKeyword(docName) || "graphic";
+  var dialog = docSettings.show_completion_dialog_box;
+
+  return {
+    settings: settings,
+    slug: slug,
+    fonts: normalizeFontMappings(fonts),
+    metadata: normalizeMetadataFields(docSettings, slug),
+    controls: {
+      writeIr: readBoolSetting(docSettings, "write_ir") !== false,
+      showDialog: dialog !== "no" && dialog !== "false" && dialog !== false
+    }
+  };
 }
 
 function runExporter() {
@@ -1837,24 +1958,14 @@ function runExporter() {
     }
   }
 
-  // Resolve settings
-  // makeKeyword applies to project_name too, not just the document-name
-  // fallback. The slug is concatenated into the output file path, so a
-  // project_name of "../../pwn" was a path traversal at the write site, and CSS
-  // metacharacters in it reached selectors. makeKeyword is idempotent on names
-  // that were already safe, so ordinary project names are unaffected. The core
-  // sanitizes settings.projectName as well, but grouping falls back to
-  // metadata.slug, which is this value — it has to be safe at the source.
-  var slug = makeKeyword(docSettings.project_name || docName);
-  if (!slug) slug = makeKeyword(docName) || "graphic";
-  var outputPath = resolveDocumentOutputPath(docSettings, docPath);
-
-  // Validate once, here, and derive everything downstream from the result.
+  // Normalize once, here, and derive everything downstream from the result.
   // Before irDoc is built, because irDoc is written to disk below and has to
   // satisfy the canonical schema on its own — and before `settings`, because the
   // export run must not act on a value the persisted document rejects.
-  var canonicalIrSettings = buildCanonicalIrSettings(docSettings);
-  sanitizeCanonicalSettings(canonicalIrSettings);
+  var inputs = normalizeIllustratorInputs(docSettings, configFile.fonts || [], docName);
+  var canonicalIrSettings = inputs.settings;
+  var slug = inputs.slug;
+  var outputPath = resolveDocumentOutputPath(canonicalIrSettings, docPath);
 
   var settings = buildExportSettings(canonicalIrSettings, slug, outputPath);
 
@@ -1933,32 +2044,17 @@ function runExporter() {
       adapterVersion: "0.1.0"
     },
     settings: canonicalIrSettings,
-    fonts: normalizeFontEntries(configFile.fonts || []),
+    fonts: inputs.fonts,
     artboards: cleanArtboards,
     customBlocks: customBlocks,
     assets: assets,
-    metadata: {
-      slug: slug,
-      headline: docSettings.headline || "",
-      leadin: docSettings.leadin || "",
-      summary: docSettings.summary || "",
-      notes: docSettings.notes || "",
-      sources: docSettings.sources || "",
-      credit: docSettings.credit || ""
-      // altText / imageAltText / ariaRole are assigned below, not here: an
-      // absent value must omit the key, never carry `undefined`. The document
-      // model has to survive a JSON round-trip and assertJsonPure enforces it,
-      // so `altText: undefined` aborts the export outright.
-    }
+    metadata: inputs.metadata
   };
-  if (docSettings.alt_text) irDoc.metadata.altText = docSettings.alt_text;
-  if (docSettings.image_alt_text) irDoc.metadata.imageAltText = docSettings.image_alt_text;
-  if (docSettings.aria_role) irDoc.metadata.ariaRole = docSettings.aria_role;
 
   span.end();
 
   // Write IR JSON for debugging (disable with write_ir: false)
-  if (docSettings.write_ir !== "false") {
+  if (inputs.controls.writeIr) {
     span = logSpan("writeIR");
     writeFile(outputPath + "ir.json", JSON.stringify(irDoc, null, 2));
     span.end();
@@ -1967,7 +2063,11 @@ function runExporter() {
   // Call core to generate HTML
   span = logSpan("processAndEmit");
   var result = All2Html.processAndEmit(irDoc, {
-    fonts: normalizeFontEntries(configFile.fonts || [])
+    // The same array irDoc carries, not a second normalization. Kept rather than
+    // dropped: mergeFonts replaces the FIRST entry matching a sourceFont, so with
+    // duplicate source fonts the merged table is not the base table and removing
+    // this would change which family a duplicate resolves to.
+    fonts: inputs.fonts
   });
   pushCoreWarnings(result);
   span.end(warnings.length + " warnings");
@@ -2014,28 +2114,25 @@ function runExporter() {
     }
   }
 
-  // Cache bust token auto-increment
-  if (docSettings.cache_bust_token) {
-    try {
-      var token = parseInt(docSettings.cache_bust_token, 10);
-      if (!isNaN(token)) {
-        var newToken = token + 1;
-        // Find and update the settings text frame, under either spelling.
-        var settingsFrame = findSettingsTextFrame(doc);
-        if (settingsFrame) {
-          try {
-            var contents = settingsFrame.contents;
-            contents = contents.replace(
-              /cache_bust_token\s*:\s*\d+/,
-              "cache_bust_token: " + newToken
-            );
-            settingsFrame.contents = contents;
-          } catch(e2) {
-            // Settings frame can't be updated
-          }
-        }
+  // Cache bust auto-increment, read from the validated bag: it is already a number
+  // or null, where the raw key needed its own parseInt/isNaN dance.
+  var cacheBustToken = canonicalIrSettings.cacheBustToken;
+  if (typeof cacheBustToken === "number") {
+    var newToken = cacheBustToken + 1;
+    // Find and update the settings text frame, under either spelling.
+    var settingsFrame = findSettingsTextFrame(doc);
+    if (settingsFrame) {
+      try {
+        var contents = settingsFrame.contents;
+        contents = contents.replace(
+          /cache_bust_token\s*:\s*\d+/,
+          "cache_bust_token: " + newToken
+        );
+        settingsFrame.contents = contents;
+      } catch(e2) {
+        // Settings frame can't be updated
       }
-    } catch(e) {}
+    }
   }
 
   // Document saved-flag restore happens in executeAll2Html, after
@@ -2050,7 +2147,7 @@ function runExporter() {
     artboardCount: artboards.length,
     imageCount: Object.keys(assets).length,
     startTime: startTime,
-    showDialog: docSettings.show_completion_dialog_box !== "no" && docSettings.show_completion_dialog_box !== "false"
+    showDialog: inputs.controls.showDialog
   };
 }
 

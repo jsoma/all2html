@@ -28,6 +28,7 @@ import { relativeOutputDirectory } from "../../src/core/artifact-path.js";
 import { processAndEmit } from "../../src/extendscript/index.js";
 import { defaultSettings } from "../../src/ir/defaults.js";
 import { isValidSettingValue } from "../../src/ir/settings-definitions.js";
+import { loadAndValidateIR } from "../../src/ir/validate.js";
 
 const exporterPath = resolve(import.meta.dirname, "../../plugins/illustrator/exporter.jsx");
 const exporterSource = readFileSync(exporterPath, "utf-8");
@@ -117,6 +118,8 @@ export interface ExporterRunResult {
   documentSaved: boolean;
   /** Parsed `ir.json`, when one was written. */
   irDocument: Record<string, unknown> | undefined;
+  /** Absolute path `ir.json` was written to, when one was written. */
+  irPath: string | undefined;
 }
 
 function settingsBlockContents(settings: Record<string, string>): string {
@@ -430,8 +433,38 @@ export function runIllustratorExporter(spec: FakeDocumentSpec = {}): ExporterRun
   );
 
   const envelope = JSON.parse(raw) as ExporterRunResult["envelope"];
-  const irPath = `${envelope.outputPath ?? ""}ir.json`;
-  const irRaw = writes.get(irPath);
+
+  // Find ir.json in what was actually written, never by reconstructing the path
+  // from the envelope. A failed run omits `outputPath`, so the reconstruction
+  // missed every ir.json written by a run that later threw — which is exactly
+  // the run most likely to have persisted a malformed document. Validation
+  // below would then have skipped silently instead of failing.
+  const irPaths: string[] = [];
+  for (const path of writes.keys()) {
+    if (path.slice(path.lastIndexOf("/") + 1) === "ir.json") irPaths.push(path);
+  }
+  if (irPaths.length > 1) {
+    throw new Error(`exporter wrote ${irPaths.length} ir.json files: ${irPaths.join(", ")}`);
+  }
+  const irPath = irPaths[0];
+  const irRaw = irPath === undefined ? undefined : writes.get(irPath);
+  const irDocument =
+    irRaw === undefined ? undefined : (JSON.parse(irRaw) as Record<string, unknown>);
+
+  // Every persisted IR must satisfy the canonical schema, in every scenario,
+  // without the test opting in. Illustrator is a Zod-free surface: this runner
+  // is the only place a schema check can cover an exporter field nobody thought
+  // to assert on. Enforcing it here rather than in a helper each `it` calls is
+  // the point — an opt-in invariant only covers the cases someone remembered.
+  if (irDocument !== undefined) {
+    try {
+      loadAndValidateIR(irDocument);
+    } catch (error) {
+      throw new Error(
+        `exporter wrote a schema-invalid ${irPath}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
 
   return {
     envelope,
@@ -440,7 +473,8 @@ export function runIllustratorExporter(spec: FakeDocumentSpec = {}): ExporterRun
     folders,
     savedAssignments,
     documentSaved,
-    irDocument: irRaw ? (JSON.parse(irRaw) as Record<string, unknown>) : undefined,
+    irDocument,
+    irPath,
   };
 }
 

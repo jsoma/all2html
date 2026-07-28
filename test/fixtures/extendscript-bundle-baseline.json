@@ -4,8 +4,8 @@
     "core": {
       "artifact": "dist/extendscript/all2html-core.js",
       "build": "build:extendscript",
-      "bytes": 124747,
-      "recordedAt": "2026-07-27",
+      "bytes": 124831,
+      "recordedAt": "2026-07-28",
       "growthTolerance": 0.05,
       "history": [
         {
@@ -63,14 +63,18 @@
         {
           "bytes": 124747,
           "reason": "124747 B. +42 B: Asset.altText plumbing in html-tree.ts. Alt text recovered from a rasterized SVG now rides on the asset it describes instead of on document metadata -- a multi-file import kept only the first file's text and the emitter stamped it onto every rasterized artboard, so two unrelated graphics got the same aria-label and one of them described the wrong image. metadata.imageAltText stays as the document-level fallback, which is what the Illustrator settings block and the Figma UI set. The assembled entry above already carries these 42 B."
+        },
+        {
+          "bytes": 124831,
+          "reason": "124831 B. +84 B: collectFamilyRequests in emitters/shared/google-fonts.ts now skips a null entry or a non-string family instead of calling getPrimaryCssFamily on it. FontMapping is a compile-time claim and two surfaces reach this helper with nothing enforcing it at runtime -- Illustrator and After Effects both read font mappings out of an unvalidated all2html.config.json. compute-styles.ts already guarded a non-string family and fell back with a warning; this sibling consumer did not, so the same malformed mapping that merely warned in the CSS path threw 'cssFamily.charAt is not a function' and failed the whole export whenever googleFonts was not 'none'. Kept in the core rather than solved only at the Illustrator boundary because it defends every Zod-free producer, including After Effects, which does not run the boundary at all. Pinned by test/unit/google-fonts.test.ts against deliberately mistyped mappings; removing the guard fails 6 of its 10 tests."
         }
       ]
     },
     "assembled": {
       "artifact": "dist/all2html.js",
       "build": "build:illustrator",
-      "bytes": 219056,
-      "recordedAt": "2026-07-27",
+      "bytes": 223288,
+      "recordedAt": "2026-07-28",
       "growthTolerance": 0.05,
       "history": [
         {
@@ -124,14 +128,18 @@
         {
           "bytes": 219056,
           "reason": "219056 B. +613 B, in two parts. +571 B is plugins/illustrator/exporter.jsx: runRestoreActions now returns a failure count and executeAll2Html only sets docToMarkSaved.saved = true when that count is zero. Every restore failure was already downgraded to an illustrator:restore-failed warning and the save flag was then set unconditionally, so a document left mutated -- a settings block still hidden, a layer still invisible, an artboard index moved -- was marked clean and Illustrator never prompted; the user closed a file whose on-screen state no longer matched the one on disk. The warning text now also states that the document was left modified and is not marked saved, since the grouped warnings are the only channel the panel renders. Roughly half the 571 B is comment: exporter.jsx is concatenated verbatim. The remaining +42 B is carried from the core artifact (src/, changed in parallel on this branch); it is not attributed here and the core baseline is not re-recorded by this entry. Not a byte of this is the new coverage: test/unit/illustrator-run-exporter.test.ts now runs the whole shipped exporter against a fake Illustrator DOM whose special block refuses to be unhidden, and asserts document.saved is never assigned -- reverting the guard turns that assertion red while the clean-path companion stays green."
+        },
+        {
+          "bytes": 223288,
+          "reason": "223288 B. +4,232 B (+1.9%), 39% of tolerance. +84 B is carried from the core (see its entry). The remaining +4,148 B is plugins/illustrator/exporter.jsx: normalizeIllustratorInputs, the single boundary where untyped Illustrator input becomes typed exporter input. Three sources reach this exporter with no schema -- all2html.config.json (JSON.parse), the CEP panel settings and font payloads, and document text blocks -- and their values were read straight into typed operations at nine separate call sites, each with its own ad-hoc rule or none. Four defects were reproduced through the fake-DOM harness before the change: non-string font family/weight/style/vshift persisted into ir.json and rejected by loadAndValidateIR; the same malformed family crashing getPrimaryCssFamily with google_fonts: link; structural metadata values persisting an object in metadata.credit; and project_name: 42 crashing makeKeyword with no ir.json written at all. project_name is the case that shows why a font-only or metadata-only fix was refused: it IS a canonical setting, covered by SETTING_DEFINITIONS, and still failed because the raw value reached makeKeyword at the slug site BEFORE buildCanonicalIrSettings ran. That split also made project_name: null emit null.html while metadata.slug said countries -- one input normalized twice, naming two different artifacts. The defect class is therefore not 'fonts' or 'non-setting config keys' but 'an untyped input consumed by a typed operation before the exporter normalized it once'. After this call runExporter reads no raw docSettings key and no raw font entry: IR construction, output-path selection (resolveDocumentOutputPath now takes the validated canonical bag, so a path the settings boundary rejected can no longer choose where the run writes), image export, processAndEmit, cache-bust handling and the result envelope all consume inputs. readStringSetting rejects non-strings instead of String()-ing them, which is what closed project_name. inputs.settings IS the canonical bag, built and sanitized inside the boundary rather than copied, so this stays one validated settings object rather than reintroducing the two bags entry 218443 eliminated. Roughly 1.9 KB of the delta is comment -- exporter.jsx is concatenated verbatim -- already trimmed once from 5,396 B total. Reclaim was considered and REFUSED at one specific site: deleting the fonts override passed to processAndEmit looks like a provable identity since both arrays are the same normalized input, but mergeFonts replaces the FIRST entry matching a sourceFont, so with duplicate source fonts in one config the merged table is not the base table and dropping the override would silently change which family a duplicate resolves to. Not a byte of this is the new coverage: test/helpers/illustrator-fake-dom.ts now finds ir.json by basename in the recorded writes rather than reconstructing the path from envelope.outputPath -- the error path omits that field, so every ir.json written by a run that later threw was invisible to the harness, which is exactly the run most likely to have persisted a malformed document -- and validates every persisted IR through loadAndValidateIR inside the runner itself, so no test can opt out. 21 new scenarios pin the declared policy; reverting readStringSetting, the font family normalization, the metadata policy or the output-path source each turns this file red."
         }
       ]
     },
     "afterEffects": {
       "artifact": "dist/after-effects/all2html-ae.jsx",
       "build": "build:after-effects",
-      "bytes": 79342,
-      "recordedAt": "2026-07-27",
+      "bytes": 79426,
+      "recordedAt": "2026-07-28",
       "growthTolerance": 0.05,
       "history": [
         {
@@ -141,6 +149,10 @@
         {
           "bytes": 79342,
           "reason": "79342 B. escapeInlineJson now escapes every '<' as \\u003c, not just '</': JSON containing '<!--<script>' put the tokenizer into script-data-double-escaped state and the player template's real closing tag was read as text, swallowing the player. Offset slightly by dropping the dead data-all2html-google-fonts marker."
+        },
+        {
+          "bytes": 79426,
+          "reason": "79426 B. +84 B, carried verbatim from the core's collectFamilyRequests guard -- this artifact concatenates emitters/shared/google-fonts.ts through the ae-index.ts helper bundle. Nothing in plugins/after-effects/exporter.jsx changed. After Effects is the surface that most needs it: it constructs no IR, never runs the Illustrator input boundary, and normalizes config fonts with its own String() coercion, so the core consumer is the only thing standing between a malformed all2html.config.json and a failed render."
         }
       ]
     }

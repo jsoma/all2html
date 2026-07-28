@@ -366,37 +366,37 @@ describe("the Illustrator output directory is constructed, not concatenated", ()
   );
 
   const match = exporterSource.match(
-    /function resolveDocumentOutputPath\(docSettings, docPath\) \{[\s\S]*?\n\}/,
+    /function resolveDocumentOutputPath\(settings, docPath\) \{[\s\S]*?\n\}/,
   );
   if (!match) throw new Error("Could not find resolveDocumentOutputPath in exporter.jsx");
 
   const resolveOutputPath = new Function(
-    "docSettings",
+    "settings",
     "docPath",
     "All2Html",
-    `${match[0]}\nreturn resolveDocumentOutputPath(docSettings, docPath);`,
+    `${match[0]}\nreturn resolveDocumentOutputPath(settings, docPath);`,
   ) as (
-    docSettings: Record<string, unknown>,
+    settings: Record<string, unknown>,
     docPath: string,
     core: { relativeOutputDirectory: (value: string) => string },
   ) => string;
 
   const core = { relativeOutputDirectory };
 
-  it("refuses a traversing html_output_path", () => {
-    expect(() => resolveOutputPath({ html_output_path: "../../outside" }, "/docs/", core)).toThrow(
+  it("refuses a traversing htmlOutputPath", () => {
+    expect(() => resolveOutputPath({ htmlOutputPath: "../../outside" }, "/docs/", core)).toThrow(
       /Artifact paths must stay inside/,
     );
   });
 
-  it("refuses a traversing image_output_path fallback", () => {
-    expect(() => resolveOutputPath({ image_output_path: "../evil" }, "/docs/", core)).toThrow(
+  it("refuses a traversing imageOutputPath fallback", () => {
+    expect(() => resolveOutputPath({ imageOutputPath: "../evil" }, "/docs/", core)).toThrow(
       /Artifact paths must stay inside/,
     );
   });
 
   it("contains a leading slash under the document directory", () => {
-    expect(resolveOutputPath({ html_output_path: "/all2html-output/" }, "/docs/", core)).toBe(
+    expect(resolveOutputPath({ htmlOutputPath: "/all2html-output/" }, "/docs/", core)).toBe(
       "/docs/all2html-output/",
     );
   });
