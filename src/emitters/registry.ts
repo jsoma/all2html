@@ -23,14 +23,10 @@ export interface EmitterDescriptor {
 const builtinEmitters: Record<string, SharedEmitterDescriptor> =
   createBuiltinEmitters(emitStandaloneGroup);
 
+// A fixed table of the built-in emitters. There is no runtime registration:
+// `registerEmitter` was deleted with zero call sites, so the set of formats is
+// exactly what `createBuiltinEmitters` seeds and no exported mutator exists.
 const emitters = new Map<string, SharedEmitterDescriptor>(Object.entries(builtinEmitters));
-
-export function registerEmitter(emitter: SharedEmitterDescriptor): void {
-  if (!emitter.name) {
-    throw new Error("Emitter name is required.");
-  }
-  emitters.set(emitter.name, emitter);
-}
 
 export function getEmitter(name: string): EmitterDescriptor {
   const emitter = emitters.get(name);

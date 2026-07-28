@@ -16,7 +16,7 @@ all2html keeps one canonical settings model even though each source tool exposes
 
 Settings always use canonical camelCase keys inside the IR and in `all2html.config.json`. Tool-native spellings such as `image_format` or `html_output_path` are accepted only on the tool side of the boundary — in an Illustrator `all2html-settings` text block (the legacy `ai2html-settings` name still works) — and are normalized before they reach the pipeline.
 
-There are 33 settings.
+There are 30 settings.
 
 ## Surfaces
 
@@ -46,7 +46,6 @@ A surface that warns tells you, during the export itself, whenever you asked for
 | Setting | Illustrator | After Effects | Figma plugin | all2html CLI | Browser converter |
 |---|---|---|---|---|---|
 | [`imageFormat`](#imageFormat) | partial | n/a | partial | partial | partial |
-| [`writeImageFiles`](#writeImageFiles) | **no** | n/a | **no** | **no** | **no** |
 | [`pngTransparent`](#pngTransparent) | yes | n/a | **no** | partial | partial |
 | [`pngNumberOfColors`](#pngNumberOfColors) | yes | n/a | **no** | partial | partial |
 | [`jpgQuality`](#jpgQuality) | yes | n/a | **no** | partial | partial |
@@ -71,8 +70,6 @@ A surface that warns tells you, during the export itself, whenever you asked for
 | [`includeResizerWidths`](#includeResizerWidths) | yes | n/a | yes | yes | yes |
 | [`responsiveImageMode`](#responsiveImageMode) | **no** | n/a | yes | yes | yes |
 | [`useLazyLoader`](#useLazyLoader) | yes | n/a | yes | yes | yes |
-| [`inlineSvg`](#inlineSvg) | **no** | n/a | **no** | **no** | **no** |
-| [`svgIdPrefix`](#svgIdPrefix) | **no** | n/a | **no** | **no** | **no** |
 | [`svgEmbedImages`](#svgEmbedImages) | yes | n/a | **no** | **no** | **no** |
 | [`clickableLink`](#clickableLink) | yes | n/a | yes | yes | yes |
 | [`createPromoImage`](#createPromoImage) | yes | n/a | **no** | **no** | **no** |
@@ -105,21 +102,6 @@ Start with Auto unless you know the output needs a specific format.
 | Figma plugin | partial | Honored values: `auto`, `png24`. The Figma runtime always exports full-color PNG with alpha, equivalent to png24. |
 | all2html CLI | partial | Honored on the `import` path only. Rasterization settings are honored by `import svg`. The `render` command never rasterizes, so this value is inert. |
 | Browser converter | partial | Honored on the `import` path only. Rasterization settings are honored by `import svg`. The `render` command never rasterizes, so this value is inert. |
-
-<a id="writeImageFiles"></a>
-### `writeImageFiles`
-
-**Type:** boolean · **Default:** `true`
-
-Asks the exporter to write extracted image assets to disk alongside the emitted output.
-
-| Surface | Support | What actually happens |
-|---|---|---|
-| Illustrator | **no** | Illustrator always writes image files. |
-| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
-| Figma plugin | **no** | Figma always writes extracted assets into the export ZIP. |
-| all2html CLI | **no** | Extracted assets are always written next to the emitted files. |
-| Browser converter | **no** | Extracted assets are always written next to the emitted files. |
 
 <a id="pngTransparent"></a>
 ### `pngTransparent`
@@ -506,40 +488,6 @@ Honored on: Illustrator, Figma plugin, all2html CLI, Browser converter.
 | Surface | Support | What actually happens |
 |---|---|---|
 | After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
-
-<a id="inlineSvg"></a>
-### `inlineSvg`
-
-**Type:** boolean · **Default:** `false` · **Panel label:** `Inline SVG layers`
-
-Keeps eligible SVG layers inline in the HTML instead of rasterizing them into background images.
-
-Inline SVG can make vector details stay crisp and stylable, but it also produces more verbose HTML and can reveal browser rendering differences.
-
-Leave this off unless you specifically need live vector layers in the markup.
-
-| Surface | Support | What actually happens |
-|---|---|---|
-| Illustrator | **no** | Tag individual layers with :svg,inline instead. The document-level setting is not read. |
-| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
-| Figma plugin | **no** | Tag individual layers with :svg:inline instead. The document-level setting is not read. |
-| all2html CLI | **no** | Only the per-layer inline flag in the IR is read. |
-| Browser converter | **no** | Only the per-layer inline flag in the IR is read. |
-
-<a id="svgIdPrefix"></a>
-### `svgIdPrefix`
-
-**Type:** string — empty, or a CSS-safe identifier (letters, digits, `_`, `-`, not starting with a digit) · **Default:** `""`
-
-Prefix applied to ids inside inline SVG output, so several inline SVGs on one page cannot collide.
-
-| Surface | Support | What actually happens |
-|---|---|---|
-| Illustrator | **no** | SVG id prefixing is not implemented on any surface; ids are emitted unprefixed. |
-| After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
-| Figma plugin | **no** | SVG id prefixing is not implemented on any surface; ids are emitted unprefixed. |
-| all2html CLI | **no** | SVG id prefixing is not implemented on any surface; ids are emitted unprefixed. |
-| Browser converter | **no** | SVG id prefixing is not implemented on any surface; ids are emitted unprefixed. |
 
 <a id="svgEmbedImages"></a>
 ### `svgEmbedImages`

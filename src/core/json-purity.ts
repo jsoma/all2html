@@ -1,8 +1,10 @@
 /**
  * JSON-purity invariants for the document model (SPEC §12.2, decision D21).
  *
- * Zod rejects non-finite numbers at *input* (`src/ir/schema.ts`), but computed
- * documents have no equivalent gate — which is exactly how `computeBreakpoints`
+ * Validation rejects non-finite numbers at *input* on the Zod surfaces —
+ * `z.number()` refuses NaN and every number base in `src/ir/schema.ts` is
+ * `.finite()` — but the ExtendScript path runs no Zod, and computed documents
+ * have no input gate at all — which is exactly how `computeBreakpoints`
  * stored `Infinity` unchallenged for as long as it did. A single JSON round-trip
  * test is necessary but not sufficient: it tells you *that* the document is dirty,
  * not *which transform* dirtied it. These assertions run at each transform boundary
@@ -146,8 +148,10 @@ export function findImpureValues(value: unknown, limit = 5): string[] {
  * Assert that a transform's output is JSON-representable throughout.
  *
  * Throws rather than warns: a sentinel in the document model is a contract break,
- * not a document-quality problem, and it is always a bug in this repo rather than in
- * a user's artwork (Zod already rejects non-finite input).
+ * not a document-quality problem, and it is nearly always a bug in this repo rather
+ * than in a user's artwork (the Zod surfaces reject non-finite input via `.finite()`;
+ * the ExtendScript surface runs no Zod, so there a sentinel can also arrive from
+ * exporter extraction).
  *
  * Cost is one type-tag walk of the object graph with no allocation on the happy path.
  * The walk is O(document), so the *relative* cost does not shrink as documents grow —

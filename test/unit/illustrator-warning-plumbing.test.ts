@@ -95,7 +95,7 @@ describe("Illustrator exporter warning plumbing", () => {
     // honors it now (KB1), so this uses a cell that is still declared dead.
     const settingWarning = checkSurfaceCapabilities(
       illustratorCapabilities,
-      { ...createDefaultSettings(), inlineSvg: true },
+      { ...createDefaultSettings(), responsiveImageMode: "css-var" },
       { surface: "illustrator", path: "render", format: "html" },
     )[0];
     expect(settingWarning.category).toBe("setting");

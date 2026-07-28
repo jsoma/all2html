@@ -1,7 +1,6 @@
 import type { EmitterConfig } from "../../../src/emitters/types.js";
 import type {
   Asset,
-  CharacterRun,
   CustomBlock,
   Element,
   FontMapping,
@@ -48,11 +47,6 @@ export interface FrameInfo {
 export interface FrameGroup {
   name: string;
   frames: FrameInfo[];
-}
-
-export interface ExtractedTextRun extends CharacterRun {
-  start: number;
-  end: number;
 }
 
 export interface ExtractedTextElement extends Omit<TextElement, "paragraphs"> {

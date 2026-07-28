@@ -14,12 +14,9 @@
     "htmlOutputPath": "/ai2html-output/",
     "htmlOutputExtension": ".html",
     "jpgQuality": 60,
-    "pngNumberOfColors": 128,
-    "inlineSvg": true
+    "pngNumberOfColors": 128
   },
-  "fonts": [
-    
-  ],
+  "fonts": [],
   "artboards": [
     {
       "id": "illustrator:artboard:artboard-3-1",
@@ -41,12 +38,9 @@
             "tool": "illustrator",
             "name": "interactions:svg"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": [
-            
-          ]
+          "elements": []
         },
         {
           "id": "illustrator:artboard:artboard-3-1:layer:layer-1-2",
@@ -56,7 +50,6 @@
             "tool": "illustrator",
             "name": "Layer 1"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -774,12 +767,9 @@
             "tool": "illustrator",
             "name": "interactions:svg"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": [
-            
-          ]
+          "elements": []
         },
         {
           "id": "illustrator:artboard:artboard-4-2:layer:layer-1-2",
@@ -789,7 +779,6 @@
             "tool": "illustrator",
             "name": "Layer 1"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [

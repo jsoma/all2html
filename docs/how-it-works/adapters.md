@@ -31,17 +31,17 @@ Canonical IDs are part of the adapter contract:
 
 Source-native labels, original names, and host metadata belong in `source`, not in ID-dependent lookup fields.
 
-## Importer Registry
+## Importers
 
-Node-capable importers use the importer registry. Built-in importers and internal future importers are registered through the same `registerImporter` path.
+There is one importer: SVG. The CLI calls it directly (`importSVGFilesFromNode`), and the browser surface uses the browser-safe entry points. There is no importer registry — one existed, but the CLI's loader already hardcoded the SVG path, so a registered importer could never have run. A registry returns when a second importer exists.
 
-This is intentionally an internal registry for now. Pre-release all2html should keep third-party plugin loading out of scope until the IR and bundle contracts are stable enough to support it.
+## Emitter Tables
 
-## Emitter Registry
+Emitters write web-facing output from emitter-ready documents. The built-in HTML, Standalone HTML, Svelte, and React emitters live in a fixed lookup table (`getEmitter` / `getAvailableFormats`); there is no runtime registration.
 
-Emitters write web-facing output from emitter-ready documents. Built-in HTML, Standalone HTML, Svelte, and React emitters use the emitter registry, and internal future emitters can use `registerEmitter`.
+A parallel browser-safe table (`getBrowserEmitter`) swaps in the browser standalone emitter so browser apps do not accidentally pull in Node-only dependencies.
 
-Browser-safe emitters use `registerBrowserEmitter` so browser apps do not accidentally pull in Node-only dependencies.
+Third-party plugin loading is intentionally out of scope until the IR and bundle contracts are stable enough to support it.
 
 ## Browser SDK
 

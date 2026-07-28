@@ -3,7 +3,7 @@
  *
  * This module builds a tree of plain, JSON-serializable nodes
  * (`shared/html-node.ts`) and knows nothing about how they are rendered.
- * `html.ts` and `html-string.ts` are now thin named entry points onto it.
+ * `html.ts` is a thin named entry point onto it.
  * `shared/to-hast.ts` adapts the same tree to hast, but only in-repo — see that
  * file's header; it is the serializer's parity oracle, not a published seam.
  *

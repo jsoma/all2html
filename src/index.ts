@@ -1,10 +1,4 @@
-export {
-  type All2HtmlConfig,
-  getConfigFonts,
-  getConfigSettings,
-  getEmitterConfig,
-  parseConfigText,
-} from "./core/config.js";
+export { type All2HtmlConfig, getEmitterConfig, parseConfigText } from "./core/config.js";
 export {
   createCollectingLogger,
   createConsoleLogger,
@@ -15,12 +9,10 @@ export {
   type StructuredEvent,
 } from "./core/logger.js";
 export { processDocument } from "./core/pipeline.js";
-export { parseEmitterConfig } from "./core/resolve-settings.js";
 export { emitHTML } from "./emitters/html.js";
-export { emitHTMLString } from "./emitters/html-string.js";
 export { emitReact } from "./emitters/react.js";
 export type { EmitFile, EmitResult, EmitterDescriptor } from "./emitters/registry.js";
-export { getAvailableFormats, getEmitter, registerEmitter } from "./emitters/registry.js";
+export { getAvailableFormats, getEmitter } from "./emitters/registry.js";
 export { emitStandalone } from "./emitters/standalone.js";
 export { emitSvelte } from "./emitters/svelte.js";
 export type {
@@ -35,7 +27,6 @@ export type {
 // consumer driving the emitters has to be able to state where it puts the
 // files, and it is not a value any user config can supply.
 export { withAssetBase } from "./emitters/types.js";
-export { getAvailableImporters, getImporter, registerImporter } from "./importers/registry.js";
 export { loadSVGImportFilesFromBrowser } from "./importers/svg/browser.js";
 export {
   importSVGFiles,
@@ -56,7 +47,6 @@ export {
 export type {
   ImportedAssetFile,
   ImportedFile,
-  ImporterDescriptor,
   ImportOptions,
   ImportResult,
 } from "./importers/types.js";

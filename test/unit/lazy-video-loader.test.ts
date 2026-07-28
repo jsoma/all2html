@@ -4,7 +4,6 @@ import { JSDOM, VirtualConsole } from "jsdom";
 import { describe, expect, it } from "vitest";
 import { processDocument } from "../../src/core/pipeline.js";
 import { emitHTML } from "../../src/emitters/html.js";
-import { emitHTMLString } from "../../src/emitters/html-string.js";
 import { emitReact } from "../../src/emitters/react.js";
 import { escapeScriptContent } from "../../src/emitters/shared/escape.js";
 import {
@@ -60,7 +59,7 @@ function loaderScripts(html: string): string[] {
 describe("the lazy video loader is emitted only when it is needed", () => {
   it("emits exactly one loader for a document with a lazy video", () => {
     const doc = processed("video-layer.json");
-    for (const { html } of [emitHTML(doc), emitHTMLString(doc), emitStandalone(doc)]) {
+    for (const { html } of [emitHTML(doc), emitStandalone(doc)]) {
       expect(loaderScripts(html)).toHaveLength(1);
       expect(html).toContain('data-src="https://example.com/video.mp4"');
     }

@@ -17,9 +17,7 @@
     "pngNumberOfColors": 128,
     "useLazyLoader": false
   },
-  "fonts": [
-    
-  ],
+  "fonts": [],
   "artboards": [
     {
       "id": "illustrator:artboard:full-1",
@@ -41,7 +39,6 @@
             "tool": "illustrator",
             "name": "Layer 1"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -158,7 +155,6 @@
             "tool": "illustrator",
             "name": "Layer 1"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -275,7 +271,6 @@
             "tool": "illustrator",
             "name": "Layer 1"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -373,9 +368,7 @@
       ]
     }
   ],
-  "customBlocks": [
-    
-  ],
+  "customBlocks": [],
   "assets": {
     "template-full": {
       "id": "template-full",

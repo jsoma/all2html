@@ -68,8 +68,6 @@ const GENERATED_BANNER = [
  * never restate behavior here.
  */
 const EXTRA_DESCRIPTIONS: Record<string, string> = {
-  writeImageFiles:
-    "Asks the exporter to write extracted image assets to disk alongside the emitted output.",
   pngTransparent: "Exports PNG backgrounds with a transparent background instead of a flat matte.",
   pngNumberOfColors:
     "Size of the color palette used when quantizing 8-bit PNG output. Fewer colors means smaller files and more banding.",
@@ -96,8 +94,6 @@ const EXTRA_DESCRIPTIONS: Record<string, string> = {
   responsiveImageMode:
     "How responsive background images are attached: as `<img src>` elements, or as CSS custom properties so only the visible artboard's image is fetched.",
   useLazyLoader: "Defers loading of background images and video until they are near the viewport.",
-  svgIdPrefix:
-    "Prefix applied to ids inside inline SVG output, so several inline SVGs on one page cannot collide.",
   clickableLink: "Wraps the whole graphic in a link to this URL.",
   createPromoImage: "Also exports a standalone promo/social image alongside the normal output.",
   promoImageWidth: "Width in pixels of the exported promo image.",

@@ -11,8 +11,7 @@ import { formatGroupedWarnings, groupWarnings, type StructuredWarning } from "..
 import type { EmitResult } from "../emitters/registry.js";
 import { formatDictatedExtension, getAvailableFormats, getEmitter } from "../emitters/registry.js";
 import { type EmitterConfig, withAssetBase } from "../emitters/types.js";
-import { getImporter } from "../importers/registry.js";
-import { loadSVGImportFiles } from "../importers/svg/node.js";
+import { importSVGFilesFromNode, loadSVGImportFiles } from "../importers/svg/node.js";
 import type { EmitterReadyDocument } from "../ir/types.js";
 import { loadAndValidateIR } from "../ir/validate.js";
 import { createOutputBundle } from "../output-bundle.js";
@@ -179,20 +178,22 @@ async function main() {
 
     getEmitter(format);
 
+    // There is exactly one importer. The registry that used to sit here was
+    // deleted: this loader branch already rejected every other name, so a
+    // registered importer could never have run.
+    if (importerName !== "svg") {
+      console.error(`Error: unknown importer: "${importerName}". Available: svg`);
+      process.exit(1);
+    }
+
     try {
-      const importer = getImporter(importerName);
       const logger = verbose ? createConsoleLogger() : noopLogger;
       const parsedConfig = configPath
         ? parseConfigText(readFileSync(resolve(configPath), "utf-8"), configPath)
         : undefined;
-      const loaded =
-        importerName === "svg"
-          ? loadSVGImportFiles(inputPath)
-          : (() => {
-              throw new Error(`No loader exists for importer "${importerName}".`);
-            })();
+      const loaded = loadSVGImportFiles(inputPath);
 
-      const imported = await importer.importFiles(loaded.files, {
+      const imported = await importSVGFilesFromNode(loaded.files, {
         slug: loaded.slug,
         entrypointPaths: loaded.entrypointPaths,
         settings: parsedConfig?.settings,

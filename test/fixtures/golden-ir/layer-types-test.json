@@ -28,7 +28,6 @@
             "tool": "illustrator",
             "name": "highlight:png"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -41,7 +40,6 @@
             "tool": "illustrator",
             "name": "footer:html-after"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -59,7 +57,6 @@
             "tool": "illustrator",
             "name": "banner:html-before"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -77,7 +74,6 @@
             "tool": "illustrator",
             "name": "bg:video"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -95,7 +91,6 @@
             "tool": "illustrator",
             "name": "markers:symbol"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -141,7 +136,6 @@
             "tool": "illustrator",
             "name": "content"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [

@@ -212,12 +212,15 @@ describe("Artboard.relationship is gone (D27)", () => {
    * than documented. Its replacement is `groupArtboards`, which is where the
    * alternates/sequence distinction has to act and which cannot take it until it
    * is ES3-safe (D19). This test fails if the field is re-added without one.
+   *
+   * Since the schema went `.strict()`, an unrecognized field is *rejected* with
+   * its path, not silently stripped — stripping is what let this field ship
+   * dead in the first place.
    */
-  it("is not carried through validation", () => {
+  it("is rejected by the strict schema, not stripped", () => {
     const raw = base();
     raw.artboards[0].relationship = "sequence";
-    const artboard = loadAndValidateIR(raw).artboards[0];
-    expect("relationship" in artboard).toBe(false);
+    expect(() => loadAndValidateIR(raw)).toThrow(/artboards\.0.*relationship/s);
   });
 
   it("has no reader anywhere in src/", () => {

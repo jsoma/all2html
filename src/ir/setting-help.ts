@@ -141,15 +141,6 @@ export const SETTING_HELP = {
     defaultNote: "Leave this on unless you are intentionally replacing the generated CSS.",
     docsAnchor: "includeResizerCss",
   },
-  inlineSvg: {
-    label: "Inline SVG layers",
-    summary:
-      "Keeps eligible SVG layers inline in the HTML instead of rasterizing them into background images.",
-    details:
-      "Inline SVG can make vector details stay crisp and stylable, but it also produces more verbose HTML and can reveal browser rendering differences.",
-    defaultNote: "Leave this off unless you specifically need live vector layers in the markup.",
-    docsAnchor: "inlineSvg",
-  },
   svgEmbedImages: {
     label: "Embed images in SVG",
     summary:

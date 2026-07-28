@@ -1,8 +1,8 @@
 /**
  * The serializer's contract, specified rather than discovered (SPEC §12.6 / D23).
  *
- * `html.ts` and `html-string.ts` are now one builder plus one serializer, so the
- * old "do the two emitters agree?" question is answered by construction. What
+ * The two historical HTML emitters are now one builder plus one serializer, so
+ * the old "do the two emitters agree?" question is answered by construction. What
  * still needs asserting is everything that question used to cover implicitly:
  * the escaping grammars, boolean attributes, void elements, raw-text elements,
  * attribute order, comment sanitization, and intentional raw markup.

@@ -16,7 +16,7 @@ import { assertJsonPure } from "../core/json-purity.js";
 import { resolveOutputExtension } from "../core/output-extension.js";
 import { resolveSettingsPure } from "../core/resolve-settings-pure.js";
 import { createWarning, type StructuredWarning, warningMessages } from "../core/warnings.js";
-import { emitHTMLString } from "../emitters/html-string.js";
+import { emitHTML } from "../emitters/html.js";
 import { defaultSettings } from "../ir/defaults.js";
 import {
   getSettingDefault,
@@ -277,13 +277,13 @@ export function processAndEmit(
     // has no emitter config. The statement lives in this comment, in the
     // Illustrator `imageOutputPath` capability note, and — executably, through
     // this exact entry point — in `test/integration/surface-entrypoints.test.ts`.
-    const emitted = emitHTMLString(ready, { artboards: group.artboards, slug: group.slug });
+    const emitted = emitHTML(ready, { artboards: group.artboards, slug: group.slug });
     for (let j = 0; j < emitted.structuredWarnings.length; j++) {
       warnings.push(emitted.structuredWarnings[j]);
     }
     files.push({ slug: group.slug, extension: extension, output: emitted.html });
   }
-  phase("emitHTMLString");
+  phase("emitHTML");
 
   return {
     html: files.length > 0 ? files[0].output : "",

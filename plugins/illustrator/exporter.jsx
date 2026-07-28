@@ -508,20 +508,23 @@ function extractLayers(doc) {
       else if (tag === "html-after") layerType = "html-after";
     }
 
-    layers.push({
+    var layerRecord = {
       name: trim(parsedName),
       type: layerType,
       source: {
         tool: "illustrator",
         name: layer.name
       },
-      inlineSvg: inlineSvg,
       visible: layer.visible,
       // 0 is a real opacity; default only on absence (matches computeOpacity).
       opacity: typeof layer.opacity === "number" ? layer.opacity : 100,
       elements: [],
       _aiLayer: layer
-    });
+    };
+    // Only `true` means anything: absent is "external svg asset", and the
+    // schema rejects the key on non-svg layers, so `inlineSvg: false` is noise.
+    if (inlineSvg) layerRecord.inlineSvg = true;
+    layers.push(layerRecord);
   }
   return layers;
 }
@@ -1673,9 +1676,6 @@ function buildCanonicalIrSettings(docSettings) {
   var imageSourcePath = readStringSetting(docSettings, "image_source_path");
   if (imageSourcePath) settings.imageSourcePath = imageSourcePath;
 
-  var svgIdPrefix = readStringSetting(docSettings, "svg_id_prefix");
-  if (svgIdPrefix) settings.svgIdPrefix = svgIdPrefix;
-
   var clickableLink = readStringSetting(docSettings, "clickable_link");
   if (clickableLink) settings.clickableLink = clickableLink;
 
@@ -1698,7 +1698,6 @@ function buildCanonicalIrSettings(docSettings) {
   if (cacheBustToken !== undefined) settings.cacheBustToken = cacheBustToken;
 
   var boolMap = {
-    write_image_files: "writeImageFiles",
     png_transparent: "pngTransparent",
     use_2x_images_if_possible: "use2xImages",
     center_html_output: "centerHtmlOutput",
@@ -1706,7 +1705,6 @@ function buildCanonicalIrSettings(docSettings) {
     include_resizer_css: "includeResizerCss",
     include_resizer_widths: "includeResizerWidths",
     use_lazy_loader: "useLazyLoader",
-    inline_svg: "inlineSvg",
     svg_embed_images: "svgEmbedImages",
     create_promo_image: "createPromoImage"
   };
@@ -2044,16 +2042,18 @@ function runExporter() {
     var abSpan = logSpan("extractText:" + artboards[i].name);
     artboards[i].layers = [];
     for (var j = 0; j < layers.length; j++) {
-      artboards[i].layers.push({
+      var abLayer = {
         id: artboards[i].id + ":layer:" + makeKeyword(layers[j].name || layers[j].type) + "-" + (j + 1),
         name: layers[j].name,
         type: layers[j].type,
         source: layers[j].source,
-        inlineSvg: layers[j].inlineSvg,
         visible: layers[j].visible,
         opacity: layers[j].opacity,
         elements: []
-      });
+      };
+      // Written only when true — see extractLayers.
+      if (layers[j].inlineSvg) abLayer.inlineSvg = true;
+      artboards[i].layers.push(abLayer);
     }
     extractTextFramesForArtboard(doc, artboards[i], artboards[i].layers, settings);
     var textCount = 0;
@@ -2088,7 +2088,8 @@ function runExporter() {
       layers: ab.layers
     };
     if (ab.responsiveness) clean.responsiveness = ab.responsiveness;
-    if (ab.imageOnly) clean.imageOnly = ab.imageOnly;
+    // `imageOnly` stays an exporter-local decision (decideTextFrameRenderAs);
+    // its canonical trace is renderAs:"image" text plus the background asset.
     cleanArtboards.push(clean);
   }
 

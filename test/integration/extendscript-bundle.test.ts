@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { processDocument } from "../../src/core/pipeline.js";
-import { emitHTMLString } from "../../src/emitters/html-string.js";
+import { emitHTML } from "../../src/emitters/html.js";
 import type { Document } from "../../src/ir/types.js";
 import { ensureFreshArtifact } from "../helpers/extendscript-build.js";
 
@@ -207,7 +207,7 @@ describe("ExtendScript bundle", () => {
 
     // Node.js pipeline
     const { document: nodeDoc } = processDocument(raw);
-    const { html: nodeHtml } = emitHTMLString(nodeDoc);
+    const { html: nodeHtml } = emitHTML(nodeDoc);
 
     // Bundle pipeline
     const { html: bundleHtml } = bundle.processAndEmit(raw);
@@ -220,7 +220,7 @@ describe("ExtendScript bundle", () => {
     const raw = loadFixture("multi-artboard-responsive.json");
 
     const { document: nodeDoc } = processDocument(raw);
-    const { html: nodeHtml } = emitHTMLString(nodeDoc);
+    const { html: nodeHtml } = emitHTML(nodeDoc);
 
     const { html: bundleHtml } = bundle.processAndEmit(raw);
 

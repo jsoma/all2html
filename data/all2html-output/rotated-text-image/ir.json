@@ -8,9 +8,7 @@
   "settings": {
     "renderRotatedSkewedTextAs": "image"
   },
-  "fonts": [
-    
-  ],
+  "fonts": [],
   "artboards": [
     {
       "id": "illustrator:artboard:desktop-1",
@@ -32,7 +30,6 @@
             "tool": "illustrator",
             "name": "content"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -128,9 +125,7 @@
       ]
     }
   ],
-  "customBlocks": [
-    
-  ],
+  "customBlocks": [],
   "assets": {
     "rotated-text-image-desktop": {
       "id": "rotated-text-image-desktop",

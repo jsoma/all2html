@@ -1,11 +1,11 @@
 /**
- * The HTML emitter entry point used by the CLI, the browser apps and Figma.
+ * The HTML emitter entry point used by every surface — the CLI, the browser
+ * apps, Figma, and the ExtendScript bundle.
  *
- * There is only one HTML emitter now (SPEC §12.6 / D23): `html-tree.ts` builds a
- * serializable node tree and `shared/html-node.ts` renders it. This module and
- * `html-string.ts` are the two historical names for the same call, kept because
- * `html-string.ts` is what the ExtendScript bundle imports and this is what
- * everything else imports.
+ * There is only one HTML emitter (SPEC §12.6 / D23): `html-tree.ts` builds a
+ * serializable node tree and `shared/html-node.ts` renders it. The historical
+ * second name for this call, `html-string.ts` / `emitHTMLString`, was an alias
+ * onto the same function and has been deleted.
  *
  * Consumers who want the tree rather than a string take `buildHTMLTree()` here.
  * `toHast()` in `shared/to-hast.js` adapts the same tree for rehype, but it is

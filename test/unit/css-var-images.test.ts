@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { processDocument } from "../../src/core/pipeline.js";
 import { emitHTML } from "../../src/emitters/html.js";
-import { emitHTMLString } from "../../src/emitters/html-string.js";
 import { emitReact } from "../../src/emitters/react.js";
 import { emitSvelte } from "../../src/emitters/svelte.js";
 
@@ -36,14 +35,8 @@ describe("CSS custom property image loading", () => {
     cloned.assets["bg-mobile"].path = "all2html-output/mobile hero (1).png";
 
     const { html } = emitHTML(cloned, undefined, { responsiveImageMode: "css-var" });
-    const { html: htmlString } = emitHTMLString(cloned, undefined, {
-      responsiveImageMode: "css-var",
-    });
 
     expect(html).toContain("--mobile-img:url(&quot;all2html-output/mobile hero (1).png?v=7&quot;)");
-    expect(htmlString).toContain(
-      "--mobile-img:url(&quot;all2html-output/mobile hero (1).png?v=7&quot;)",
-    );
   });
 
   it("emits background-image: var() in CSS container queries", () => {

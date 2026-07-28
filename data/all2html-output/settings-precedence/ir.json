@@ -13,9 +13,7 @@
     "jpgQuality": 85,
     "maxWidth": 640
   },
-  "fonts": [
-    
-  ],
+  "fonts": [],
   "artboards": [
     {
       "id": "illustrator:artboard:desktop-1",
@@ -37,7 +35,6 @@
             "tool": "illustrator",
             "name": "content"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -122,9 +119,7 @@
       ]
     }
   ],
-  "customBlocks": [
-    
-  ],
+  "customBlocks": [],
   "assets": {
     "settings-precedence-desktop": {
       "id": "settings-precedence-desktop",

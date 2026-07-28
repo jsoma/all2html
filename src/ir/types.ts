@@ -68,7 +68,6 @@ export interface Metadata {
 
 export interface Settings {
   imageFormat: ImageFormat[];
-  writeImageFiles: boolean;
   pngTransparent: boolean;
   pngNumberOfColors: number;
   jpgQuality: number;
@@ -93,8 +92,6 @@ export interface Settings {
   includeResizerWidths: boolean;
   responsiveImageMode: "img-src" | "css-var";
   useLazyLoader: boolean;
-  inlineSvg: boolean;
-  svgIdPrefix: string;
   svgEmbedImages: boolean;
   clickableLink: string;
   createPromoImage: boolean;
@@ -125,9 +122,15 @@ export interface Artboard {
   height: number;
   source?: SourceMetadata;
   responsiveness?: Responsiveness;
-  imageOnly?: boolean;
   layers: Layer[];
 }
+
+/*
+ * `Artboard.imageOnly` was declared here and consumed by nothing downstream —
+ * every reader lived inside a producer, pre-emission. The decision stays
+ * adapter-local; its canonical result is `renderAs: "image"` text (with
+ * `renderAsReason: "imageOnly"`) plus the background asset that contains it.
+ */
 
 export type LayerType =
   | "default"
@@ -145,7 +148,13 @@ export interface Layer {
   name: string;
   type: LayerType;
   source?: SourceMetadata;
-  inlineSvg: boolean;
+  /**
+   * Only meaningful on `type: "svg"` layers, and only `true` means "inline the
+   * SVG markup". Absent means the layer's SVG is an external asset. The schema
+   * rejects the field on any other layer type; producers never write
+   * `inlineSvg: false`.
+   */
+  inlineSvg?: boolean;
   visible: boolean;
   opacity: number;
   elements: Element[];
@@ -168,13 +177,16 @@ export interface BlurEffect {
 
 export type TextEffect = DropShadowEffect | BlurEffect;
 
+/** CSS `matrix(a, b, c, d, e, f)` entries — exactly six finite numbers. */
+export type TransformMatrix = [number, number, number, number, number, number];
+
 interface TextElementFields {
   type: "text";
   id: string;
   kind: "point" | "area";
   position: BoundingBox;
   rotation?: number;
-  transformMatrix?: number[];
+  transformMatrix?: TransformMatrix;
   /** 0-100 scale (0 = fully transparent, 100 = fully opaque). */
   opacity: number;
   blendMode?: "multiply";
@@ -185,7 +197,6 @@ interface TextElementFields {
   areaBorder?: { width: number; color: Color };
   /** Why the exporter chose this renderAs value. Allows core to override if needed. */
   renderAsReason?: "rotation" | "warp" | "pathText" | "imageOnly" | "setting";
-  dataAttributes?: Record<string, string>;
   binding?: {
     path: string;
     allowHtml: boolean;
@@ -225,7 +236,6 @@ export interface ShapeElement {
   opacity: number;
   blendMode?: "multiply";
   orientation?: "horizontal" | "vertical";
-  segments?: { x1: number; y1: number; x2: number; y2: number }[];
 }
 
 export interface VideoElement {
@@ -241,17 +251,12 @@ export interface RawHtmlElement {
 export interface SnippetElement {
   type: "snippet";
   key: string;
-  group?: string;
   position: BoundingBox;
-  geometry?: { kind: "rectangle" | "circle" | "line" };
-  visible?: boolean;
 }
 
 export interface Paragraph {
   text: string;
   alignment: "left" | "center" | "right" | "justify";
-  /** Text direction. Defaults to "ltr" if omitted. */
-  direction?: "ltr" | "rtl";
   leading: number;
   spaceBefore: number;
   spaceAfter: number;
@@ -303,7 +308,6 @@ export interface CustomBlock {
 export interface Asset {
   id: string;
   path: string;
-  hash?: string;
   mimeType: string;
   width: number;
   height: number;

@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseEmitterConfig, resolveSettings } from "../../src/core/resolve-settings.js";
+import { resolveSettings } from "../../src/core/resolve-settings.js";
 import { loadAndValidateIR } from "../../src/ir/validate.js";
 
 function withTempConfig(content: string, run: (path: string) => void) {
@@ -30,20 +30,6 @@ describe("resolveSettings config validation", () => {
   it("rejects invalid settings types in config files", () => {
     withTempConfig('{ "settings": { "maxWidth": "oops" } }', (configPath) => {
       expect(() => resolveSettings(doc, configPath)).toThrow(/settings.maxWidth/);
-    });
-  });
-
-  it("parses validated emitter config", () => {
-    withTempConfig('{ "emit": { "html": { "positionMode": "percentage" } } }', (configPath) => {
-      expect(parseEmitterConfig(configPath)).toEqual({
-        html: { positionMode: "percentage" },
-      });
-    });
-  });
-
-  it("rejects invalid emitter config values", () => {
-    withTempConfig('{ "emit": { "react": { "fitMode": "cover" } } }', (configPath) => {
-      expect(() => parseEmitterConfig(configPath)).toThrow(/emit.react/);
     });
   });
 });

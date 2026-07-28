@@ -14,8 +14,9 @@ const fixtureFiles = readdirSync(fixturesDir).filter((f) => f.endsWith(".json"))
  *
  * What used to be here and is not any more:
  *  - "string emitter matches hast emitter" compared `emitHTML` to
- *    `emitHTMLString`, which are two exported names for the same function since
- *    the emitter collapse (SPEC §12.6 / D23). It compared a function to itself.
+ *    `emitHTMLString` (an alias deleted since), which were two exported names for
+ *    the same function after the emitter collapse (SPEC §12.6 / D23). It
+ *    compared a function to itself.
  *    Real serializer coverage is `html-serializer.test.ts`, which pins the
  *    serializer against `hast-util-to-html` — an independent oracle.
  *  - A standalone "no NaN or undefined" test per fixture. Kept as an assertion

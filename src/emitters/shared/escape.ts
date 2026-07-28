@@ -3,11 +3,12 @@
  *
  * THE CONTRACT
  * ------------
- * The hast emitter (`html.ts`) hands raw values to `hast-util-to-html`, which
- * escapes them with its own fixed subsets. There is no option to widen those
- * subsets, so the *only* way the string emitter (`html-string.ts`) can produce
- * byte-identical output is to escape exactly the same characters that
- * `hast-util-to-html` escapes — no more, no less.
+ * The `toHast()` adapter (`shared/to-hast.ts`) hands raw values to
+ * `hast-util-to-html`, which escapes them with its own fixed subsets. There is
+ * no option to widen those subsets, so the *only* way the serializer
+ * (`shared/html-node.ts`) can produce byte-identical output is to escape
+ * exactly the same characters that `hast-util-to-html` escapes — no more, no
+ * less.
  *
  * The subsets below are copied from hast-util-to-html:
  *   - text nodes      → `['<', '&']`                    (lib/handle/text.js)

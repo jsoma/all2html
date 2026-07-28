@@ -181,6 +181,10 @@ export async function convertLoadedSvgFilesInBrowser(
   };
 }
 
+// A fixed table of the browser-safe built-in emitters. There is no runtime
+// registration: `registerBrowserEmitter` was deleted with zero call sites, so
+// the set of formats is exactly what `createBuiltinEmitters` seeds and no
+// exported mutator exists.
 const browserEmitters = createBuiltinEmitters(emitStandaloneBrowserGroup);
 const browserEmitterRegistry = new Map<string, BrowserEmitterDescriptor>(
   Object.entries(browserEmitters).map(([name, emitter]) => [
@@ -188,13 +192,6 @@ const browserEmitterRegistry = new Map<string, BrowserEmitterDescriptor>(
     emitter as BrowserEmitterDescriptor,
   ]),
 );
-
-export function registerBrowserEmitter(emitter: BrowserEmitterDescriptor): void {
-  if (!emitter.name) {
-    throw new Error("Browser emitter name is required.");
-  }
-  browserEmitterRegistry.set(emitter.name, emitter);
-}
 
 export function getBrowserEmitter(name: string): BrowserEmitterDescriptor {
   const emitter = browserEmitterRegistry.get(name);

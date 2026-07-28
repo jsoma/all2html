@@ -28,7 +28,6 @@
             "tool": "illustrator",
             "name": "blank-video:video"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -41,7 +40,6 @@
             "tool": "illustrator",
             "name": "bad-protocol:video"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -54,7 +52,6 @@
             "tool": "illustrator",
             "name": "bad-ext:video"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -67,7 +64,6 @@
             "tool": "illustrator",
             "name": "hero-video:video"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -85,7 +81,6 @@
             "tool": "illustrator",
             "name": "content"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [

@@ -17,9 +17,7 @@
     "jpgQuality": 60,
     "pngNumberOfColors": 128
   },
-  "fonts": [
-    
-  ],
+  "fonts": [],
   "artboards": [
     {
       "id": "illustrator:artboard:artboard-1-1",
@@ -41,7 +39,6 @@
             "tool": "illustrator",
             "name": "Layers"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -115,12 +112,9 @@
             "tool": "illustrator",
             "name": "600 map"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": [
-            
-          ]
+          "elements": []
         }
       ]
     },
@@ -144,7 +138,6 @@
             "tool": "illustrator",
             "name": "Layers"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -218,12 +211,9 @@
             "tool": "illustrator",
             "name": "600 map"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": [
-            
-          ]
+          "elements": []
         }
       ]
     },
@@ -247,7 +237,6 @@
             "tool": "illustrator",
             "name": "Layers"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -321,12 +310,9 @@
             "tool": "illustrator",
             "name": "600 map"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": [
-            
-          ]
+          "elements": []
         }
       ]
     },
@@ -350,7 +336,6 @@
             "tool": "illustrator",
             "name": "Layers"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -424,12 +409,9 @@
             "tool": "illustrator",
             "name": "600 map"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": [
-            
-          ]
+          "elements": []
         }
       ]
     },
@@ -453,7 +435,6 @@
             "tool": "illustrator",
             "name": "Layers"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -527,19 +508,14 @@
             "tool": "illustrator",
             "name": "600 map"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": [
-            
-          ]
+          "elements": []
         }
       ]
     }
   ],
-  "customBlocks": [
-    
-  ],
+  "customBlocks": [],
   "assets": {
     "multiple-files-test-artboard-1": {
       "id": "multiple-files-test-artboard-1",

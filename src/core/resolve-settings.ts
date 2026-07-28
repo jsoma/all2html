@@ -1,11 +1,9 @@
 import { readFileSync } from "node:fs";
-import type { EmitterConfig } from "../emitters/types.js";
-import type { Document, ResolvedDocument, Settings } from "../ir/types.js";
+import type { Document, ResolvedDocument } from "../ir/types.js";
 import {
   type All2HtmlConfig,
   getConfigFonts,
   getConfigSettings,
-  getEmitterConfig,
   parseConfigText,
 } from "./config.js";
 import { resolveDocumentSettings } from "./settings-resolver.js";
@@ -36,16 +34,4 @@ export function resolveSettings(doc: Document, configPath?: string): ResolvedDoc
   }
 
   return resolveDocumentSettings(doc);
-}
-
-/**
- * Parse emitter-specific config from a config file.
- * Returns validated emitter options or undefined if no config/no emit section.
- * Pipeline stays pure — this is called by the CLI alongside processDocument().
- */
-export function parseEmitterConfig(config?: string | All2HtmlConfig): EmitterConfig | undefined {
-  if (!config) return undefined;
-  return typeof config === "string"
-    ? getEmitterConfig(readConfigFile(config))
-    : getEmitterConfig(config);
 }

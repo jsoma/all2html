@@ -23,11 +23,11 @@
 - [x] IR schema with **exclusive** phase types (SPEC §12.1 / D20): `Document → Resolved → Breakpointed → Styled → Deduplicated → EmitterReady`, each carrying a `pipelinePhase` literal so no transform can be skipped or repeated without a compile error. Image-rendered text is its own variant (`ImageTextElement`); `EmitterReadyLayer` admits no un-positioned variants. Removed the placeholder breakpoint in `settings-resolver.ts`, the placeholder `computedPosition` in `deduplicate-styles.ts`, and 12 runtime property-sniffing guards across the transforms and emitters.
 - [ ] `Artboard.relationship: "alternates" | "sequence"` (SPEC §12.10.5) is **not** in the IR. It was declared and validated with no consumer, and was removed under D27 rather than documented as unused. The D19 blocker is now gone — `groupArtboards` is ES3-safe and every surface calls it — but the field still has no consumer: grouping decides which artboards share a file, while alternates-vs-sequence decides whether the viewer sees one artboard or all of them, which lives in breakpoints and the emitter. It lands with that behavior.
 - [x] Zod validation, default settings, JSONC config
-- [x] CSS-identifier sanitizing on the Zod-free path: `src/extendscript/index.ts` checks `namespace`, `projectName` and `svgIdPrefix` against `SAFE_SETTING_IDENTIFIER_RE` (defined in `src/ir/settings-definitions.ts`, re-exported from `schema.ts` so there is one pattern, not two). A rejected value falls back to its declared default and warns `setting:invalid-value` rather than aborting the export — every Zod-free caller enters through this bundle, so the check belongs there rather than in one exporter
+- [x] CSS-identifier sanitizing on the Zod-free path: `src/extendscript/index.ts` checks `namespace` and `projectName` against `SAFE_SETTING_IDENTIFIER_RE` (defined in `src/ir/settings-definitions.ts`, re-exported from `schema.ts` so there is one pattern, not two). A rejected value falls back to its declared default and warns `setting:invalid-value` rather than aborting the export — every Zod-free caller enters through this bundle, so the check belongs there rather than in one exporter
 - [x] resolveSettings + resolveSettingsPure (fs-free for ExtendScript)
 - [x] computeBreakpoints, computeStyles, fontMap, deduplicateStyles, computePositions
 - [x] groupArtboards (one-file / multiple-files output)
-- [ ] SVG post-processing (ID cleanup, `data-name`, hex decode, opacity/multiply, non-scaling-stroke, raster removal) — `src/core/svg-postprocess.ts` implemented all of this and was imported by nothing but its own test on any surface. Deleted under D16; nothing replaces it, and `svgIdPrefix` stays declared `unsupported` in `src/core/capabilities.ts` so the setting warns rather than silently no-opping
+- [ ] SVG post-processing (ID cleanup, `data-name`, hex decode, opacity/multiply, non-scaling-stroke, raster removal) — `src/core/svg-postprocess.ts` implemented all of this and was imported by nothing but its own test on any surface. Deleted under D16; nothing replaces it, and the `svgIdPrefix` setting itself has since been deleted (capability matrix D19–D21) — re-implementing means re-adding the setting alongside real prefixing in the emitter that mints the ids
 - [x] Template system (Mustache + EJS), warning consolidation, asset path tokens
 - [x] Text effects: drop shadow → `text-shadow`, blur → `filter: blur()`, deduplicated as `g-effect{N}` classes
 - [x] Hyperlinks on text runs: `CharacterRun.hyperlink` → `<a>` tags in both emitters
@@ -41,7 +41,7 @@
 - [x] ExtendScript exporter: `logSpan()` with `$.writeln()` timestamps
 
 ### Emitters (5 formats)
-- [x] HTML — one emitter: a node-tree builder (`emitters/html-tree.ts`) over an ES3-safe serializer (`emitters/shared/html-node.ts`). `html.ts` and `html-string.ts` are re-export entry points, not two implementations. Covers text, shapes, video, SVG/PNG layers, raw HTML
+- [x] HTML — one emitter: a node-tree builder (`emitters/html-tree.ts`) over an ES3-safe serializer (`emitters/shared/html-node.ts`). `html.ts` is the single re-export entry point (the `emitHTMLString` alias is deleted). Covers text, shapes, video, SVG/PNG layers, raw HTML
 - [x] Standalone HTML with template support
 - [x] Svelte component ($props, assetsPath, scoped CSS)
 - [x] React component (typed props, assetsPath, className)
@@ -153,7 +153,7 @@ Verified against the code and reproduced. These are defects, not limitations —
 | What | Where | Effect |
 |---|---|---|
 | `imageFormat: svg`/`png24` → PNG8 on Illustrator | `illustrator/exporter.jsx#exportArtboardImage` | Wrong format, but no longer silent: the `partial` declaration warns, and the panel select renders both values disabled and labelled "not supported" (`gateOptions`, `ImageSettings.svelte:59`). The exporter branch is unfixed |
-| Illustrator emits HTML only | `src/extendscript/index.ts#processAndEmit` | Standalone/Svelte/React unreachable from the production surface, and so is the `emit` options block — the call is `emitHTMLString(ready, { artboards, slug })` with no emitter config. `output: multiple-files` *is* honored (one HTML file per artboard group); only the format is fixed |
+| Illustrator emits HTML only | `src/extendscript/index.ts#processAndEmit` | Standalone/Svelte/React unreachable from the production surface, and so is the `emit` options block — the call is `emitHTML(ready, { artboards, slug })` with no emitter config. `output: multiple-files` *is* honored (one HTML file per artboard group); only the format is fixed |
 | Figma `:symbol` and `:div` are not implemented | `extract/layers.ts#UNSUPPORTED_TOKENS`, `runtime-extract.ts#unsupportedLayerTokenWarning` | The tag is recognized **only in order to warn**; it is then ignored and the layer exports as ordinary artwork. Not a silent drop and not a rejected layer — the parser no longer claims a layer type the runtime refuses |
 
 Fixed on `review/contract-cleanup`, listed so the rows are not re-derived from stale

@@ -59,11 +59,17 @@ describe("Illustrator panel capability gating", () => {
     expect(options.find((option) => option.value === "png")?.label).toBe("PNG (8-bit)");
   });
 
-  it("disables controls for settings Illustrator does not read at all", () => {
-    for (const key of ["inlineSvg", "svgIdPrefix"] as PanelSettingKey[]) {
-      expect(isControlDisabledByCapability(key)).toBe(true);
-      expect(capabilityNote(key)).toBe(illustratorCapabilities.settings[key].note);
-      expect(capabilityNote(key)).toBeTruthy();
+  it("has no panel control left for a setting declared unsupported on Illustrator", () => {
+    // The two controls this test used to gate (`inlineSvg`, `svgIdPrefix`) are
+    // gone with their settings. What remains declared unsupported for
+    // Illustrator must have no panel control at all — a disabled control for a
+    // deleted setting would be worse than none.
+    for (const [key, support] of Object.entries(illustratorCapabilities.settings)) {
+      if (support.status !== "unsupported" && support.status !== "na") continue;
+      expect(
+        isControlDisabledByCapability(key as PanelSettingKey),
+        `${key} is declared unsupported; if a control exists it must be disabled`,
+      ).toBe(true);
     }
   });
 

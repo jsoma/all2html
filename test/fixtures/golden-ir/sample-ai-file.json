@@ -38,7 +38,6 @@
             "tool": "illustrator",
             "name": "Layer 3"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -204,7 +203,6 @@
             "tool": "illustrator",
             "name": "area text"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -217,7 +215,6 @@
             "tool": "illustrator",
             "name": "background"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []

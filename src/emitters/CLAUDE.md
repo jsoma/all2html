@@ -4,15 +4,16 @@ Emitters take an `EmitterReadyDocument` and produce output in a specific format.
 
 ## Registry (`registry.ts`)
 
-Emitters are registered in an internal `Map` through `registerEmitter`. Built-ins use the same path as future internal emitters. Each descriptor has `emitAll(doc, groups)` returning `{ files: EmitFile[], warnings, structuredWarnings }`. Emitters build `StructuredWarning[]` internally (code + category assigned at the call site, see `src/core/warnings.ts`); `warnings` is the plain-string projection kept for the manifest and the surface UIs. The CLI uses `getEmitter(format)` for dispatch — no if/else chain. The `perGroup()` helper handles the group loop for **every** emitter, standalone included (`registry-shared.ts#perGroup`) — standalone used to discard `groups` and emit one file whatever `output` said, which is the bug that made `output: multiple-files` a lie on that format. Extensions go through `resolveOutputExtension()` in `src/core/output-extension.ts` (leading dot ensured, anything that is not a filename suffix rejected with `setting:invalid-value` and replaced by the default) — the extension is a filename component, and "add a dot if missing" turned `/../../outside.txt` into a path that resolved above `-o`. Only the html emitter reads `htmlOutputExtension` — svelte/react force `.svelte` and `.jsx`/`.tsx`, and standalone hardcodes `.html`. `formatDictatedExtension(format, emitterConfig)` is the single statement of that per-format rule; callers pass its result as `SurfaceContext.formatExtension` so the capability checker compares a requested extension against the one file name the run will actually write.
+Emitters live in a fixed internal `Map` seeded with the built-ins at construction. There is no runtime registration — `registerEmitter` was deleted with zero call sites, and the table exports no mutators. Each descriptor has `emitAll(doc, groups)` returning `{ files: EmitFile[], warnings, structuredWarnings }`. Emitters build `StructuredWarning[]` internally (code + category assigned at the call site, see `src/core/warnings.ts`); `warnings` is the plain-string projection kept for the manifest and the surface UIs. The CLI uses `getEmitter(format)` for dispatch — no if/else chain. The `perGroup()` helper handles the group loop for **every** emitter, standalone included (`registry-shared.ts#perGroup`) — standalone used to discard `groups` and emit one file whatever `output` said, which is the bug that made `output: multiple-files` a lie on that format. Extensions go through `resolveOutputExtension()` in `src/core/output-extension.ts` (leading dot ensured, anything that is not a filename suffix rejected with `setting:invalid-value` and replaced by the default) — the extension is a filename component, and "add a dot if missing" turned `/../../outside.txt` into a path that resolved above `-o`. Only the html emitter reads `htmlOutputExtension` — svelte/react force `.svelte` and `.jsx`/`.tsx`, and standalone hardcodes `.html`. `formatDictatedExtension(format, emitterConfig)` is the single statement of that per-format rule; callers pass its result as `SurfaceContext.formatExtension` so the capability checker compares a requested extension against the one file name the run will actually write.
 Common emitter options must be wired end-to-end through the registry; don't leave typed options as dead config. `assetBase` is the one option a **surface** supplies rather than a user: `withAssetBase()` in `types.ts` stamps it onto every format at the one point that knows where the surface writes its files, and it is deliberately absent from the strict `EmitterConfigSchema` so a config file naming it is a parse error.
 
 ## HTML emitter (`html-tree.ts` + `shared/html-node.ts`)
 
 There is ONE HTML emitter (SPEC §12.6 / D23). `html-tree.ts` builds a tree of plain,
 JSON-serializable nodes; `shared/html-node.ts` defines those nodes and holds the single
-ES3-safe serializer. `html.ts` and `html-string.ts` are thin re-export entry points onto
-the same call — `emitHTML` and `emitHTMLString` are literally the same function.
+ES3-safe serializer. `html.ts` is the one thin re-export entry point onto that call —
+every surface, the ExtendScript bundle included, imports `emitHTML` (the `html-string.ts`
+/ `emitHTMLString` alias was deleted).
 
 Do not reintroduce a second implementation. The two used to be ~1,050 lines with an
 identical function decomposition kept in sync by test alone, and they had already
@@ -253,7 +254,7 @@ byte equality over every IR fixture.
 - The HTML emitter passes RAW values into the node tree and never escapes. Escaping is the serializer's job and happens exactly once
 - Outside the node tree (e.g. `standalone-shared.ts`), use `escapeAttr()` for attribute values and `escapeHtml()` for text content
 - Never define a local `escapeAttr`/`escapeHtml`/`escapeHtmlAttr` — import from `shared/escape.ts`
-- Never add a second HTML emitter. `html.ts` and `html-string.ts` are names for one function
+- Never add a second HTML emitter. `html.ts` is the one entry point onto `html-tree.ts`; do not reintroduce an alias module
 - CSS properties output in alphabetical order for determinism
 - Use `raw()` only for intentionally unescaped content (custom blocks, inline SVG, `&nbsp;`)
 - Pre-index assets with `buildScopedAssetIndex()` for O(1) canonical ID lookups — don't use `Object.values().find()` in loops

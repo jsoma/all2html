@@ -26,8 +26,3 @@ export interface ImportOptions {
   entrypointPaths?: readonly string[];
   settings?: Partial<Settings>;
 }
-
-export interface ImporterDescriptor {
-  name: string;
-  importFiles: (files: readonly ImportedFile[], options?: ImportOptions) => Promise<ImportResult>;
-}

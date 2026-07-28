@@ -28,7 +28,6 @@ export interface PanelSettings {
   projectName?: string;
   htmlOutputExtension?: string;
   imageSourcePath?: string;
-  writeImageFiles?: boolean;
 
   // Advanced - responsive
   textResponsiveness?: "fixed" | "dynamic";
@@ -43,8 +42,6 @@ export interface PanelSettings {
   // Advanced - CSS/features
   includeResizerCss?: boolean;
   includeResizerWidths?: boolean;
-  inlineSvg?: boolean;
-  svgIdPrefix?: string;
   svgEmbedImages?: boolean;
 
   // Advanced - image
@@ -293,7 +290,6 @@ export const panelDefaults: Required<
     | "projectName"
     | "htmlOutputExtension"
     | "imageSourcePath"
-    | "writeImageFiles"
     | "textResponsiveness"
     | "centerHtmlOutput"
     | "renderRotatedSkewedTextAs"
@@ -301,8 +297,6 @@ export const panelDefaults: Required<
     | "testingMode"
     | "includeResizerCss"
     | "includeResizerWidths"
-    | "inlineSvg"
-    | "svgIdPrefix"
     | "svgEmbedImages"
     | "pngTransparent"
   >
@@ -320,7 +314,6 @@ export const panelDefaults: Required<
   projectName: getSettingDefault("projectName"),
   htmlOutputExtension: getSettingDefault("htmlOutputExtension"),
   imageSourcePath: getSettingDefault("imageSourcePath"),
-  writeImageFiles: getSettingDefault("writeImageFiles"),
   textResponsiveness: getSettingDefault("textResponsiveness"),
   centerHtmlOutput: getSettingDefault("centerHtmlOutput"),
   renderRotatedSkewedTextAs: getSettingDefault("renderRotatedSkewedTextAs"),
@@ -328,8 +321,6 @@ export const panelDefaults: Required<
   testingMode: getSettingDefault("testingMode"),
   includeResizerCss: getSettingDefault("includeResizerCss"),
   includeResizerWidths: getSettingDefault("includeResizerWidths"),
-  inlineSvg: getSettingDefault("inlineSvg"),
-  svgIdPrefix: getSettingDefault("svgIdPrefix"),
   svgEmbedImages: getSettingDefault("svgEmbedImages"),
   pngTransparent: getSettingDefault("pngTransparent"),
 };

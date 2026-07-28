@@ -34,7 +34,6 @@ export const SETTING_DEFINITIONS = [
     kind: "enum-array",
     values: IMAGE_FORMAT_VALUES,
   },
-  { key: "writeImageFiles", defaultValue: true, kind: "boolean" },
   { key: "pngTransparent", defaultValue: false, kind: "boolean" },
   { key: "pngNumberOfColors", defaultValue: 128, kind: "integer", min: 1, max: 256 },
   { key: "jpgQuality", defaultValue: 85, kind: "integer", min: 0, max: 100 },
@@ -74,8 +73,6 @@ export const SETTING_DEFINITIONS = [
     values: RESPONSIVE_IMAGE_MODE_VALUES,
   },
   { key: "useLazyLoader", defaultValue: true, kind: "boolean" },
-  { key: "inlineSvg", defaultValue: false, kind: "boolean" },
-  { key: "svgIdPrefix", defaultValue: "", kind: "string-safe" },
   { key: "svgEmbedImages", defaultValue: false, kind: "boolean" },
   { key: "clickableLink", defaultValue: "", kind: "string" },
   { key: "createPromoImage", defaultValue: false, kind: "boolean" },
@@ -84,7 +81,7 @@ export const SETTING_DEFINITIONS = [
 ] as const satisfies readonly SettingDefinition[];
 
 /**
- * The rule for `string-safe` settings (`namespace`, `projectName`, `svgIdPrefix`):
+ * The rule for `string-safe` settings (`namespace`, `projectName`):
  * they are concatenated into CSS selectors and generated identifiers
  * **unescaped**, so any metacharacter is an injection vector.
  *

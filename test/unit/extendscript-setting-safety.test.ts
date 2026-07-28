@@ -47,11 +47,7 @@ describe("the pattern has one definition", () => {
   });
 
   it("covers exactly the settings declared string-safe", () => {
-    expect([...SAFE_IDENTIFIER_SETTING_KEYS].sort()).toEqual([
-      "namespace",
-      "projectName",
-      "svgIdPrefix",
-    ]);
+    expect([...SAFE_IDENTIFIER_SETTING_KEYS].sort()).toEqual(["namespace", "projectName"]);
   });
 });
 
@@ -108,11 +104,12 @@ describe("the ExtendScript path rejects unsafe identifier settings (no Zod runs 
   it("guards the inline config path too, not only document settings", () => {
     // The panel and `all2html.config.json` arrive through the config argument;
     // the text block arrives on `irDoc.settings`. The guard sits after the merge
-    // so both are covered.
-    const result = processAndEmit(loadDoc(), { settings: { svgIdPrefix: INJECTION } });
+    // so both are covered. `projectName` is used because the fixture's document
+    // settings do not pin it (document settings would win over the config).
+    const result = processAndEmit(loadDoc(), { settings: { projectName: INJECTION } });
     expect(
       result.structuredWarnings.some(
-        (w) => w.code === "setting:invalid-value" && w.setting === "svgIdPrefix",
+        (w) => w.code === "setting:invalid-value" && w.setting === "projectName",
       ),
     ).toBe(true);
   });
@@ -138,10 +135,17 @@ describe("the ExtendScript path rejects unsafe identifier settings (no Zod runs 
  */
 describe("the Illustrator surface warns for settings it does not honor", () => {
   it("emits a setting:unsupported warning per unhonored setting, tagged illustrator", () => {
-    const result = processAndEmit(loadDoc({ svgIdPrefix: "pfx", writeImageFiles: false }));
+    // Two cells still declared dead on Illustrator: the standalone preview
+    // template (D28) and responsiveImageMode (N1).
+    const result = processAndEmit(
+      loadDoc({ localPreviewTemplate: "preview.html", responsiveImageMode: "css-var" }),
+    );
 
     const unsupported = result.structuredWarnings.filter((w) => w.code === "setting:unsupported");
-    expect(unsupported.map((w) => w.setting).sort()).toEqual(["svgIdPrefix", "writeImageFiles"]);
+    expect(unsupported.map((w) => w.setting).sort()).toEqual([
+      "localPreviewTemplate",
+      "responsiveImageMode",
+    ]);
     for (const warning of unsupported) {
       expect(warning.category).toBe("setting");
       expect(warning.surface).toBe("illustrator");
@@ -317,13 +321,11 @@ describe("the ir.json exporter.jsx persists is canonical", () => {
     const { doc, warnings } = persistedDocument({
       project_name: "countries-2024",
       namespace: "g-",
-      svg_id_prefix: "svg_",
     });
 
     const validated = loadAndValidateIR(doc);
     expect(validated.settings.projectName).toBe("countries-2024");
     expect(validated.settings.namespace).toBe("g-");
-    expect(validated.settings.svgIdPrefix).toBe("svg_");
     expect(warnings).toEqual([]);
   });
 

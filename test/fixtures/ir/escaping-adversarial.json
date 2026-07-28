@@ -37,16 +37,23 @@
           "id": "artboard:meta-small:layer:text",
           "name": "text layer <x>&\"'`--> <!-- --!> </script",
           "type": "default",
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "source": { "tool": "test", "name": "text layer" },
+          "source": {
+            "tool": "test",
+            "name": "text layer"
+          },
           "elements": [
             {
               "type": "text",
               "id": "el <x>&\"'`--> <!-- --!> </script",
               "kind": "area",
-              "position": { "x": 10, "y": 10, "width": 300, "height": 40 },
+              "position": {
+                "x": 10,
+                "y": 10,
+                "width": 300,
+                "height": 40
+              },
               "opacity": 100,
               "valign": "top",
               "renderAs": "html",
@@ -66,7 +73,11 @@
                       "text": "run <x>&\"'`--> <!-- --!> </script",
                       "fontName": "ArialMT",
                       "fontSize": 14,
-                      "color": { "r": 0, "g": 0, "b": 0 },
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
                       "capitalization": "normal",
                       "baselineShift": "normal",
                       "letterSpacing": 0
@@ -75,7 +86,11 @@
                       "text": " and more",
                       "fontName": "Arial-BoldMT",
                       "fontSize": 14,
-                      "color": { "r": 200, "g": 0, "b": 0 },
+                      "color": {
+                        "r": 200,
+                        "g": 0,
+                        "b": 0
+                      },
                       "capitalization": "normal",
                       "baselineShift": "normal",
                       "letterSpacing": 0,
@@ -97,7 +112,11 @@
                       "text": "",
                       "fontName": "ArialMT",
                       "fontSize": 14,
-                      "color": { "r": 0, "g": 0, "b": 0 },
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
                       "capitalization": "normal",
                       "baselineShift": "normal",
                       "letterSpacing": 0
@@ -109,7 +128,12 @@
             {
               "type": "snippet",
               "key": "snip <x>&\"'`--> <!-- --!> </script",
-              "position": { "x": 10, "y": 60, "width": 200, "height": 100 }
+              "position": {
+                "x": 10,
+                "y": 60,
+                "width": 200,
+                "height": 100
+              }
             },
             {
               "type": "rawHtml",
@@ -121,17 +145,28 @@
           "id": "artboard:meta-small:layer:markers",
           "name": "markers <x>&\"'`--> <!-- --!> </script",
           "type": "symbol",
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "source": { "tool": "test", "name": "markers" },
+          "source": {
+            "tool": "test",
+            "name": "markers"
+          },
           "elements": [
             {
               "type": "shape",
               "shapeType": "circle",
               "id": "shape <x>&\"'`--> <!-- --!> </script",
-              "position": { "x": 40, "y": 40, "width": 20, "height": 20 },
-              "fill": { "r": 255, "g": 0, "b": 0 },
+              "position": {
+                "x": 40,
+                "y": 40,
+                "width": 20,
+                "height": 20
+              },
+              "fill": {
+                "r": 255,
+                "g": 0,
+                "b": 0
+              },
               "opacity": 80
             }
           ]
@@ -140,30 +175,36 @@
           "id": "artboard:meta-small:layer:overlay",
           "name": "overlay <x>&\"'`",
           "type": "png",
-          "inlineSvg": false,
           "visible": true,
           "opacity": 60,
-          "source": { "tool": "test", "name": "overlay" },
+          "source": {
+            "tool": "test",
+            "name": "overlay"
+          },
           "elements": []
         },
         {
           "id": "artboard:meta-small:layer:vector",
           "name": "vector <x>&\"'`",
           "type": "svg",
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "source": { "tool": "test", "name": "vector" },
+          "source": {
+            "tool": "test",
+            "name": "vector"
+          },
           "elements": []
         },
         {
           "id": "artboard:meta-small:layer:clip",
           "name": "clip <x>&\"'`",
           "type": "video",
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "source": { "tool": "test", "name": "clip" },
+          "source": {
+            "tool": "test",
+            "name": "clip"
+          },
           "elements": [
             {
               "type": "video",
@@ -175,10 +216,12 @@
           "id": "artboard:meta-small:layer:ai2html-html-before",
           "name": "ai2html-html-before",
           "type": "html-before",
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "source": { "tool": "test", "name": "ai2html-html-before" },
+          "source": {
+            "tool": "test",
+            "name": "ai2html-html-before"
+          },
           "elements": [
             {
               "type": "rawHtml",
@@ -190,10 +233,12 @@
           "id": "artboard:meta-small:layer:ai2html-html-after",
           "name": "ai2html-html-after",
           "type": "html-after",
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "source": { "tool": "test", "name": "ai2html-html-after" },
+          "source": {
+            "tool": "test",
+            "name": "ai2html-html-after"
+          },
           "elements": [
             {
               "type": "rawHtml",
@@ -219,16 +264,23 @@
           "id": "artboard:meta-large:layer:text",
           "name": "text layer <x>&\"'`--> <!-- --!> </script",
           "type": "default",
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "source": { "tool": "test", "name": "text layer" },
+          "source": {
+            "tool": "test",
+            "name": "text layer"
+          },
           "elements": [
             {
               "type": "text",
               "id": "el2 <x>&\"'`--> <!-- --!> </script",
               "kind": "point",
-              "position": { "x": 20, "y": 20, "width": 400, "height": 30 },
+              "position": {
+                "x": 20,
+                "y": 20,
+                "width": 400,
+                "height": 30
+              },
               "opacity": 100,
               "valign": "top",
               "renderAs": "html",
@@ -244,7 +296,11 @@
                       "text": "second <x>&\"'`--> <!-- --!> </script",
                       "fontName": "ArialMT",
                       "fontSize": 16,
-                      "color": { "r": 10, "g": 10, "b": 10 },
+                      "color": {
+                        "r": 10,
+                        "g": 10,
+                        "b": 10
+                      },
                       "capitalization": "normal",
                       "baselineShift": "normal",
                       "letterSpacing": 0
@@ -283,7 +339,11 @@
       "mimeType": "image/png",
       "width": 400,
       "height": 300,
-      "exportParams": { "format": "png", "scale": 1, "transparent": false },
+      "exportParams": {
+        "format": "png",
+        "scale": 1,
+        "transparent": false
+      },
       "artboardId": "artboard:meta-small"
     },
     "bg-large": {
@@ -292,7 +352,11 @@
       "mimeType": "image/png",
       "width": 900,
       "height": 500,
-      "exportParams": { "format": "png", "scale": 1, "transparent": false },
+      "exportParams": {
+        "format": "png",
+        "scale": 1,
+        "transparent": false
+      },
       "artboardId": "artboard:meta-large"
     },
     "overlay-png": {
@@ -301,7 +365,11 @@
       "mimeType": "image/png",
       "width": 400,
       "height": 300,
-      "exportParams": { "format": "png", "scale": 1, "transparent": true },
+      "exportParams": {
+        "format": "png",
+        "scale": 1,
+        "transparent": true
+      },
       "artboardId": "artboard:meta-small",
       "layerId": "artboard:meta-small:layer:overlay"
     },
@@ -311,7 +379,11 @@
       "mimeType": "image/svg+xml",
       "width": 400,
       "height": 300,
-      "exportParams": { "format": "svg", "scale": 1, "transparent": true },
+      "exportParams": {
+        "format": "svg",
+        "scale": 1,
+        "transparent": true
+      },
       "artboardId": "artboard:meta-small",
       "layerId": "artboard:meta-small:layer:vector"
     }

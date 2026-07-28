@@ -268,11 +268,6 @@ export const illustratorCapabilities: SurfaceCapabilities = {
       values: ["auto", "png", "jpg"],
       note: "Illustrator rasterizes 8-bit PNG for every value except jpg, so png24 and svg both produce an 8-bit PNG.",
     },
-    // D3 — zero readers; exporter.jsx:1767 calls exportImages unconditionally.
-    writeImageFiles: {
-      status: "unsupported",
-      note: "Illustrator always writes image files.",
-    },
     // `exporter.jsx:1803-1806` computes ONE output directory —
     // `docPath + (html_output_path || image_output_path || "all2html-output/")`
     // — and writes the HTML and every image into it. So this setting does move
@@ -299,20 +294,10 @@ export const illustratorCapabilities: SurfaceCapabilities = {
       status: "unsupported",
       note: "Illustrator always emits img-src images.",
     },
-    // D16 — no reader of settings.inlineSvg anywhere; only the per-layer flag is read.
-    inlineSvg: {
-      status: "unsupported",
-      note: "Tag individual layers with :svg,inline instead. The document-level setting is not read.",
-    },
-    // D19 — the only implementation was src/core/svg-postprocess.ts, which had no
-    // importers on any surface and has been deleted (D16). Nothing replaces it: this
-    // declaration is now the whole story, and the checker below is what stops the
-    // setting from silently no-opping. Reinstating id prefixing means writing it into
-    // the emitter that produces the ids and flipping these four declarations together.
-    svgIdPrefix: {
-      status: "unsupported",
-      note: "SVG id prefixing is not implemented on any surface; ids are emitted unprefixed.",
-    },
+    // D3/D16/D19 (writeImageFiles, document-level inlineSvg, svgIdPrefix) are
+    // gone as settings, not merely declared: each was accepted everywhere and
+    // read nowhere, so the setting itself was deleted from SETTING_DEFINITIONS.
+    //
     // D28 — the standalone emitter is unreachable from src/extendscript/index.ts.
     localPreviewTemplate: {
       status: "unsupported",
@@ -425,11 +410,6 @@ export const figmaCapabilities: SurfaceCapabilities = {
     },
     jpgQuality: { status: "unsupported", note: FIGMA_RASTER_NOTE },
     use2xImages: { status: "unsupported", divergesAtDefault: false, note: FIGMA_RASTER_NOTE },
-    // D4 — assets are always written into the ZIP.
-    writeImageFiles: {
-      status: "unsupported",
-      note: "Figma always writes extracted assets into the export ZIP.",
-    },
     // Footnote 5 — Figma emits html and standalone; standalone ignores this.
     htmlOutputExtension: HTML_ONLY_OUTPUT_EXTENSION,
     // D11 — delivery is a ZIP; paths come from the bundle manifest.
@@ -454,16 +434,9 @@ export const figmaCapabilities: SurfaceCapabilities = {
       status: "unsupported",
       note: "Figma always emits rotated and skewed text as live HTML.",
     },
-    // D17
-    inlineSvg: {
-      status: "unsupported",
-      note: "Tag individual layers with :svg:inline instead. The document-level setting is not read.",
-    },
-    // D20
-    svgIdPrefix: {
-      status: "unsupported",
-      note: "SVG id prefixing is not implemented on any surface; ids are emitted unprefixed.",
-    },
+    // D4/D17/D20 (writeImageFiles, inlineSvg, svgIdPrefix) were deleted as
+    // settings — see the Illustrator table's note.
+    //
     // D22
     svgEmbedImages: {
       status: "unsupported",
@@ -542,11 +515,9 @@ const IMPORT_ONLY_TEXT_RENDER: SettingSupport = {
   paths: ["import"],
   note: "Text rendering mode is decided by the exporter that produced the IR. On `render` the value is inert.",
 };
-// D5
-const NODE_WRITE_IMAGE_FILES: SettingSupport = {
-  status: "unsupported",
-  note: "Extracted assets are always written next to the emitted files.",
-};
+// D5/D18/D21 (writeImageFiles, inlineSvg, svgIdPrefix) were deleted as
+// settings — accepted everywhere, read nowhere.
+//
 // D12
 const NODE_HTML_OUTPUT_PATH: SettingSupport = {
   status: "unsupported",
@@ -556,16 +527,6 @@ const NODE_HTML_OUTPUT_PATH: SettingSupport = {
 const NODE_ROTATED_TEXT: SettingSupport = {
   status: "unsupported",
   note: "Only the Illustrator exporter acts on this; the core always emits rotated and skewed text as live HTML.",
-};
-// D18
-const NODE_INLINE_SVG: SettingSupport = {
-  status: "unsupported",
-  note: "Only the per-layer inline flag in the IR is read.",
-};
-// D21
-const NODE_SVG_ID_PREFIX: SettingSupport = {
-  status: "unsupported",
-  note: "SVG id prefixing is not implemented on any surface; ids are emitted unprefixed.",
 };
 // D23
 const NODE_SVG_EMBED_IMAGES: SettingSupport = {
@@ -591,12 +552,9 @@ const CLI_SETTINGS: { [key: string]: SettingSupport } = {
   jpgQuality: IMPORT_ONLY_RASTER,
   use2xImages: IMPORT_ONLY_RASTER,
   renderTextAs: IMPORT_ONLY_TEXT_RENDER,
-  writeImageFiles: NODE_WRITE_IMAGE_FILES,
   htmlOutputPath: NODE_HTML_OUTPUT_PATH,
   htmlOutputExtension: HTML_ONLY_OUTPUT_EXTENSION,
   renderRotatedSkewedTextAs: NODE_ROTATED_TEXT,
-  inlineSvg: NODE_INLINE_SVG,
-  svgIdPrefix: NODE_SVG_ID_PREFIX,
   svgEmbedImages: NODE_SVG_EMBED_IMAGES,
   createPromoImage: NODE_PROMO_IMAGE,
   promoImageWidth: NODE_PROMO_IMAGE,
@@ -610,12 +568,9 @@ const BROWSER_SETTINGS: { [key: string]: SettingSupport } = {
   jpgQuality: IMPORT_ONLY_RASTER,
   use2xImages: IMPORT_ONLY_RASTER,
   renderTextAs: IMPORT_ONLY_TEXT_RENDER,
-  writeImageFiles: NODE_WRITE_IMAGE_FILES,
   htmlOutputPath: NODE_HTML_OUTPUT_PATH,
   htmlOutputExtension: HTML_ONLY_OUTPUT_EXTENSION,
   renderRotatedSkewedTextAs: NODE_ROTATED_TEXT,
-  inlineSvg: NODE_INLINE_SVG,
-  svgIdPrefix: NODE_SVG_ID_PREFIX,
   svgEmbedImages: NODE_SVG_EMBED_IMAGES,
   createPromoImage: NODE_PROMO_IMAGE,
   promoImageWidth: NODE_PROMO_IMAGE,
@@ -864,9 +819,8 @@ function unhonoredReason(
  *
  * A request that matches the surface's real behavior is never a warning, which
  * is what keeps ordinary exports quiet: a surface that ignores a setting but
- * lands on the documented default anyway (Illustrator always writes image
- * files, and `writeImageFiles` defaults to `true`) says nothing until the user
- * asks for something else.
+ * lands on the documented default anyway says nothing until the user asks for
+ * something else.
  */
 export function checkSurfaceCapabilities(
   declaration: SurfaceCapabilities,

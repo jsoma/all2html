@@ -5,7 +5,7 @@ import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { convertLoadedSvgFilesInBrowser, getBrowserEmitter } from "../../src/browser.js";
 import { processDocument } from "../../src/core/pipeline.js";
-import { emitHTMLString } from "../../src/emitters/html-string.js";
+import { emitHTML } from "../../src/emitters/html.js";
 import { CURRENT_IR_VERSION, type Document, type Settings } from "../../src/ir/types.js";
 import { ensureFreshArtifact } from "../helpers/extendscript-build.js";
 
@@ -179,7 +179,7 @@ describe("Illustrator entry point (ExtendScript bundle processAndEmit)", () => {
 
     // Grouping must not have changed what a default export looks like.
     const { document: nodeDoc } = processDocument(structuredClone(raw));
-    expect(result.html).toBe(emitHTMLString(nodeDoc).html);
+    expect(result.html).toBe(emitHTML(nodeDoc).html);
   });
 
   it("carries the requested html extension onto every emitted file", () => {

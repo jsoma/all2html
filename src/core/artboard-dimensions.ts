@@ -12,7 +12,7 @@
  * `z.number().positive()`. The ExtendScript path never runs Zod — that is exactly
  * why D21 put the purity assertions there — so it needs the same constraint
  * expressed directly. Artboard width and height are the *only* divisors in the
- * ExtendScript-bound transforms (`compute-positions.ts`, `html-string.ts`'s
+ * ExtendScript-bound transforms (`compute-positions.ts`, `html-tree.ts`'s
  * aspect ratio and padding, `percentage-positions.ts`), so this is the whole
  * class, not a sample of it.
  *

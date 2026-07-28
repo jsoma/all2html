@@ -28,7 +28,6 @@
             "tool": "illustrator",
             "name": "footer-hook:html-after"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -46,7 +45,6 @@
             "tool": "illustrator",
             "name": "blank-layer-hook:html-before"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -59,7 +57,6 @@
             "tool": "illustrator",
             "name": "deck-hook:html-before"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -77,7 +74,6 @@
             "tool": "illustrator",
             "name": "content"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [

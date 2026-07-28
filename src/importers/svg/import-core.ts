@@ -59,7 +59,6 @@ interface StyleContext {
   letterSpacing?: string;
   lineHeight?: string;
   textAnchor?: string;
-  direction?: "ltr" | "rtl";
   visibility?: string;
   hyperlink?: string;
 }
@@ -253,11 +252,6 @@ function mergeStyleContext(parent: StyleContext, node: SvgNode): StyleContext {
   const lineHeight = getAttr(node, "line-height") ?? styleMap["line-height"] ?? parent.lineHeight;
   const anchor =
     getAttr(node, "text-anchor") ?? styleMap["text-anchor"] ?? parent.textAnchor ?? "start";
-  const direction =
-    ((getAttr(node, "direction") ?? styleMap.direction ?? parent.direction) as
-      | "ltr"
-      | "rtl"
-      | undefined) ?? "ltr";
   // `visibility` is inherited and a descendant may re-enable itself, unlike
   // `display: none`, which removes the whole subtree.
   const visibility = getAttr(node, "visibility") ?? styleMap.visibility ?? parent.visibility;
@@ -274,7 +268,6 @@ function mergeStyleContext(parent: StyleContext, node: SvgNode): StyleContext {
     letterSpacing,
     lineHeight,
     textAnchor: anchor,
-    direction,
     visibility,
     hyperlink,
   };
@@ -799,7 +792,6 @@ function buildTextElement(
   const paragraphs: Paragraph[] = populatedLines.map((line) => ({
     text: line.runs.map((run) => run.text).join(""),
     alignment,
-    direction: context.direction,
     leading: Math.max(line.leading || line.maxFontSize * 1.2, 1),
     spaceBefore: 0,
     spaceAfter: 0,
@@ -1156,7 +1148,6 @@ function createInitialContext(): StyleContext {
     fill: "#000000",
     color: "#000000",
     opacity: 1,
-    direction: "ltr",
     textAnchor: "start",
   };
 }
@@ -1339,7 +1330,6 @@ async function parseSvgFile(
         id: `${file.path}#content`,
         name: "content",
       },
-      inlineSvg: false,
       visible: true,
       opacity: 100,
       elements: extractedText.map((entry) => entry.element),
@@ -1382,11 +1372,12 @@ async function parseSvgFile(
         width: dimensions.width,
         height: dimensions.height,
       },
-      // Both are optional in the IR and both are absent for an unannotated
-      // filename; assigning `undefined` would put an enumerable key on the
-      // artboard that JSON.stringify drops.
+      // Optional in the IR and absent for an unannotated filename; assigning
+      // `undefined` would put an enumerable key on the artboard that
+      // JSON.stringify drops. `naming.imageOnly` stays importer-local: its
+      // canonical trace is the absence of recovered text plus the background
+      // asset, not an artboard field.
       ...(naming.responsiveness === undefined ? {} : { responsiveness: naming.responsiveness }),
-      ...(naming.imageOnly === undefined ? {} : { imageOnly: naming.imageOnly }),
       layers,
     },
     backgroundAsset,

@@ -147,8 +147,7 @@ all2html/
 │   │   └── pipeline.ts             # orchestrates transforms
 │   ├── emitters/
 │   │   ├── html-tree.ts            # HTML node-tree builder (the one HTML emitter)
-│   │   ├── html.ts                 # re-export entry point
-│   │   ├── html-string.ts          # re-export entry point (ExtendScript bundle)
+│   │   ├── html.ts                 # re-export entry point (all surfaces incl. ExtendScript)
 │   │   ├── svelte.ts               # Svelte component emitter
 │   │   ├── react.ts                # React component emitter
 │   │   ├── standalone.ts           # Full standalone HTML page
@@ -271,7 +270,6 @@ Core merges `settings`; each emitter reads its own section from `emit`.
 interface Settings {
   // Image settings
   imageFormat: ("auto" | "png" | "png24" | "jpg" | "svg")[];
-  writeImageFiles: boolean;
   pngTransparent: boolean;
   pngNumberOfColors: number;    // 1-256
   jpgQuality: number;           // 0-100
@@ -300,8 +298,6 @@ interface Settings {
   includeResizerCss: boolean;
   includeResizerWidths: boolean;
   useLazyLoader: boolean;
-  inlineSvg: boolean;
-  svgIdPrefix: string;
   svgEmbedImages: boolean;
   clickableLink?: string;
   createPromoImage: boolean;
@@ -309,6 +305,8 @@ interface Settings {
   localPreviewTemplate?: string;
 }
 ```
+
+Three settings were deleted rather than implemented: `writeImageFiles`, the document-level `inlineSvg` setting, and `svgIdPrefix` were accepted on every surface and read on none (capability matrix D3–D5, D16–D21). Inline SVG remains expressible per layer via `Layer.inlineSvg`.
 
 ### 3.3 Artboard
 
@@ -323,11 +321,12 @@ interface Artboard {
 
   // Per-artboard overrides (from name annotation)
   responsiveness?: "fixed" | "dynamic";
-  imageOnly?: boolean;           // skip text-to-HTML, render all as image
 
   layers: Layer[];
 }
 ```
+
+An artboard-name `image_only` annotation stays an exporter-local decision: its canonical trace is `TextElement.renderAs: "image"` (with `renderAsReason: "imageOnly"`) plus the background asset that contains the rasterized text, not an artboard field.
 
 ### 3.4 Layer
 
@@ -336,7 +335,7 @@ interface Layer {
   name: string;                  // cleaned layer name
   type: "default" | "svg" | "png" | "symbol" | "div"
       | "video" | "html-before" | "html-after";
-  inlineSvg: boolean;            // for svg layers: embed inline?
+  inlineSvg?: boolean;           // svg layers only; true = embed markup inline
   visible: boolean;
   opacity: number;               // 0-100
   elements: Element[];
@@ -356,7 +355,7 @@ interface TextElement {
   kind: "point" | "area";
   position: BoundingBox;         // absolute pixels, artboard-relative, top-left origin
   rotation?: number;             // degrees (only if > 1 degree)
-  transformMatrix?: number[];    // [a, b, c, d, e, f] for rotated text
+  transformMatrix?: [number, number, number, number, number, number]; // CSS matrix(a, b, c, d, e, f)
   opacity: number;               // computed through parent chain, 0-100
   blendMode?: "multiply";        // only multiply is supported
 
@@ -373,7 +372,6 @@ interface TextElement {
 
   // Exporter metadata
   renderAs: "html" | "image";   // what the exporter decided
-  dataAttributes?: Record<string, string>;  // from note field
 
   // Tagged text binding (v1.2+)
   // When present, component emitters replace static text with a runtime expression
@@ -434,7 +432,6 @@ interface ShapeElement {
 
   // Line-specific
   orientation?: "horizontal" | "vertical";
-  segments?: { x1: number; y1: number; x2: number; y2: number }[];
 }
 
 interface VideoElement {
@@ -450,12 +447,7 @@ interface RawHtmlElement {
 interface SnippetElement {
   type: "snippet";
   key: string;                   // stable identifier (from layer name prefix)
-  group?: string;                // optional grouping (layer name, for multi-region snippets)
   position: BoundingBox;         // mount region position, absolute pixels
-  geometry?: {                   // optional shape info (for visual guides)
-    kind: "rectangle" | "circle" | "line";
-  };
-  visible?: boolean;             // whether shape was visible in design (default true)
 }
 ```
 
@@ -463,7 +455,7 @@ interface SnippetElement {
 
 A snippet is a **runtime mount region** — a positioned placeholder where the consumer can inject interactive content. The exporter creates `SnippetElement`s from shapes found on `:snippet`-annotated layers. The `key` field is framework-agnostic; emitters map it to their idiom (Svelte `{@render}` snippet prop, React `ReactNode` prop, Web Component slot).
 
-Multiple `SnippetElement`s can share the same `key` (e.g., one per artboard in a responsive set). The `group` field preserves the layer name for disambiguation.
+Multiple `SnippetElement`s can share the same `key` (e.g., one per artboard in a responsive set).
 
 #### Tagged Text Bindings
 
@@ -518,7 +510,6 @@ interface CustomBlock {
 interface Asset {
   id: string;                    // unique identifier
   path: string;                  // relative file path
-  hash?: string;                 // content hash (computed by core if not provided)
   mimeType: string;              // "image/png", "image/jpeg", "image/svg+xml"
   width: number;                 // pixel width
   height: number;                // pixel height
@@ -566,7 +557,7 @@ All positions in the IR use:
 
 For each element, the exporter records `renderAs`:
 - `"htmlText"` — text frames that should become HTML overlays
-- `"image"` — text frames that should be baked into the background image (rotated text when `renderRotatedSkewedTextAs: "image"`, or artboards with `imageOnly` flag)
+- `"image"` — text frames that should be baked into the background image (rotated text when `renderRotatedSkewedTextAs: "image"`, or artboards annotated `image_only` in the design tool)
 
 The background image for each artboard is exported with all `renderAs: "htmlText"` frames hidden.
 
@@ -1010,7 +1001,7 @@ Every ai2html feature, mapped to our implementation:
 |---|---|---|
 | `namespace` | Implement | CSS class prefix |
 | `image_format` | Implement | auto/png/png24/jpg/svg |
-| `write_image_files` | Implement | Exporter handles this |
+| `write_image_files` | Removed | Deleted: zero readers on every surface (matrix D3–D5) |
 | `responsiveness` | Implement | fixed/dynamic |
 | `text_responsiveness` | Implement | Area text width: % vs px |
 | `output` | Implement | one-file / multiple-files |
@@ -1031,8 +1022,8 @@ Every ai2html feature, mapped to our implementation:
 | `include_resizer_widths` | Implement | data-min/max-width attrs |
 | `include_resizer_script` | Skip | Legacy JS resizer — modern only |
 | `use_lazy_loader` | Implement | Native loading="lazy" only |
-| `inline_svg` | Implement | |
-| `svg_id_prefix` | Implement | |
+| `inline_svg` | Removed | Deleted as a document setting (matrix D16–D18); per-layer `:svg,inline` tagging remains |
+| `svg_id_prefix` | Removed | Deleted: no prefixing implementation exists on any surface (matrix D19–D21) |
 | `svg_embed_images` | Implement | Exporter setting |
 | `clickable_link` | Implement | Wrap in `<a>` |
 | `create_promo_image` | Implement | Exporter generates |
@@ -1223,7 +1214,7 @@ The rule binds consumers too, not just the model: `extractBreakpointData()` carr
 
 **Target.** One emitter builds a serializable node tree of plain objects — which the JSON-serializable rule already requires — and one ES5-safe serializer renders it. Nothing downstream consumes hast; only its string output is used. The escaping contract becomes single-sourced, which retires the parity bug *by construction* rather than by test. A hast adapter can remain for consumers who want the tree.
 
-> **STATUS: DONE for HTML.** `emitters/html-tree.ts` builds the tree, `emitters/shared/html-node.ts` defines the nodes and holds the one ES3-safe serializer, and `html.ts` / `html-string.ts` are re-export entry points onto the same function. Output is byte-identical to both former emitters, verified against verbatim copies of each across every IR fixture × the full option cross-product × grouped/ungrouped before those copies were deleted. Attributes are an ordered array of pairs rather than an object, because ES3 does not define `for...in` order and the old string emitter's `Object.keys` iteration was therefore unspecified inside ExtendScript. `shared/to-hast.ts` keeps the rehype seam and doubles as the parity anchor that pins the escaping subsets to `hast-util-to-html`'s own. Cost: +788 B in both ExtendScript artifacts (this bundle only ever carried one of the two emitters, with builder and serializer fused, so there was no duplication here to delete); −239 lines repo-wide.
+> **STATUS: DONE for HTML.** `emitters/html-tree.ts` builds the tree, `emitters/shared/html-node.ts` defines the nodes and holds the one ES3-safe serializer, and `html.ts` is the re-export entry point onto it for every surface (the `html-string.ts` / `emitHTMLString` alias has since been deleted). Output is byte-identical to both former emitters, verified against verbatim copies of each across every IR fixture × the full option cross-product × grouped/ungrouped before those copies were deleted. Attributes are an ordered array of pairs rather than an object, because ES3 does not define `for...in` order and the old string emitter's `Object.keys` iteration was therefore unspecified inside ExtendScript. `shared/to-hast.ts` keeps the rehype seam and doubles as the parity anchor that pins the escaping subsets to `hast-util-to-html`'s own. Cost: +788 B in both ExtendScript artifacts (this bundle only ever carried one of the two emitters, with builder and serializer fused, so there was no duplication here to delete); −239 lines repo-wide.
 >
 > **STATUS: DONE for Svelte and React.** Both now consume `buildHTMLTree()` through `emitters/shared/component-tree.ts`, which is what turns `buildHTMLTree()` from an exported convenience into the actual shared input. Three regexes retired: the `<style>` block is *removed from the tree as a node* rather than matched out of a string; the Google Fonts `<link>` tags are never built (the tree is built with `googleFonts: "none"` and the href is carried out separately to `<svelte:head>` / JSX, so `stripGoogleFontsLinkTags` has no caller in the emitters); and `/<!--[\s\S]*?-->/g` is gone, which stops the emitters eating comments an author wrote inside their own `html-before` / `html-after` blocks. Zero bytes in either ExtendScript artifact — neither emitter is in that entry graph.
 >

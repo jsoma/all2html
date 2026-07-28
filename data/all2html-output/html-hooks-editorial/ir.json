@@ -5,12 +5,8 @@
     "toolVersion": "29.8.9",
     "adapterVersion": "0.1.0"
   },
-  "settings": {
-    
-  },
-  "fonts": [
-    
-  ],
+  "settings": {},
+  "fonts": [],
   "artboards": [
     {
       "id": "illustrator:artboard:desktop-1",
@@ -32,7 +28,6 @@
             "tool": "illustrator",
             "name": "footer-hook:html-after"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -50,12 +45,9 @@
             "tool": "illustrator",
             "name": "blank-layer-hook:html-before"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": [
-            
-          ]
+          "elements": []
         },
         {
           "id": "illustrator:artboard:desktop-1:layer:deck-hook-3",
@@ -65,7 +57,6 @@
             "tool": "illustrator",
             "name": "deck-hook:html-before"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -83,7 +74,6 @@
             "tool": "illustrator",
             "name": "content"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [

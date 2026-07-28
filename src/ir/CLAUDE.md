@@ -3,7 +3,7 @@
 The IR is the contract between input plugins and the core. Plugins produce it, the core consumes it.
 
 - `types.ts` — All TypeScript interfaces. Base types (`Document`, `Artboard`, `Layer`, `Element`) and pipeline phase types (`PhaseDocument<P>` and its aliases `ResolvedDocument`, `BreakpointedDocument`, `StyledDocument`, `DeduplicatedDocument`, `EmitterReadyDocument`).
-- `schema.ts` — Zod schemas for runtime validation. Mirrors every type in `types.ts`.
+- `schema.ts` — Zod schemas for runtime validation. Mirrors every type in `types.ts`. Every declared object is `.strict()` (unknown keys reject with their path — never silently strip) except `MetadataSchema` and `SourceMetadataSchema`, which are open by contract via `.catchall`. Every number base is `.finite()`; Zod itself already rejects NaN.
 - `validate.ts` — `loadAndValidateIR()` entry point. Throws `IRValidationError` with exact paths on failure.
 - `defaults.ts` — Default settings values matching ai2html defaults.
 - `settings-definitions.ts` — The setting list: key, kind, default, range. Ships inside the ExtendScript bundle.
@@ -15,7 +15,7 @@ The IR is the contract between input plugins and the core. Plugins produce it, t
 - `Document.source` is required and identifies the source tool/adapter. Source-native names and IDs belong in `source`, not in ad-hoc top-level fields.
 - `Artboard.id` and `Layer.id` are required stable canonical IDs. Assets reference these through `artboardId` and `layerId`.
 - `Document.settings` is `Partial<Settings>` (exporter may only set some). After `resolveSettings`, it becomes full `Settings` on `ResolvedDocument`.
-- `Document.settings` uses canonical camelCase keys from `Settings` (`clickableLink`, `htmlOutputPath`, `inlineSvg`, etc.). Tool-native snake_case belongs only inside plugin-side parsing, never in emitted IR JSON.
+- `Document.settings` uses canonical camelCase keys from `Settings` (`clickableLink`, `htmlOutputPath`, `jpgQuality`, etc.). Tool-native snake_case belongs only inside plugin-side parsing, never in emitted IR JSON.
 - `renderAs` on TextElement uses `"html" | "image"` (not "htmlText"). Optional `renderAsReason` explains why (rotation, warp, pathText, imageOnly, setting).
 - Elements use a discriminated union on `type`: `"text" | "shape" | "video" | "rawHtml" | "snippet"`.
 - The enriched types (`StyledTextElement`, `EmitterReadyTextElement`, etc.) extend the base types — don't duplicate fields.
@@ -48,5 +48,9 @@ The IR is the contract between input plugins and the core. Plugins produce it, t
 - Duplicate layer IDs inside one artboard are invalid.
 - Assets that reference unknown artboard/layer IDs are invalid.
 - `Asset.exportParams.format` is enum: `"png" | "png24" | "jpg" | "svg"`.
-- `Paragraph.direction` is optional: `"ltr" | "rtl"` (defaults to "ltr" when omitted).
 - `Metadata.lang` is optional: BCP 47 language tag (e.g., "en", "ja").
+- `Layer.inlineSvg` is optional and valid only on `type: "svg"` layers (superRefine); only `true` means "inline the markup". Producers never write `inlineSvg: false`.
+- `transformMatrix` is a six-number tuple (`TransformMatrix`), CSS `matrix(a, b, c, d, e, f)` order, every entry finite.
+- Semantic checks in `DocumentSchema.superRefine`: html-rendered text element ids are unique per artboard (image-rendered text is exempt — it makes no DOM node); at most one background asset per artboard and one asset per `(artboardId, layerId)`; a visible `png` or non-inline `svg` layer must have its layer asset; `renderAs: "image"` text requires a background asset on its artboard.
+- `loadAndValidateIR` rejects an own `__proto__` key on the raw `Document.assets` record **before** Zod runs — the installed Zod's record parser silently drops that key, which would lose the asset. Only `__proto__`, only on `assets`; `constructor`/`toString` stay legal ids and `metadata` stays open.
+- Deleted, do not re-add without a consumer: `TextElement.dataAttributes`, `SnippetElement.group`/`.geometry`/`.visible`, `ShapeElement.segments`, `Asset.hash`, `Artboard.imageOnly` (producer-local decision; canonical trace is `renderAs: "image"` + the background asset), `Paragraph.direction` (returns with a real RTL consumer), and the settings `writeImageFiles`, document-level `inlineSvg`, `svgIdPrefix`.

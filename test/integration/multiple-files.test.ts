@@ -186,8 +186,8 @@ describe("multiple-files output mode", () => {
  * Artboards that share a *name* but not an id.
  *
  * These two came from `html-string-emitter.test.ts`, which was otherwise an
- * emitter-vs-itself parity sweep (`emitHTMLString` is a re-export of `emitHTML`
- * since the emitter collapse, SPEC §12.6 / D23) and has been deleted. The
+ * emitter-vs-itself parity sweep (`emitHTMLString` was a re-export of `emitHTML`
+ * after the emitter collapse, SPEC §12.6 / D23; the alias is deleted too). The
  * assertions below are the part of that file that tested something: background
  * asset selection and group scoping key off the stable artboard id, not the
  * display name, so duplicate names must not collapse into one another.

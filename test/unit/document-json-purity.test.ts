@@ -41,8 +41,8 @@ describe("document model is JSON-pure (SPEC §12.2)", () => {
       expect(roundTrip(groups)).toStrictEqual(groups);
 
       // The observable consequence: the serialized document emits the same bytes.
-      // `emitHTMLString` is the same function as `emitHTML` since the emitter
-      // collapse (D23), so asserting it separately compares a function to itself.
+      // `emitHTML` is the one HTML emitter since the emitter collapse (D23); the
+      // `emitHTMLString` alias was deleted.
       expect(emitHTML(restored).html).toBe(emitHTML(document).html);
 
       expect(findImpureValues(document)).toEqual([]);

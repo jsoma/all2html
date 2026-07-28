@@ -12,7 +12,6 @@ import {
 import { processDocument } from "../../src/core/pipeline.js";
 import type { SurfaceId } from "../../src/core/warnings.js";
 import { emitHTML } from "../../src/emitters/html.js";
-import { emitHTMLString } from "../../src/emitters/html-string.js";
 import { formatDictatedExtension, getEmitter } from "../../src/emitters/registry.js";
 import type { EmitterConfig } from "../../src/emitters/types.js";
 import { createDefaultSettings, SETTING_DEFINITIONS } from "../../src/ir/settings-definitions.js";
@@ -32,7 +31,6 @@ const repoRoot = resolve(__dirname, "../..");
  */
 const UNHONORED_VALUE: Partial<Record<keyof Settings, unknown>> = {
   imageFormat: ["svg"],
-  writeImageFiles: false,
   pngTransparent: true,
   pngNumberOfColors: 64,
   jpgQuality: 50,
@@ -41,8 +39,6 @@ const UNHONORED_VALUE: Partial<Record<keyof Settings, unknown>> = {
   renderTextAs: "image",
   renderRotatedSkewedTextAs: "image",
   output: "multiple-files",
-  inlineSvg: true,
-  svgIdPrefix: "gfx-",
   svgEmbedImages: true,
   createPromoImage: true,
   promoImageWidth: 2048,
@@ -66,9 +62,8 @@ const DEAD_CELLS: ReadonlyArray<{
 }> = [
   { id: "D1", surface: "illustrator", setting: "imageFormat" },
   { id: "D2", surface: "figma", setting: "imageFormat" },
-  { id: "D3", surface: "illustrator", setting: "writeImageFiles" },
-  { id: "D4", surface: "figma", setting: "writeImageFiles" },
-  { id: "D5", surface: "cli", setting: "writeImageFiles" },
+  // D3-D5 (writeImageFiles) are gone from this list because the setting itself
+  // was deleted: it was accepted everywhere and read nowhere.
   // D6/D7/D9 diverge at the default: Figma always exports alpha PNG at scale 1
   // with no quantizer, so the *default* is the value it cannot produce.
   { id: "D6", surface: "figma", setting: "pngTransparent", value: false },
@@ -84,12 +79,9 @@ const DEAD_CELLS: ReadonlyArray<{
   { id: "D13", surface: "figma", setting: "renderTextAs" },
   { id: "D14", surface: "figma", setting: "renderRotatedSkewedTextAs" },
   { id: "D15", surface: "cli", setting: "renderRotatedSkewedTextAs" },
-  { id: "D16", surface: "illustrator", setting: "inlineSvg" },
-  { id: "D17", surface: "figma", setting: "inlineSvg" },
-  { id: "D18", surface: "cli", setting: "inlineSvg" },
-  { id: "D19", surface: "illustrator", setting: "svgIdPrefix" },
-  { id: "D20", surface: "figma", setting: "svgIdPrefix" },
-  { id: "D21", surface: "cli", setting: "svgIdPrefix" },
+  // D16-D18 (document-level inlineSvg) and D19-D21 (svgIdPrefix) are gone from
+  // this list because both settings were deleted — accepted everywhere, read
+  // nowhere. The per-layer `Layer.inlineSvg` flag is unaffected.
   { id: "D22", surface: "figma", setting: "svgEmbedImages" },
   { id: "D23", surface: "cli", setting: "svgEmbedImages" },
   { id: "D24", surface: "figma", setting: "createPromoImage" },
@@ -323,13 +315,16 @@ describe("DEAD settings now warn", () => {
     );
   });
 
-  it("covers the 29 DEAD cells still recorded in the capability matrix", () => {
+  it("covers the 20 DEAD cells still recorded in the capability matrix", () => {
     // 31 when the matrix was transcribed. Two were fixed rather than declared:
-    // D10 (illustrator/output) and D31 (useLazyLoader on video). The number is
-    // stated in three places that must agree — this assertion, the header of
+    // D10 (illustrator/output) and D31 (useLazyLoader on video). Nine more were
+    // closed by deleting their settings outright — writeImageFiles (D3-D5),
+    // document-level inlineSvg (D16-D18), and svgIdPrefix (D19-D21) had zero
+    // readers on every surface. The number is stated in three places that must
+    // agree — this assertion, the header of
     // `internal-docs/capability-matrix.md`, and the Known Broken bullet in the
     // root `CLAUDE.md`.
-    expect(DEAD_CELLS).toHaveLength(29);
+    expect(DEAD_CELLS).toHaveLength(20);
   });
 });
 
@@ -379,32 +374,35 @@ describe("declarations match what the code actually does", () => {
     ).toEqual([]);
   });
 
-  it("svgIdPrefix has no implementation anywhere, so no surface declares it honored", () => {
-    // Matrix D19-D21. The only prefixing implementation was src/core/svg-postprocess.ts,
-    // which had zero importers on any surface; it was deleted under D16 and nothing
-    // replaces it. Both assertions below now hold trivially, which is the point: the
-    // declaration is the only remaining statement about this setting, and it warns.
-    expect(sourceMentions("settings.svgIdPrefix")).toEqual([]);
-    expect(sourceMentions("svg-postprocess.js")).toEqual([]);
-    for (const surface of ["illustrator", "figma", "cli", "browser"] as const) {
-      expect(getSurfaceCapabilities(surface).settings.svgIdPrefix.status).toBe("unsupported");
+  it("the deleted zero-reader settings are gone everywhere, not merely declared", () => {
+    // Matrix D3-D5 (writeImageFiles), D16-D18 (document-level inlineSvg), and
+    // D19-D21 (svgIdPrefix) were closed by deleting the settings: each was
+    // accepted on every surface and read on none. Nothing may reintroduce them
+    // — not the definition table, not a reader, not a per-surface declaration.
+    const deletedKeys = ["writeImageFiles", "svgIdPrefix"];
+    for (const key of deletedKeys) {
+      expect(
+        SETTING_DEFINITIONS.some((definition) => (definition.key as string) === key),
+        `${key} is back in SETTING_DEFINITIONS`,
+      ).toBe(false);
+      expect(sourceMentions(`settings.${key}`)).toEqual([]);
+      for (const surface of ["illustrator", "figma", "cli", "browser"] as const) {
+        expect(
+          getSurfaceCapabilities(surface).settings[key],
+          `${surface} still declares ${key}`,
+        ).toBeUndefined();
+      }
     }
-  });
-
-  it("writeImageFiles is read by nothing, so no surface declares it honored", () => {
-    // Matrix D3-D5.
-    expect(sourceMentions("settings.writeImageFiles")).toEqual([]);
-    for (const surface of ["illustrator", "figma", "cli", "browser"] as const) {
-      expect(getSurfaceCapabilities(surface).settings.writeImageFiles.status).toBe("unsupported");
-    }
-  });
-
-  it("the document-level inlineSvg setting is read by nothing", () => {
-    // Matrix D16-D18: emitters read only the per-layer flag.
+    // `inlineSvg` needs its own spelling checks: the *setting* is gone, while
+    // the per-layer `Layer.inlineSvg` flag legitimately remains.
+    expect(
+      SETTING_DEFINITIONS.some((definition) => (definition.key as string) === "inlineSvg"),
+    ).toBe(false);
     expect(sourceMentions("settings.inlineSvg")).toEqual([]);
     for (const surface of ["illustrator", "figma", "cli", "browser"] as const) {
-      expect(getSurfaceCapabilities(surface).settings.inlineSvg.status).toBe("unsupported");
+      expect(getSurfaceCapabilities(surface).settings.inlineSvg).toBeUndefined();
     }
+    expect(sourceMentions("svg-postprocess.js")).toEqual([]);
   });
 
   it("promo image generation exists only in the Illustrator exporter", () => {
@@ -741,7 +739,9 @@ describe("D31 retired: lazy video ships a loader", () => {
     expect(sourceMentions("IntersectionObserver")).toEqual(["src/emitters/shared/lazy-video.ts"]);
   });
 
-  it("emits the loader instead of warning, from both HTML emitters identically", () => {
+  it("emits the loader instead of warning", () => {
+    // This used to run both `emitHTML` and the `emitHTMLString` alias; the
+    // alias was deleted, so there is exactly one HTML emitter to assert on.
     const doc = JSON.parse(
       readFileSync(join(repoRoot, "test/fixtures/ir/video-layer.json"), "utf-8"),
     );
@@ -750,17 +750,13 @@ describe("D31 retired: lazy video ships a loader", () => {
     });
 
     expect(groups).toHaveLength(1);
-    const hast = emitHTML(document);
-    const string = emitHTMLString(document);
+    const result = emitHTML(document);
 
-    for (const result of [hast, string]) {
-      expect(
-        result.structuredWarnings.filter((warning) => warning.setting === "useLazyLoader"),
-      ).toEqual([]);
-      expect(result.html).toContain("data-src=");
-      expect(result.html).toContain("IntersectionObserver");
-    }
-    expect(hast.structuredWarnings).toEqual(string.structuredWarnings);
+    expect(
+      result.structuredWarnings.filter((warning) => warning.setting === "useLazyLoader"),
+    ).toEqual([]);
+    expect(result.html).toContain("data-src=");
+    expect(result.html).toContain("IntersectionObserver");
   });
 
   it("says nothing and ships no loader when the user opts out", () => {
@@ -771,7 +767,7 @@ describe("D31 retired: lazy video ships a loader", () => {
     const { document } = processDocument(doc, {
       surface: { surface: "cli", path: "render", format: "html" },
     });
-    const result = emitHTMLString(document);
+    const result = emitHTML(document);
 
     expect(result.structuredWarnings.some((warning) => warning.setting === "useLazyLoader")).toBe(
       false,
@@ -834,7 +830,7 @@ describe("the pipeline warns for the active surface", () => {
     irVersion: "0.1.0",
     source: { tool: "test", version: "0" },
     metadata: { slug: "cap" },
-    settings: { output: "multiple-files", svgIdPrefix: "gfx-" },
+    settings: { output: "multiple-files", htmlOutputPath: "custom-html/" },
     fonts: [],
     customBlocks: [],
     assets: {},
@@ -851,7 +847,6 @@ describe("the pipeline warns for the active surface", () => {
             type: "default",
             visible: true,
             opacity: 100,
-            inlineSvg: false,
             elements: [],
           },
         ],
@@ -864,9 +859,9 @@ describe("the pipeline warns for the active surface", () => {
       surface: { surface: "cli", path: "render", format: "html" },
     });
 
-    expect(result.warnings.some((warning) => warning.includes("svgIdPrefix"))).toBe(true);
+    expect(result.warnings.some((warning) => warning.includes("htmlOutputPath"))).toBe(true);
     const structured = result.structuredWarnings.find(
-      (warning) => warning.setting === "svgIdPrefix",
+      (warning) => warning.setting === "htmlOutputPath",
     );
     expect(structured?.code).toBe(SETTING_UNSUPPORTED_CODE);
     expect(structured?.surface).toBe("cli");

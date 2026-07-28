@@ -14,9 +14,19 @@ const ConfigFontMappingSchema = z
     style: z.string().optional(),
     vshift: z.string().optional(),
   })
+  // Strict like the top-level config: a typo inside a font entry used to be
+  // silently stripped while the rest of the file was validated.
+  .strict()
   .refine((font) => font.sourceFont || font.aifont, {
     path: ["sourceFont"],
     message: "sourceFont is required",
+  })
+  // `aifont` is a compatibility alias for `sourceFont`, not a second field.
+  // When both are present they must agree — silently letting `sourceFont` win
+  // hid the conflict from the one person who could resolve it.
+  .refine((font) => !font.sourceFont || !font.aifont || font.sourceFont === font.aifont, {
+    path: ["aifont"],
+    message: "aifont conflicts with sourceFont; the two must match when both are present",
   })
   .transform(({ aifont, sourceFont, ...font }): FontMapping => {
     const normalizedSourceFont = sourceFont ?? aifont;

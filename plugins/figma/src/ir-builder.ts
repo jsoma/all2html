@@ -108,8 +108,10 @@ export function buildArtboard(frame: ExtractedFrame): Artboard {
     },
     // Omitted, not set to undefined: the document model must survive a JSON
     // round-trip, and assertJsonPure enforces that per transform.
+    // `frame.imageOnly` stays extraction-local: its canonical trace is
+    // renderAs:"image" text (renderAsReason:"imageOnly") plus the background
+    // asset that contains it, not an artboard field.
     ...(frame.responsiveness === undefined ? {} : { responsiveness: frame.responsiveness }),
-    ...(frame.imageOnly === undefined ? {} : { imageOnly: frame.imageOnly }),
     layers: frame.layers.map((layer) => ({
       id: makeFigmaLayerId(frame, layer),
       name: layer.name,
@@ -119,7 +121,9 @@ export function buildArtboard(frame: ExtractedFrame): Artboard {
         id: layer.sourceNodeId,
         name: layer.name,
       },
-      inlineSvg: layer.inlineSvg,
+      // Only `true` is meaningful, and the schema rejects the key on non-svg
+      // layers — `inlineSvg: false` is producer noise.
+      ...(layer.inlineSvg ? { inlineSvg: true } : {}),
       visible: layer.visible,
       opacity: layer.opacity,
       elements: [...layer.elements],

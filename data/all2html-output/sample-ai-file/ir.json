@@ -18,9 +18,7 @@
     "jpgQuality": 60,
     "pngNumberOfColors": 128
   },
-  "fonts": [
-    
-  ],
+  "fonts": [],
   "artboards": [
     {
       "id": "illustrator:artboard:mobile-3",
@@ -42,7 +40,6 @@
             "tool": "illustrator",
             "name": "Layer 3"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -208,12 +205,9 @@
             "tool": "illustrator",
             "name": "area text"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": [
-            
-          ]
+          "elements": []
         },
         {
           "id": "illustrator:artboard:mobile-3:layer:background-3",
@@ -223,19 +217,14 @@
             "tool": "illustrator",
             "name": "background"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": [
-            
-          ]
+          "elements": []
         }
       ]
     }
   ],
-  "customBlocks": [
-    
-  ],
+  "customBlocks": [],
   "assets": {
     "sample-ai-file-mobile": {
       "id": "sample-ai-file-mobile",

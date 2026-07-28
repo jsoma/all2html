@@ -28,7 +28,6 @@
             "tool": "illustrator",
             "name": "highlight:png"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -41,7 +40,6 @@
             "tool": "illustrator",
             "name": "locator:svg"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -54,7 +52,6 @@
             "tool": "illustrator",
             "name": "content"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -159,7 +156,6 @@
             "tool": "illustrator",
             "name": "highlight:png"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -172,7 +168,6 @@
             "tool": "illustrator",
             "name": "locator:svg"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -185,7 +180,6 @@
             "tool": "illustrator",
             "name": "content"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -290,7 +284,6 @@
             "tool": "illustrator",
             "name": "highlight:png"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -303,7 +296,6 @@
             "tool": "illustrator",
             "name": "locator:svg"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -316,7 +308,6 @@
             "tool": "illustrator",
             "name": "content"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -421,7 +412,6 @@
             "tool": "illustrator",
             "name": "highlight:png"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -434,7 +424,6 @@
             "tool": "illustrator",
             "name": "locator:svg"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -447,7 +436,6 @@
             "tool": "illustrator",
             "name": "content"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -552,7 +540,6 @@
             "tool": "illustrator",
             "name": "highlight:png"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -565,7 +552,6 @@
             "tool": "illustrator",
             "name": "locator:svg"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -578,7 +564,6 @@
             "tool": "illustrator",
             "name": "content"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -683,7 +668,6 @@
             "tool": "illustrator",
             "name": "highlight:png"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -696,7 +680,6 @@
             "tool": "illustrator",
             "name": "locator:svg"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": []
@@ -709,7 +692,6 @@
             "tool": "illustrator",
             "name": "content"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [

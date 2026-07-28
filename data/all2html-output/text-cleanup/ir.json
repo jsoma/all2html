@@ -16,9 +16,7 @@
     "jpgQuality": 60,
     "pngNumberOfColors": 128
   },
-  "fonts": [
-    
-  ],
+  "fonts": [],
   "artboards": [
     {
       "id": "illustrator:artboard:artboard-1-1",
@@ -40,7 +38,6 @@
             "tool": "illustrator",
             "name": "shadow-text"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -92,12 +89,9 @@
             "tool": "illustrator",
             "name": "Layer 1"
           },
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
-          "elements": [
-            
-          ]
+          "elements": []
         }
       ]
     }
