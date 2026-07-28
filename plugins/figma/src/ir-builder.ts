@@ -3,6 +3,7 @@
  * This module is the boundary between Figma-specific extraction and the core pipeline.
  */
 
+import { hasOwn } from "../../../src/core/identifiers.js";
 import type {
   Artboard,
   Asset,
@@ -30,7 +31,7 @@ function mergeAssets(
       // Last-wins overwriting silently dropped an asset whenever two ids
       // collided (the failure §3.2 fixed at the producer by deriving ids from
       // owner ids). A collision reaching this point is a bug, so it throws.
-      if (Object.hasOwn(assets, asset.id)) {
+      if (hasOwn(assets, asset.id)) {
         throw new FigmaPluginError(
           `Duplicate asset id "${asset.id}". Every extracted asset needs its own id; overwriting would silently drop one asset from the export.`,
         );

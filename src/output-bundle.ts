@@ -5,6 +5,7 @@ import {
   artifactEntryPath,
   artifactRelativePath,
 } from "./core/artifact-path.js";
+import { hasOwn } from "./core/identifiers.js";
 import type { EmitFile } from "./emitters/registry.js";
 import type { ImportedAssetFile } from "./importers/types.js";
 import type { Document, SourceMetadata } from "./ir/types.js";
@@ -136,8 +137,9 @@ function reconcileAssetBytes(
   const seen = new Set<string>();
 
   for (const file of assetFiles) {
-    // NOT `Object.hasOwn` — ES2022; this module runs inside the Figma plugin VM.
-    if (!Object.hasOwn(canonical, file.assetId)) {
+    // `hasOwn`, not `Object.hasOwn` — ES2022 is absent in the Figma plugin VM,
+    // and an inline hasOwnProperty.call gets auto-"fixed" back at commit time.
+    if (!hasOwn(canonical, file.assetId)) {
       problems.push(`bytes were supplied for unknown asset "${file.assetId}"`);
       continue;
     }
