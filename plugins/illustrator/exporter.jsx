@@ -266,18 +266,22 @@ function pushUnhideRestore(item) {
   restoreActions.push(function() { item.hidden = false; });
 }
 
-// Runs every pending restore in LIFO order. Failures are reported through the
-// warning system instead of being silently swallowed — a failed restore leaves
-// the user's .ai file mutated (e.g. a permanently hidden all2html-settings block).
+// Runs every pending restore in LIFO order and returns how many failed.
+// Failures are warned rather than swallowed — a failed restore leaves the
+// user's .ai file mutated (e.g. a permanently hidden all2html-settings block) —
+// and the count is what stops executeAll2Html from marking it saved.
 function runRestoreActions() {
+  var failures = 0;
   while (restoreActions.length > 0) {
     var action = restoreActions.pop();
     try {
       action();
     } catch(e) {
-      warn("Could not restore document state after export: " + (e.message || e.toString()), "illustrator:restore-failed", "other");
+      failures++;
+      warn("Could not restore document state after export: " + (e.message || e.toString()) + " The document was left modified and is not marked saved.", "illustrator:restore-failed", "other");
     }
   }
+  return failures;
 }
 
 // ============================================================
@@ -326,7 +330,9 @@ function parseSpecialBlocks(doc) {
 
     if (blockType === "settings" || blockType === "text") {
       // Legacy keys land in their own bag and are merged underneath at return,
-      // so precedence does not depend on text-frame order.
+      // so cross-prefix precedence does not depend on text-frame order. Within a
+      // prefix it does: duplicates assign into one bag, so the last one wins.
+      // panel-settings-block.test.ts holds the panel's merge to both halves.
       var bag = prefix === LEGACY_BLOCK_PREFIX ? legacySettings : settings;
       // Parse key: value entries
       for (var j = 0; j < lines.length; j++) {
@@ -2085,9 +2091,13 @@ function executeAll2Html() {
   }
 
   // Restore state on success (LIFO: inverse order of mutation)
-  runRestoreActions();
+  var failedRestores = runRestoreActions();
   if (docToMarkSaved) {
-    try { docToMarkSaved.saved = true; } catch(e) {}
+    // Only a fully restored document is clean. A failed restore means the file
+    // really is modified: leave it dirty so Illustrator prompts on close.
+    if (failedRestores === 0) {
+      try { docToMarkSaved.saved = true; } catch(e) {}
+    }
     docToMarkSaved = null;
   }
 

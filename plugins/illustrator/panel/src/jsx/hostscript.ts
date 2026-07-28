@@ -443,13 +443,17 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.hasSettingsBlock, (): string => {
 });
 
 /**
- * Every settings block in the document, canonical spelling first.
+ * Every settings block in the document, split by spelling and kept in document
+ * order inside each group.
  *
- * The exporter merges both bags and lets `all2html-` win key-by-key, order
- * independent (`parseSpecialBlocks`). Returning the canonical block first lets
- * the caller reproduce that precedence by merging in reverse.
+ * Both halves matter, and for different reasons. Across prefixes the exporter
+ * lets `all2html-` win key-by-key over `ai2html-` (`parseSpecialBlocks` fills two
+ * bags and merges the legacy one underneath). Within one prefix the exporter
+ * assigns into a single bag while walking text frames in document order, so a
+ * *later* duplicate wins. Preserving the document order inside each group is
+ * what lets `readMergedSettingsBlocks` reproduce both rules.
  */
-function findSettingsBlocks(): TextFrame[] {
+function findSettingsBlockGroups(): { canonical: TextFrame[]; legacy: TextFrame[] } {
   var doc = app.activeDocument;
   var canonical: TextFrame[] = [];
   var legacy: TextFrame[] = [];
@@ -469,7 +473,13 @@ function findSettingsBlocks(): TextFrame[] {
       // Skip frames without text
     }
   }
-  return canonical.concat(legacy);
+  return { canonical: canonical, legacy: legacy };
+}
+
+/** Every settings block in the document, canonical spelling first. */
+function findSettingsBlocks(): TextFrame[] {
+  var groups = findSettingsBlockGroups();
+  return groups.canonical.concat(groups.legacy);
 }
 
 function trimHostString(value: string): string {
@@ -525,12 +535,24 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.readSettingsBlock, (): string => {
 });
 
 function readMergedSettingsBlocks(): { [key: string]: string } {
-  var blocks = findSettingsBlocks();
+  var groups = findSettingsBlockGroups();
   var merged: { [key: string]: string } = {};
-  // `findSettingsBlocks` returns canonical blocks first, so applying them in
-  // reverse leaves the `all2html-` value on top key-by-key while uncontested
-  // `ai2html-` keys survive — the exporter's rule, reproduced.
-  for (var i = blocks.length - 1; i >= 0; i--) {
+  // The exporter's rule, stated once and applied in the only order that
+  // produces it: within a prefix the last block in document order wins, and the
+  // canonical bag then lands on top of the legacy one key-by-key while
+  // uncontested `ai2html-` keys survive.
+  //
+  // Merging the flat canonical-first list in reverse used to reproduce only the
+  // cross-prefix half; it silently inverted the within-prefix half, so a
+  // document with two `all2html-settings` blocks exported under the last one
+  // while the panel showed values and `doc` badges from the first.
+  mergeSettingsBlocksInto(merged, groups.legacy);
+  mergeSettingsBlocksInto(merged, groups.canonical);
+  return merged;
+}
+
+function mergeSettingsBlocksInto(merged: { [key: string]: string }, blocks: TextFrame[]): void {
+  for (var i = 0; i < blocks.length; i++) {
     var parsed = parseSettingsBlock(blocks[i]);
     for (var key in parsed) {
       if (Object.prototype.hasOwnProperty.call(parsed, key)) {
@@ -538,7 +560,6 @@ function readMergedSettingsBlocks(): { [key: string]: string } {
       }
     }
   }
-  return merged;
 }
 
 // ============================================================

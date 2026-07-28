@@ -222,6 +222,68 @@ describe("the document slug is keyword-cased before it reaches a File path", () 
   });
 });
 
+/**
+ * Pins the `failedRestores === 0` guard on `docToMarkSaved.saved = true` in
+ * `executeAll2Html`. `runRestoreActions()` swallows each failure into an
+ * `illustrator:restore-failed` warning, so the save flag was being set on a
+ * document the exporter had demonstrably failed to put back — Illustrator then
+ * never prompts, and the user closes a file that is still mutated (a special
+ * block left hidden, a layer left invisible).
+ *
+ * The custom block below overlaps the artboard, so the exporter hides it and
+ * pushes an unhide restore; `failRestore` makes that restore throw.
+ */
+describe("a document the exporter could not restore is left dirty", () => {
+  const withCssBlock: Partial<FakeDocumentSpec> = {
+    textFrames: [
+      { contents: "Chart Title" },
+      { contents: "all2html-css\n.g-body { color: red; }" },
+    ],
+  };
+
+  it("marks the document saved when every restore succeeded", () => {
+    const result = run(withCssBlock);
+
+    expect(result.envelope.success, result.envelope.error).toBe(true);
+    expect(
+      result.envelope.structuredWarnings.filter((w) => w.code === "illustrator:restore-failed"),
+    ).toEqual([]);
+    expect(result.savedAssignments).toEqual([true]);
+    expect(result.documentSaved).toBe(true);
+  });
+
+  it("does not mark the document saved when a restore failed", () => {
+    const result = run({
+      textFrames: [
+        { contents: "Chart Title" },
+        { contents: "all2html-css\n.g-body { color: red; }", failRestore: true },
+      ],
+    });
+
+    // The export itself still succeeds — the files are written; it is the
+    // document state that could not be put back.
+    expect(result.envelope.success, result.envelope.error).toBe(true);
+    expect(result.savedAssignments).toEqual([]);
+
+    // ...and the user is told why, through the summary the panel renders.
+    const restoreWarnings = result.envelope.structuredWarnings.filter(
+      (warning) => warning.code === "illustrator:restore-failed",
+    );
+    expect(restoreWarnings).toHaveLength(1);
+    expect(restoreWarnings[0].message).toContain("not marked saved");
+    expect(result.envelope.warnings[restoreWarnings[0].category]).toContain(
+      restoreWarnings[0].message,
+    );
+  });
+
+  it("still leaves an already-dirty document dirty", () => {
+    const result = run({ ...withCssBlock, saved: false });
+
+    expect(result.savedAssignments).toEqual([]);
+    expect(result.documentSaved).toBe(false);
+  });
+});
+
 /** Settings precedence, executed rather than described: config < panel < text block. */
 describe("settings precedence through the real run", () => {
   it("lets the text block win over the panel, and the panel over the config file", () => {

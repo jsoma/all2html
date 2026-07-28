@@ -57,6 +57,13 @@ export interface FakeTextFrameSpec {
   bounds?: AiRect;
   kind?: "point" | "area";
   hidden?: boolean;
+  /**
+   * Make restoring this frame's visibility throw, the way Illustrator does when
+   * the frame ends up on a locked/deleted parent. The exporter hides special
+   * blocks that overlap an artboard and pushes an unhide restore; with this set,
+   * that restore fails and the document is genuinely left mutated.
+   */
+  failRestore?: boolean;
 }
 
 export interface FakeDocumentSpec {
@@ -100,6 +107,14 @@ export interface ExporterRunResult {
   exports: RecordedExport[];
   /** Every folder `ensureFolder()` created. */
   folders: string[];
+  /**
+   * Every value assigned to `document.saved`, in order. Empty means the exporter
+   * never touched the flag — which is the only honest outcome when a restore
+   * failed, since the file on screen no longer matches the file on disk.
+   */
+  savedAssignments: boolean[];
+  /** `document.saved` as the run left it. */
+  documentSaved: boolean;
   /** Parsed `ir.json`, when one was written. */
   irDocument: Record<string, unknown> | undefined;
 }
@@ -287,16 +302,29 @@ export function runIllustratorExporter(spec: FakeDocumentSpec = {}): ExporterRun
       characters: collection(makeCharacters(contents)),
       paragraphs: collection(makeParagraphs(contents)),
     };
+    if (frame.failRestore) {
+      let hidden = frame.hidden ?? false;
+      Object.defineProperty(tf, "hidden", {
+        get: () => hidden,
+        set: (value: boolean) => {
+          if (value === false) throw new Error("The object is locked and cannot be modified");
+          hidden = value;
+        },
+        enumerable: true,
+      });
+    }
     layer.textFrames.push(tf);
     return tf;
   });
+
+  const savedAssignments: boolean[] = [];
+  let documentSaved = spec.saved ?? true;
 
   const doc: AiObject = {
     typename: "Document",
     name: docName,
     path: docPath,
     fullName: `${docPath}/${docName}`,
-    saved: spec.saved ?? true,
     documentColorSpace: "DocumentColorSpace.RGB",
     activeLayer: { name: layers[0]?.name ?? "Layer 1" },
     layers: collection(layers),
@@ -313,6 +341,14 @@ export function runIllustratorExporter(spec: FakeDocumentSpec = {}): ExporterRun
       if (String(type) === "ExportType.SVG") files.set(file.path, "<svg><g/></svg>");
     },
   };
+  Object.defineProperty(doc, "saved", {
+    get: () => documentSaved,
+    set: (value: boolean) => {
+      savedAssignments.push(value);
+      documentSaved = value;
+    },
+    enumerable: true,
+  });
   Object.assign(docStub, { typename: "Document" });
 
   // ---- Illustrator globals --------------------------------------------------
@@ -402,6 +438,8 @@ export function runIllustratorExporter(spec: FakeDocumentSpec = {}): ExporterRun
     writes,
     exports,
     folders,
+    savedAssignments,
+    documentSaved,
     irDocument: irRaw ? (JSON.parse(irRaw) as Record<string, unknown>) : undefined,
   };
 }
