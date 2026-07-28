@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.40">
+      <meta name="generator" content="zensical-0.0.51">
     
     
       
@@ -34,7 +34,7 @@
       
         
       
-      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.fba56155.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.62c9b9cc.min.css">
       
       
 
@@ -211,6 +211,19 @@
   
   
     
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
     
       <li class="md-tabs__item">
         <a href="../../options/illustrator/" class="md-tabs__link">
@@ -229,6 +242,35 @@
   
   
   
+    
+      
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
     
     
       <li class="md-tabs__item">
@@ -251,6 +293,23 @@
   
   
     
+      
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
     
       <li class="md-tabs__item md-tabs__item--active">
         <a href="../" class="md-tabs__link">
@@ -269,6 +328,19 @@
   
   
   
+    
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
     
     
       <li class="md-tabs__item">
@@ -1211,6 +1283,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-spelling-is-not-shared" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The Spelling Is Not Shared
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-happens-to-them" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1302,6 +1385,8 @@
       
         
       
+        
+      
     
     
     
@@ -1360,6 +1445,33 @@
     
   
   Settings Reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/support-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Support Matrix
 
     
   </span>
@@ -1537,6 +1649,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-spelling-is-not-shared" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The Spelling Is Not Shared
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-happens-to-them" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1624,6 +1747,7 @@
     <li class="md-path__item">
       <a href="../.." class="md-path__link">
         
+  
   <span class="md-ellipsis">
     Home
   </span>
@@ -1639,9 +1763,27 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
       <li class="md-path__item">
         <a href="../" class="md-path__link">
           
+  
   <span class="md-ellipsis">
     How It Works
   </span>
@@ -1666,16 +1808,46 @@
 <h1 id="special-layers">Special Layers<a class="headerlink" href="#special-layers" title="Permanent link">&para;</a></h1>
 <p>Special layers are how all2html exports more than “background image plus text.”</p>
 <h2 id="common-layer-types">Common Layer Types<a class="headerlink" href="#common-layer-types" title="Permanent link">&para;</a></h2>
-<p>The current naming contract across the richer surfaces includes:</p>
+<p>The tag names are shared across the richer surfaces:</p>
 <ul>
 <li><code>:png</code></li>
 <li><code>:svg</code></li>
-<li><code>:svg:inline</code></li>
+<li>inline SVG (spelled differently per surface — see below)</li>
 <li><code>:video</code></li>
 <li><code>:html-before</code></li>
 <li><code>:html-after</code></li>
 </ul>
-<p>Illustrator currently has the deepest support, but the naming model is shared where it makes sense.</p>
+<p>Illustrator also supports <code>:symbol</code> and <code>:div</code>. Figma does not: it recognizes the spelling only to warn you that the tag did nothing, and the layer exports as ordinary artwork.</p>
+<h2 id="the-spelling-is-not-shared">The Spelling Is Not Shared<a class="headerlink" href="#the-spelling-is-not-shared" title="Permanent link">&para;</a></h2>
+<p>The tag <em>names</em> are shared; the <em>syntax</em> is not. Each surface has its own parser, and a tag that does not match is not an error — the layer just exports as ordinary artwork.</p>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Inline SVG</th>
+<th>How names are matched</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Illustrator</td>
+<td><code>:svg,inline</code> or <code>:inline</code></td>
+<td>Splits on the first <code>:</code>, lowercases the rest, exact match, no trimming.</td>
+</tr>
+<tr>
+<td>Figma</td>
+<td><code>:svg:inline</code> only</td>
+<td>Case-insensitive prefix <strong>or</strong> suffix match, first match wins, direct children of the selected frame only.</td>
+</tr>
+<tr>
+<td>SVG import</td>
+<td>not available</td>
+<td>No layer tags at all. Grouping and rendering come from the filename stem (<code>story--dynamic.svg</code>, <code>story--image.svg</code>, <code>story--640.svg</code>).</td>
+</tr>
+</tbody>
+</table>
+<p>If you copy a tag from an Illustrator document into Figma, or the other way round, check that row first. See the <a href="../../reference/support-matrix/">Support Matrix</a> for the full comparison.</p>
+<p>The document-level <code>inlineSvg</code> setting is not read on any surface — only the per-layer tag is.</p>
 <h2 id="what-happens-to-them">What Happens To Them<a class="headerlink" href="#what-happens-to-them" title="Permanent link">&para;</a></h2>
 <h3 id="raster-background">Raster Background<a class="headerlink" href="#raster-background" title="Permanent link">&para;</a></h3>
 <p>Anything that should remain part of the flattened visual treatment ends up in the background image output.</p>
@@ -1754,10 +1926,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["navigation.tabs","navigation.sections","navigation.indexes","navigation.top","navigation.path","toc.follow"],"search":"../../assets/javascripts/workers/search.e2d2d235.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["navigation.tabs","navigation.sections","navigation.indexes","navigation.top","navigation.path","toc.follow"],"search":"../../assets/javascripts/workers/search.b6b7e04f.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.dbc0afdc.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7f30b55.min.js"></script>
       
     
   </body>

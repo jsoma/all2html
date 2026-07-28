@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.40">
+      <meta name="generator" content="zensical-0.0.51">
     
     
       
@@ -34,7 +34,7 @@
       
         
       
-      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.fba56155.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.62c9b9cc.min.css">
       
       
 
@@ -213,6 +213,19 @@
   
   
     
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
     
       <li class="md-tabs__item md-tabs__item--active">
         <a href="../illustrator/" class="md-tabs__link">
@@ -231,6 +244,35 @@
   
   
   
+    
+      
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
     
     
       <li class="md-tabs__item">
@@ -251,6 +293,23 @@
   
   
     
+      
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
     
       <li class="md-tabs__item">
         <a href="../../how-it-works/" class="md-tabs__link">
@@ -269,6 +328,19 @@
   
   
   
+    
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
     
     
       <li class="md-tabs__item">
@@ -1307,6 +1379,8 @@
       
         
       
+        
+      
     
     
     
@@ -1365,6 +1439,33 @@
     
   
   Settings Reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/support-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Support Matrix
 
     
   </span>
@@ -1634,6 +1735,7 @@
     <li class="md-path__item">
       <a href="../.." class="md-path__link">
         
+  
   <span class="md-ellipsis">
     Home
   </span>
@@ -1649,9 +1751,23 @@
   
     
     
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
       <li class="md-path__item">
         <a href="../illustrator/" class="md-path__link">
           
+  
   <span class="md-ellipsis">
     Options
   </span>
@@ -1674,7 +1790,8 @@
 
 
 <h1 id="figma">Figma<a class="headerlink" href="#figma" title="Permanent link">&para;</a></h1>
-<p>The Figma plugin works well now and fits the same pipeline as the other surfaces.</p>
+<p><strong>The Figma plugin is beta.</strong> It runs, it fits the same pipeline as the other surfaces, and it exports real newsroom files — but it is not a supported exporter yet. Expect to check the output, and check the <a href="../../reference/settings/">Settings Reference</a> before relying on a setting: several settings that the Illustrator path honors do nothing here.</p>
+<p>Beta means, concretely: no repeated live-export sign-off yet, and the raster export is fixed at transparent full-color PNG at 1x regardless of what you set.</p>
 <h2 id="download">Download<a class="headerlink" href="#download" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="https://github.com/jsoma/all2html/releases/latest/download/all2html-figma-plugin.zip">Figma plugin <code>.zip</code></a></li>
@@ -1695,7 +1812,7 @@
 <li><code>story:640</code></li>
 <li><code>story:960</code></li>
 <li><code>story:dynamic</code></li>
-<li><code>story:image</code></li>
+<li><code>story:image-only</code></li>
 <li>Run the imported all2html plugin.</li>
 <li>Choose a preset and output format.</li>
 <li>Export the ZIP bundle.</li>
@@ -1724,7 +1841,7 @@
 <h2 id="config-and-special-layers">Config And Special Layers<a class="headerlink" href="#config-and-special-layers" title="Permanent link">&para;</a></h2>
 <p>The plugin keeps shared config in <code>figma.root</code> plugin data and local convenience state in <code>figma.clientStorage</code>.</p>
 <p>The settings UI includes <code>Google Fonts</code> with <code>Off</code>, <code>CSS @import</code>, and <code>Link tag</code> modes. Figma text fonts are inferred into canonical font mappings automatically, and explicit config mappings still override the inferred mapping for the same <code>sourceFont</code>.</p>
-<p>Top-level tagged child nodes inside a selected frame can define special layers with the Illustrator-aligned naming contract:</p>
+<p>Top-level tagged child nodes inside a selected frame can define special layers:</p>
 <ul>
 <li><code>:png</code></li>
 <li><code>:svg</code></li>
@@ -1733,6 +1850,15 @@
 <li><code>:html-before</code></li>
 <li><code>:html-after</code></li>
 </ul>
+<p>Figma's tag syntax is <strong>not</strong> the same as Illustrator's, even though the tag names look alike:</p>
+<ul>
+<li>Inline SVG is written <code>:svg:inline</code> here. Illustrator's <code>:svg,inline</code> and <code>:inline</code> do not match in Figma.</li>
+<li>Matching is case-insensitive and works as a prefix <strong>or</strong> a suffix of the node name.</li>
+<li>Only direct children of the selected frame are scanned.</li>
+<li><code>:symbol</code> and <code>:div</code> are <strong>not supported on Figma</strong>. The plugin recognizes the spelling only so it can tell you: the layer exports as ordinary artwork and the export warns, rather than the tag being silently accepted or silently ignored.</li>
+</ul>
+<p>Frame names take a separate set of tokens: <code>:dynamic</code>, <code>:fixed</code>, <code>:image-only</code>, or a bare integer width override. <code>:image</code> is accepted as an older spelling of <code>:image-only</code> so existing files keep working; new files should use <code>:image-only</code>.</p>
+<p>See the <a href="../../reference/support-matrix/">Support Matrix</a> for the full per-surface tag comparison.</p>
 <h2 id="what-figma-is-good-for-right-now">What Figma Is Good For Right Now<a class="headerlink" href="#what-figma-is-good-for-right-now" title="Permanent link">&para;</a></h2>
 <ul>
 <li>newsroom story frames</li>
@@ -1741,10 +1867,6 @@
 <li>special hooks and visual overlays</li>
 </ul>
 <p>It is less about full-file auto-discovery and more about clean, selected export roots.</p>
-<blockquote>
-<p>Screenshot placeholder
-Crop the Figma plugin UI showing the selection summary, preset selector, and export format controls.</p>
-</blockquote>
 
 
 
@@ -1809,10 +1931,10 @@ Crop the Figma plugin UI showing the selection summary, preset selector, and exp
     
       
       
-      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["navigation.tabs","navigation.sections","navigation.indexes","navigation.top","navigation.path","toc.follow"],"search":"../../assets/javascripts/workers/search.e2d2d235.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["navigation.tabs","navigation.sections","navigation.indexes","navigation.top","navigation.path","toc.follow"],"search":"../../assets/javascripts/workers/search.b6b7e04f.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.dbc0afdc.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7f30b55.min.js"></script>
       
     
   </body>

@@ -4,7 +4,6 @@
     "imageFormat": [
       "auto"
     ],
-    "writeImageFiles": true,
     "pngTransparent": false,
     "pngNumberOfColors": 128,
     "jpgQuality": 85,
@@ -28,8 +27,6 @@
     "includeResizerWidths": true,
     "responsiveImageMode": "img-src",
     "useLazyLoader": true,
-    "inlineSvg": false,
-    "svgIdPrefix": "",
     "svgEmbedImages": false,
     "clickableLink": "",
     "createPromoImage": false,
@@ -59,7 +56,6 @@
         {
           "name": "content",
           "type": "default",
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -79,7 +75,6 @@
                 {
                   "text": "Embedded image",
                   "alignment": "left",
-                  "direction": "ltr",
                   "leading": 31.2,
                   "spaceBefore": 0,
                   "spaceAfter": 0,
@@ -118,7 +113,6 @@
                 {
                   "text": "Photo card",
                   "alignment": "left",
-                  "direction": "ltr",
                   "leading": 69.6,
                   "spaceBefore": 0,
                   "spaceAfter": 0,
@@ -157,7 +151,6 @@
                 {
                   "text": "Auto format should choose JPG because raster content is present.",
                   "alignment": "left",
-                  "direction": "ltr",
                   "leading": 26.4,
                   "spaceBefore": 0,
                   "spaceAfter": 0,

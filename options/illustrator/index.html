@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.40">
+      <meta name="generator" content="zensical-0.0.51">
     
     
       
@@ -34,7 +34,7 @@
       
         
       
-      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.fba56155.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.62c9b9cc.min.css">
       
       
 
@@ -213,6 +213,19 @@
   
   
     
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
     
       <li class="md-tabs__item md-tabs__item--active">
         <a href="././" class="md-tabs__link">
@@ -231,6 +244,35 @@
   
   
   
+    
+      
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
     
     
       <li class="md-tabs__item">
@@ -251,6 +293,23 @@
   
   
     
+      
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
     
       <li class="md-tabs__item">
         <a href="../../how-it-works/" class="md-tabs__link">
@@ -269,6 +328,19 @@
   
   
   
+    
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
     
     
       <li class="md-tabs__item">
@@ -634,6 +706,17 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         Important Settings
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#text-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Text Blocks
       </span>
     </span>
   </a>
@@ -1335,6 +1418,8 @@
       
         
       
+        
+      
     
     
     
@@ -1393,6 +1478,33 @@
     
   
   Settings Reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/support-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Support Matrix
 
     
   </span>
@@ -1631,6 +1743,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#text-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Text Blocks
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#special-layers" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1690,6 +1813,7 @@
     <li class="md-path__item">
       <a href="../.." class="md-path__link">
         
+  
   <span class="md-ellipsis">
     Home
   </span>
@@ -1705,9 +1829,23 @@
   
     
     
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
       <li class="md-path__item">
         <a href="././" class="md-path__link">
           
+  
   <span class="md-ellipsis">
     Options
   </span>
@@ -1758,7 +1896,7 @@
 <li>Create one or more artboards.</li>
 <li>Add text, overlays, and special layers.</li>
 <li>Run the script or export from the panel.</li>
-<li>Rejoice in the the generated HTML/images.</li>
+<li>Rejoice in the generated HTML/images.</li>
 </ol>
 <p>Output is written next to the document by default in <code>all2html-output/</code>.</p>
 <h2 id="important-settings">Important Settings<a class="headerlink" href="#important-settings" title="Permanent link">&para;</a></h2>
@@ -1776,24 +1914,38 @@
 </ul>
 <p>You can set them in:</p>
 <ul>
-<li>an <code>ai2html-settings</code> text block in the document</li>
+<li>an <code>all2html-settings</code> text block in the document</li>
 <li><code>all2html.config.json</code> next to the document</li>
 <li>the CEP panel</li>
 </ul>
 <p>The panel also shows where values are coming from and lets you save defaults.</p>
+<p>Names in an <code>all2html-settings</code> text block are snake_case (<code>image_format</code>); everywhere else — <code>all2html.config.json</code>, <code>ir.json</code>, the panel — they are camelCase (<code>imageFormat</code>). Both resolve to the same setting.</p>
+<p>One of these does less than it looks like it does on Illustrator: <code>image_format</code> only distinguishes <code>jpg</code> from everything else, so <code>png24</code> and <code>svg</code> both come out as 8-bit PNG. The export warns when you ask for something Illustrator will not produce. (<code>output: multiple-files</code> now works — the exporter writes one HTML file per responsive group.) The full list is in the <a href="../../reference/settings/">Settings Reference</a>.</p>
+<h2 id="text-blocks">Text Blocks<a class="headerlink" href="#text-blocks" title="Permanent link">&para;</a></h2>
+<p>Settings and custom code travel in the document as text blocks whose <strong>first line</strong> is the block name:</p>
+<ul>
+<li><code>all2html-settings</code> — snake_case <code>key: value</code> settings</li>
+<li><code>all2html-text</code> — <code>key: value</code> text fields (headline, credit, and so on)</li>
+<li><code>all2html-css</code>, <code>all2html-js</code>, <code>all2html-html</code></li>
+<li><code>all2html-html-before</code>, <code>all2html-html-after</code></li>
+</ul>
+<p>Every one of these also accepts the legacy <code>ai2html-</code> spelling, so documents authored against ai2html keep working unchanged. If a document somehow contains both an <code>all2html-settings</code> and an <code>ai2html-settings</code> block, the <code>all2html-</code> values win key by key; keys that appear only in the <code>ai2html-</code> block are still used. The order of the blocks in the document does not matter.</p>
 <h2 id="special-layers">Special Layers<a class="headerlink" href="#special-layers" title="Permanent link">&para;</a></h2>
 <p>Illustrator supports the richest set of special layers today. The main ones are:</p>
 <ul>
 <li><code>:png</code></li>
 <li><code>:svg</code></li>
-<li><code>:svg:inline</code></li>
+<li><code>:svg,inline</code> (or the shorthand <code>:inline</code>)</li>
 <li><code>:video</code></li>
 <li><code>:html-before</code></li>
 <li><code>:html-after</code></li>
 <li><code>:symbol</code></li>
 <li><code>:div</code></li>
 </ul>
-<p>These either stay as overlays/hooks or influence how the final background and HTML are built. They are explained in more detail in <a href="../../how-it-works/special-layers/">Special Layers</a>.</p>
+<p>Inline SVG is spelled <strong><code>:svg,inline</code></strong> — with a comma. <code>:svg:inline</code> is the <em>Figma</em> spelling and matches nothing in Illustrator: the layer will silently export as ordinary artwork instead.</p>
+<p>Illustrator splits the layer name on the first <code>:</code>, lowercases the rest, and matches it exactly, so <code>My chart:PNG</code> works but <code>:png</code> with a trailing space does not.</p>
+<p>The document-level <code>inlineSvg</code> setting is not read by any surface. Tag the individual layer instead.</p>
+<p>These either stay as overlays/hooks or influence how the final background and HTML are built. They are explained in more detail in <a href="../../how-it-works/special-layers/">Special Layers</a>, and compared across surfaces in the <a href="../../reference/support-matrix/">Support Matrix</a>.</p>
 <h2 id="fonts">Fonts<a class="headerlink" href="#fonts" title="Permanent link">&para;</a></h2>
 <p>Font mapping is done through <code>all2html.config.json</code> or the panel UI. The common case is mapping an Illustrator font name to a web family and weight:</p>
 <div class="language-json highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
@@ -1815,10 +1967,6 @@
 <li>special-layer overlays and hooks</li>
 <li>deterministic background image generation</li>
 </ul>
-<blockquote>
-<p>Screenshot placeholder
-Crop the main panel settings area plus one visible badge or font-mapping row.</p>
-</blockquote>
 
 
 
@@ -1883,10 +2031,10 @@ Crop the main panel settings area plus one visible badge or font-mapping row.</p
     
       
       
-      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["navigation.tabs","navigation.sections","navigation.indexes","navigation.top","navigation.path","toc.follow"],"search":"../../assets/javascripts/workers/search.e2d2d235.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["navigation.tabs","navigation.sections","navigation.indexes","navigation.top","navigation.path","toc.follow"],"search":"../../assets/javascripts/workers/search.b6b7e04f.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.dbc0afdc.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7f30b55.min.js"></script>
       
     
   </body>
