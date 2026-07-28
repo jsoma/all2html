@@ -123,3 +123,18 @@ export interface HostCommandResultMap {
 
 export type HostCommandArgs<K extends HostCommandName> = HostCommandArgsMap[K];
 export type HostCommandResult<K extends HostCommandName> = HostCommandResultMap[K];
+
+/**
+ * ExtendScript error → its message text. `String(anErrorObject)` spells
+ * "Error: <message>", and every consumer that displays a host error adds its
+ * own context prefix — so raw String(e) is how the panel ended up showing
+ * "Could not load…: Error: Error: No composition is active". ES3-safe: the
+ * hostscript bundle calls this too.
+ */
+export function hostErrorMessage(e: unknown): string {
+  const withMessage = e as { message?: unknown };
+  if (withMessage && typeof withMessage.message === "string" && withMessage.message) {
+    return withMessage.message;
+  }
+  return String(e);
+}

@@ -139,9 +139,11 @@ describe("shared host export runner", () => {
       settingsPathGlobalKey: "__ALL2HTML_PANEL_SETTINGS_PATH__",
     });
 
+    // hostErrorMessage strips String(Error)'s own "Error: " spelling, so the
+    // context prefix is the only prefix — no more "…: Error: Error: …" chains.
     expect(JSON.parse(raw)).toEqual({
       success: false,
-      error: "Export failed: Error: boom",
+      error: "Export failed: boom",
     });
     expect(env.files.get("/tmp/all2html-panel-settings.json")?.remove).toHaveBeenCalled();
     expect(env.globalState.__ALL2HTML_PANEL_SETTINGS_PATH__).toBeUndefined();

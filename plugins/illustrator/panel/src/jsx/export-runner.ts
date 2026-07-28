@@ -1,3 +1,5 @@
+import { hostErrorMessage } from "../shared/host-contract.js";
+
 type ScriptFileLike = {
   exists: boolean;
   fsName?: string;
@@ -146,13 +148,13 @@ function runPanelExport(env: ExportRunnerEnv, options: ExportRunnerOptions): str
 
     return attachResultDiagnostics(String(result), "Export failed");
   } catch (e) {
-    log("error", "Panel export execution failed", String(e));
+    log("error", "Panel export execution failed", hostErrorMessage(e));
     return attachResultDiagnostics(
       JSON.stringify({
         success: false,
-        error: options.failurePrefix + String(e),
+        error: options.failurePrefix + hostErrorMessage(e),
       }),
-      options.failurePrefix + String(e),
+      options.failurePrefix + hostErrorMessage(e),
     );
   } finally {
     try {

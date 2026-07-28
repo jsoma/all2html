@@ -127,6 +127,10 @@ export interface ExporterRunResult {
   savedAssignments: boolean[];
   /** `document.saved` as the run left it. */
   documentSaved: boolean;
+  /** Every `document.saveAs()` target path, in order. */
+  saveAsCalls: string[];
+  /** `document.name` as the run left it (SVG export renames; see exportFile). */
+  documentName: string;
   /** Parsed `ir.json`, when one was written. */
   irDocument: Record<string, unknown> | undefined;
   /** Absolute path `ir.json` was written to, when one was written. */
@@ -343,6 +347,7 @@ export function runIllustratorExporter(spec: FakeDocumentSpec = {}): ExporterRun
   });
 
   const savedAssignments: boolean[] = [];
+  const saveAsCalls: string[] = [];
   let documentSaved = spec.saved ?? true;
 
   const doc: AiObject = {
@@ -370,7 +375,21 @@ export function runIllustratorExporter(spec: FakeDocumentSpec = {}): ExporterRun
       });
       // Illustrator appends the extension; the SVG path is the only one the
       // exporter reads back, and only when the layer is tagged inline.
-      if (String(type) === "ExportType.SVG") files.set(file.path, "<svg><g/></svg>");
+      if (String(type) === "ExportType.SVG") {
+        files.set(file.path, "<svg><g/></svg>");
+        // Real Illustrator renames the document after an SVG export: name and
+        // fullName re-point at the exported file. The exporter's identity
+        // restore exists because of this; the fake must reproduce it.
+        doc.name = file.path.split("/").pop() ?? file.path;
+        doc.fullName = file.path;
+      }
+    },
+    saveAs(file: FakeFile | string): void {
+      const path = typeof file === "string" ? file : file.path;
+      saveAsCalls.push(path);
+      doc.fullName = path;
+      doc.name = path.split("/").pop() ?? path;
+      documentSaved = true;
     },
   };
   Object.defineProperty(doc, "saved", {
@@ -502,6 +521,8 @@ export function runIllustratorExporter(spec: FakeDocumentSpec = {}): ExporterRun
     folders,
     savedAssignments,
     documentSaved,
+    saveAsCalls,
+    documentName: String(doc.name),
     irDocument,
     irPath,
   };
