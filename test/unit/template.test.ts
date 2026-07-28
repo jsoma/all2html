@@ -1,6 +1,30 @@
 import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
-import { applyTemplate, rawTemplateValue } from "../../src/core/template.js";
+import { opaqueKey } from "../../src/core/identifiers.js";
+import {
+  applyTemplate as applyTemplateRaw,
+  rawTemplateValue,
+  type TemplateResult,
+  type TemplateValue,
+} from "../../src/core/template.js";
+import type { WarningContext } from "../../src/core/warnings.js";
+
+/**
+ * `applyTemplate`'s replacement keys are built with `opaqueKey()` (the caller
+ * prefixes on write; see `src/emitters/standalone.ts`). The suite writes plain
+ * variable names, so this wrapper applies the contract once.
+ */
+function applyTemplate(
+  template: string,
+  vars: Record<string, TemplateValue>,
+  context?: WarningContext,
+): TemplateResult {
+  const replacements: Record<string, TemplateValue> = {};
+  for (const [key, value] of Object.entries(vars)) {
+    replacements[opaqueKey(key)] = value;
+  }
+  return applyTemplateRaw(template, replacements, context);
+}
 
 /** The suite reads `output` constantly; keep the call sites short. */
 function render(template: string, vars: Record<string, string> = {}): string {
@@ -53,6 +77,27 @@ describe("applyTemplate", () => {
 
   it("leaves a value with nothing to escape byte-identical", () => {
     expect(render("{{projectName}}", vars)).toBe("test-project");
+  });
+
+  it("treats {{toString}} as an unknown variable, not a prototype hit", () => {
+    // Raw-keyed `in` used to resolve this to Object.prototype.toString, which
+    // was then silently erased downstream. Unknown variables stay verbatim.
+    const { output, warnings } = applyTemplate("{{toString}}", vars);
+    expect(output).toBe("{{toString}}");
+    expect(warnings).toEqual([]);
+    expect(render("{{constructor}}", vars)).toBe("{{constructor}}");
+    expect(render("{{hasOwnProperty}}", vars)).toBe("{{hasOwnProperty}}");
+  });
+
+  it("substitutes a variable actually named toString or __proto__", () => {
+    // JSON.parse creates `__proto__` as an ordinary own key (an object literal
+    // would not); the opaque-key write is what lets it survive as a variable.
+    const hostile = JSON.parse('{"__proto__": "proto value", "toString": "ts value"}') as Record<
+      string,
+      string
+    >;
+    expect(render("{{__proto__}}", hostile)).toBe("proto value");
+    expect(render("{{toString}}", hostile)).toBe("ts value");
   });
 });
 

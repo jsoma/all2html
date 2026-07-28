@@ -139,6 +139,9 @@ describe("Figma extracted-frame fixtures", () => {
     expect(result.files[0].output).toContain("all2html-output/photo.png");
     expect(result.files[0].output).not.toContain('class="g-content');
     expect(result.files[0].output).not.toContain("<p>");
+    // The fixture records its caption with renderAs:"image" (it lives in the
+    // raster), so the text must not also appear as live HTML.
+    expect(result.files[0].output).not.toContain("Caption baked into the raster");
   });
 
   it("renders nested-frame extracted payloads without invalid positions", () => {

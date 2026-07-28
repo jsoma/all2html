@@ -59,6 +59,11 @@ export interface FakeTextFrameSpec {
   kind?: "point" | "area";
   hidden?: boolean;
   /**
+   * Rotation in degrees, expressed the way the exporter reads it: through the
+   * frame's `matrix` (`Math.atan2(mValueB, mValueA)`). Only set when nonzero.
+   */
+  rotation?: number;
+  /**
    * Make restoring this frame's visibility throw, the way Illustrator does when
    * the frame ends up on a locked/deleted parent. The exporter hides special
    * blocks that overlap an artboard and pushes an unhide restore; with this set,
@@ -88,6 +93,12 @@ export interface RecordedExport {
   path: string;
   type: string;
   options: Record<string, unknown>;
+  /**
+   * `contents` of every text frame whose `hidden` flag was true at the moment
+   * `doc.exportFile()` ran. This is the only observable proof that a frame the
+   * exporter renders as an image was actually left visible for the raster.
+   */
+  hiddenTextContents: string[];
 }
 
 export interface ExporterRunResult {
@@ -305,6 +316,17 @@ export function runIllustratorExporter(spec: FakeDocumentSpec = {}): ExporterRun
       characters: collection(makeCharacters(contents)),
       paragraphs: collection(makeParagraphs(contents)),
     };
+    if (frame.rotation) {
+      const radians = (frame.rotation * Math.PI) / 180;
+      tf.matrix = {
+        mValueA: Math.cos(radians),
+        mValueB: Math.sin(radians),
+        mValueC: -Math.sin(radians),
+        mValueD: Math.cos(radians),
+        mValueTX: 0,
+        mValueTY: 0,
+      };
+    }
     if (frame.failRestore) {
       let hidden = frame.hidden ?? false;
       Object.defineProperty(tf, "hidden", {
@@ -338,7 +360,14 @@ export function runIllustratorExporter(spec: FakeDocumentSpec = {}): ExporterRun
       setActiveArtboardIndex(): void {},
     }),
     exportFile(file: FakeFile, type: string, options: Record<string, unknown>): void {
-      exports.push({ path: file.path, type: String(type), options: { ...options } });
+      exports.push({
+        path: file.path,
+        type: String(type),
+        options: { ...options },
+        hiddenTextContents: textFrames
+          .filter((frame) => frame.hidden === true)
+          .map((frame) => String(frame.contents)),
+      });
       // Illustrator appends the extension; the SVG path is the only one the
       // exporter reads back, and only when the layer is tagged inline.
       if (String(type) === "ExportType.SVG") files.set(file.path, "<svg><g/></svg>");

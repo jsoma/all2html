@@ -16,6 +16,7 @@
 import { createWarning, type StructuredWarning, warningMessages } from "../core/warnings.js";
 import type { CustomBlock, EmitterReadyDocument } from "../ir/types.js";
 import type { EmitGroupOptions } from "./html-tree.js";
+import { assetBaseJoinRuntimeExpression } from "./shared/assets.js";
 import {
   ASSETS_TOKEN,
   buildComponentTree,
@@ -278,7 +279,7 @@ ${propDocs.length > 0 ? `${propDocs.join("\n")}\n` : ""}
   const ASSET_TOKEN = "${ASSETS_TOKEN}";
 
   function resolveHtml(html) {
-    const safePath = assetsPath.replace(/\\/+$/, "");
+    const safePath = ${assetBaseJoinRuntimeExpression("assetsPath")};
     return html.split(ASSET_TOKEN).join(safePath);
   }
 ${lazyVideoScript}</script>

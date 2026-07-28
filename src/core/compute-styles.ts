@@ -1,7 +1,6 @@
 import type {
   BreakpointedDocument,
   CharacterRun,
-  Color,
   ComputedTextStyle,
   Paragraph,
   StyledArtboard,
@@ -11,6 +10,7 @@ import type {
   StyledTextElement,
   TextElement,
 } from "../ir/types.js";
+import { formatCssColorSnapNearBlack } from "./css-color.js";
 import { createFontMap, type FontLookupResult } from "./font-map.js";
 import {
   createWarning,
@@ -19,23 +19,11 @@ import {
   type WarningContext,
 } from "./warnings.js";
 
-const RGB_BLACK_THRESHOLD = 36;
 const CSS_PRECISION = 4;
 
 function round(n: number, decimals: number = CSS_PRECISION): number {
   const factor = 10 ** decimals;
   return Math.round(n * factor) / factor;
-}
-
-function formatColor(color: Color): string {
-  let { r, g, b } = color;
-  if (r < RGB_BLACK_THRESHOLD && g < RGB_BLACK_THRESHOLD && b < RGB_BLACK_THRESHOLD) {
-    r = g = b = 0;
-  }
-  if (color.opacity !== undefined && color.opacity < 100) {
-    return `rgba(${r},${g},${b},${round(color.opacity / 100, 2)})`;
-  }
-  return `rgb(${r},${g},${b})`;
 }
 
 // A CSS <family-name> is either a quoted string or a whitespace-separated run of
@@ -225,7 +213,9 @@ function computeRunStyle(
     fontSize: `${fontSize}px`,
     fontWeight,
     fontStyle,
-    color: formatColor(run.color),
+    // The near-black snap is text-run parity behavior only — fills, strokes and
+    // area styling use the plain formatter (`src/core/css-color.ts`).
+    color: formatCssColorSnapNearBlack(run.color),
     lineHeight: `${paragraph.leading}px`,
   };
 

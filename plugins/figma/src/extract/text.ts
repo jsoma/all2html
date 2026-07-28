@@ -130,7 +130,9 @@ export function segmentToRun(segment: FigmaTextSegment): ExtractedTextRun {
     letterSpacing,
     capitalization,
     baselineShift: "normal",
-    hyperlink,
+    // Omitted, not set to undefined: the document model must survive a JSON
+    // round-trip, and assertJsonPure rejects explicit-undefined keys.
+    ...(hyperlink ? { hyperlink } : {}),
   };
 }
 
@@ -161,7 +163,8 @@ export function segmentsToParagraph(
   return {
     text: runs.map((run) => run.text).join(""),
     alignment: options.alignment ?? "left",
-    direction: options.direction,
+    // Omitted when absent — see segmentToRun's hyperlink note.
+    ...(options.direction ? { direction: options.direction } : {}),
     leading: resolveLeading(segments[0]),
     spaceBefore: options.spaceBefore ?? 0,
     spaceAfter: options.spaceAfter ?? 0,
@@ -191,7 +194,7 @@ export function segmentsToParagraphs(
       paragraphs.push({
         text: "",
         alignment: options.alignment ?? "left",
-        direction: options.direction,
+        ...(options.direction ? { direction: options.direction } : {}),
         leading,
         spaceBefore: options.spaceBefore ?? 0,
         spaceAfter: options.spaceAfter ?? 0,

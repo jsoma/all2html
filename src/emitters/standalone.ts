@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { opaqueKey } from "../core/identifiers.js";
 import { applyTemplate, rawTemplateValue, type TemplateValue } from "../core/template.js";
 import { createWarning, type StructuredWarning, warningMessages } from "../core/warnings.js";
 import type { EmitterReadyDocument } from "../ir/types.js";
@@ -68,15 +69,19 @@ export function emitStandaloneGroup(
       // else's template, so they go in raw and `applyTemplate` escapes them for
       // whichever position its tokenizer finds them in. The emitted fragment is
       // the one value that IS markup, so it is the one value marked raw.
+      //
+      // Keys are written with `opaqueKey()` — `applyTemplate`'s contract.
+      // `metadata` accepts arbitrary keys, and a raw write of a key named
+      // `__proto__` is a silent no-op on a plain object.
       const replacements: Record<string, TemplateValue> = {};
       for (const [key, value] of Object.entries(settings)) {
-        if (typeof value === "string") replacements[key] = value;
+        if (typeof value === "string") replacements[opaqueKey(key)] = value;
       }
       for (const [key, value] of Object.entries(doc.metadata)) {
-        if (typeof value === "string") replacements[key] = value;
+        if (typeof value === "string") replacements[opaqueKey(key)] = value;
       }
-      replacements.ai2htmlPartial = rawTemplateValue(fragment);
-      replacements.all2htmlPartial = rawTemplateValue(fragment);
+      replacements[opaqueKey("ai2htmlPartial")] = rawTemplateValue(fragment);
+      replacements[opaqueKey("all2htmlPartial")] = rawTemplateValue(fragment);
 
       // `applyTemplate` classifies every slot by the grammar position it lands
       // in and refuses the ones no escape can make safe (attribute name, tag

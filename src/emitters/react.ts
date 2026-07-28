@@ -29,6 +29,7 @@
 import { createWarning, type StructuredWarning, warningMessages } from "../core/warnings.js";
 import type { EmitterReadyDocument } from "../ir/types.js";
 import type { EmitGroupOptions } from "./html-tree.js";
+import { assetBaseJoinRuntimeExpression } from "./shared/assets.js";
 import {
   ASSETS_TOKEN,
   buildComponentTree,
@@ -365,7 +366,7 @@ const googleFontsHref = ${tree.googleFontsHref ? JSON.stringify(tree.googleFonts
 const CONTENTS = { display: "contents" }${isTypeScript ? " as const" : ""};
 ${metadataBlock}
 ${signature}
-  const safePath = assetsPath.replace(/\\/+$/, "");
+  const safePath = ${assetBaseJoinRuntimeExpression("assetsPath")};
   const html = useMemo(
     () => htmlChunks.map((chunk) => chunk.split(ASSET_TOKEN).join(safePath)),
     [safePath]

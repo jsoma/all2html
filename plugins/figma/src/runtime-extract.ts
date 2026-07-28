@@ -5,7 +5,7 @@ import { extractFrameInfo } from "./extract/frames.js";
 import { parseLayerType } from "./extract/layers.js";
 import { type FigmaTextSegment, figmaFontToMapping, segmentsToParagraphs } from "./extract/text.js";
 import { makeFigmaArtboardId, makeFigmaLayerId } from "./ir-ids.js";
-import type { ExtractedAsset, ExtractedFrame, ExtractedLayer } from "./types.js";
+import type { ExtractedAsset, ExtractedFrame, ExtractedLayer, FrameInfo } from "./types.js";
 
 const TEXT_SEGMENT_FIELDS = [
   "fontName",
@@ -184,6 +184,7 @@ function extractTextElement(
   frame: FrameNode,
   warnings: string[],
   fontMappings: Map<string, FontMapping>,
+  disposition: TextRenderDisposition,
 ): TextElement {
   const position = getNodeBoundsRelativeToFrame(textNode, frame);
   const paragraphs = extractParagraphs(textNode, warnings, fontMappings);
@@ -194,11 +195,13 @@ function extractTextElement(
     id: makeTextId(textNode.id),
     kind: mapKind(textNode),
     position,
-    rotation: textNode.rotation ? textNode.rotation * -1 : undefined,
+    // Omitted, not set to undefined: the document model must survive a JSON
+    // round-trip, and assertJsonPure rejects explicit-undefined keys.
+    ...(textNode.rotation ? { rotation: textNode.rotation * -1 } : {}),
     opacity,
     valign: mapValign(textNode),
     paragraphs,
-    renderAs: "html",
+    ...disposition,
   };
 }
 
@@ -274,6 +277,22 @@ function hideTextNodes(node: SceneNode): void {
   }
 }
 
+/**
+ * The single image-only disposition. Two sites must agree on it: the IR builder
+ * (`buildDefaultLayer` records image-only text with `renderAs: "image"`) and the
+ * raster export (`extractFramesFromSelection` leaves exactly that text visible in
+ * the clone so the background PNG contains it). When the two sites decided
+ * independently, an image-only frame's text ended up in neither the IR nor the
+ * exported raster.
+ */
+export function rendersTextIntoBackground(frameInfo: Pick<FrameInfo, "imageOnly">): boolean {
+  return frameInfo.imageOnly === true;
+}
+
+type TextRenderDisposition =
+  | { renderAs: "html" }
+  | { renderAs: "image"; renderAsReason: "imageOnly" };
+
 function makeSpecialLayerBase(
   candidate: SpecialLayerCandidate,
 ): Omit<ExtractedLayer, "elements" | "sourceNodeId"> {
@@ -282,7 +301,8 @@ function makeSpecialLayerBase(
     type: candidate.type,
     inlineSvg: candidate.inlineSvg,
     visible: candidate.node.visible,
-    opacity: Math.round((("opacity" in candidate.node ? candidate.node.opacity : 1) || 1) * 100),
+    // Nullish, not `||`: opacity 0 is a valid value and must survive into the IR.
+    opacity: Math.round((("opacity" in candidate.node ? candidate.node.opacity : 1) ?? 1) * 100),
   };
 }
 
@@ -383,8 +403,13 @@ export function createBackgroundAsset(
   bytes: Uint8Array,
 ): ExtractedAsset {
   const keyword = makeKeyword(frameInfo.originalName || frameInfo.name);
+  const artboardId = makeFigmaArtboardId(frameInfo);
   return {
-    id: `bg-${keyword}`,
+    // Identity derives from the owning artboard's canonical id plus a role
+    // suffix, never from display names: same-named frames are legal (they form
+    // a responsive group), and name-derived ids collapsed their assets onto one
+    // record.
+    id: `${artboardId}:background`,
     // Asset paths are relative to `settings.imageOutputPath`, exactly like the
     // Illustrator exporter (`exporter.jsx` writes `imageName + ext`) and the SVG
     // importer. The output directory is applied twice, in two places that must
@@ -392,11 +417,13 @@ export function createBackgroundAsset(
     // `createOutputBundle({ assetRoot })` prefixes it into the bundle layout.
     // Baking it in here instead made a non-default `imageOutputPath` emit HTML
     // pointing at a path the ZIP did not contain.
-    path: `${slug}-${keyword}.png`,
+    // The readable slug keeps the filename recognizable; the owner id keeps it
+    // unique across same-named frames.
+    path: `${makeAssetKeyword(`${slug}-${keyword}-${artboardId}`)}.png`,
     mimeType: "image/png",
     width: actualWidth,
     height: actualHeight,
-    artboardId: makeFigmaArtboardId(frameInfo),
+    artboardId,
     source: {
       tool: "figma",
       id: frameInfo.sourceNodeId,
@@ -420,18 +447,21 @@ function createSpecialLayerAsset(
 ): ExtractedAsset {
   const artboardKeyword = makeAssetKeyword(frameInfo.originalName || frameInfo.name);
   const layerKeyword = makeAssetKeyword(layer.name);
+  const layerId = makeFigmaLayerId(frameInfo, layer);
   const width = ("width" in node ? node.width : frameInfo.width) ?? frameInfo.width;
   const height = ("height" in node ? node.height : frameInfo.height) ?? frameInfo.height;
 
   return {
-    id: `${layer.type}-${artboardKeyword}-${layerKeyword}`,
+    // Owner id plus role suffix — see `createBackgroundAsset` for why display
+    // names cannot be the identity.
+    id: `${layerId}:asset`,
     // Relative to `settings.imageOutputPath` — see `createBackgroundAsset`.
-    path: `${slug}-${artboardKeyword}-${layerKeyword}.${options.extension}`,
+    path: `${makeAssetKeyword(`${slug}-${artboardKeyword}-${layerKeyword}-${layerId}`)}.${options.extension}`,
     mimeType: options.mimeType,
     width,
     height,
     artboardId: makeFigmaArtboardId(frameInfo),
-    layerId: makeFigmaLayerId(frameInfo, layer),
+    layerId,
     source: {
       tool: "figma",
       id: layer.sourceNodeId,
@@ -453,14 +483,21 @@ function buildDefaultLayer(
   const textNodes: TextNode[] = [];
   walkVisibleTextNodes(frameClone, textNodes);
 
-  const elements = frameInfo.imageOnly
-    ? []
-    : textNodes
-        .map((textNode) => extractTextElement(textNode, frameClone, warnings, fontMappings))
-        .sort((a, b) => {
-          if (a.position.y !== b.position.y) return a.position.y - b.position.y;
-          return a.position.x - b.position.x;
-        });
+  // Same predicate as the raster-export site in `extractFramesFromSelection`:
+  // image-only text is recorded as baked into the background raster; all other
+  // text becomes live HTML and is hidden before the raster export.
+  const disposition: TextRenderDisposition = rendersTextIntoBackground(frameInfo)
+    ? { renderAs: "image", renderAsReason: "imageOnly" }
+    : { renderAs: "html" };
+
+  const elements = textNodes
+    .map((textNode) =>
+      extractTextElement(textNode, frameClone, warnings, fontMappings, disposition),
+    )
+    .sort((a, b) => {
+      if (a.position.y !== b.position.y) return a.position.y - b.position.y;
+      return a.position.x - b.position.x;
+    });
 
   return {
     sourceNodeId: frameClone.id,
@@ -682,7 +719,12 @@ export async function extractFramesFromSelection(
         orderedLayers.push(defaultLayer);
       }
 
-      hideTextNodes(movedClone);
+      // The other half of the disposition `buildDefaultLayer` used above:
+      // image-only frames keep their text visible so the background raster
+      // contains it; other frames hide text because it re-renders as live HTML.
+      if (!rendersTextIntoBackground(frameInfo)) {
+        hideTextNodes(movedClone);
+      }
       const bytes = await movedClone.exportAsync({ format: "PNG" });
 
       extracted.push({

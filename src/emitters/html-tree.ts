@@ -15,6 +15,8 @@
  * ES3-safe: this module ships inside the ExtendScript bundle.
  */
 
+import { formatCssColor } from "../core/css-color.js";
+import { hasOwn, opaqueKey } from "../core/identifiers.js";
 import {
   createWarning,
   pushUniqueStructuredWarning,
@@ -120,16 +122,19 @@ function renderTextElement(
     classes.push(element.effectClassName);
   }
 
-  // Area text path styling
+  // Area text path styling. Colors go through the one formatter (alpha as
+  // rgba, no near-black snap); the border width is the declared IR width,
+  // rounded like shape strokes.
   const extraStyle: string[] = [];
   if (element.areaFill) {
-    const c = element.areaFill;
-    extraStyle.push("background-color:rgb(" + c.r + "," + c.g + "," + c.b + ")");
+    extraStyle.push("background-color:" + formatCssColor(element.areaFill));
     extraStyle.push("padding:6px 6px 6px 7px");
   }
   if (element.areaBorder) {
-    const c = element.areaBorder.color;
-    extraStyle.push("border:1px solid rgb(" + c.r + "," + c.g + "," + c.b + ")");
+    const borderWidth = Math.max(1, Math.round(element.areaBorder.width));
+    extraStyle.push(
+      "border:" + borderWidth + "px solid " + formatCssColor(element.areaBorder.color),
+    );
     if (!element.areaFill) extraStyle.push("padding:6px 6px 6px 7px");
   }
 
@@ -182,13 +187,15 @@ function renderTextElement(
     paragraphs.push(el("p", paraAttrs, runs));
   }
 
-  // Element ids are namespaced with the same `{ns}{slug}-` prefix the container
-  // and artboard ids already carry (D7). Exporters mint document-local ids —
-  // Illustrator's are literally `g-ai0-1` — so two all2html graphics on one CMS
-  // page would otherwise emit duplicate ids. Nothing in the generated CSS
-  // selects an element id (see `shared/css.ts`: only the container and artboard
-  // ids appear in selectors), so this is an emit-time rename with no stylesheet
-  // counterpart to keep in sync.
+  // Element ids are namespaced with the emitted artboard id — `{ns}{slug}-` plus
+  // the artboard key (D7, spec §2.7). Exporters mint document-local ids —
+  // Illustrator's are literally `g-ai0-1`, and a *named* frame emits its name —
+  // so two all2html graphics on one CMS page, or two artboards in one responsive
+  // group each holding a frame named `headline`, would otherwise emit duplicate
+  // ids. Nothing in the generated CSS selects an element id (see
+  // `shared/css.ts`: only the container and artboard ids appear in selectors),
+  // so this is an emit-time rename with no stylesheet counterpart to keep in
+  // sync.
   const attrs: HtmlAttrs = [
     ["id", idPrefix + element.id],
     ["class", classes.join(" ")],
@@ -212,14 +219,13 @@ function scopeArtboards(
   artboards?: EmitterReadyArtboard[],
 ): EmitterReadyArtboard[] {
   if (!artboards) return doc.artboards;
+  // `opaqueKey()`/`hasOwn()` (src/core/identifiers.js): an artboard whose id is
+  // `__proto__` must be scoped like any other, not silently dropped.
   const ids: Record<string, true> = {};
   for (const ab of artboards) {
-    ids[ab.id] = true;
+    ids[opaqueKey(ab.id)] = true;
   }
-  // NOT `Object.hasOwn` — ExtendScript is ES3 and has neither it nor a polyfill
-  // for it. `biome check --write` will "fix" this back; do not let it.
-  // biome-ignore lint/suspicious/noPrototypeBuiltins: ES3 host, see above
-  return doc.artboards.filter((ab) => Object.prototype.hasOwnProperty.call(ids, ab.id));
+  return doc.artboards.filter((ab) => hasOwn(ids, opaqueKey(ab.id)));
 }
 
 function renderArtboard(
@@ -294,7 +300,7 @@ function renderArtboard(
         ["id", abId + "-img"],
         ["class", ns + "aiImg"],
         ["alt", bgAltText],
-        ["src", resolveAssetPath(bgAsset, settings, assetBase)],
+        ["src", resolveAssetPath(bgAsset, settings, assetBase, warnings)],
       ];
       if (settings.useLazyLoader) {
         imgAttrs.push(["loading", "lazy"]);
@@ -303,16 +309,22 @@ function renderArtboard(
     }
   }
 
-  // html-before layers
+  // html-before layers. Invisible layers are skipped here like everywhere
+  // else — a hook layer the designer hid must not inject markup.
   for (const layer of ab.layers) {
     if (layer.type !== "html-before") continue;
+    if (layer.visible === false) continue;
     for (const element of layer.elements) {
       if (element.type === "rawHtml") children.push(raw(element.content));
     }
   }
 
   // Render non-hook layers in the preserved layer order from the canonical artboard.
+  // A `visible: false` layer produces nothing, whatever its kind (asset layers
+  // included): visibility is authored state, and rendering hidden content was a
+  // silent divergence from the design tool.
   for (const layer of ab.layers) {
+    if (layer.visible === false) continue;
     switch (layer.type) {
       case "png": {
         const pngAsset = getScopedLayerAsset(assetIdx, ab, layer.id);
@@ -321,7 +333,7 @@ function renderArtboard(
             el("img", [
               ["class", ns + "aiImg"],
               ["alt", ""],
-              ["src", resolveAssetPath(pngAsset, settings, assetBase)],
+              ["src", resolveAssetPath(pngAsset, settings, assetBase, warnings)],
               [
                 "style",
                 layer.opacity < 100 ? "opacity:" + (layer.opacity / 100).toFixed(2) : undefined,
@@ -343,7 +355,7 @@ function renderArtboard(
               el("img", [
                 ["class", ns + "aiImg"],
                 ["alt", ""],
-                ["src", resolveAssetPath(svgAsset, settings, assetBase)],
+                ["src", resolveAssetPath(svgAsset, settings, assetBase, warnings)],
                 [
                   "style",
                   layer.opacity < 100 ? "opacity:" + (layer.opacity / 100).toFixed(2) : undefined,
@@ -414,7 +426,7 @@ function renderArtboard(
       case "default":
         for (const element of layer.elements) {
           if (element.type === "text" && element.renderAs === "html") {
-            children.push(renderTextElement(element, ns, idPrefix, layer.name, warnings));
+            children.push(renderTextElement(element, ns, abId + "-", layer.name, warnings));
           }
           if (element.type === "snippet") {
             children.push(
@@ -435,6 +447,7 @@ function renderArtboard(
   // html-after layers
   for (const layer of ab.layers) {
     if (layer.type !== "html-after") continue;
+    if (layer.visible === false) continue;
     for (const element of layer.elements) {
       if (element.type === "rawHtml") children.push(raw(element.content));
     }
@@ -532,7 +545,10 @@ export function buildHTMLTree(
       if (bgAsset) {
         const keyword = makeArtboardKey(ab, scopedDoc.artboards);
         varParts.push(
-          "--" + keyword + "-img:" + toCssUrlValue(resolveAssetPath(bgAsset, settings, assetBase)),
+          "--" +
+            keyword +
+            "-img:" +
+            toCssUrlValue(resolveAssetPath(bgAsset, settings, assetBase, warnings)),
         );
       }
     }

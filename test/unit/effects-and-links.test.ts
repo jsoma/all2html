@@ -28,7 +28,8 @@ describe("Text effects", () => {
     const shadowEffect = ab.effectStyleClasses.find((e) => e.css.includes("text-shadow"));
     expect(shadowEffect).toBeDefined();
     expect(shadowEffect?.css).toContain("text-shadow: 2px 4px 3px");
-    expect(shadowEffect?.css).toContain("rgba(0,0,0,0.50)");
+    // The shared formatter drops trailing zeros: `0.5`, not `.toFixed(2)`'s `0.50`.
+    expect(shadowEffect?.css).toContain("rgba(0,0,0,0.5)");
   });
 
   it("generates filter CSS for blur effects", () => {

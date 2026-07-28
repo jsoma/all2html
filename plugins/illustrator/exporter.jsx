@@ -517,7 +517,8 @@ function extractLayers(doc) {
       },
       inlineSvg: inlineSvg,
       visible: layer.visible,
-      opacity: layer.opacity || 100,
+      // 0 is a real opacity; default only on absence (matches computeOpacity).
+      opacity: typeof layer.opacity === "number" ? layer.opacity : 100,
       elements: [],
       _aiLayer: layer
     });
@@ -686,6 +687,41 @@ function extractParagraph(para) {
   return result;
 }
 
+// Rotation detected from the frame's matrix. Callable both at element
+// extraction and at raster-export time (hideTextFramesForExport) with the
+// same result: it reads only the frame, never mutable export state.
+function computeTextFrameRotation(tf) {
+  var rotation = { angle: 0, matrix: null };
+  try {
+    var m = tf.matrix;
+    var angle = Math.atan2(m.mValueB, m.mValueA) * (180 / Math.PI);
+    if (Math.abs(angle) > 1) {
+      rotation.angle = angle;
+      rotation.matrix = [
+        m.mValueA, m.mValueB, m.mValueC, m.mValueD, m.mValueTX, m.mValueTY
+      ];
+    }
+  } catch(e) {}
+  return rotation;
+}
+
+// The ONE renderAs disposition, shared by element extraction and
+// hideTextFramesForExport. Whatever sets renderAs "image" on a frame's
+// element must also keep that frame visible during raster export —
+// otherwise the text appears in neither the HTML nor the raster.
+// Precedence: imageOnly > global setting > rotation setting > html.
+function decideTextFrameRenderAs(tf, artboard, settings, rotation) {
+  if (rotation === undefined || rotation === null) {
+    rotation = computeTextFrameRotation(tf);
+  }
+  if (artboard.imageOnly) return { renderAs: "image", reason: "imageOnly" };
+  if (settings.renderTextAs === "image") return { renderAs: "image", reason: "setting" };
+  if (rotation.angle !== 0 && settings.renderRotatedSkewedTextAs === "image") {
+    return { renderAs: "image", reason: "rotation" };
+  }
+  return { renderAs: "html", reason: undefined };
+}
+
 function extractTextFramesForArtboard(doc, artboard, layers, settings) {
   var abRect = artboard._aiRect;
   var abLeft = abRect[0];
@@ -721,7 +757,9 @@ function extractTextFramesForArtboard(doc, artboard, layers, settings) {
     return a.left - b.left;
   });
 
-  // Find the default layer to add elements to
+  // Find the default layer to add elements to. Prefer a visible default
+  // layer, then any visible layer: the emitter skips `visible: false`
+  // layers, so content attached to an invisible layer vanishes from output.
   var defaultLayer = null;
   for (var li = 0; li < layers.length; li++) {
     if (layers[li].type === "default" && layers[li].visible) {
@@ -729,45 +767,47 @@ function extractTextFramesForArtboard(doc, artboard, layers, settings) {
       break;
     }
   }
+  if (!defaultLayer) {
+    for (var lv = 0; lv < layers.length; lv++) {
+      if (layers[lv].visible) {
+        defaultLayer = layers[lv];
+        break;
+      }
+    }
+  }
   if (!defaultLayer && layers.length > 0) {
     defaultLayer = layers[0];
   }
+  var warnedInvisibleLayer = false;
 
   var abIndex = artboard._aiIndex;
+  // Element ids already used on THIS artboard. Two frames with the same name
+  // on one artboard would otherwise emit the same DOM id; keys are $-prefixed
+  // so a frame named "constructor" cannot collide with Object.prototype.
+  var usedElementIds = {};
   for (var fi = 0; fi < frames.length; fi++) {
     var tf = frames[fi];
-    // Detect rotation before deciding renderAs
-    var rotationAngle = 0;
-    var rotationMatrix = null;
-    try {
-      var m = tf.matrix;
-      rotationAngle = Math.atan2(m.mValueB, m.mValueA) * (180 / Math.PI);
-      if (Math.abs(rotationAngle) > 1) {
-        rotationMatrix = [
-          m.mValueA, m.mValueB, m.mValueC, m.mValueD, m.mValueTX, m.mValueTY
-        ];
-      } else {
-        rotationAngle = 0;
-      }
-    } catch(e) {}
+    var rotation = computeTextFrameRotation(tf);
+    // Shared with hideTextFramesForExport: see decideTextFrameRenderAs.
+    var disposition = decideTextFrameRenderAs(tf, artboard, settings, rotation);
+    var renderAs = disposition.renderAs;
+    var renderAsReason = disposition.reason;
 
-    // Decide renderAs: imageOnly > global setting > rotation setting > html
-    var renderAs = "html";
-    var renderAsReason;
-    if (artboard.imageOnly) {
-      renderAs = "image";
-      renderAsReason = "imageOnly";
-    } else if (settings.renderTextAs === "image") {
-      renderAs = "image";
-      renderAsReason = "setting";
-    } else if (rotationAngle !== 0 && settings.renderRotatedSkewedTextAs === "image") {
-      renderAs = "image";
-      renderAsReason = "rotation";
+    var baseId = tf.name ? makeKeyword(tf.name) : ("g-ai" + abIndex + "-" + (fi + 1));
+    var elementId = baseId;
+    var dedupeIndex = 2;
+    while (hasOwn(usedElementIds, "$" + elementId)) {
+      elementId = baseId + "-" + dedupeIndex;
+      dedupeIndex++;
     }
+    if (elementId !== baseId) {
+      warn('Duplicate text frame name "' + (tf.name || baseId) + '" on artboard "' + artboard.name + '". Using id "' + elementId + '" for this frame.', "text:duplicate-id", "text");
+    }
+    usedElementIds["$" + elementId] = true;
 
     var element = {
       type: "text",
-      id: tf.name ? makeKeyword(tf.name) : ("g-ai" + abIndex + "-" + (fi + 1)),
+      id: elementId,
       kind: tf.kind === TextType.POINTTEXT ? "point" : "area",
       position: {
         x: tf.left - abLeft,
@@ -787,9 +827,9 @@ function extractTextFramesForArtboard(doc, artboard, layers, settings) {
     if (blend) element.blendMode = blend;
 
     // Apply rotation
-    if (rotationMatrix) {
-      element.rotation = rotationAngle;
-      element.transformMatrix = rotationMatrix;
+    if (rotation.matrix) {
+      element.rotation = rotation.angle;
+      element.transformMatrix = rotation.matrix;
     }
 
     // Extract paragraphs
@@ -811,6 +851,10 @@ function extractTextFramesForArtboard(doc, artboard, layers, settings) {
     }
 
     if (element.paragraphs.length > 0 && defaultLayer) {
+      if (defaultLayer.visible === false && !warnedInvisibleLayer) {
+        warn('Text on artboard "' + artboard.name + '" was attached to invisible layer "' + defaultLayer.name + '" because no visible layer exists. It will not appear in the HTML output; show the layer to export it.', "layer:invisible-content", "text");
+        warnedInvisibleLayer = true;
+      }
       defaultLayer.elements.push(element);
     }
   }
@@ -1210,15 +1254,19 @@ function resolveImageFormat(doc, artboard, settings) {
 // `hidden` is an accumulator supplied by the caller so already-hidden frames
 // are still restorable if this loop throws partway through.
 function hideTextFramesForExport(doc, artboard, settings, hidden) {
-  // When render_text_as is "image" or testing_mode is on, keep all text visible for raster capture
-  if (settings.renderTextAs === "image" || settings.testingMode) return hidden;
+  // When testing_mode is on, keep all text visible for raster capture
+  if (settings.testingMode) return hidden;
   var abRect = artboard._aiRect;
   for (var i = 0; i < doc.textFrames.length; i++) {
     var tf = doc.textFrames[i];
     if (tf.hidden) continue;
     if (tf.kind === TextType.PATHTEXT) continue;
     if (!boundsIntersect(tf.visibleBounds, abRect)) continue;
-    if (artboard.imageOnly) continue; // Keep text visible for image_only artboards
+    // The same disposition extraction used: any frame whose element is
+    // renderAs "image" (imageOnly artboard, global render_text_as, or a
+    // rotated frame under render_rotated_skewed_text_as) must stay visible
+    // so the raster contains it — its text exists nowhere else.
+    if (decideTextFrameRenderAs(tf, artboard, settings).renderAs === "image") continue;
     tf.hidden = true;
     hidden.push(tf);
   }
@@ -1235,6 +1283,14 @@ function restoreHiddenFrames(frames) {
   }
 }
 
+// 0 is a declared-valid jpgQuality (settings-definitions min 0), so the
+// default applies only on absence — `|| 85` erased a real 0.
+function resolveJpgQuality(settings) {
+  var quality = settings.jpgQuality;
+  if (quality === undefined || quality === null) return 85;
+  return quality;
+}
+
 function exportArtboardImage(doc, path, format, settings) {
   var file = new File(path);
   var scale = settings.use2xImages ? 200 : 100;
@@ -1245,7 +1301,7 @@ function exportArtboardImage(doc, path, format, settings) {
     opts.antiAliasing = false;
     opts.horizontalScale = scale;
     opts.verticalScale = scale;
-    opts.qualitySetting = settings.jpgQuality || 85;
+    opts.qualitySetting = resolveJpgQuality(settings);
     doc.exportFile(file, ExportType.JPEG, opts);
   } else {
     var opts = new ExportOptionsPNG8();
@@ -1366,7 +1422,7 @@ function exportImages(doc, artboards, settings) {
           format: format,
           scale: settings.use2xImages ? 2 : 1,
           transparent: settings.pngTransparent || false,
-          quality: settings.jpgQuality || 85,
+          quality: resolveJpgQuality(settings),
           colors: settings.pngNumberOfColors || 128
         }
       };

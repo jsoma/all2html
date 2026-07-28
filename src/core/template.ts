@@ -76,6 +76,7 @@
  */
 
 import { escapeAttr, escapeHtml, sanitizeCommentText } from "../emitters/shared/escape.js";
+import { hasOwn, opaqueKey } from "./identifiers.js";
 import { createWarning, type StructuredWarning, type WarningContext } from "./warnings.js";
 
 /**
@@ -564,16 +565,25 @@ function isRawValue(value: TemplateValue): value is RawTemplateValue {
   return typeof value !== "string";
 }
 
+/**
+ * Replacement records are keyed with `opaqueKey()` (`src/core/identifiers.js`)
+ * and read with own-property checks only. The old raw-keyed `in` lookup walked
+ * the prototype chain, so `{{toString}}` resolved to
+ * `Object.prototype.toString` (and was then silently erased downstream), while
+ * a metadata key named `__proto__` could never be written at all. An unknown
+ * variable — including `{{toString}}` now — is left in the output verbatim.
+ */
 function lookupVar(
   name: string,
   replacements: Record<string, TemplateValue>,
 ): TemplateValue | undefined {
-  if (name in replacements) return replacements[name];
-  const lower = name.toLowerCase();
-  if (lower in replacements) return replacements[lower];
-  // Case-insensitive search
+  const exactKey = opaqueKey(name);
+  if (hasOwn(replacements, exactKey)) return replacements[exactKey];
+  const lowerKey = opaqueKey(name.toLowerCase());
+  if (hasOwn(replacements, lowerKey)) return replacements[lowerKey];
+  // Case-insensitive search over the record's own keys
   for (const key of Object.keys(replacements)) {
-    if (key.toLowerCase() === lower) return replacements[key];
+    if (key.toLowerCase() === lowerKey) return replacements[key];
   }
   return undefined;
 }
@@ -612,6 +622,13 @@ function rejectionWarning(
 /**
  * Substitute `replacements` into `template`, escaping each value for the grammar
  * position its slot occupies and refusing the positions where no escape works.
+ *
+ * **`replacements` keys must be built with `opaqueKey()`** from
+ * `src/core/identifiers.js` — variable name `headline` is stored under
+ * `opaqueKey("headline")`. Prefixing on write is what lets a variable named
+ * `__proto__` exist at all (a raw write is a silent no-op on a plain object),
+ * and own-property reads are what keep `{{toString}}` from resolving to
+ * `Object.prototype.toString`.
  *
  * `context` is attached to every warning produced — the caller knows which
  * setting the template came from, this module does not.

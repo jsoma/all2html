@@ -400,7 +400,7 @@ Honored on: Illustrator.
 | Surface | Support | What actually happens |
 |---|---|---|
 | After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
-| Figma plugin | **no** | Figma always emits live HTML text and always hides text before the background raster. |
+| Figma plugin | **no** | Figma derives text disposition from the frame's image-only token alone; this setting is not read. |
 | all2html CLI | partial | Honored on the `import` path only. Text rendering mode is decided by the exporter that produced the IR. On `render` the value is inert. |
 | Browser converter | partial | Honored on the `import` path only. Text rendering mode is decided by the exporter that produced the IR. On `render` the value is inert. |
 

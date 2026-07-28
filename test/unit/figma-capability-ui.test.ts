@@ -132,14 +132,19 @@ describe("Figma UI capability gating", () => {
   it("disables the text-rendering pickers that used to promise an image fallback", () => {
     mountUi();
 
-    for (const selector of ["[data-render-text-as]", "[data-render-rotated]"]) {
+    const gated = [
+      ["[data-render-text-as]", figmaCapabilities.settings.renderTextAs.note],
+      ["[data-render-rotated]", figmaCapabilities.settings.renderRotatedSkewedTextAs.note],
+    ] as const;
+    for (const [selector, note] of gated) {
       const element = select(selector);
       expect(element.disabled).toBe(true);
       // The option a user could previously pick is now visibly unavailable.
       expect(element.querySelector<HTMLOptionElement>('option[value="image"]')?.disabled).toBe(
         true,
       );
-      expect(element.title).toContain("live HTML");
+      // The tooltip carries the declared capability note, whatever it says.
+      expect(element.title).toBe(note);
     }
     expect(noteText("renderTextAs")).toBe(figmaCapabilities.settings.renderTextAs.note);
   });

@@ -100,9 +100,24 @@ export function buildExportBundle(
  * stated where the paths are built, backstopped at the write.
  */
 export function createZipArchive(bundle: FigmaExportBundle): Uint8Array {
-  const zipEntries: Record<string, Uint8Array> = {};
+  // Null prototype: fflate needs real entry names as keys, and on a plain
+  // object literal an entry named "__proto__" (which passes the path check —
+  // it is a legal filename) is silently absent from the ZIP.
+  const zipEntries: Record<string, Uint8Array> = Object.create(null);
   for (const entry of bundle.entries) {
-    zipEntries[assertSafeBundleEntryPath(entry.path)] =
+    const path = assertSafeBundleEntryPath(entry.path);
+    // A null-prototype map on our side is not enough for this one name:
+    // fflate flattens entries into its own plain object, where assigning the
+    // "__proto__" key sets that object's prototype instead of storing the
+    // entry — the file would either vanish from the ZIP or corrupt archive
+    // assembly. Refuse loudly rather than drop silently. ("constructor",
+    // "toString", etc. are ordinary own-key assignments and stay legal.)
+    if (path === "__proto__") {
+      throw new Error(
+        `Refusing to build a ZIP with an entry named "__proto__": the ZIP encoder cannot store that name. Rename the frame or file that produced it.`,
+      );
+    }
+    zipEntries[path] =
       typeof entry.content === "string" ? strToU8(entry.content) : new Uint8Array(entry.content);
   }
   return zipSync(zipEntries, { level: 0 });

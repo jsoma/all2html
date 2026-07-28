@@ -12,6 +12,7 @@ import type {
   StyledTextElement,
   TextEffect,
 } from "../ir/types.js";
+import { formatCssColor } from "./css-color.js";
 
 function getStyleKey(style: ComputedTextStyle): string {
   return Object.entries(style)
@@ -39,14 +40,6 @@ function isStyledText(el: StyledElement): el is StyledTextElement {
   return el.type === "text" && el.renderAs === "html";
 }
 
-function formatColor(c: { r: number; g: number; b: number; opacity?: number }): string {
-  const opacity = c.opacity ?? 100;
-  if (opacity < 100) {
-    return `rgba(${c.r},${c.g},${c.b},${(opacity / 100).toFixed(2)})`;
-  }
-  return `rgb(${c.r},${c.g},${c.b})`;
-}
-
 function effectsToCSS(effects: TextEffect[]): string {
   const parts: string[] = [];
 
@@ -54,7 +47,7 @@ function effectsToCSS(effects: TextEffect[]): string {
   const shadows = effects.filter((e) => e.type === "dropShadow");
   if (shadows.length > 0) {
     const shadowValues = shadows.map(
-      (s) => `${s.offsetX}px ${s.offsetY}px ${s.blurRadius}px ${formatColor(s.color)}`,
+      (s) => `${s.offsetX}px ${s.offsetY}px ${s.blurRadius}px ${formatCssColor(s.color)}`,
     );
     parts.push(`text-shadow: ${shadowValues.join(", ")};`);
   }

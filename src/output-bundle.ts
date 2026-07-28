@@ -177,9 +177,27 @@ export function getBundleFile(bundle: OutputBundle, path: string): OutputBundleF
 }
 
 export function bundleToZipBytes(bundle: OutputBundle): Uint8Array {
-  const zipEntries: Record<string, Uint8Array> = {};
+  // Null prototype: fflate needs the real entry name as the key, so the `$`
+  // prefix convention cannot apply here — and on a plain `{}` a file named
+  // `__proto__` silently vanishes from the ZIP while every uniqueness check
+  // passes. This function never rides the ExtendScript bundle, so
+  // `Object.create(null)` is safe.
+  const zipEntries: Record<string, Uint8Array> = Object.create(null);
   for (const file of bundle.files) {
-    zipEntries[assertSafeBundleEntryPath(file.path)] = file.bytes;
+    const entryPath = assertSafeBundleEntryPath(file.path);
+    // fflate's `zipSync` re-flattens its input into a plain object internally
+    // (`fltn`), where a key of exactly `__proto__` rewires that object's
+    // prototype instead of storing the entry — the archive cannot carry this
+    // name. Fail loudly rather than silently dropping the file or crashing
+    // inside fflate. (`constructor`, `toString`, and `__proto__` as a path
+    // *segment* are all fine: plain assignment shadows data properties; only
+    // the exact top-level name hits the accessor.)
+    if (entryPath === "__proto__") {
+      throw new Error(
+        'Cannot add ZIP entry named "__proto__": the ZIP encoder cannot represent that entry name.',
+      );
+    }
+    zipEntries[entryPath] = file.bytes;
   }
   return zipSync(zipEntries, { level: 6 });
 }

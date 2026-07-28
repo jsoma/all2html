@@ -33,7 +33,8 @@ export function encodeRasterImage(
         width: image.width,
         height: image.height,
       },
-      settings.jpgQuality || 85,
+      // `??`, not `||`: `jpgQuality: 0` is a declared-valid value.
+      settings.jpgQuality ?? 85,
     );
     return {
       bytes: Uint8Array.from(encoded.data),

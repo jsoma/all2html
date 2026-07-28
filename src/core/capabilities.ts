@@ -443,10 +443,11 @@ export const figmaCapabilities: SurfaceCapabilities = {
     // now reads it once and hands it to both sides — `withAssetBase()` for the
     // emitted `src`, `assetRoot` for the ZIP entry — so the two are built from
     // the same value. No entry — Figma's `defaultStatus` is "honored".
-    // D13 — runtime-extract.ts:191 hardcodes renderAs:"html".
+    // D13 — this setting has no reader: runtime-extract.ts#buildDefaultLayer
+    // derives renderAs from the frame's image-only token alone.
     renderTextAs: {
       status: "unsupported",
-      note: "Figma always emits live HTML text and always hides text before the background raster.",
+      note: "Figma derives text disposition from the frame's image-only token alone; this setting is not read.",
     },
     // D14
     renderRotatedSkewedTextAs: {

@@ -342,6 +342,25 @@ describe("Figma plugin foundation", () => {
       expect(doc.assets["story-bg"].path).toBe("story-bg.png");
     });
 
+    it("refuses duplicate asset ids instead of silently overwriting", () => {
+      // Two frames whose assets collapse onto one id: last-wins merging used to
+      // silently drop the first asset from the merged record.
+      const first = makeFrame();
+      const second = makeFrame({
+        sourceNodeId: "frame-2",
+        originalName: "story:1024:dynamic",
+        width: 1024,
+        actualWidth: 1024,
+      });
+
+      expect(() => buildDocument([first, second], { slug: "figma-story" })).toThrow(
+        FigmaPluginError,
+      );
+      expect(() => buildDocument([first, second], { slug: "figma-story" })).toThrow(
+        /Duplicate asset id "story-bg"/,
+      );
+    });
+
     it("auto-adds Figma font mappings and lets config override them", () => {
       const frame = makeFrame();
       const element = frame.layers[0].elements[0];
@@ -639,6 +658,47 @@ describe("Figma plugin foundation", () => {
           entries: [...bundle.entries, { path: "../../evil.png", content: "x" }],
         }),
       ).toThrow(/Refusing to build an output bundle/);
+    });
+
+    /**
+     * `assertSafeBundleEntryPath` accepts "__proto__" — it is a legal filename —
+     * but a plain object literal made that assignment a silent no-op, so the
+     * entry passed every check and was simply absent from the ZIP. The entry map
+     * is now null-prototyped, and the one name fflate itself cannot store (its
+     * internal flattener assigns entry names into a plain object, where
+     * "__proto__" sets the prototype instead of the entry) is refused with a
+     * real error instead of vanishing. Sibling prototype names are ordinary
+     * own-key assignments and must keep working; `unzipSync` has the same
+     * plain-object trap on the read side, so the assertion scans the archive
+     * bytes for the stored entry name.
+     */
+    it("errors on a __proto__ zip entry and keeps other prototype-named entries", () => {
+      expect(() =>
+        createZipArchive({
+          format: "html",
+          ir: {} as never,
+          entries: [
+            { path: "index.html", content: "<!doctype html>" },
+            { path: "__proto__", content: new Uint8Array([1, 2, 3]) },
+          ],
+          warnings: [],
+        }),
+      ).toThrow(/entry named "__proto__"/);
+
+      const archive = createZipArchive({
+        format: "html",
+        ir: {} as never,
+        entries: [
+          { path: "index.html", content: "<!doctype html>" },
+          { path: "constructor", content: new Uint8Array([1, 2, 3]) },
+          { path: "toString", content: new Uint8Array([4, 5, 6]) },
+        ],
+        warnings: [],
+      });
+      const bytes = Array.from(archive, (byte) => String.fromCharCode(byte)).join("");
+      expect(bytes).toContain("constructor");
+      expect(bytes).toContain("toString");
+      expect(bytes).toContain("index.html");
     });
 
     /**

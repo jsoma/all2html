@@ -1320,7 +1320,7 @@ async function parseSvgFile(
         ...(rasterized.mimeType === "image/png"
           ? { transparent: settings.pngTransparent || false }
           : {}),
-        ...(rasterized.mimeType === "image/jpeg" ? { quality: settings.jpgQuality || 85 } : {}),
+        ...(rasterized.mimeType === "image/jpeg" ? { quality: settings.jpgQuality ?? 85 } : {}),
         ...(rasterized.mimeType === "image/png" && resolvedFormat === "png"
           ? { colors: settings.pngNumberOfColors || 128 }
           : {}),

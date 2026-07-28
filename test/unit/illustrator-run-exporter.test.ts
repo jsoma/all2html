@@ -451,3 +451,199 @@ describe("untyped config values are normalized once, at the boundary", () => {
     expect(run().irPath).toBe("/docs/all2html-output/ir.json");
   });
 });
+
+/**
+ * Defaults apply only on absence. `jpg_quality: 0` is declared valid
+ * (settings-definitions min 0) and layer opacity 0 is a real value; both used
+ * to be erased by `|| 85` / `|| 100` at the read site.
+ */
+describe("a valid zero survives to the export and the IR", () => {
+  it("keeps jpg_quality: 0 in the JPEG options and in exportParams", () => {
+    const result = run({ settingsBlock: { image_format: "jpg", jpg_quality: "0" } });
+
+    const validated = loadAndValidateIR(result.irDocument);
+    expect(validated.settings.jpgQuality).toBe(0);
+    expect(result.exports).toHaveLength(1);
+    expect(result.exports[0].type).toBe("ExportType.JPEG");
+    expect(result.exports[0].options.qualitySetting).toBe(0);
+    for (const asset of Object.values(validated.assets)) {
+      expect(asset.exportParams?.quality).toBe(0);
+    }
+  });
+
+  it("keeps a layer's opacity: 0 through the IR and into emitted CSS", () => {
+    const result = run({
+      layers: [{ name: "Layer 1" }, { name: "art:png", opacity: 0 }],
+    });
+
+    expect(result.envelope.success, result.envelope.error).toBe(true);
+    const validated = loadAndValidateIR(result.irDocument);
+    const pngLayer = validated.artboards[0].layers.find((layer) => layer.type === "png");
+    expect(pngLayer?.opacity).toBe(0);
+    // html-tree emits `opacity:` on the png layer's <img> only when < 100.
+    expect(emittedHtml(result).get("countries.html")).toContain("opacity:0.00");
+  });
+});
+
+/**
+ * The default-layer fallback used to take `layers[0]` with no visibility test,
+ * silently attaching extracted text to a `visible: false` layer — content the
+ * emitter will skip. It must prefer a visible layer and, when only an
+ * invisible one exists, say so.
+ */
+describe("the default-layer fallback prefers a visible layer", () => {
+  it("attaches text to a visible tagged layer over an invisible default layer", () => {
+    const result = run({
+      layers: [{ name: "notes", visible: false }, { name: "art:div" }],
+      textFrames: [{ contents: "Chart Title", layer: "art:div" }],
+    });
+
+    expect(result.envelope.success, result.envelope.error).toBe(true);
+    const validated = loadAndValidateIR(result.irDocument);
+    const [invisible, visible] = validated.artboards[0].layers;
+    expect(invisible.visible).toBe(false);
+    expect(invisible.elements).toEqual([]);
+    expect(visible.visible).toBe(true);
+    expect(visible.elements).toHaveLength(1);
+    expect(result.envelope.structuredWarnings.map((warning) => warning.code)).not.toContain(
+      "layer:invisible-content",
+    );
+  });
+
+  it("warns when content can only attach to an invisible layer", () => {
+    // The frame sits on a settings-named layer, which extractLayers excludes
+    // from the layer list — so the only candidate layer is the invisible one.
+    const result = run({
+      layers: [{ name: "all2html-settings" }, { name: "notes", visible: false }],
+      textFrames: [{ contents: "Chart Title", layer: "all2html-settings" }],
+    });
+
+    expect(result.envelope.success, result.envelope.error).toBe(true);
+    const validated = loadAndValidateIR(result.irDocument);
+    expect(validated.artboards[0].layers).toHaveLength(1);
+    expect(validated.artboards[0].layers[0].visible).toBe(false);
+    expect(validated.artboards[0].layers[0].elements).toHaveLength(1);
+
+    const invisibleWarnings = result.envelope.structuredWarnings.filter(
+      (warning) => warning.code === "layer:invisible-content",
+    );
+    expect(invisibleWarnings).toHaveLength(1);
+    expect(invisibleWarnings[0].message).toContain('"notes"');
+  });
+});
+
+/**
+ * Named frames emit `makeKeyword(tf.name)` ids. Copy-pasting a named frame is
+ * ordinary authoring, so two same-named frames on ONE artboard dedupe with a
+ * numeric suffix and a warning. Cross-artboard duplicates are left alone —
+ * the core emitter namespaces those by artboard.
+ */
+describe("same-artboard duplicate text frame names dedupe", () => {
+  it("suffixes the second frame's id and warns", () => {
+    const result = run({
+      textFrames: [
+        { contents: "First", name: "headline" },
+        { contents: "Second", name: "headline", bounds: [10, -60, 210, -90] },
+        { contents: "Third", name: "headline", bounds: [10, -110, 210, -140] },
+      ],
+    });
+
+    const validated = loadAndValidateIR(result.irDocument);
+    const ids = validated.artboards[0].layers[0].elements.map((element) =>
+      element.type === "text" ? element.id : undefined,
+    );
+    expect(ids).toEqual(["headline", "headline-2", "headline-3"]);
+
+    const duplicateWarnings = result.envelope.structuredWarnings.filter(
+      (warning) => warning.code === "text:duplicate-id",
+    );
+    expect(duplicateWarnings).toHaveLength(2);
+    expect(duplicateWarnings[0].message).toContain('"headline"');
+  });
+
+  it("leaves same-named frames on different artboards alone", () => {
+    const result = run({
+      artboards: [{ name: "chart" }, { name: "map", rect: [700, 0, 1600, -400] }],
+      textFrames: [
+        { contents: "Chart headline", name: "headline" },
+        { contents: "Map headline", name: "headline", bounds: [710, -10, 890, -40] },
+      ],
+    });
+
+    const validated = loadAndValidateIR(result.irDocument);
+    for (const artboard of validated.artboards) {
+      const element = artboard.layers[0].elements[0];
+      expect(element.type).toBe("text");
+      expect(element.type === "text" ? element.id : undefined).toBe("headline");
+    }
+    expect(result.envelope.structuredWarnings.map((warning) => warning.code)).not.toContain(
+      "text:duplicate-id",
+    );
+  });
+});
+
+/**
+ * One renderAs disposition for extraction AND raster export. A rotated frame
+ * under `render_rotated_skewed_text_as: image` produces a renderAs "image"
+ * element (so no HTML text) — hideTextFramesForExport must therefore leave it
+ * visible during the raster capture, or the text exists nowhere at all.
+ */
+describe("image-rendered text stays visible during raster export", () => {
+  it("keeps a rotated frame visible in the raster and out of the HTML", () => {
+    const result = run({
+      settingsBlock: { render_rotated_skewed_text_as: "image" },
+      textFrames: [
+        { contents: "Straight label", name: "straight" },
+        { contents: "Rotated label", name: "rotated", rotation: 30, bounds: [10, -60, 210, -90] },
+      ],
+    });
+
+    expect(result.envelope.success, result.envelope.error).toBe(true);
+    const validated = loadAndValidateIR(result.irDocument);
+    const elements = validated.artboards[0].layers[0].elements;
+    const rotated = elements.find((el) => el.type === "text" && el.id === "rotated");
+    const straight = elements.find((el) => el.type === "text" && el.id === "straight");
+    if (rotated?.type !== "text" || straight?.type !== "text") {
+      throw new Error("expected both text elements in the IR");
+    }
+    expect(rotated.renderAs).toBe("image");
+    expect(rotated.renderAsReason).toBe("rotation");
+    expect(rotated.rotation).toBeCloseTo(30);
+    expect(rotated.transformMatrix).toHaveLength(6);
+    expect(straight.renderAs).toBe("html");
+
+    // At the moment the artboard raster was captured, the html-rendered frame
+    // was hidden and the image-rendered frame was still visible.
+    const raster = result.exports.find((entry) => entry.type === "ExportType.PNG8");
+    expect(raster).toBeDefined();
+    expect(raster?.hiddenTextContents).toContain("Straight label");
+    expect(raster?.hiddenTextContents).not.toContain("Rotated label");
+
+    // And the HTML carries only the html-rendered frame's text.
+    const html = emittedHtml(result).get("countries.html");
+    expect(html).toContain("Straight label");
+    expect(html).not.toContain("Rotated label");
+  });
+
+  it("still keeps every frame visible under the global render_text_as: image", () => {
+    const result = run({ settingsBlock: { render_text_as: "image" } });
+
+    const raster = result.exports.find((entry) => entry.type === "ExportType.PNG8");
+    expect(raster?.hiddenTextContents).toEqual([]);
+  });
+
+  it("hides html-rendered rotated text when the setting says html", () => {
+    // Default render_rotated_skewed_text_as is "html": the rotated frame's
+    // element renders as HTML, so the raster must NOT contain the text twice.
+    const result = run({
+      textFrames: [{ contents: "Rotated label", name: "rotated", rotation: 30 }],
+    });
+
+    const validated = loadAndValidateIR(result.irDocument);
+    const element = validated.artboards[0].layers[0].elements[0];
+    expect(element.type === "text" ? element.renderAs : undefined).toBe("html");
+
+    const raster = result.exports.find((entry) => entry.type === "ExportType.PNG8");
+    expect(raster?.hiddenTextContents).toContain("Rotated label");
+  });
+});

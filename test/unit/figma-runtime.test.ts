@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { FigmaTextSegment } from "../../plugins/figma/src/extract/text.js";
+import { buildDocument } from "../../plugins/figma/src/ir-builder.js";
 import { isUiToSandboxMessage } from "../../plugins/figma/src/messages.js";
 import {
   loadLocalUiState,
@@ -20,6 +21,7 @@ import {
   mapTextAutoResizeToKind,
   resolveSpecialLayerTextValue,
 } from "../../plugins/figma/src/runtime-extract.js";
+import type { ExtractedFrame } from "../../plugins/figma/src/types.js";
 import { figmaCapabilities } from "../../src/core/capabilities.js";
 
 const fixtureDir = resolve(import.meta.dirname, "../fixtures/figma");
@@ -307,6 +309,106 @@ describe("Figma runtime helpers", () => {
     expect(isValidVideoUrl("http://cdn.example.com/video.mp4")).toBe(false);
     expect(isValidVideoUrl("https://cdn.example.com/video.mov")).toBe(false);
     expect(isValidVideoUrl("not-a-url")).toBe(false);
+  });
+
+  it("keeps special-layer opacity 0 through extraction and into the IR", async () => {
+    const warnings: string[] = [];
+    const frameInfo = {
+      name: "story",
+      originalName: "story",
+      sourceNodeId: "frame-1",
+      width: 640,
+      height: 360,
+    } as never;
+
+    const extracted = await extractSpecialLayer(
+      {
+        name: "deck-hook",
+        type: "html-before",
+        inlineSvg: false,
+        node: {
+          id: "hook-1",
+          name: "deck-hook:html-before",
+          type: "FRAME",
+          visible: true,
+          // A valid value — `|| 1` used to erase it to full opacity.
+          opacity: 0,
+          children: [{ id: "text-1", type: "TEXT", visible: true, characters: "<em>Deck</em>" }],
+        } as never,
+      },
+      frameInfo,
+      "story",
+      warnings,
+    );
+
+    expect(warnings).toEqual([]);
+    expect(extracted.layer?.opacity).toBe(0);
+
+    const frame: ExtractedFrame = {
+      sourceNodeId: "frame-1",
+      name: "story",
+      originalName: "story",
+      width: 640,
+      height: 360,
+      actualWidth: 640,
+      actualHeight: 360,
+      layers: extracted.layer ? [extracted.layer] : [],
+      assets: [],
+    };
+    const doc = buildDocument([frame], { slug: "story" });
+    expect(doc.artboards[0].layers[0].opacity).toBe(0);
+  });
+
+  it("derives special-layer asset ids and paths from owner ids, so same-named frames stay distinct", async () => {
+    const candidateFor = (nodeId: string) =>
+      ({
+        name: "highlight",
+        type: "png",
+        inlineSvg: false,
+        node: {
+          id: nodeId,
+          name: "highlight:png",
+          type: "FRAME",
+          visible: true,
+          width: 200,
+          height: 100,
+          exportAsync: async () => new Uint8Array([2]),
+        } as never,
+      }) as const;
+
+    // Two frames with the same display name (a legal responsive group) but
+    // different node ids must not collapse onto one asset record.
+    const first = await extractSpecialLayer(
+      candidateFor("9:1"),
+      {
+        name: "story",
+        originalName: "story",
+        sourceNodeId: "1:1",
+        width: 640,
+        height: 360,
+      } as never,
+      "figma-story",
+      [],
+    );
+    const second = await extractSpecialLayer(
+      candidateFor("9:2"),
+      {
+        name: "story",
+        originalName: "story",
+        sourceNodeId: "2:2",
+        width: 960,
+        height: 360,
+      } as never,
+      "figma-story",
+      [],
+    );
+
+    expect(first.assets[0]?.id).toBe("figma:1-1:layer:9-1:asset");
+    expect(second.assets[0]?.id).toBe("figma:2-2:layer:9-2:asset");
+    expect(first.assets[0]?.path).not.toBe(second.assets[0]?.path);
+    // Asset references stay canonical ids.
+    expect(first.assets[0]?.artboardId).toBe("figma:1-1");
+    expect(first.assets[0]?.layerId).toBe("figma:1-1:layer:9-1");
   });
 
   it("warns clearly for hidden, empty, and ambiguous special-layer text content", () => {

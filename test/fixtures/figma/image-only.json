@@ -16,7 +16,39 @@
         "inlineSvg": false,
         "visible": true,
         "opacity": 100,
-        "elements": []
+        "elements": [
+          {
+            "type": "text",
+            "id": "figma-photo-caption",
+            "kind": "point",
+            "position": { "x": 32, "y": 380, "width": 320, "height": 28 },
+            "opacity": 100,
+            "valign": "top",
+            "renderAs": "image",
+            "renderAsReason": "imageOnly",
+            "paragraphs": [
+              {
+                "text": "Caption baked into the raster",
+                "alignment": "left",
+                "leading": 24,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "runs": [
+                  {
+                    "text": "Caption baked into the raster",
+                    "fontName": "Inter-Regular",
+                    "fontPostScriptName": "Inter-Regular",
+                    "fontSize": 18,
+                    "color": { "r": 0, "g": 0, "b": 0 },
+                    "letterSpacing": 0,
+                    "capitalization": "normal",
+                    "baselineShift": "normal"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
     ],
     "assets": [

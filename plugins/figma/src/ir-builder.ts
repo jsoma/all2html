@@ -13,6 +13,7 @@ import type {
 } from "../../../src/ir/types.js";
 import { CURRENT_IR_VERSION } from "../../../src/ir/types.js";
 import { loadAndValidateIR } from "../../../src/ir/validate.js";
+import { FigmaPluginError } from "./errors.js";
 import { validateExtractedFrames } from "./extract/frames.js";
 import { figmaSourceFontToMapping } from "./extract/text.js";
 import { makeFigmaArtboardId, makeFigmaLayerId } from "./ir-ids.js";
@@ -26,6 +27,14 @@ function mergeAssets(
 
   for (const frame of frames) {
     for (const asset of frame.assets ?? []) {
+      // Last-wins overwriting silently dropped an asset whenever two ids
+      // collided (the failure §3.2 fixed at the producer by deriving ids from
+      // owner ids). A collision reaching this point is a bug, so it throws.
+      if (Object.hasOwn(assets, asset.id)) {
+        throw new FigmaPluginError(
+          `Duplicate asset id "${asset.id}". Every extracted asset needs its own id; overwriting would silently drop one asset from the export.`,
+        );
+      }
       assets[asset.id] = stripAssetBytes(asset);
     }
   }

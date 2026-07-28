@@ -38,7 +38,7 @@ function allIds(html: string): string[] {
 }
 
 describe("element ids are namespaced per document", () => {
-  it("prefixes the raw IR id with the same {ns}{slug}- the container uses", () => {
+  it("prefixes the raw IR id with the emitted artboard id ({ns}{slug}-{artboardKey}-)", () => {
     const raw = load("single-artboard-basic.json");
     const { document: doc } = processDocument(raw);
     const { html } = emitHTML(doc);
@@ -53,10 +53,41 @@ describe("element ids are namespaced per document", () => {
     expect(irIds).toContain("g-ai0-1");
 
     for (const id of irIds) {
-      expect(html).toContain(`id="g-test-graphic-${id}"`);
+      // The artboard key (`desktop`) sits between the document prefix and the
+      // element id, so a frame named the same on two artboards of one
+      // responsive group cannot collide (spec §2.7).
+      expect(html).toContain(`id="g-test-graphic-desktop-${id}"`);
       // The bare id must be gone: an `id="g-ai0-1"` anywhere is the collision.
       expect(allIds(html)).not.toContain(id);
+      // And the artboard-less spelling must be gone too.
+      expect(allIds(html)).not.toContain(`g-test-graphic-${id}`);
     }
+  });
+
+  it("gives same-named frames on two artboards of one group distinct DOM ids", () => {
+    // A named Illustrator frame emits its name as the element id, so two
+    // artboards in one responsive group each holding a frame named `headline`
+    // used to emit duplicate `id="g-…-headline"`.
+    const raw = load("single-artboard-basic.json");
+    const [ab] = raw.artboards;
+    const second = JSON.parse(JSON.stringify(ab));
+    second.id = "artboard:mobile";
+    second.width = 300;
+    second.source = { ...second.source, name: "mobile" };
+    for (const layer of second.layers) {
+      layer.id = layer.id.replace("artboard:desktop", "artboard:mobile");
+    }
+    raw.artboards = [ab, second];
+
+    const { html } = emitHTML(processDocument(raw).document);
+    const ids = allIds(html);
+    expect(ids.length).toBeGreaterThan(2);
+    // Every id on the page is unique…
+    expect(ids).toEqual([...new Set(ids)]);
+    // …and the shared element id appears once per artboard, artboard-scoped.
+    const headlineIds = ids.filter((id) => id.endsWith("-g-ai0-1"));
+    expect(headlineIds).toHaveLength(2);
+    expect(new Set(headlineIds).size).toBe(2);
   });
 
   it("gives two documents with different slugs disjoint id sets", () => {

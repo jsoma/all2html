@@ -1,13 +1,22 @@
 import { artifactRelativePath } from "../../core/artifact-path.js";
+import { hasOwn, opaqueKey } from "../../core/identifiers.js";
+import {
+  createWarning,
+  pushUniqueStructuredWarning,
+  type StructuredWarning,
+} from "../../core/warnings.js";
 import type { Asset, EmitterReadyArtboard, Settings } from "../../ir/types.js";
 
+/**
+ * All keys are `opaqueKey()`-guarded (see `src/core/identifiers.js`): an
+ * artboard or layer id named `__proto__` must be ordinary data, not a prototype
+ * hit. The layer scope is a nested record rather than an `artboardId:layerId`
+ * concatenation — both shipped ID schemes embed `:`, so `("a:b","c")` and
+ * `("a","b:c")` used to meet in one namespace.
+ */
 export interface ScopedAssetIndex {
   byArtboard: Record<string, Asset>;
-  byArtboardLayer: Record<string, Asset>;
-}
-
-function makeArtboardScopedKey(artboard: Pick<EmitterReadyArtboard, "id">): string {
-  return artboard.id;
+  byArtboardLayer: Record<string, Record<string, Asset>>;
 }
 
 export function buildScopedAssetIndex(
@@ -15,20 +24,23 @@ export function buildScopedAssetIndex(
   assets: Record<string, Asset>,
 ): ScopedAssetIndex {
   const byArtboard: Record<string, Asset> = {};
-  const byArtboardLayer: Record<string, Asset> = {};
+  const byArtboardLayer: Record<string, Record<string, Asset>> = {};
   const artboardIds: Record<string, true> = {};
   for (const artboard of artboards) {
-    artboardIds[`$${artboard.id}`] = true;
+    artboardIds[opaqueKey(artboard.id)] = true;
   }
 
   for (const asset of Object.values(assets)) {
-    if (!artboardIds[`$${asset.artboardId}`]) continue;
-    const scopedKey = asset.artboardId;
+    const artboardKey = opaqueKey(asset.artboardId);
+    if (!hasOwn(artboardIds, artboardKey)) continue;
 
     if (!asset.layerId) {
-      byArtboard[scopedKey] = asset;
+      byArtboard[artboardKey] = asset;
     } else {
-      byArtboardLayer[`${scopedKey}:${asset.layerId}`] = asset;
+      if (!hasOwn(byArtboardLayer, artboardKey)) {
+        byArtboardLayer[artboardKey] = {};
+      }
+      byArtboardLayer[artboardKey][opaqueKey(asset.layerId)] = asset;
     }
   }
 
@@ -39,7 +51,8 @@ export function getScopedArtboardAsset(
   assetIdx: ScopedAssetIndex,
   artboard: Pick<EmitterReadyArtboard, "id">,
 ): Asset | undefined {
-  return assetIdx.byArtboard[makeArtboardScopedKey(artboard)];
+  const key = opaqueKey(artboard.id);
+  return hasOwn(assetIdx.byArtboard, key) ? assetIdx.byArtboard[key] : undefined;
 }
 
 export function getScopedLayerAsset(
@@ -47,7 +60,36 @@ export function getScopedLayerAsset(
   artboard: Pick<EmitterReadyArtboard, "id">,
   layerId: string,
 ): Asset | undefined {
-  return assetIdx.byArtboardLayer[`${makeArtboardScopedKey(artboard)}:${layerId}`];
+  const artboardKey = opaqueKey(artboard.id);
+  if (!hasOwn(assetIdx.byArtboardLayer, artboardKey)) return undefined;
+  const layerAssets = assetIdx.byArtboardLayer[artboardKey];
+  const layerKey = opaqueKey(layerId);
+  return hasOwn(layerAssets, layerKey) ? layerAssets[layerKey] : undefined;
+}
+
+/**
+ * The one asset-URL join rule: exactly one `/` between a non-empty base and the
+ * asset path. A base without a trailing slash used to concatenate verbatim
+ * (`img` + `chart.png` → `imgchart.png`, a silent 404); a base that is all
+ * slashes (site root `/`) keeps its one slash. ES3-safe.
+ */
+export function joinAssetBase(base: string, path: string): string {
+  if (!base) return path;
+  let end = base.length;
+  while (end > 0 && base.charAt(end - 1) === "/") end--;
+  return base.slice(0, end) + "/" + path;
+}
+
+/**
+ * The runtime half of the same rule, as generated-component source. The emitted
+ * markup carries `ASSETS_TOKEN + "/"` (see `component-tree.ts`), so the
+ * component's job is to reduce the user-supplied base to no trailing slash
+ * before token replacement — together that is `joinAssetBase`. Svelte and React
+ * both inline this expression so the two runtimes and `resolveAssetPath`
+ * cannot drift.
+ */
+export function assetBaseJoinRuntimeExpression(baseVarName: string): string {
+  return `${baseVarName}.replace(/\\/+$/, "")`;
 }
 
 /**
@@ -82,15 +124,38 @@ export function getScopedLayerAsset(
  * **same** constructor bundle assembly builds its entry from, not a second copy
  * of the rule. The schema only requires `Asset.path` to be non-empty, so `/x.png`
  * and `a//b.png` are valid IR; spelled here and normalized there, the emitted
- * `src` was `assets//x.png` while the ZIP held `assets/x.png`. The base is still
- * concatenated verbatim, because `imageSourcePath` is a URL the user is
- * deliberately pointing somewhere the bundle layout does not describe.
+ * `src` was `assets//x.png` while the ZIP held `assets/x.png`. The base is a URL
+ * the user may deliberately point somewhere the bundle layout does not describe;
+ * it is joined with `joinAssetBase()` — exactly one `/` between base and path —
+ * because a base missing its trailing slash used to concatenate into
+ * `imgchart.png`, a silent 404.
+ *
+ * A base containing `?` or `#` gets a structured warning (`asset:base-query`):
+ * the `?v=` cache-bust append is unconditional, so such a base would produce a
+ * double query string.
  */
-export function resolveAssetPath(asset: Asset, settings: Settings, assetBase?: string): string {
+export function resolveAssetPath(
+  asset: Asset,
+  settings: Settings,
+  assetBase?: string,
+  warnings?: StructuredWarning[],
+): string {
   const basePath = settings.imageSourcePath || assetBase || "";
   let path = artifactRelativePath(asset.path);
   if (basePath) {
-    path = basePath + path;
+    if (warnings && (basePath.indexOf("?") !== -1 || basePath.indexOf("#") !== -1)) {
+      pushUniqueStructuredWarning(
+        warnings,
+        createWarning(
+          "asset:base-query",
+          "image",
+          'Asset base path "' +
+            basePath +
+            '" contains "?" or "#"; the appended cache-bust query (?v=...) and asset path will not resolve as intended.',
+        ),
+      );
+    }
+    path = joinAssetBase(basePath, path);
   }
   if (settings.cacheBustToken != null) {
     path += `?v=${settings.cacheBustToken}`;

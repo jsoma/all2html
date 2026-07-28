@@ -11,6 +11,7 @@ import type {
   EmitterReadySnippetElement,
   ShapeElement,
 } from "../ir/types.js";
+import { formatCssColor } from "./css-color.js";
 
 const CSS_PRECISION = 4;
 const POINT_TEXT_EXTRA_WIDTH = 22;
@@ -89,11 +90,22 @@ function computeTextPosition(
     result.top = `${topPct}%`;
   }
 
-  // Rotated text: apply CSS transform
+  // Rotated text: apply CSS transform.
+  //
+  // `rotation` is CSS-clockwise degrees; `transformMatrix` is CSS
+  // `[a, b, c, d, e, f]`. Adapters convert their host convention before the IR
+  // (Figma negates its counter-clockwise angle at extraction). A present,
+  // non-identity matrix is the full statement of the transform and wins alone —
+  // rotation is never applied on top of it.
   const vertAnchorPct = el.valign === "bottom" ? 100 : el.valign === "middle" ? 50 : 0;
-  if (el.transformMatrix && el.rotation) {
+  if (el.transformMatrix && !isIdentityMatrix(el.transformMatrix) && el.rotation) {
     const m = el.transformMatrix;
     result.transform = `matrix(${m.map((v) => round(v, 6)).join(",")})`;
+    result.transformOrigin = `50% ${vertAnchorPct}%`;
+  } else if (el.rotation) {
+    // Rotation without a usable matrix: Figma emits exactly this shape (it sets
+    // `rotation` and never a matrix), which previously produced no CSS at all.
+    result.transform = `rotate(${round(el.rotation, 6)}deg)`;
     result.transformOrigin = `50% ${vertAnchorPct}%`;
   } else if (el.transformMatrix && !isIdentityMatrix(el.transformMatrix)) {
     // Unrotated but scaled text (e.g. Illustrator's horizontal-scale slider).
@@ -120,10 +132,6 @@ function computeTextPosition(
   }
 
   return result;
-}
-
-function formatColor(c: { r: number; g: number; b: number }): string {
-  return `rgb(${c.r},${c.g},${c.b})`;
 }
 
 export function computeShapePosition(
@@ -158,12 +166,12 @@ export function computeShapePosition(
   }
 
   if (el.fill) {
-    result.backgroundColor = formatColor(el.fill);
+    result.backgroundColor = formatCssColor(el.fill);
   }
 
   if (el.stroke) {
     const w = Math.max(1, Math.round(el.stroke.width));
-    const stroke = `${w}px solid ${formatColor(el.stroke.color)}`;
+    const stroke = `${w}px solid ${formatCssColor(el.stroke.color)}`;
     // Lines take a single edge instead of a full box. The edge is *chosen*, not
     // assigned and then cleared: writing `result.border = undefined` afterwards
     // left an enumerable `border` key holding `undefined`, which JSON.stringify
