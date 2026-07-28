@@ -1,5 +1,10 @@
 import { strToU8, zipSync } from "fflate";
-import { type ArtifactEntryPath, artifactEntryPath } from "./core/artifact-path.js";
+import {
+  type ArtifactEntryPath,
+  artifactEntryDirectory,
+  artifactEntryPath,
+  artifactRelativePath,
+} from "./core/artifact-path.js";
 import type { EmitFile } from "./emitters/registry.js";
 import type { ImportedAssetFile } from "./importers/types.js";
 import type { Document, SourceMetadata } from "./ir/types.js";
@@ -51,12 +56,15 @@ export function createOutputBundle(options: OutputBundleOptions): OutputBundle {
       "application/json",
     ),
   ];
-  const assetRoot = options.assetRoot
-    ? artifactEntryPath(
-        options.assetRoot,
-        'to build an output bundle with the image output directory ("imageOutputPath")',
-      )
-    : "";
+  // The directory the asset entries sit under, which is **not** an entry: a value
+  // that normalizes away (`/`, `//`, `./`) is the bundle root, which is what the
+  // site-root `imageOutputPath: "/"` this module documents as legitimate means on
+  // the ZIP side. Routing it through `artifactEntryPath()` failed it as "does not
+  // name a file" — including when there were no assets to place at all.
+  const assetRoot = artifactEntryDirectory(
+    options.assetRoot ?? "",
+    'to build an output bundle with the image output directory ("imageOutputPath")',
+  );
 
   for (const asset of options.assetFiles) {
     const assetPath = artifactEntryPath(
@@ -157,8 +165,14 @@ function createManifestFile(baseManifest: OutputBundleManifest): {
   throw new Error("Failed to stabilize manifest.json byte size.");
 }
 
+/**
+ * Lookups share the construction rule, so a key spelled any of the ways an entry
+ * could have been named still lands on the entry. Lookups never throw — the
+ * dropzone calls this with whatever path is selected in its file list — so this
+ * is the normalizer alone, without the containment assertion construction adds.
+ */
 export function getBundleFile(bundle: OutputBundle, path: string): OutputBundleFile | undefined {
-  const normalized = normalizeBundlePath(path);
+  const normalized = artifactRelativePath(path);
   return bundle.files.find((file) => file.path === normalized);
 }
 
@@ -177,24 +191,6 @@ function createTextBundleFile(path: string, text: string, mimeType: string): Out
     mimeType,
     text,
   };
-}
-
-/**
- * Reduce a path to the one spelling the bundle stores it under.
- *
- * Separator collapsing and the leading-`./` strip are unchanged; the only
- * widening is that the leading strip now **repeats**, so `//server/share` and
- * `.//x` normalize to relative paths instead of stopping one slash short. Every
- * path that already normalized to a relative entry normalizes to the exact same
- * string, which is what keeps `getBundleFile()` lookups working — it is the same
- * function, and a lookup key must land on the entry key it named before.
- */
-function normalizeBundlePath(path: string): string {
-  return path
-    .replace(/\\/g, "/")
-    .replace(/^(\.?\/)+/, "")
-    .replace(/\/+/g, "/")
-    .replace(/\/$/, "");
 }
 
 /**
@@ -257,9 +253,8 @@ export function assertSafeBundleEntryPath(path: string): string {
 }
 
 function joinBundlePath(base: string, relativePath: ArtifactEntryPath): string {
-  const normalizedRelative = normalizeBundlePath(relativePath);
-  if (!base) return normalizedRelative;
-  return `${base}/${normalizedRelative}`.replace(/\/+/g, "/");
+  if (!base) return relativePath;
+  return `${base}/${relativePath}`;
 }
 
 function assertUniqueBundlePaths(files: readonly OutputBundleFile[]): void {

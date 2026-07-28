@@ -73,8 +73,8 @@ describe("output bundle", () => {
  * the Figma JSONC). Bundle entry paths become **ZIP entry names**
  * (`bundleToZipBytes`, `plugins/figma/src/export.ts`), and Figma hands that ZIP
  * to the user to extract, so a `..` in an entry name writes outside the
- * extraction directory. `normalizeBundlePath` collapsed separators and left `..`
- * alone, so `imageOutputPath: "../../"` produced exactly that.
+ * extraction directory. Bundle assembly used to only collapse separators and
+ * left `..` alone, so `imageOutputPath: "../../"` produced exactly that.
  *
  * The CLI's `resolveInsideOutputDir` covers only the CLI's filesystem sink; this
  * is the same rule stated where the paths are built, so every consumer inherits
@@ -190,6 +190,60 @@ describe("bundle entry paths cannot escape the bundle root", () => {
     expectContained(bundle);
   });
 
+  /**
+   * The boundary the module's own documentation calls legitimate:
+   * `imageOutputPath: "/"` is a site-root `<img src>` prefix, and the surfaces
+   * hand that same value in as `assetRoot`. A directory that normalizes to
+   * nothing is the **bundle root**, not a missing file name — `artifactEntryPath`
+   * refuses an empty result because nothing names a file, which is the right rule
+   * for an entry and the wrong one for the directory the entries sit under.
+   */
+  it.each([
+    "/",
+    "//",
+    "\\",
+    "./",
+  ])("puts assets at the bundle root for a site-root assetRoot %j", (assetRoot) => {
+    const bundle = createOutputBundle(makeBundleOptions({ assetRoot }));
+
+    expect(bundle.files.map((file) => file.path)).toEqual([
+      "ir.json",
+      "manifest.json",
+      "sample.html",
+      "sample.png",
+    ]);
+    expectContained(bundle);
+    expect(Object.keys(unzipSync(bundleToZipBytes(bundle))).sort()).toEqual(
+      bundle.manifest.files.map((file) => file.path).sort(),
+    );
+  });
+
+  /**
+   * The same value with nothing to apply it to. The old branch tested
+   * `options.assetRoot` for truthiness, so `"/"` was validated as a file entry
+   * and threw even when the document had no assets — a value the run never reads.
+   */
+  it("builds a bundle with a site-root assetRoot and no assets", () => {
+    const bundle = createOutputBundle(makeBundleOptions({ assetRoot: "/", assetFiles: [] }));
+
+    expect(bundle.files.map((file) => file.path)).toEqual([
+      "ir.json",
+      "manifest.json",
+      "sample.html",
+    ]);
+  });
+
+  /**
+   * Containment is asserted on the directory itself, not on the entries it
+   * happens to produce: the same string is also the emitted `src` prefix, so a
+   * traversing value is refused whether or not this run has assets.
+   */
+  it("still refuses a hostile assetRoot when there are no assets", () => {
+    expect(() =>
+      createOutputBundle(makeBundleOptions({ assetRoot: "../../evil", assetFiles: [] })),
+    ).toThrow(/Refusing to build an output bundle/);
+  });
+
   it("still builds a legitimate nested asset directory", () => {
     const bundle = createOutputBundle(makeBundleOptions({ assetRoot: "img/graphics/" }));
 
@@ -230,7 +284,7 @@ describe("bundle entry paths cannot escape the bundle root", () => {
 });
 
 /**
- * `getBundleFile` shares `normalizeBundlePath` with construction, so the lookup
+ * `getBundleFile` shares `artifactRelativePath` with construction, so the lookup
  * key has to keep landing on the entry key. Lookups also must not throw — the
  * dropzone calls this with whatever path is selected in its file list.
  */

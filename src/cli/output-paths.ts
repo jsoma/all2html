@@ -6,9 +6,9 @@ import { resolve, sep } from "node:path";
  * Every component of an emitted path is user-influenced: the slug comes from
  * `projectName` / `metadata.slug`, the extension from `htmlOutputExtension`, and
  * bundle entries additionally from `imageOutputPath`, which is concatenated into
- * the bundle's own path list without any traversal check
- * (`normalizeBundlePath()` in `src/output-bundle.ts` collapses separators and
- * leaves `..` alone).
+ * the bundle's own path list (`createOutputBundle()` in `src/output-bundle.ts`
+ * constructs those entries through `artifactEntryDirectory()` /
+ * `artifactEntryPath()`, which normalize separators and refuse `..`).
  *
  * Each of those is sanitized at its source; this is the sink-side backstop, so
  * that no future producer of a filename can write outside the directory the user

@@ -1,6 +1,5 @@
+import { artifactRelativePath } from "../../core/artifact-path.js";
 import type { Asset, EmitterReadyArtboard, Settings } from "../../ir/types.js";
-
-export const ASSET_PATH_TOKEN = "%%ASSET_PATH%%";
 
 export interface ScopedAssetIndex {
   byArtboard: Record<string, Asset>;
@@ -78,10 +77,18 @@ export function getScopedLayerAsset(
  * `assetRoot + asset.path` with no "already prefixed?" test, and the two have
  * to produce the same string or the HTML references entries the bundle does not
  * contain.
+ *
+ * That agreement is why `asset.path` goes through `artifactRelativePath()` — the
+ * **same** constructor bundle assembly builds its entry from, not a second copy
+ * of the rule. The schema only requires `Asset.path` to be non-empty, so `/x.png`
+ * and `a//b.png` are valid IR; spelled here and normalized there, the emitted
+ * `src` was `assets//x.png` while the ZIP held `assets/x.png`. The base is still
+ * concatenated verbatim, because `imageSourcePath` is a URL the user is
+ * deliberately pointing somewhere the bundle layout does not describe.
  */
 export function resolveAssetPath(asset: Asset, settings: Settings, assetBase?: string): string {
   const basePath = settings.imageSourcePath || assetBase || "";
-  let path = asset.path;
+  let path = artifactRelativePath(asset.path);
   if (basePath) {
     path = basePath + path;
   }
@@ -89,25 +96,6 @@ export function resolveAssetPath(asset: Asset, settings: Settings, assetBase?: s
     path += `?v=${settings.cacheBustToken}`;
   }
   return path;
-}
-
-/**
- * Create a tokenized asset path using %%ASSET_PATH%% token.
- * Used by Svelte/React emitters where the path is resolved at runtime via a prop.
- */
-export function tokenizedAssetPath(asset: Asset, settings: Settings): string {
-  let path = `${ASSET_PATH_TOKEN}/${asset.path}`;
-  if (settings.cacheBustToken != null) {
-    path += `?v=${settings.cacheBustToken}`;
-  }
-  return path;
-}
-
-/**
- * Replace %%ASSET_PATH%% tokens in a string with a concrete path.
- */
-export function replaceAssetPathToken(str: string, assetsPath: string): string {
-  return str.split(ASSET_PATH_TOKEN).join(assetsPath);
 }
 
 /**

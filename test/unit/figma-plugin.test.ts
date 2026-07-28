@@ -484,19 +484,58 @@ describe("Figma plugin foundation", () => {
      * all — a CDN, a site root. The companion test below covers that case.
      */
     it.each([
-      ["all2html-output/", "default"],
-      ["img/", "non-default"],
-      ["assets/graphics/", "nested non-default"],
-      ["", "empty"],
-    ])("keeps HTML src paths and ZIP entries in sync for %s imageOutputPath, with no imageSourcePath", (imageOutputPath) => {
-      const ir = buildDocument([makeFrame()], {
+      { label: "the default imageOutputPath", imageOutputPath: "all2html-output/" },
+      { label: "a non-default imageOutputPath", imageOutputPath: "img/" },
+      { label: "a nested imageOutputPath", imageOutputPath: "assets/graphics/" },
+      { label: "an empty imageOutputPath", imageOutputPath: "" },
+      // `imageOutputPath: "/"` is a site-root `<img src>` prefix, so the `src`
+      // keeps its leading slash and the ZIP directory is the ZIP root. This used
+      // to abort the export outright.
+      { label: "a site-root imageOutputPath", imageOutputPath: "/", src: "/story-bg.png" },
+      {
+        label: "a site-root nested imageOutputPath",
+        imageOutputPath: "/img/",
+        src: "/img/story-bg.png",
+      },
+      // `Asset.path` is only required to be non-empty, so these spellings are all
+      // valid IR. Each must still name an entry the ZIP contains.
+      {
+        label: "a root-relative asset path",
+        imageOutputPath: "img/",
+        assetPath: "/story-bg.png",
+        src: "img/story-bg.png",
+      },
+      {
+        label: "a dot-relative asset path",
+        imageOutputPath: "img/",
+        assetPath: "./story-bg.png",
+        src: "img/story-bg.png",
+      },
+      {
+        label: "a doubled separator in the asset path",
+        imageOutputPath: "img/",
+        assetPath: "a//story-bg.png",
+        src: "img/a/story-bg.png",
+      },
+      {
+        label: "a plain asset path",
+        imageOutputPath: "img/",
+        assetPath: "story-bg.png",
+        src: "img/story-bg.png",
+      },
+    ])("keeps HTML src paths and ZIP entries in sync for $label, with no imageSourcePath", ({
+      imageOutputPath,
+      assetPath = "story-bg.png",
+      src,
+    }) => {
+      const expectedSrc = src ?? `${imageOutputPath}${assetPath}`;
+      const baseAssets = makeFrame().assets ?? [];
+      const assets = baseAssets.map((asset) => ({ ...asset, path: assetPath }));
+      const ir = buildDocument([makeFrame({ assets })], {
         slug: "figma-story",
         settings: { imageOutputPath, projectName: "figma-story" },
       });
-      const bundle = buildExportBundle(ir, {
-        format: "html",
-        assetFiles: makeFrame().assets ?? [],
-      });
+      const bundle = buildExportBundle(ir, { format: "html", assetFiles: assets });
       const files = unzipSync(createZipArchive(bundle));
 
       const htmlEntry = bundle.entries.find((entry) => entry.path.endsWith(".html"));
@@ -505,12 +544,17 @@ describe("Figma plugin foundation", () => {
 
       const srcPaths = Array.from(html.matchAll(/src="([^"]+\.png)"/g)).map((match) => match[1]);
       expect(srcPaths).toHaveLength(1);
-      expect(srcPaths[0]).toBe(`${imageOutputPath}story-bg.png`);
-      expect(Object.keys(files)).toContain(srcPaths[0]);
-      expect(strFromU8(files[srcPaths[0]])).toBe("png-bytes");
+      expect(srcPaths[0]).toBe(expectedSrc);
+
+      // A site-root `src` names the ZIP root: the leading `/` is the URL half
+      // of the one value, and a ZIP has no entries above its root. Everything
+      // after it must match an entry character for character.
+      const expectedEntry = expectedSrc.replace(/^\/+/, "");
+      expect(Object.keys(files)).toContain(expectedEntry);
+      expect(strFromU8(files[expectedEntry])).toBe("png-bytes");
 
       // The manifest is the machine-readable inventory; it must agree too.
-      expect(bundle.entries.map((entry) => entry.path)).toContain(srcPaths[0]);
+      expect(bundle.entries.map((entry) => entry.path)).toContain(expectedEntry);
     });
 
     /**

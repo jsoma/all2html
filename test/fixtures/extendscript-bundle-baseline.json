@@ -4,7 +4,7 @@
     "core": {
       "artifact": "dist/extendscript/all2html-core.js",
       "build": "build:extendscript",
-      "bytes": 124675,
+      "bytes": 124705,
       "recordedAt": "2026-07-27",
       "growthTolerance": 0.05,
       "history": [
@@ -55,13 +55,17 @@
         {
           "bytes": 124675,
           "reason": "124675 B. Contract-cleanup review: +3,554 B for two categorical boundaries. artifact-path.ts supplies the ES3-safe constructor used by Illustrator output directories and bundle entry paths, closing the remaining html_output_path traversal and normalizing asset directory separators. isValidSettingValue derives the Zod-free Illustrator settings boundary from SETTING_DEFINITIONS, replacing the identifier-only mirror so enum, array and numeric range constraints are enforced before ir.json persistence and after settings precedence."
+        },
+        {
+          "bytes": 124705,
+          "reason": "124705 B. +30 B: artifactRelativePath was extracted as the single path normalizer in artifact-path.ts and every other constructor now builds on it, so the emitter and bundle assembly spell a path the same way. asset.path \"/x.png\" under base \"assets/\" previously emitted assets//x.png against a ZIP entry of assets/x.png. artifactEntryDirectory joined it, treating a value that normalizes to empty as the artifact root so imageOutputPath \"/\" stops aborting every bundle export while keeping the leading slash in the emitted src."
         }
       ]
     },
     "assembled": {
       "artifact": "dist/all2html.js",
       "build": "build:illustrator",
-      "bytes": 217105,
+      "bytes": 218443,
       "recordedAt": "2026-07-27",
       "growthTolerance": 0.05,
       "history": [
@@ -107,7 +111,11 @@
         },
         {
           "bytes": 217105,
-          "reason": "217105 B. +519 B: the Illustrator output directory moved into a named resolveDocumentOutputPath so a test can execute the real function out of the shipped .jsx. relativeOutputDirectory rejecting traversal was already proven, and the bundle re-exporting it was already proven, but nothing pinned that exporter.jsx still calls it -- deleting that one call left the whole suite green while html_output_path ../../outside escaped the document directory again. Removing it now fails three tests."
+          "reason": "217105 B. +519 B: the Illustrator output directory moved into a named resolveDocumentOutputPath so a test can execute the real function out of the shipped .jsx. relativeOutputDirectory rejecting traversal was already proven, and the bundle re-exporting it was already proven, but nothing pinned that exporter.jsx still calls it -- deleting that one call left the whole suite green while html_output_path ../../outside escaped the document directory again. CORRECTION, made in the next entry: what this bought was narrower than it claimed. Deleting the relativeOutputDirectory call INSIDE resolveDocumentOutputPath failed three tests; bypassing resolveDocumentOutputPath at its runExporter call site -- writing docPath + (docSettings.html_output_path || ...) directly -- still failed nothing, because the test called the extracted function itself and runExporter had no executable coverage at all. That call site is pinned by the harness recorded below."
+        },
+        {
+          "bytes": 218443,
+          "reason": "218443 B. +1,338 B, in two parts. +1,308 B is plugins/illustrator/exporter.jsx: the export run and the persisted ir.json now derive from ONE validated settings object. There were two bags -- canonicalIrSettings, which was sanitized and written to disk, and a separate unvalidated `settings` literal that re-parsed the same raw docSettings and drove image extraction -- so image_format: gif was stripped from ir.json and still reached exportParams.format, writing a document that fails our own schema, and an out-of-range jpg_quality changed the exported JPEG while ir.json recorded 85. buildExportSettings now reads the sanitized canonical bag and falls back to All2Html.defaultSettings per key, which is the same fallback the core's own sanitizer uses; the exporter's duplicated per-setting parsing and its dead `outputMode` field are gone, and promo_image_width is read from the validated bag too. Roughly 0.8 KB of the delta is the two rationale comments -- exporter.jsx is concatenated verbatim, comments included. The remaining +30 B is carried from the core artifact (src/core/artifact-path.ts, changed in parallel on this branch); it is not attributed here and the core baseline is not re-recorded by this entry. Not a byte of this is the new coverage: test/helpers/illustrator-fake-dom.ts runs the whole shipped exporter -- last line included -- against a fake Illustrator DOM, so runExporter's call sites are executed rather than described. Four guards that were deletable with the suite green now each fail test/unit/illustrator-run-exporter.test.ts: the resolveDocumentOutputPath call site, the sanitizeCanonicalSettings call site, the result.files write loop, and makeKeyword on the slug that is concatenated into the promo image File path."
         }
       ]
     },
