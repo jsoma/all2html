@@ -188,6 +188,41 @@ describe("the CLI cannot resolve a write path outside its output directory", () 
     // with the output directory's name must not pass.
     expect(() => resolveInsideOutputDir(outDir, "../all2html-out-evil/x.html")).toThrow();
   });
+
+  /**
+   * Containment used to be `outPath.startsWith(absOutputDir + sep)`, which is
+   * only correct when the directory does not already end in a separator. For a
+   * filesystem root that concatenation is `//`, so `-o /` rejected every file
+   * the run tried to write — the guard refused the whole export rather than a
+   * hostile name. A Windows drive root (`C:\`) and any user-supplied path with
+   * a trailing slash have the same shape.
+   */
+  it("accepts a filesystem root, and a directory given with a trailing separator", () => {
+    const root = resolve(sep);
+    expect(resolveInsideOutputDir(root, "graphic.html")).toBe(join(root, "graphic.html"));
+    expect(resolveInsideOutputDir(root, "all2html-output/img.png")).toBe(
+      join(root, "all2html-output", "img.png"),
+    );
+
+    expect(resolveInsideOutputDir(outDir + sep, "graphic.html")).toBe(join(outDir, "graphic.html"));
+    expect(resolveInsideOutputDir(outDir + sep, "all2html-output/img.png")).toBe(
+      join(outDir, "all2html-output", "img.png"),
+    );
+    // Traversal is still refused when the directory carries a trailing
+    // separator — the loosened check must not have loosened that.
+    expect(() => resolveInsideOutputDir(outDir + sep, "../outside.html")).toThrow(
+      /outside the output directory/,
+    );
+    expect(() => resolveInsideOutputDir(outDir + sep, "../all2html-out-evil/x.html")).toThrow();
+  });
+
+  it("refuses to write the output directory itself", () => {
+    for (const self of ["", ".", "./", "sub/.."]) {
+      expect(() => resolveInsideOutputDir(outDir, self), JSON.stringify(self)).toThrow(
+        /outside the output directory/,
+      );
+    }
+  });
 });
 
 /**

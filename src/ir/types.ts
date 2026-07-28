@@ -309,6 +309,22 @@ export interface Asset {
   height: number;
   artboardId: string;
   layerId?: string;
+  /**
+   * Alt text describing *this* image.
+   *
+   * Alt text has to travel with the thing it describes. `Metadata.imageAltText`
+   * is document-level, so a multi-file import that rasterizes two unrelated
+   * graphics could only store one description and every artboard rendered it —
+   * labelling one graphic with the other's text, which is worse for a screen
+   * reader than no label at all. The asset is the narrowest thing that owns a
+   * description: it already carries `artboardId`/`layerId`, so per-artboard
+   * scoping is free and no pipeline phase has to carry the field.
+   *
+   * Emitters prefer this over `Metadata.imageAltText`, which stays as the
+   * document-level fallback (Illustrator sets it from its settings block).
+   * Omitted when absent — never `undefined`.
+   */
+  altText?: string;
   source?: SourceMetadata;
   exportParams: {
     format: string;

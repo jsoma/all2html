@@ -522,8 +522,10 @@ interface Asset {
   mimeType: string;              // "image/png", "image/jpeg", "image/svg+xml"
   width: number;                 // pixel width
   height: number;                // pixel height
-  artboardName: string;          // which artboard this belongs to
-  layerName?: string;            // which layer (for :png, :svg layers)
+  artboardId: string;            // which artboard this belongs to (canonical id)
+  layerId?: string;              // which layer (for :png, :svg layers)
+  altText?: string;              // description of *this* image; document-level
+                                 // metadata.imageAltText is the fallback
   exportParams: {
     format: string;
     scale: number;               // 1 or 2 (retina)

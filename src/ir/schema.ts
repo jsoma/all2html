@@ -196,6 +196,7 @@ export const AssetSchema = z.object({
   height: z.number().positive(),
   artboardId: z.string().min(1),
   layerId: z.string().optional(),
+  altText: z.string().optional(),
   source: SourceMetadataSchema.optional(),
   exportParams: z.object({
     format: z.enum(["png", "png24", "jpg", "svg"]),

@@ -85,9 +85,14 @@ describe("Illustrator SVG live text recovery", () => {
       "countries-artboard-4-interactions.svg: left text positioned outside the artboard in the background asset.",
     );
     expect(result.warnings).toContain(
-      "countries-artboard-4-interactions.svg: generated placeholder image alt text; review metadata.imageAltText before publishing.",
+      "countries-artboard-4-interactions.svg: generated placeholder image alt text; review the alt text before publishing.",
     );
     expect(result.document.metadata.imageAltText).toBe("countries-artboard-4-interactions");
+    // The same text also rides on the asset it describes, so a multi-file
+    // import cannot hand this label to somebody else's graphic.
+    expect(Object.values(result.document.assets).map((asset) => asset.altText)).toEqual([
+      "countries-artboard-4-interactions",
+    ]);
     expect(html).toContain('alt="countries-artboard-4-interactions"');
     expect(html).not.toContain('alt=""');
   });

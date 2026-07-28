@@ -29,6 +29,7 @@ The IR is the contract between input plugins and the core. Plugins produce it, t
 - Zod-free surfaces validate setting values through `isValidSettingValue()` from `settings-definitions.ts`; it derives enum/range/type/identifier rules from the same definitions that build `SettingsSchema`. Do not add another per-setting validator in an exporter.
 - The Figma plugin foundation imports `SettingsSchema`, `MetadataSchema`, and `FontMappingSchema` directly from `schema.ts` for config validation. Keep those schemas canonical and shared rather than cloning plugin-local variants.
 - Accessibility metadata belongs in `Document.metadata` (`altText`, `imageAltText`, `ariaRole`), not in `Document.settings`.
+- A description of **one image** belongs on that image: `Asset.altText`. `Metadata.imageAltText` is the document-level fallback and emitters prefer the asset's own value. A document-level field cannot describe two rasterized graphics, and stamping one file's recovered text onto the other's `alt` is worse than no label at all.
 - Font mappings use `sourceFont` as the canonical source-tool key. Keep `aifont` only in explicit compatibility adapters.
 
 ## Unit conventions

@@ -273,6 +273,12 @@ function renderArtboard(
   // Background image
   const bgAsset = getScopedArtboardAsset(assetIdx, ab);
   if (bgAsset) {
+    // The asset's own description wins over the document-level one. Two
+    // rasterized artboards in one document describe two different graphics, and
+    // `metadata.imageAltText` can only hold one of them; it stays as the
+    // document-level fallback because that is what Illustrator's settings block
+    // and the Figma UI set.
+    const bgAltText = bgAsset.altText || doc.metadata.imageAltText || "";
     if (cssVarImages) {
       // CSS custom property mode: use <div> with background-image via CSS var
       children.push(
@@ -280,14 +286,14 @@ function renderArtboard(
           ["id", abId + "-img"],
           ["class", ns + "aiImg"],
           ["role", "img"],
-          ["aria-label", doc.metadata.imageAltText || ab.name],
+          ["aria-label", bgAltText || ab.name],
         ]),
       );
     } else {
       const imgAttrs: HtmlAttrs = [
         ["id", abId + "-img"],
         ["class", ns + "aiImg"],
-        ["alt", doc.metadata.imageAltText || ""],
+        ["alt", bgAltText],
         ["src", resolveAssetPath(bgAsset, settings, assetBase)],
       ];
       if (settings.useLazyLoader) {

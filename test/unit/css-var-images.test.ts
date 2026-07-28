@@ -78,6 +78,71 @@ describe("CSS custom property image loading", () => {
     expect(html).toContain('aria-label="desktop"');
   });
 
+  /**
+   * `Asset.altText` describes one image; `metadata.imageAltText` describes the
+   * whole document. Illustrator only ever sets the document-level one (from
+   * `image_alt_text` in the settings block), so it has to keep applying to
+   * every background; the SVG importer sets the per-asset one, which has to win
+   * so two rasterized graphics in one document cannot be given the same label.
+   */
+  describe("background image alt text", () => {
+    function withAltText(assetAltText: Record<string, string>, documentAltText?: string) {
+      const cloned = structuredClone(doc);
+      if (documentAltText !== undefined) cloned.metadata.imageAltText = documentAltText;
+      for (const [assetId, altText] of Object.entries(assetAltText)) {
+        cloned.assets[assetId].altText = altText;
+      }
+      return cloned;
+    }
+
+    it("applies metadata.imageAltText to every background — the Illustrator path", () => {
+      const { html } = emitHTML(withAltText({}, "Chart of the whole thing"));
+      expect(html.match(/alt="Chart of the whole thing"/g)).toHaveLength(3);
+      expect(html).not.toContain('alt=""');
+    });
+
+    it("prefers the asset's own alt text over the document-level one", () => {
+      const { html } = emitHTML(
+        withAltText({ "bg-mobile": "Small screen chart" }, "Chart of the whole thing"),
+      );
+      expect(html).toContain('alt="Small screen chart"');
+      // The other two backgrounds still fall back to the document-level value.
+      expect(html.match(/alt="Chart of the whole thing"/g)).toHaveLength(2);
+    });
+
+    it("gives each asset its own label with no document-level value at all", () => {
+      const { html } = emitHTML(
+        withAltText({ "bg-mobile": "Small screen chart", "bg-desktop": "Wide chart" }),
+      );
+      expect(html).toContain('alt="Small screen chart"');
+      expect(html).toContain('alt="Wide chart"');
+      // bg-tablet has neither, so it keeps the empty alt a decorative image gets.
+      expect(html).toContain('alt=""');
+    });
+
+    it("uses the same precedence for the css-var aria-label, artboard name last", () => {
+      const { html } = emitHTML(
+        withAltText({ "bg-mobile": "Small screen chart" }, "Chart of the whole thing"),
+        undefined,
+        { responsiveImageMode: "css-var" },
+      );
+      expect(html).toContain('aria-label="Small screen chart"');
+      expect(html.match(/aria-label="Chart of the whole thing"/g)).toHaveLength(2);
+      expect(html).not.toContain('aria-label="mobile"');
+
+      const { html: bare } = emitHTML(
+        withAltText({ "bg-mobile": "Small screen chart" }),
+        undefined,
+        {
+          responsiveImageMode: "css-var",
+        },
+      );
+      expect(bare).toContain('aria-label="Small screen chart"');
+      expect(bare).toContain('aria-label="tablet"');
+      expect(bare).toContain('aria-label="desktop"');
+    });
+  });
+
   it("keeps <img> tags for PNG/SVG overlay layers", () => {
     // Load a fixture that has both background and overlay layers
     const ir = JSON.parse(readFileSync("test/fixtures/ir/png-layer-overlay.json", "utf-8"));

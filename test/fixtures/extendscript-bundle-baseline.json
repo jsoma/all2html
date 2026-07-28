@@ -4,7 +4,7 @@
     "core": {
       "artifact": "dist/extendscript/all2html-core.js",
       "build": "build:extendscript",
-      "bytes": 124705,
+      "bytes": 124747,
       "recordedAt": "2026-07-27",
       "growthTolerance": 0.05,
       "history": [
@@ -59,13 +59,17 @@
         {
           "bytes": 124705,
           "reason": "124705 B. +30 B: artifactRelativePath was extracted as the single path normalizer in artifact-path.ts and every other constructor now builds on it, so the emitter and bundle assembly spell a path the same way. asset.path \"/x.png\" under base \"assets/\" previously emitted assets//x.png against a ZIP entry of assets/x.png. artifactEntryDirectory joined it, treating a value that normalizes to empty as the artifact root so imageOutputPath \"/\" stops aborting every bundle export while keeping the leading slash in the emitted src."
+        },
+        {
+          "bytes": 124747,
+          "reason": "124747 B. +42 B: Asset.altText plumbing in html-tree.ts. Alt text recovered from a rasterized SVG now rides on the asset it describes instead of on document metadata -- a multi-file import kept only the first file's text and the emitter stamped it onto every rasterized artboard, so two unrelated graphics got the same aria-label and one of them described the wrong image. metadata.imageAltText stays as the document-level fallback, which is what the Illustrator settings block and the Figma UI set. The assembled entry above already carries these 42 B."
         }
       ]
     },
     "assembled": {
       "artifact": "dist/all2html.js",
       "build": "build:illustrator",
-      "bytes": 218443,
+      "bytes": 219056,
       "recordedAt": "2026-07-27",
       "growthTolerance": 0.05,
       "history": [
@@ -116,6 +120,10 @@
         {
           "bytes": 218443,
           "reason": "218443 B. +1,338 B, in two parts. +1,308 B is plugins/illustrator/exporter.jsx: the export run and the persisted ir.json now derive from ONE validated settings object. There were two bags -- canonicalIrSettings, which was sanitized and written to disk, and a separate unvalidated `settings` literal that re-parsed the same raw docSettings and drove image extraction -- so image_format: gif was stripped from ir.json and still reached exportParams.format, writing a document that fails our own schema, and an out-of-range jpg_quality changed the exported JPEG while ir.json recorded 85. buildExportSettings now reads the sanitized canonical bag and falls back to All2Html.defaultSettings per key, which is the same fallback the core's own sanitizer uses; the exporter's duplicated per-setting parsing and its dead `outputMode` field are gone, and promo_image_width is read from the validated bag too. Roughly 0.8 KB of the delta is the two rationale comments -- exporter.jsx is concatenated verbatim, comments included. The remaining +30 B is carried from the core artifact (src/core/artifact-path.ts, changed in parallel on this branch); it is not attributed here and the core baseline is not re-recorded by this entry. Not a byte of this is the new coverage: test/helpers/illustrator-fake-dom.ts runs the whole shipped exporter -- last line included -- against a fake Illustrator DOM, so runExporter's call sites are executed rather than described. Four guards that were deletable with the suite green now each fail test/unit/illustrator-run-exporter.test.ts: the resolveDocumentOutputPath call site, the sanitizeCanonicalSettings call site, the result.files write loop, and makeKeyword on the slug that is concatenated into the promo image File path."
+        },
+        {
+          "bytes": 219056,
+          "reason": "219056 B. +613 B, in two parts. +571 B is plugins/illustrator/exporter.jsx: runRestoreActions now returns a failure count and executeAll2Html only sets docToMarkSaved.saved = true when that count is zero. Every restore failure was already downgraded to an illustrator:restore-failed warning and the save flag was then set unconditionally, so a document left mutated -- a settings block still hidden, a layer still invisible, an artboard index moved -- was marked clean and Illustrator never prompted; the user closed a file whose on-screen state no longer matched the one on disk. The warning text now also states that the document was left modified and is not marked saved, since the grouped warnings are the only channel the panel renders. Roughly half the 571 B is comment: exporter.jsx is concatenated verbatim. The remaining +42 B is carried from the core artifact (src/, changed in parallel on this branch); it is not attributed here and the core baseline is not re-recorded by this entry. Not a byte of this is the new coverage: test/unit/illustrator-run-exporter.test.ts now runs the whole shipped exporter against a fake Illustrator DOM whose special block refuses to be unhidden, and asserts document.saved is never assigned -- reverting the guard turns that assertion red while the clean-path companion stays green."
         }
       ]
     },

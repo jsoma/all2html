@@ -454,14 +454,96 @@ describe("SVG importer matrix transforms", () => {
     );
 
     expect(result.document.metadata.imageAltText).toBe("Unemployment by county");
+    // It also travels with the asset it describes, which is what survives a
+    // multi-file import.
+    expect(Object.values(result.document.assets).map((asset) => asset.altText)).toEqual([
+      "Unemployment by county",
+    ]);
     expect(result.warnings).toContain(
-      "chart.svg: generated placeholder image alt text; review metadata.imageAltText before publishing.",
+      "chart.svg: generated placeholder image alt text; review the alt text before publishing.",
     );
 
     const processed = processDocument(result.document);
     const emitted = getEmitter("html").emitAll(processed.document, processed.groups);
     expect(emitted.files[0].output).toContain('alt="Unemployment by county"');
     expect(emitted.files[0].output).not.toContain('alt=""');
+  });
+
+  /**
+   * Alt text is per-graphic. It used to be stored once per *document*
+   * (`imageAltText ??= parsed.imageAltText` in the per-file loop), so the first
+   * rasterized file's recovered copy was stamped onto every rasterized
+   * artboard. A screen-reader user then heard one graphic described as the
+   * other, which is worse than an unlabelled image because nothing signals the
+   * mismatch.
+   */
+  it("gives each rasterized file in a multi-SVG import its own alt text", async () => {
+    const rotated = (label: string) =>
+      `<text transform="matrix(0.7071 0.7071 -0.7071 0.7071 100 50)" font-size="16">${label}</text>`;
+    const result = await importSVGFiles(
+      [
+        {
+          path: "unemployment.svg",
+          content: `<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="300" fill="#eee"/>${rotated("Unemployment by county")}</svg>`,
+        },
+        {
+          path: "rainfall.svg",
+          content: `<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="300" fill="#ddd"/>${rotated("Rainfall since 1950")}</svg>`,
+        },
+      ],
+      { entrypointPaths: ["unemployment.svg", "rainfall.svg"], slug: "two-charts" },
+    );
+
+    const altByArtboard = Object.fromEntries(
+      Object.values(result.document.assets).map((asset) => [asset.artboardId, asset.altText]),
+    );
+    expect(Object.values(altByArtboard).sort()).toEqual([
+      "Rainfall since 1950",
+      "Unemployment by county",
+    ]);
+
+    // No document-level value to leak across the two graphics.
+    expect(result.document.metadata.imageAltText).toBeUndefined();
+
+    const processed = processDocument(result.document);
+    const emitted = getEmitter("html").emitAll(processed.document, processed.groups);
+    const html = emitted.files.map((file) => file.output).join("\n");
+    expect(html).toContain('alt="Unemployment by county"');
+    expect(html).toContain('alt="Rainfall since 1950"');
+  });
+
+  it("leaves an undescribed artboard undescribed in a multi-SVG import", async () => {
+    const result = await importSVGFiles(
+      [
+        {
+          path: "unemployment.svg",
+          content:
+            '<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="300" fill="#eee"/><text transform="matrix(0.7071 0.7071 -0.7071 0.7071 100 50)" font-size="16">Unemployment by county</text></svg>',
+        },
+        {
+          path: "plain.svg",
+          content:
+            '<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="300" fill="#ddd"/></svg>',
+        },
+      ],
+      { entrypointPaths: ["unemployment.svg", "plain.svg"], slug: "two-charts" },
+    );
+
+    const plainAsset = Object.values(result.document.assets).find((asset) =>
+      asset.artboardId.includes("plain"),
+    );
+    expect(plainAsset).toBeDefined();
+    expect(plainAsset?.altText).toBeUndefined();
+
+    const processed = processDocument(result.document);
+    const emitted = getEmitter("html").emitAll(processed.document, processed.groups);
+    const byFile = Object.fromEntries(emitted.files.map((file) => [file.slug, file.output]));
+
+    // The described graphic keeps its description; the undescribed one stays
+    // decorative instead of inheriting the other file's label.
+    expect(byFile["two-charts-unemployment"]).toContain('alt="Unemployment by county"');
+    expect(byFile["two-charts-plain"]).toContain('alt=""');
+    expect(byFile["two-charts-plain"]).not.toContain("Unemployment by county");
   });
 
   it("falls back to the artboard name when the discarded text is unusable", async () => {

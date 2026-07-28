@@ -1353,14 +1353,19 @@ async function parseSvgFile(
   // A graphic that rasterized every one of its text objects would otherwise ship
   // with alt="". Seed alt text from the discarded copy so the output is at least
   // describable, and tell the user to review it.
+  //
+  // The text is stored on the background asset, not only on the document: this
+  // runs once per imported file, and a document-level field can hold only one
+  // description for a whole batch of unrelated graphics.
   let imageAltText: string | undefined;
   if (textRecoveryFailed && backgroundAsset) {
     imageAltText = synthesizeImageAltText(scan.discardedText, naming.artboardName);
+    backgroundAsset.altText = imageAltText;
     addWarning(
       state,
       "import:placeholder-alt-text",
       "text",
-      `${file.path}: generated placeholder image alt text; review metadata.imageAltText before publishing.`,
+      `${file.path}: generated placeholder image alt text; review the alt text before publishing.`,
     );
   }
 
@@ -1479,7 +1484,14 @@ export async function importSVGFilesWithRasterizer(
 
     const parsed = await parseSvgFile(state, file, filesByPath, naming, importSettings, rasterizer);
     artboards.push(parsed.artboard);
-    imageAltText ??= parsed.imageAltText;
+    // Document-level alt text is only meaningful when the document describes a
+    // single graphic. `imageAltText ??= parsed.imageAltText` kept the *first*
+    // file's recovered text and the emitter then stamped it onto every
+    // rasterized artboard, so a two-file import labelled one graphic with the
+    // other's description. Per-file text lives on `backgroundAsset.altText`;
+    // this field is populated only for the single-entrypoint case, where the
+    // two are the same thing.
+    if (entrypointPaths.length === 1) imageAltText = parsed.imageAltText;
     if (parsed.backgroundAsset && parsed.backgroundFile) {
       assets[parsed.backgroundAsset.id] = parsed.backgroundAsset;
       state.assetFiles.push(parsed.backgroundFile);
