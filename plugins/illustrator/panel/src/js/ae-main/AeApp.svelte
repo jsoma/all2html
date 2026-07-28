@@ -85,7 +85,9 @@
       if (generation !== templateLoadGeneration) return;
       outputTemplates = [];
       canQueueInAME = false;
-      templateLoadError = String(e);
+      // e.message, not String(e): the host error text often already carries an
+      // "Error:" prefix, and String(Error) adds another.
+      templateLoadError = e instanceof Error ? e.message : String(e);
     }
   }
 

@@ -19,6 +19,12 @@ var structuredWarnings = [];
 var restoreActions = [];
 var unlockedObjectCount = 0;
 var docToMarkSaved = null;
+// Illustrator's SVG exporter renames the document in place: after
+// doc.exportFile(..., ExportType.SVG, ...) the document's name and fullName
+// point at the exported layer SVG, so a later File > Save would overwrite
+// that artifact instead of the .ai file. runExporter records the identity
+// here; executeAll2Html restores it after the run.
+var docIdentityToRestore = null;
 
 function logDiagnostic(level, message, detail) {
   try {
@@ -1929,6 +1935,7 @@ function runExporter() {
   restoreActions = [];
   unlockedObjectCount = 0;
   docToMarkSaved = null;
+  docIdentityToRestore = null;
 
   var startTime = new Date().getTime();
   var span;
@@ -1941,6 +1948,11 @@ function runExporter() {
   var docPath = doc.path + "/";
   var docSaved = doc.saved;
   var docName = doc.name.replace(/\.ai$/i, "");
+  try {
+    docIdentityToRestore = { doc: doc, fullName: String(doc.fullName), savedAtStart: docSaved };
+  } catch(e) {
+    docIdentityToRestore = null;
+  }
   span.end(doc.name);
 
   span = logSpan("unlockObjects");
@@ -2254,10 +2266,37 @@ function executeAll2Html() {
 
   // Restore state on success (LIFO: inverse order of mutation)
   var failedRestores = runRestoreActions();
+
+  // Illustrator's SVG exporter renames the document in place: after
+  // doc.exportFile(..., ExportType.SVG, ...) name and fullName point at the
+  // exported layer SVG, so File > Save would write an .ai over that SVG
+  // instead of over the user's .ai file.
+  //
+  // This warns rather than saving the document back. saveAs() to the original
+  // path does restore the identity, but it is not free and it is not ours to
+  // spend: measured against real Illustrator it took 133.7s on a 577 KB
+  // document, and it commits a write to the user's file that the export never
+  // asked for. The root fix is to export SVG from a temporary document (what
+  // ai2html did) so the rename lands on a throwaway; that is a real exporter
+  // change, tracked separately.
+  var renamed = false;
+  if (docIdentityToRestore) {
+    var identity = docIdentityToRestore;
+    docIdentityToRestore = null;
+    var currentFullName = null;
+    try { currentFullName = String(identity.doc.fullName); } catch(e) {}
+    if (currentFullName !== null && currentFullName !== identity.fullName) {
+      renamed = true;
+      warn('Illustrator renamed this document to "' + identity.doc.name + '" while exporting an :svg layer, so it now points at the exported SVG. The file on disk is untouched, but File > Save would overwrite that SVG - use File > Save As and pick the original .ai file. The document is left unsaved so Illustrator prompts you.', "illustrator:document-renamed", "other");
+    }
+  }
+
   if (docToMarkSaved) {
-    // Only a fully restored document is clean. A failed restore means the file
-    // really is modified: leave it dirty so Illustrator prompts on close.
-    if (failedRestores === 0) {
+    // Only a fully restored document with its own identity is clean. A failed
+    // restore means the file really is modified; a rename means the document
+    // no longer points at the file it came from. Either way leave it dirty so
+    // Illustrator prompts on close instead of letting it be closed silently.
+    if (failedRestores === 0 && !renamed) {
       try { docToMarkSaved.saved = true; } catch(e) {}
     }
     docToMarkSaved = null;

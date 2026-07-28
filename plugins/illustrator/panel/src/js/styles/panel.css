@@ -491,6 +491,12 @@ select option {
   color: var(--text-primary);
 }
 
+.run-alert-strip.success {
+  background: rgba(45, 145, 85, 0.09);
+  border-color: rgba(45, 145, 85, 0.35);
+  color: var(--text-primary);
+}
+
 .run-alert-copy {
   display: flex;
   flex-wrap: wrap;

@@ -77,7 +77,7 @@
     "assembled": {
       "artifact": "dist/all2html.js",
       "build": "build:illustrator",
-      "bytes": 227329,
+      "bytes": 230226,
       "recordedAt": "2026-07-28",
       "growthTolerance": 0.05,
       "history": [
@@ -140,6 +140,10 @@
         {
           "bytes": 227329,
           "reason": "227329 B. +4,041 B (+1.8%) across the contract-cleanup branch: +849 B carried from the core (see its entry) and +3,192 B in plugins/illustrator/exporter.jsx, in four parts. (1) Valid zeros: layer opacity and jpg_quality 0 no longer erased by || defaults (explicit null/undefined checks, matching computeOpacity). (2) The default-layer fallback prefers a visible layer and warns layer:invisible-content when content lands on an invisible one -- required because the core emitter now skips visible:false layers, so text attached to one would otherwise vanish silently. (3) Per-artboard element-id dedupe with a numeric suffix and a text:duplicate-id warning -- required because the IR now rejects duplicate html-rendered text ids per artboard, and a copy-pasted named frame is ordinary authoring, not an error. (4) The one text disposition: computeTextFrameRotation + decideTextFrameRenderAs are consulted by both element extraction and hideTextFramesForExport, so a frame whose element is renderAs:image (including the rotated case under render_rotated_skewed_text_as: image) stays visible during raster export instead of disappearing from both the HTML and the raster. Offset by deleting the write_image_files/inline_svg key-map entries and the svg_id_prefix read. As always, exporter.jsx is concatenated verbatim, so a portion of the delta is the rationale comments at those four sites."
+        },
+        {
+          "bytes": 230226,
+          "reason": "230226 B. +2,897 B, all in plugins/illustrator/exporter.jsx: the document-rename report found by the live smoke. Illustrator's SVG exporter renames the document in place -- after doc.exportFile(ExportType.SVG) name and fullName point at the exported layer SVG, so File > Save writes an .ai over that SVG instead of over the user's .ai, and the exporter then marked the RENAMED document saved, so it could be closed with no prompt. The exporter now records the identity before the run and, when a rename is detected, warns illustrator:document-renamed with the recovery instruction (File > Save As, pick the original .ai) and leaves the document unsaved so Illustrator prompts on close -- the same 'a document whose on-screen state no longer matches disk stays dirty' rule as the restore-failure entry above. Auto-saving it back was implemented first and REJECTED on measurement: doc.saveAs() to the original path took 133.7s on a 577 KB document against real Illustrator, and it commits a write to the user's file that the export never asked for. The root fix is exporting SVG from a temporary document (what ai2html's copyArtboardForImageExport did) so the rename lands on a throwaway; that is a real exporter change, not a warning, and is tracked separately. Roughly 1.3 KB of the delta is the rationale comments; exporter.jsx ships comments verbatim. Pinned by two fake-DOM scenarios in test/unit/illustrator-run-exporter.test.ts against a harness that now reproduces the rename, and verified against live Illustrator."
         }
       ]
     },

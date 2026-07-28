@@ -2,6 +2,7 @@
  * After Effects helpers for the shared CEP panel hostscript.
  */
 
+import { hostErrorMessage } from "../shared/host-contract";
 import { findMissingConfiguredFonts } from "./font-config";
 
 function stripJsonComments(content: string): string {
@@ -266,7 +267,7 @@ function aeSaveConfigFile(configJson: string): string {
     file.close();
     return JSON.stringify({ success: true });
   } catch (e) {
-    return JSON.stringify({ success: false, error: String(e) });
+    return JSON.stringify({ success: false, error: hostErrorMessage(e) });
   }
 }
 

@@ -11,6 +11,7 @@ import {
   HOST_NAMESPACE,
   type HostCommandArgs,
   type HostCommandName,
+  hostErrorMessage,
   ILLUSTRATOR_HOST_COMMANDS,
 } from "../shared/host-contract";
 import {
@@ -238,7 +239,11 @@ registerHostCommand(AE_HOST_COMMANDS.getAeOutputTemplates, (compId: string): str
     return JSON.stringify(aeListOutputModuleTemplates(unwrapBridgeStringArg(compId) || null));
   } catch (e) {
     // A stale targetCompId must surface as a real error, not an empty catalog.
-    return JSON.stringify({ outputModuleTemplates: [], canQueueInAME: false, error: String(e) });
+    return JSON.stringify({
+      outputModuleTemplates: [],
+      canQueueInAME: false,
+      error: hostErrorMessage(e),
+    });
   }
 });
 
@@ -292,7 +297,7 @@ registerHostCommand(COMMON_HOST_COMMANDS.openFolder, (folderPath: string): strin
     }
     return JSON.stringify({ success: false, error: "Folder not found" });
   } catch (e) {
-    return JSON.stringify({ success: false, error: String(e) });
+    return JSON.stringify({ success: false, error: hostErrorMessage(e) });
   }
 });
 
@@ -329,7 +334,7 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.saveXmpSettings, (dataJson: string
     xmpSetVariable(XMP_DATA_KEY, unwrapBridgeStringArg(dataJson));
     return JSON.stringify({ success: true });
   } catch (e) {
-    return JSON.stringify({ success: false, error: String(e) });
+    return JSON.stringify({ success: false, error: hostErrorMessage(e) });
   }
 });
 
@@ -341,7 +346,7 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.clearXmpSettings, (): string => {
     xmpDeleteVariable(XMP_DATA_KEY);
     return JSON.stringify({ success: true });
   } catch (e) {
-    return JSON.stringify({ success: false, error: String(e) });
+    return JSON.stringify({ success: false, error: hostErrorMessage(e) });
   }
 });
 
@@ -380,7 +385,7 @@ registerHostCommand(
       );
     } catch (e) {
       // A stale targetCompId must surface as a real error, not an empty list.
-      return JSON.stringify({ error: String(e) });
+      return JSON.stringify({ error: hostErrorMessage(e) });
     }
   },
 );

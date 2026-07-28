@@ -662,3 +662,45 @@ describe("image-rendered text stays visible during raster export", () => {
     expect(raster?.hiddenTextContents).toContain("Rotated label");
   });
 });
+
+/**
+ * Illustrator's SVG exporter renames the document in place: after
+ * `doc.exportFile(..., ExportType.SVG, ...)` the document's name and fullName
+ * point at the exported layer SVG, so a later File > Save would overwrite the
+ * exported artifact instead of the .ai file. The fake DOM reproduces the
+ * rename; these pin the exporter's identity restore.
+ */
+describe("SVG layer export renames the document; the exporter reports it", () => {
+  it("warns and leaves the document unsaved when an svg layer export renamed it", () => {
+    const result = run({
+      layers: [{ name: "Layer 1" }, { name: "art:svg" }],
+      textFrames: [{ contents: "Title" }],
+    });
+
+    expect(result.envelope.success, result.envelope.error).toBe(true);
+    expect(result.exports.some((entry) => entry.type === "ExportType.SVG")).toBe(true);
+    // Never saveAs: it measured 133.7s against real Illustrator and commits a
+    // write the export never asked for. Warn instead.
+    expect(result.saveAsCalls).toEqual([]);
+    expect(result.envelope.structuredWarnings.map((warning) => warning.code)).toContain(
+      "illustrator:document-renamed",
+    );
+    // Never marked clean, so Illustrator keeps the dirty flag its own
+    // mutations set and prompts on close. (The fake starts `saved: true` and
+    // does not simulate Illustrator's automatic dirtying, so the assignment
+    // log — not the flag — is what proves the exporter kept its hands off.)
+    expect(result.savedAssignments).toEqual([]);
+  });
+
+  it("leaves document identity and the saved flag alone when no svg layer exports", () => {
+    const result = run({ textFrames: [{ contents: "Title" }] });
+
+    expect(result.envelope.success, result.envelope.error).toBe(true);
+    expect(result.saveAsCalls).toEqual([]);
+    expect(result.documentName).toBe("countries.ai");
+    expect(result.envelope.structuredWarnings.map((warning) => warning.code)).not.toContain(
+      "illustrator:document-renamed",
+    );
+    expect(result.savedAssignments).toEqual([true]);
+  });
+});
