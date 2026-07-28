@@ -1,15 +1,28 @@
 import { unzipSync } from "fflate";
 import { describe, expect, it } from "vitest";
-import { CURRENT_IR_VERSION, type Document } from "../../src/ir/types.js";
+import { type Asset, CURRENT_IR_VERSION, type Document } from "../../src/ir/types.js";
 import {
   bundleToZipBytes,
   createOutputBundle,
   getBundleFile,
   type OutputBundle,
   type OutputBundleOptions,
+  resolvedManifestSlug,
 } from "../../src/output-bundle.js";
 
-function makeDocument(imageOutputPath = "assets"): Document {
+function sampleAsset(path = "sample.png"): Asset {
+  return {
+    id: "sample-asset",
+    path,
+    mimeType: "image/png",
+    width: 2,
+    height: 1,
+    artboardId: "artboard:sample",
+    exportParams: { format: "png", scale: 1 },
+  };
+}
+
+function makeDocument(imageOutputPath = "assets", assets: Record<string, Asset> = {}): Document {
   return {
     irVersion: CURRENT_IR_VERSION,
     source: { tool: "svg", toolVersion: "1.0", adapterVersion: "0.1.0" },
@@ -23,19 +36,35 @@ function makeDocument(imageOutputPath = "assets"): Document {
     fonts: [],
     artboards: [],
     customBlocks: [],
-    assets: {},
+    assets,
     metadata: { slug: "sample" },
   };
 }
 
-function makeBundleOptions(overrides: Partial<OutputBundleOptions> = {}): OutputBundleOptions {
+/**
+ * A coherent default: the document declares one asset and the sidecar carries
+ * its bytes. `assetPath` moves the *canonical* asset path, because that record
+ * is now the only place a bundle asset path comes from.
+ */
+function makeBundleOptions(
+  overrides: Partial<OutputBundleOptions> = {},
+  assetPath = "sample.png",
+): OutputBundleOptions {
   return {
-    irDocument: makeDocument(),
-    emittedFiles: [{ slug: "sample", extension: ".html", output: "<div>sample</div>" }],
-    assetFiles: [{ path: "sample.png", bytes: Uint8Array.from([1, 2, 3]), mimeType: "image/png" }],
+    irDocument: makeDocument("assets", { "sample-asset": sampleAsset(assetPath) }),
+    emittedFiles: [
+      { slug: "sample", extension: ".html", output: "<div>sample</div>", mimeType: "text/html" },
+    ],
+    assetFiles: [{ assetId: "sample-asset", bytes: Uint8Array.from([1, 2, 3]) }],
     assetRoot: "assets",
+    slug: "sample",
     ...overrides,
   };
+}
+
+/** The same options with no assets anywhere — document and sidecar agree. */
+function makeAssetlessOptions(overrides: Partial<OutputBundleOptions> = {}): OutputBundleOptions {
+  return makeBundleOptions({ irDocument: makeDocument(), assetFiles: [], ...overrides });
 }
 
 describe("output bundle", () => {
@@ -65,16 +94,110 @@ describe("output bundle", () => {
       "manifest.json",
     );
   });
+
+  it("supports an explicit ZIP compression level (0 = store, for the Figma sandbox)", () => {
+    const bundle = createOutputBundle(makeBundleOptions());
+    const stored = bundleToZipBytes(bundle, { level: 0 });
+    const deflated = bundleToZipBytes(bundle);
+
+    // Same contents either way; only the encoding differs.
+    expect(Object.keys(unzipSync(stored)).sort()).toEqual(Object.keys(unzipSync(deflated)).sort());
+    expect(new TextDecoder().decode(unzipSync(stored)["sample.html"])).toBe(
+      new TextDecoder().decode(unzipSync(deflated)["sample.html"]),
+    );
+  });
+});
+
+/**
+ * The bundle cross-references asset bytes against the canonical `Document.assets`
+ * record: exactly one byte entry per canonical asset, none for an asset the
+ * document does not declare. Before this, a bundle could ship HTML referencing
+ * an image the ZIP silently did not contain.
+ */
+describe("asset byte reconciliation", () => {
+  it("rejects a bundle missing bytes for a canonical asset, naming the asset id", () => {
+    expect(() => createOutputBundle(makeBundleOptions({ assetFiles: [] }))).toThrow(
+      /no bytes were supplied for asset "sample-asset"/,
+    );
+  });
+
+  it("rejects bytes for an asset the document does not declare, naming the asset id", () => {
+    expect(() =>
+      createOutputBundle(
+        makeBundleOptions({
+          assetFiles: [
+            { assetId: "sample-asset", bytes: Uint8Array.from([1]) },
+            { assetId: "ghost", bytes: Uint8Array.from([2]) },
+          ],
+        }),
+      ),
+    ).toThrow(/unknown asset "ghost"/);
+  });
+
+  it("rejects duplicate byte entries for one asset", () => {
+    expect(() =>
+      createOutputBundle(
+        makeBundleOptions({
+          assetFiles: [
+            { assetId: "sample-asset", bytes: Uint8Array.from([1]) },
+            { assetId: "sample-asset", bytes: Uint8Array.from([2]) },
+          ],
+        }),
+      ),
+    ).toThrow(/twice for asset "sample-asset"/);
+  });
+
+  it("takes the asset path and MIME from the canonical record, not the sidecar", () => {
+    const bundle = createOutputBundle(makeBundleOptions());
+    expect(bundle.manifest.files).toContainEqual(
+      expect.objectContaining({ path: "assets/sample.png", mimeType: "image/png", role: "asset" }),
+    );
+  });
+});
+
+describe("emitter-declared MIME and caller-supplied slug", () => {
+  it("keeps text/html on a custom htmlOutputExtension file instead of inferring from the name", () => {
+    const bundle = createOutputBundle(
+      makeAssetlessOptions({
+        emittedFiles: [
+          { slug: "sample", extension: ".php", output: "<div>php</div>", mimeType: "text/html" },
+        ],
+      }),
+    );
+
+    expect(bundle.manifest.files).toContainEqual(
+      expect.objectContaining({ path: "sample.php", mimeType: "text/html", role: "emitted" }),
+    );
+  });
+
+  it("writes the caller's resolved slug into the manifest, not the unresolved settings", () => {
+    const doc = makeDocument();
+    doc.settings.projectName = "unresolved-name";
+    const bundle = createOutputBundle(
+      makeAssetlessOptions({ irDocument: doc, slug: "resolved-name" }),
+    );
+
+    expect(bundle.manifest.slug).toBe("resolved-name");
+  });
+
+  it("resolvedManifestSlug prefers the resolved projectName and falls back to the document slug", () => {
+    expect(
+      resolvedManifestSlug({ settings: { projectName: "proj" }, metadata: { slug: "doc" } }),
+    ).toBe("proj");
+    expect(resolvedManifestSlug({ settings: { projectName: "" }, metadata: { slug: "doc" } })).toBe(
+      "doc",
+    );
+  });
 });
 
 /**
  * Zip-slip. `assetRoot` comes from `settings.imageOutputPath`, which is user text
  * on every surface (`ai2html-settings`, `all2html.config.json`, the CEP panel,
  * the Figma JSONC). Bundle entry paths become **ZIP entry names**
- * (`bundleToZipBytes`, `plugins/figma/src/export.ts`), and Figma hands that ZIP
- * to the user to extract, so a `..` in an entry name writes outside the
- * extraction directory. Bundle assembly used to only collapse separators and
- * left `..` alone, so `imageOutputPath: "../../"` produced exactly that.
+ * (`bundleToZipBytes`), and Figma hands that ZIP to the user to extract, so a
+ * `..` in an entry name writes outside the extraction directory. Bundle assembly
+ * used to only collapse separators and left `..` alone, so
+ * `imageOutputPath: "../../"` produced exactly that.
  *
  * The CLI's `resolveInsideOutputDir` covers only the CLI's filesystem sink; this
  * is the same rule stated where the paths are built, so every consumer inherits
@@ -107,22 +230,21 @@ describe("bundle entry paths cannot escape the bundle root", () => {
     );
   });
 
-  it.each(hostileRoots)("refuses an asset path of %j", (path) => {
-    expect(() =>
-      createOutputBundle(
-        makeBundleOptions({
-          assetRoot: "",
-          assetFiles: [{ path, bytes: Uint8Array.from([1]), mimeType: "image/png" }],
-        }),
-      ),
-    ).toThrow(/Refusing to build an output bundle/);
+  // The canonical asset record is now the only source of a bundle asset path,
+  // so the hostile value rides on `Document.assets[*].path`.
+  it.each(hostileRoots)("refuses a canonical asset path of %j", (path) => {
+    expect(() => createOutputBundle(makeBundleOptions({ assetRoot: "" }, path))).toThrow(
+      /Refusing to build an output bundle/,
+    );
   });
 
   it("refuses an emitted file name that escapes", () => {
     expect(() =>
       createOutputBundle(
         makeBundleOptions({
-          emittedFiles: [{ slug: "../../evil", extension: ".html", output: "x" }],
+          emittedFiles: [
+            { slug: "../../evil", extension: ".html", output: "x", mimeType: "text/html" },
+          ],
         }),
       ),
     ).toThrow(/Refusing to build an output bundle/);
@@ -132,14 +254,9 @@ describe("bundle entry paths cannot escape the bundle root", () => {
     "ir.json",
     "manifest.json",
   ])("refuses an asset that collides with the reserved %s entry", (path) => {
-    expect(() =>
-      createOutputBundle(
-        makeBundleOptions({
-          assetRoot: "",
-          assetFiles: [{ path, bytes: Uint8Array.from([9]), mimeType: "application/octet-stream" }],
-        }),
-      ),
-    ).toThrow(/collides.*Bundle entry paths must be unique/);
+    expect(() => createOutputBundle(makeBundleOptions({ assetRoot: "" }, path))).toThrow(
+      /collides.*Bundle entry paths must be unique/,
+    );
   });
 
   it("refuses distinct emitted names that normalize to one entry", () => {
@@ -147,8 +264,8 @@ describe("bundle entry paths cannot escape the bundle root", () => {
       createOutputBundle(
         makeBundleOptions({
           emittedFiles: [
-            { slug: "nested//sample", extension: ".html", output: "one" },
-            { slug: "nested/sample", extension: ".html", output: "two" },
+            { slug: "nested//sample", extension: ".html", output: "one", mimeType: "text/html" },
+            { slug: "nested/sample", extension: ".html", output: "two", mimeType: "text/html" },
           ],
         }),
       ),
@@ -158,7 +275,9 @@ describe("bundle entry paths cannot escape the bundle root", () => {
   it("classifies an emitted entry by its constructed path, not its raw spelling", () => {
     const bundle = createOutputBundle(
       makeBundleOptions({
-        emittedFiles: [{ slug: "/sample", extension: ".html", output: "sample" }],
+        emittedFiles: [
+          { slug: "/sample", extension: ".html", output: "sample", mimeType: "text/html" },
+        ],
       }),
     );
 
@@ -224,7 +343,7 @@ describe("bundle entry paths cannot escape the bundle root", () => {
    * and threw even when the document had no assets — a value the run never reads.
    */
   it("builds a bundle with a site-root assetRoot and no assets", () => {
-    const bundle = createOutputBundle(makeBundleOptions({ assetRoot: "/", assetFiles: [] }));
+    const bundle = createOutputBundle(makeAssetlessOptions({ assetRoot: "/" }));
 
     expect(bundle.files.map((file) => file.path)).toEqual([
       "ir.json",
@@ -239,9 +358,9 @@ describe("bundle entry paths cannot escape the bundle root", () => {
    * traversing value is refused whether or not this run has assets.
    */
   it("still refuses a hostile assetRoot when there are no assets", () => {
-    expect(() =>
-      createOutputBundle(makeBundleOptions({ assetRoot: "../../evil", assetFiles: [] })),
-    ).toThrow(/Refusing to build an output bundle/);
+    expect(() => createOutputBundle(makeAssetlessOptions({ assetRoot: "../../evil" }))).toThrow(
+      /Refusing to build an output bundle/,
+    );
   });
 
   it("still builds a legitimate nested asset directory", () => {
@@ -265,9 +384,8 @@ describe("bundle entry paths cannot escape the bundle root", () => {
   });
 
   /**
-   * The sink-side backstop. `OutputBundle` is a public type and the Figma writer
-   * builds its own entry names, so the ZIP writers re-assert the rule rather than
-   * trusting whoever assembled the file list.
+   * The sink-side backstop. `OutputBundle` is a public type, so the ZIP writer
+   * re-asserts the rule rather than trusting whoever assembled the file list.
    */
   it("refuses to zip a hand-assembled bundle with an escaping entry", () => {
     const bundle = createOutputBundle(makeBundleOptions());

@@ -13,7 +13,9 @@
     "jpgQuality": 85,
     "maxWidth": 640
   },
-  "fonts": [],
+  "fonts": [
+    
+  ],
   "artboards": [
     {
       "id": "illustrator:artboard:desktop-1",
@@ -119,7 +121,9 @@
       ]
     }
   ],
-  "customBlocks": [],
+  "customBlocks": [
+    
+  ],
   "assets": {
     "settings-precedence-desktop": {
       "id": "settings-precedence-desktop",

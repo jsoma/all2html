@@ -5,8 +5,12 @@
     "toolVersion": "29.8.9",
     "adapterVersion": "0.1.0"
   },
-  "settings": {},
-  "fonts": [],
+  "settings": {
+    
+  },
+  "fonts": [
+    
+  ],
   "artboards": [
     {
       "id": "illustrator:artboard:story-1-dynamic-640-1",
@@ -30,7 +34,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:story-1-dynamic-640-1:layer:locator-2",
@@ -42,7 +48,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:story-1-dynamic-640-1:layer:content-3",
@@ -158,7 +166,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:story-2-dynamic-720-2:layer:locator-2",
@@ -170,7 +180,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:story-2-dynamic-720-2:layer:content-3",
@@ -286,7 +298,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:story-3-fixed-800-3:layer:locator-2",
@@ -298,7 +312,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:story-3-fixed-800-3:layer:content-3",
@@ -414,7 +430,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:story-4-dynamic-960-4:layer:locator-2",
@@ -426,7 +444,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:story-4-dynamic-960-4:layer:content-3",
@@ -542,7 +562,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:story-5-fixed-1120-5:layer:locator-2",
@@ -554,7 +576,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:story-5-fixed-1120-5:layer:content-3",
@@ -670,7 +694,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:story-6-dynamic-1280-6:layer:locator-2",
@@ -682,7 +708,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:story-6-dynamic-1280-6:layer:content-3",
@@ -777,7 +805,9 @@
       "responsiveness": "dynamic"
     }
   ],
-  "customBlocks": [],
+  "customBlocks": [
+    
+  ],
   "assets": {
     "large-story-story-1-dynamic-640": {
       "id": "large-story-story-1-dynamic-640",

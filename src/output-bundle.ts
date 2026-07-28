@@ -44,8 +44,28 @@ export interface OutputBundleOptions {
   emittedFiles: readonly EmitFile[];
   assetFiles: readonly ImportedAssetFile[];
   assetRoot?: string;
+  /**
+   * Manifest slug, supplied by the caller from its **processed** (resolved)
+   * document. This module used to read `irDocument.settings.projectName` — the
+   * *unresolved* `Partial<Settings>` — while every caller laid out the bundle
+   * from the resolved one, so the manifest and the layout could disagree.
+   */
+  slug: string;
   emittedFormat?: string;
   warnings?: readonly string[];
+}
+
+/**
+ * The one statement of what the manifest `slug` is: the resolved project name,
+ * falling back to the document slug — the same pair `groupArtboards` names
+ * output files from. Callers pass `resolvedManifestSlug(processedDocument)` as
+ * `OutputBundleOptions.slug`.
+ */
+export function resolvedManifestSlug(document: {
+  settings: { projectName?: string };
+  metadata: { slug: string };
+}): string {
+  return document.settings.projectName || document.metadata.slug;
 }
 
 export function createOutputBundle(options: OutputBundleOptions): OutputBundle {
@@ -66,7 +86,7 @@ export function createOutputBundle(options: OutputBundleOptions): OutputBundle {
     'to build an output bundle with the image output directory ("imageOutputPath")',
   );
 
-  for (const asset of options.assetFiles) {
+  for (const asset of reconcileAssetBytes(options.irDocument, options.assetFiles)) {
     const assetPath = artifactEntryPath(
       asset.path,
       `to build an output bundle with the asset path "${asset.path}"`,
@@ -83,14 +103,10 @@ export function createOutputBundle(options: OutputBundleOptions): OutputBundle {
       `${emitted.slug}${emitted.extension}`,
       `to build an output bundle with the emitted file name "${emitted.slug}${emitted.extension}"`,
     );
-    const mimeType = relativePath.endsWith(".html")
-      ? "text/html"
-      : relativePath.endsWith(".svelte")
-        ? "text/plain"
-        : relativePath.endsWith(".tsx") || relativePath.endsWith(".jsx")
-          ? "text/plain"
-          : "text/plain";
-    filesWithoutManifest.push(createTextBundleFile(relativePath, emitted.output, mimeType));
+    // The MIME comes from the emitter that produced the file — the inference
+    // chain that used to sit here called a custom `htmlOutputExtension` file
+    // not-HTML.
+    filesWithoutManifest.push(createTextBundleFile(relativePath, emitted.output, emitted.mimeType));
   }
 
   assertUniqueBundlePaths(filesWithoutManifest);
@@ -101,6 +117,52 @@ export function createOutputBundle(options: OutputBundleOptions): OutputBundle {
     files: [...sortedFiles, manifestFile].sort((a, b) => a.path.localeCompare(b.path)),
     manifest,
   };
+}
+
+/**
+ * Cross-reference the byte sidecars against the document's canonical assets:
+ * exactly one byte entry per canonical asset, none for an asset the document
+ * does not declare. Without this a bundle could ship HTML referencing an image
+ * the ZIP does not contain — silently. Path and MIME come from the canonical
+ * record; the sidecar carries only `assetId` + bytes, so the two cannot drift.
+ */
+function reconcileAssetBytes(
+  irDocument: Document,
+  assetFiles: readonly ImportedAssetFile[],
+): Array<{ path: string; bytes: Uint8Array; mimeType: string }> {
+  const canonical = irDocument.assets;
+  const problems: string[] = [];
+  const resolved: Array<{ path: string; bytes: Uint8Array; mimeType: string }> = [];
+  const seen = new Set<string>();
+
+  for (const file of assetFiles) {
+    // NOT `Object.hasOwn` — ES2022; this module runs inside the Figma plugin VM.
+    if (!Object.hasOwn(canonical, file.assetId)) {
+      problems.push(`bytes were supplied for unknown asset "${file.assetId}"`);
+      continue;
+    }
+    if (seen.has(file.assetId)) {
+      problems.push(`bytes were supplied twice for asset "${file.assetId}"`);
+      continue;
+    }
+    seen.add(file.assetId);
+    const asset = canonical[file.assetId];
+    resolved.push({ path: asset.path, bytes: file.bytes, mimeType: asset.mimeType });
+  }
+
+  for (const assetId of Object.keys(canonical)) {
+    if (!seen.has(assetId)) {
+      problems.push(`no bytes were supplied for asset "${assetId}"`);
+    }
+  }
+
+  if (problems.length > 0) {
+    throw new Error(
+      `Refusing to build an output bundle: ${problems.join("; ")}. Every canonical asset needs exactly one byte entry.`,
+    );
+  }
+
+  return resolved;
 }
 
 function createManifest(
@@ -115,13 +177,12 @@ function createManifest(
       ),
     ),
   );
-  const slug = options.irDocument.settings.projectName || options.irDocument.metadata.slug;
   return {
     schemaVersion: "0.1.0",
     createdAt: new Date().toISOString(),
     source: options.irDocument.source,
     irVersion: options.irDocument.irVersion,
-    slug,
+    slug: options.slug,
     emittedFormat: options.emittedFormat,
     warnings: [...(options.warnings ?? [])],
     files: files.map((file) => ({
@@ -176,7 +237,17 @@ export function getBundleFile(bundle: OutputBundle, path: string): OutputBundleF
   return bundle.files.find((file) => file.path === normalized);
 }
 
-export function bundleToZipBytes(bundle: OutputBundle): Uint8Array {
+export interface BundleZipOptions {
+  /**
+   * DEFLATE level, 0 (store) through 9. Defaults to 6, fflate's own default.
+   * Surfaces that cannot afford the CPU — the Figma plugin sandbox — must say
+   * so explicitly by passing 0; the compression choice is a decision, not a
+   * side effect of which writer a surface happens to call.
+   */
+  level?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+}
+
+export function bundleToZipBytes(bundle: OutputBundle, options: BundleZipOptions = {}): Uint8Array {
   // Null prototype: fflate needs the real entry name as the key, so the `$`
   // prefix convention cannot apply here — and on a plain `{}` a file named
   // `__proto__` silently vanishes from the ZIP while every uniqueness check
@@ -199,7 +270,7 @@ export function bundleToZipBytes(bundle: OutputBundle): Uint8Array {
     }
     zipEntries[entryPath] = file.bytes;
   }
-  return zipSync(zipEntries, { level: 6 });
+  return zipSync(zipEntries, { level: options.level ?? 6 });
 }
 
 function createTextBundleFile(path: string, text: string, mimeType: string): OutputBundleFile {

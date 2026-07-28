@@ -237,7 +237,8 @@ registerHostCommand(AE_HOST_COMMANDS.getAeOutputTemplates, (compId: string): str
   try {
     return JSON.stringify(aeListOutputModuleTemplates(unwrapBridgeStringArg(compId) || null));
   } catch (e) {
-    return JSON.stringify({ outputModuleTemplates: [], canQueueInAME: false });
+    // A stale targetCompId must surface as a real error, not an empty catalog.
+    return JSON.stringify({ outputModuleTemplates: [], canQueueInAME: false, error: String(e) });
   }
 });
 
@@ -378,7 +379,8 @@ registerHostCommand(
         aeFindMissingFonts(fontConfigJson, unwrapBridgeStringArg(compId) || null),
       );
     } catch (e) {
-      return "[]";
+      // A stale targetCompId must surface as a real error, not an empty list.
+      return JSON.stringify({ error: String(e) });
     }
   },
 );

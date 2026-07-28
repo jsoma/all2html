@@ -1285,10 +1285,11 @@ async function parseSvgFile(
       state,
       `${makeKeyword(stripExtension(file.path) || "svg")}.${extensionForMimeType(rasterized.mimeType)}`,
     );
+    // The byte sidecar names the asset; path and MIME live on the asset record
+    // below, so the two can no longer drift apart.
     backgroundFile = {
-      path: backgroundPath,
+      assetId: backgroundPath,
       bytes: rasterized.bytes,
-      mimeType: rasterized.mimeType,
     };
     backgroundAsset = {
       id: backgroundPath,

@@ -18,7 +18,9 @@
     "jpgQuality": 60,
     "pngNumberOfColors": 128
   },
-  "fonts": [],
+  "fonts": [
+    
+  ],
   "artboards": [
     {
       "id": "illustrator:artboard:mobile-3",
@@ -207,7 +209,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:mobile-3:layer:background-3",
@@ -219,12 +223,16 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         }
       ]
     }
   ],
-  "customBlocks": [],
+  "customBlocks": [
+    
+  ],
   "assets": {
     "sample-ai-file-mobile": {
       "id": "sample-ai-file-mobile",

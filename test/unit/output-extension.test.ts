@@ -125,6 +125,9 @@ describe("the html emitter is the one reader, and it rejects at the boundary", (
   it("carries a legitimate custom extension onto every file", () => {
     const result = emitWith(".php");
     expect(result.files.map((file) => file.extension)).toEqual([".php"]);
+    // The emitter declares the MIME; a renamed file is still an HTML fragment.
+    // The bundle manifest copies this instead of re-inferring from the name.
+    expect(result.files.map((file) => file.mimeType)).toEqual(["text/html"]);
     expect(result.structuredWarnings.filter((w) => w.code === "setting:invalid-value")).toEqual([]);
   });
 

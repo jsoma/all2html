@@ -20,7 +20,7 @@ The Figma plugin should feel usable to newsroom designers, not just developers. 
 - Warnings are product UX. Do not hide them behind counts or console-only output.
 - ZIP delivery is the plugin boundary. Bundles include `ir.json`, `manifest.json`, emitted files, and extracted assets. The core still only thinks in IR documents and emitted files until bundle assembly.
 - Do not add a Figma-only HTML renderer. All Figma output must pass through `processDocument()` and the existing emitters.
-- The runnable plugin path uses a browser-safe pipeline chain (`loadAndValidateIR` → `resolveSettingsPure` → core transforms) instead of the Node CLI entrypoint.
+- The runnable plugin path uses a browser-safe pipeline chain (`loadAndValidateIR` → `resolveSettings` → core transforms) instead of the Node CLI entrypoint. `resolveSettings` is pure — config file I/O lives in the CLI, so there is nothing Node-only to avoid.
 - Do not call Figma “supported” in user-facing docs until the live hardening corpus and typical-newsroom-file QA bar are actually satisfied.
 
 ## Key Files

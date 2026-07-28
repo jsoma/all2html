@@ -5,7 +5,9 @@
     "toolVersion": "29.8.9",
     "adapterVersion": "0.1.0"
   },
-  "settings": {},
+  "settings": {
+    
+  },
   "fonts": [
     {
       "sourceFont": "MyriadPro-Regular",
@@ -156,7 +158,9 @@
       ]
     }
   ],
-  "customBlocks": [],
+  "customBlocks": [
+    
+  ],
   "assets": {
     "font-mapping-real-desktop": {
       "id": "font-mapping-real-desktop",

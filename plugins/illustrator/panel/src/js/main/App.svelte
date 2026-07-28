@@ -48,6 +48,9 @@
   let dirty = $state(false);
   let lastRunAnchor = $state<HTMLDivElement | null>(null);
   let autoReviewedRunKey = $state<string | null>(null);
+  let storageWarnings = $state<string[]>([]);
+  let saveDefaultsError = $state("");
+  let saveDefaultsConfirmed = $state(false);
 
   const SCHEMA_VERSION = "1.0.0";
 
@@ -69,6 +72,7 @@
         settingsSource = resolved.source;
         documentControlledKeys = resolved.documentControlledKeys;
         fieldSources = resolved.fieldSources;
+        storageWarnings = resolved.storageWarnings;
         dirty = false;
       },
       onAbsent: () => {
@@ -78,6 +82,7 @@
         settingsSource = "core-defaults";
         documentControlledKeys = [];
         fieldSources = {};
+        storageWarnings = [];
         dirty = false;
       },
     });
@@ -134,10 +139,18 @@
 
   function markDirty(): void {
     dirty = true;
+    saveDefaultsConfirmed = false;
   }
 
-  async function handleSaveAsDefault(): Promise<void> {
-    saveAppDefaults(editableSettings(settings), fonts);
+  function handleSaveAsDefault(): void {
+    try {
+      saveAppDefaults(editableSettings(settings), fonts);
+      saveDefaultsError = "";
+      saveDefaultsConfirmed = true;
+    } catch (e) {
+      saveDefaultsConfirmed = false;
+      saveDefaultsError = `Could not save defaults: ${String(e)}`;
+    }
   }
 
   function reviewLastRun(): void {
@@ -222,6 +235,10 @@
         </div>
       {/if}
 
+      {#each storageWarnings as warning}
+        <div class="panel-note panel-note-warning">{warning}</div>
+      {/each}
+
       <MainSettings bind:settings onchange={markDirty} {documentControlledKeys} {fieldSources} {editedKeys} />
       <ImageSettings bind:settings onchange={markDirty} {documentControlledKeys} {fieldSources} {editedKeys} />
       <OutputSettings bind:settings onchange={markDirty} {documentControlledKeys} {fieldSources} {editedKeys} />
@@ -252,9 +269,13 @@
       />
       <AdvancedSettings bind:settings onchange={markDirty} {documentControlledKeys} {fieldSources} {editedKeys} />
 
+      {#if saveDefaultsError}
+        <div class="panel-note panel-note-warning">{saveDefaultsError}</div>
+      {/if}
+
       <div class="section" style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px">
         <button class="btn-secondary" onclick={handleSaveAsDefault}>
-          Save as Default
+          Save as Default{saveDefaultsConfirmed ? " ✓" : ""}
         </button>
         <span class="settings-source">
           src: {sourceLabel}

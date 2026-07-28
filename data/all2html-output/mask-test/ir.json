@@ -15,7 +15,9 @@
     "pngNumberOfColors": 128,
     "maxWidth": null
   },
-  "fonts": [],
+  "fonts": [
+    
+  ],
   "artboards": [
     {
       "id": "illustrator:artboard:artboard-1-1",
@@ -128,7 +130,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:artboard-1-1:layer:fig5-3",
@@ -140,7 +144,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:artboard-1-1:layer:fig3-4",
@@ -152,7 +158,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:artboard-1-1:layer:fig4-5",
@@ -164,12 +172,16 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         }
       ]
     }
   ],
-  "customBlocks": [],
+  "customBlocks": [
+    
+  ],
   "assets": {
     "mask-test-artboard-1": {
       "id": "mask-test-artboard-1",

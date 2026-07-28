@@ -21,7 +21,7 @@ describe("SVG importer", () => {
     expect(result.document.artboards[0].name).toBe("canva-card");
     expect(result.document.artboards[0].layers.map((layer) => layer.type)).toEqual(["default"]);
     expect(result.document.fonts).toHaveLength(1);
-    expect(result.assetFiles.map((asset) => asset.path)).toContain("canva-card-640.png");
+    expect(result.assetFiles.map((asset) => asset.assetId)).toContain("canva-card-640.png");
     expect(result.warnings).toEqual([]);
 
     const processed = processDocument(result.document);
@@ -136,9 +136,10 @@ describe("SVG importer", () => {
       "rotated.svg: no live HTML text could be recovered from SVG text nodes.",
     );
     expect(result.document.artboards[0].layers).toHaveLength(0);
-    const pngAsset = result.assetFiles.find((asset) => asset.path.endsWith(".png"));
+    const pngAsset = result.assetFiles.find((asset) => asset.assetId.endsWith(".png"));
     expect(pngAsset).toBeDefined();
-    expect(pngAsset?.mimeType).toBe("image/png");
+    // MIME lives on the canonical asset record the byte sidecar references.
+    expect(pngAsset && result.document.assets[pngAsset.assetId]?.mimeType).toBe("image/png");
   });
 
   it("recovers text inside translated parent groups at the correct position", async () => {
@@ -196,8 +197,7 @@ describe("SVG importer", () => {
     );
 
     expect(result.assetFiles).toHaveLength(1);
-    expect(result.assetFiles[0].path).toBe("graphic.jpg");
-    expect(result.assetFiles[0].mimeType).toBe("image/jpeg");
+    expect(result.assetFiles[0].assetId).toBe("graphic.jpg");
     expect(result.document.assets["graphic.jpg"]?.mimeType).toBe("image/jpeg");
   });
 
@@ -222,7 +222,7 @@ describe("SVG importer", () => {
     expect(result.warnings.some((warning) => /missing linked image asset/.test(warning))).toBe(
       false,
     );
-    expect(result.assetFiles[0].path).toBe("graphic.jpg");
+    expect(result.assetFiles[0].assetId).toBe("graphic.jpg");
   });
 
   it("honors explicit jpg import settings", async () => {
@@ -241,7 +241,7 @@ describe("SVG importer", () => {
       },
     );
 
-    expect(result.assetFiles[0].path).toBe("graphic.jpg");
+    expect(result.assetFiles[0].assetId).toBe("graphic.jpg");
     expect(result.document.assets["graphic.jpg"]?.exportParams.quality).toBe(72);
   });
 
@@ -296,8 +296,8 @@ describe("SVG importer", () => {
     );
 
     expect(calls).toBe(1);
-    expect(result.assetFiles[0].path).toBe("custom.png");
-    expect(result.assetFiles[0].mimeType).toBe("image/png");
+    expect(result.assetFiles[0].assetId).toBe("custom.png");
+    expect(result.document.assets["custom.png"]?.mimeType).toBe("image/png");
   });
 });
 

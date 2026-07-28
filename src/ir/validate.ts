@@ -45,6 +45,9 @@ function rejectProtoAssetKey(json: unknown): void {
   if (json === null || typeof json !== "object") return;
   const assets = (json as { assets?: unknown }).assets;
   if (assets === null || typeof assets !== "object") return;
+  // `Object.prototype.hasOwnProperty.call`, not `Object.hasOwn`: this file
+  // compiles under tsconfig.extendscript.json and rides the ES5 bundle, where
+  // ES2022 runtime APIs do not exist (and are not polyfilled by transpilers).
   if (Object.hasOwn(assets, "__proto__")) {
     throw new IRValidationError([
       {

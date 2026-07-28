@@ -7,10 +7,16 @@ export interface ImportedFile {
   mimeType?: string;
 }
 
+/**
+ * The bytes for one canonical asset. Just the bytes: `path` and `mimeType`
+ * live on the `Document.assets[assetId]` record this references — the importer
+ * used to write both copies from the same source and nothing checked they
+ * still agreed. `createOutputBundle` reconciles this list against the
+ * document's assets (exactly one byte entry per canonical asset).
+ */
 export interface ImportedAssetFile {
-  path: string;
+  assetId: string;
   bytes: Uint8Array;
-  mimeType: string;
 }
 
 export interface ImportResult {

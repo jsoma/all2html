@@ -16,7 +16,9 @@
     "jpgQuality": 60,
     "pngNumberOfColors": 128
   },
-  "fonts": [],
+  "fonts": [
+    
+  ],
   "artboards": [
     {
       "id": "illustrator:artboard:artboard-1-1",
@@ -801,7 +803,9 @@
       ]
     }
   ],
-  "customBlocks": [],
+  "customBlocks": [
+    
+  ],
   "assets": {
     "fixed-artboard-1": {
       "id": "fixed-artboard-1",

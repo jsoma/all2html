@@ -17,7 +17,9 @@
     "jpgQuality": 60,
     "pngNumberOfColors": 128
   },
-  "fonts": [],
+  "fonts": [
+    
+  ],
   "artboards": [
     {
       "id": "illustrator:artboard:artboard-1-1",
@@ -114,7 +116,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         }
       ]
     },
@@ -213,7 +217,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         }
       ]
     },
@@ -312,7 +318,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         }
       ]
     },
@@ -411,7 +419,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         }
       ]
     },
@@ -510,12 +520,16 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         }
       ]
     }
   ],
-  "customBlocks": [],
+  "customBlocks": [
+    
+  ],
   "assets": {
     "multiple-files-test-artboard-1": {
       "id": "multiple-files-test-artboard-1",

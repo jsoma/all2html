@@ -122,21 +122,37 @@ function aeFindCompById(compId: string | null): CompItem | null {
   return null;
 }
 
+/**
+ * Explicit comp targeting, same rule as the exporter: a supplied compId is
+ * honored or the call fails with an error naming it; only an absent compId
+ * falls back to the active comp, and no active comp is also a failure. Falling
+ * back silently after a delete/rename would answer for the wrong comp.
+ */
+function aeResolveTargetComp(compId: string | null): CompItem {
+  if (compId) {
+    var target = aeFindCompById(compId);
+    if (!target) {
+      throw new Error(
+        'The selected composition (id "' +
+          compId +
+          '") was not found in this project. Re-select a composition in the panel.',
+      );
+    }
+    return target;
+  }
+
+  var active = aeGetActiveComp();
+  if (!active) {
+    throw new Error("No composition is active in After Effects.");
+  }
+  return active;
+}
+
 function aeListOutputModuleTemplates(compId: string | null): {
   outputModuleTemplates: string[];
   canQueueInAME: boolean;
 } {
-  var comp = aeFindCompById(compId) || aeGetActiveComp();
-  if (!comp) {
-    return {
-      outputModuleTemplates: [],
-      canQueueInAME: !!(
-        app.project &&
-        app.project.renderQueue &&
-        app.project.renderQueue.canQueueInAME
-      ),
-    };
-  }
+  var comp = aeResolveTargetComp(compId);
 
   var rqItem = null;
   try {
@@ -255,8 +271,7 @@ function aeSaveConfigFile(configJson: string): string {
 }
 
 function aeCollectCompFonts(compId: string | null): string[] {
-  var comp = aeFindCompById(compId) || aeGetActiveComp();
-  if (!comp) return [];
+  var comp = aeResolveTargetComp(compId);
 
   var fontSet: { [name: string]: boolean } = {};
 

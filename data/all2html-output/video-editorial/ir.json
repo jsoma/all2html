@@ -5,8 +5,12 @@
     "toolVersion": "29.8.9",
     "adapterVersion": "0.1.0"
   },
-  "settings": {},
-  "fonts": [],
+  "settings": {
+    
+  },
+  "fonts": [
+    
+  ],
   "artboards": [
     {
       "id": "illustrator:artboard:desktop-1",
@@ -30,7 +34,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:desktop-1:layer:bad-protocol-2",
@@ -42,7 +48,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:desktop-1:layer:bad-ext-3",
@@ -54,7 +62,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:desktop-1:layer:hero-video-4",
@@ -203,7 +213,9 @@
       ]
     }
   ],
-  "customBlocks": [],
+  "customBlocks": [
+    
+  ],
   "assets": {
     "video-editorial-desktop": {
       "id": "video-editorial-desktop",

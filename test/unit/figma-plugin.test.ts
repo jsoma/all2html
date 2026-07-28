@@ -2,7 +2,7 @@ import { strFromU8, unzipSync } from "fflate";
 import { describe, expect, it } from "vitest";
 import { parsePluginConfig } from "../../plugins/figma/src/config.js";
 import { FigmaPluginError } from "../../plugins/figma/src/errors.js";
-import { buildExportBundle, createZipArchive } from "../../plugins/figma/src/export.js";
+import { buildExportBundle, zipExportBundle } from "../../plugins/figma/src/export.js";
 import {
   extractFrameInfo,
   getSelectedTopLevelFrames,
@@ -477,7 +477,7 @@ describe("Figma plugin foundation", () => {
         assetFiles: makeFrame().assets ?? [],
       });
 
-      const archive = createZipArchive(bundle);
+      const archive = zipExportBundle(bundle);
       const files = unzipSync(archive);
 
       expect(strFromU8(files["ir.json"])).toContain('"source"');
@@ -555,7 +555,7 @@ describe("Figma plugin foundation", () => {
         settings: { imageOutputPath, projectName: "figma-story" },
       });
       const bundle = buildExportBundle(ir, { format: "html", assetFiles: assets });
-      const files = unzipSync(createZipArchive(bundle));
+      const files = unzipSync(zipExportBundle(bundle));
 
       const htmlEntry = bundle.entries.find((entry) => entry.path.endsWith(".html"));
       const html = htmlEntry?.content;
@@ -597,7 +597,7 @@ describe("Figma plugin foundation", () => {
         format: "html",
         assetFiles: makeFrame().assets ?? [],
       });
-      const files = unzipSync(createZipArchive(bundle));
+      const files = unzipSync(zipExportBundle(bundle));
 
       const htmlEntry = bundle.entries.find((entry) => entry.path.endsWith(".html"));
       const html = htmlEntry?.content;
@@ -644,61 +644,56 @@ describe("Figma plugin foundation", () => {
     });
 
     /**
-     * `createZipArchive` builds ZIP entry names from `FigmaExportBundle.entries`
-     * instead of calling `bundleToZipBytes`, so it re-asserts the rule at the
-     * write rather than trusting the assembled list.
+     * The ZIP sink is the shared writer now (`zipExportBundle` →
+     * `bundleToZipBytes`), which re-asserts entry-path containment and the
+     * `__proto__` refusal at the write. The full hostile-name matrix for that
+     * writer lives in `test/unit/output-bundle.test.ts` and
+     * `test/unit/opaque-key-lookups.test.ts`; this pins that the Figma surface
+     * actually rides it — a tampered file list still cannot reach a ZIP.
      */
-    it("refuses to zip an entry list that escapes the bundle root", () => {
+    it("refuses to zip a tampered bundle whose entry escapes the bundle root", () => {
       const ir = buildDocument([makeFrame()], { slug: "figma-story" });
-      const bundle = buildExportBundle(ir, { format: "html" });
+      const bundle = buildExportBundle(ir, { format: "html", assetFiles: makeFrame().assets });
 
       expect(() =>
-        createZipArchive({
+        zipExportBundle({
           ...bundle,
-          entries: [...bundle.entries, { path: "../../evil.png", content: "x" }],
+          outputBundle: {
+            ...bundle.outputBundle,
+            files: [
+              ...bundle.outputBundle.files,
+              { path: "../../evil.png", bytes: new Uint8Array([1]), mimeType: "image/png" },
+            ],
+          },
         }),
       ).toThrow(/Refusing to build an output bundle/);
     });
 
-    /**
-     * `assertSafeBundleEntryPath` accepts "__proto__" — it is a legal filename —
-     * but a plain object literal made that assignment a silent no-op, so the
-     * entry passed every check and was simply absent from the ZIP. The entry map
-     * is now null-prototyped, and the one name fflate itself cannot store (its
-     * internal flattener assigns entry names into a plain object, where
-     * "__proto__" sets the prototype instead of the entry) is refused with a
-     * real error instead of vanishing. Sibling prototype names are ordinary
-     * own-key assignments and must keep working; `unzipSync` has the same
-     * plain-object trap on the read side, so the assertion scans the archive
-     * bytes for the stored entry name.
-     */
-    it("errors on a __proto__ zip entry and keeps other prototype-named entries", () => {
-      expect(() =>
-        createZipArchive({
-          format: "html",
-          ir: {} as never,
-          entries: [
-            { path: "index.html", content: "<!doctype html>" },
-            { path: "__proto__", content: new Uint8Array([1, 2, 3]) },
-          ],
-          warnings: [],
-        }),
-      ).toThrow(/entry named "__proto__"/);
-
-      const archive = createZipArchive({
-        format: "html",
-        ir: {} as never,
-        entries: [
-          { path: "index.html", content: "<!doctype html>" },
-          { path: "constructor", content: new Uint8Array([1, 2, 3]) },
-          { path: "toString", content: new Uint8Array([4, 5, 6]) },
-        ],
-        warnings: [],
+    it("records the resolved slug in the manifest", () => {
+      // projectName deliberately differs from the document slug, so this can
+      // only pass if the manifest reads the *resolved* settings — the same
+      // value the emitted file is named from.
+      const ir = buildDocument([makeFrame()], {
+        slug: "figma-story",
+        settings: { projectName: "figma-renamed" },
       });
-      const bytes = Array.from(archive, (byte) => String.fromCharCode(byte)).join("");
-      expect(bytes).toContain("constructor");
-      expect(bytes).toContain("toString");
-      expect(bytes).toContain("index.html");
+      const bundle = buildExportBundle(ir, { format: "html", assetFiles: makeFrame().assets });
+      expect(bundle.outputBundle.manifest.slug).toBe("figma-renamed");
+      expect(bundle.outputBundle.files.map((file) => file.path)).toContain("figma-renamed.html");
+    });
+
+    /**
+     * The honest failure for an extracted asset whose bytes never arrived: the
+     * bundle refuses, naming the asset, instead of shipping HTML that references
+     * an image the ZIP does not contain.
+     */
+    it("refuses to bundle when an extracted asset has no bytes", () => {
+      const bytelessAssets = (makeFrame().assets ?? []).map(({ bytes: _bytes, ...asset }) => asset);
+      const ir = buildDocument([makeFrame()], { slug: "figma-story" });
+
+      expect(() => buildExportBundle(ir, { format: "html", assetFiles: bytelessAssets })).toThrow(
+        /no bytes were supplied for asset "story-bg"/,
+      );
     });
 
     /**
@@ -719,8 +714,12 @@ describe("Figma plugin foundation", () => {
         settings: config.settings,
       });
 
-      const absolute = buildExportBundle(ir, { format: "html" });
-      const percentage = buildExportBundle(ir, { format: "html", emit: config.emit });
+      const absolute = buildExportBundle(ir, { format: "html", assetFiles: makeFrame().assets });
+      const percentage = buildExportBundle(ir, {
+        format: "html",
+        assetFiles: makeFrame().assets,
+        emit: config.emit,
+      });
 
       const htmlOf = (bundle: ReturnType<typeof buildExportBundle>): string => {
         const entry = bundle.entries.find((file) => file.path.endsWith(".html"));

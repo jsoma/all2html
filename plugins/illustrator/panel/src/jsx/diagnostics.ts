@@ -79,7 +79,9 @@ function attachDiagnosticsToResult(
     var parsed = JSON.parse(text);
     if (parsed && typeof parsed === "object") {
       parsed.diagnostics = diagnostics;
-      if (parsed.success === undefined) {
+      // The AE exporter reports a `status` instead of a success boolean; do not
+      // synthesize a second truth next to it.
+      if (parsed.success === undefined && parsed.status === undefined) {
         parsed.success = !parsed.error;
       }
       return JSON.stringify(parsed);

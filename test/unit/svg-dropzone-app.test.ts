@@ -86,8 +86,23 @@ function createImportResult({
   assetFiles?: ImportFilesResult["assetFiles"];
   warnings?: string[];
 } = {}): ImportFilesResult {
+  const document = createDocument(artboardNames);
+  // The bundle reconciles byte sidecars against `Document.assets` — exactly one
+  // byte entry per canonical asset — so the stub document must declare every
+  // asset whose bytes it supplies.
+  for (const file of assetFiles) {
+    document.assets[file.assetId] = {
+      id: file.assetId,
+      path: file.assetId,
+      mimeType: "image/png",
+      width: 2,
+      height: 1,
+      artboardId: document.artboards[0].id,
+      exportParams: { format: "png", scale: 1 },
+    };
+  }
   return {
-    document: createDocument(artboardNames),
+    document,
     assetFiles,
     warnings,
     structuredWarnings: [],
@@ -100,6 +115,54 @@ function createPreviewBundle(options: BuildBundleOptions) {
     throw new Error("Missing emitted file");
   }
   return createOutputBundle(options);
+}
+
+type ConvertResult = Awaited<ReturnType<SvgDropzoneDependencies["convert"]>>;
+
+function createConversion(overrides: Partial<ConvertResult> = {}): ConvertResult {
+  return {
+    loaded: createLoadedFiles(),
+    slug: "story",
+    format: "html",
+    irDocument: createDocument(),
+    bundle: createOutputBundle({
+      irDocument: createDocument(),
+      emittedFiles: [
+        { slug: "story", extension: ".html", output: "<div>preview</div>", mimeType: "text/html" },
+      ],
+      assetFiles: [],
+      slug: "story",
+    }),
+    emittedPath: "story.html",
+    importWarnings: [],
+    renderWarnings: [],
+    artboardCount: 1,
+    groupCount: 1,
+    assetCount: 0,
+    filePaths: ["story.html"],
+    ...overrides,
+  };
+}
+
+function createDeferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (error: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
+async function flushAsync(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+function selectStoryFile(root: ParentNode): void {
+  const fileInput = requireElement<HTMLInputElement>(root, "[data-file-input]");
+  assignFiles(fileInput, [new File(["<svg />"], "story.svg", { type: "image/svg+xml" })]);
+  fileInput.dispatchEvent(new Event("change"));
 }
 
 function createUnusedDependencies(): SvgDropzoneDependencies {
@@ -119,7 +182,12 @@ function createUnusedDependencies(): SvgDropzoneDependencies {
       throw new Error("not used");
     },
     buildBundle() {
-      return createOutputBundle({ irDocument: createDocument(), emittedFiles: [], assetFiles: [] });
+      return createOutputBundle({
+        irDocument: createDocument(),
+        emittedFiles: [],
+        assetFiles: [],
+        slug: "story",
+      });
     },
     convert: convertLoadedSvgFilesInBrowser,
     zipBundle() {
@@ -177,9 +245,7 @@ describe("svg dropzone app", () => {
       async importFiles() {
         return createImportResult({
           artboardNames: ["story", "story-2"],
-          assetFiles: [
-            { path: "story.png", bytes: Uint8Array.from([1, 2, 3]), mimeType: "image/png" },
-          ],
+          assetFiles: [{ assetId: "story.png", bytes: Uint8Array.from([1, 2, 3]) }],
           warnings: ["import warning"],
         });
       },
@@ -197,6 +263,7 @@ describe("svg dropzone app", () => {
                     format === "react"
                       ? "export default function Story() {}"
                       : "<div>preview</div>",
+                  mimeType: format === "react" ? "text/plain" : "text/html",
                 },
               ],
               warnings: [],
@@ -269,7 +336,12 @@ describe("svg dropzone app", () => {
           emitAll() {
             return {
               files: [
-                { slug: "story", extension: ".jsx", output: "export default function Story() {}" },
+                {
+                  slug: "story",
+                  extension: ".jsx",
+                  output: "export default function Story() {}",
+                  mimeType: "text/plain",
+                },
               ],
               warnings: [],
               structuredWarnings: [],
@@ -335,7 +407,14 @@ describe("svg dropzone app", () => {
           name: "html",
           emitAll() {
             return {
-              files: [{ slug: "story", extension: ".html", output: "<div>preview</div>" }],
+              files: [
+                {
+                  slug: "story",
+                  extension: ".html",
+                  output: "<div>preview</div>",
+                  mimeType: "text/html",
+                },
+              ],
               warnings: [],
               structuredWarnings: [],
             };
@@ -418,6 +497,7 @@ describe("svg dropzone app", () => {
           irDocument: createDocument(),
           emittedFiles: [],
           assetFiles: [],
+          slug: "story",
         });
       },
       zipBundle: () => new Uint8Array([1]),
@@ -437,6 +517,188 @@ describe("svg dropzone app", () => {
     );
     expect(root.querySelector("iframe")).toBeNull();
 
+    document.body.innerHTML = "";
+  });
+});
+
+describe("svg dropzone revision guard", () => {
+  function mountWithConvert(convert: SvgDropzoneDependencies["convert"]) {
+    const root = document.createElement("div");
+    document.body.append(root);
+    const download = vi.fn();
+    mountSvgDropzoneApp(root, {
+      ...createUnusedDependencies(),
+      async createRasterizer() {
+        return {
+          async rasterizeSvg() {
+            throw new Error("not used");
+          },
+        };
+      },
+      async loadFiles() {
+        return createLoadedFiles();
+      },
+      convert,
+      download,
+    });
+    return { root, download };
+  }
+
+  it("ignores a stale success: a mid-run edit keeps the result out of viewer and download", async () => {
+    const deferred = createDeferred<ConvertResult>();
+    const { root, download } = mountWithConvert(() => deferred.promise);
+    selectStoryFile(root);
+
+    requireElement<HTMLButtonElement>(root, "[data-generate]").click();
+    await flushAsync();
+
+    // Edit while the run is in flight: the result now describes stale inputs.
+    const slugInput = requireElement<HTMLInputElement>(root, "[data-slug]");
+    slugInput.value = "edited";
+    slugInput.dispatchEvent(new Event("input"));
+
+    deferred.resolve(createConversion());
+    await flushAsync();
+
+    expect(root.querySelector("iframe")).toBeNull();
+    expect(root.querySelector("[data-viewer-meta]")?.textContent).toBe("No output generated yet.");
+    const downloadButton = requireElement<HTMLButtonElement>(root, "[data-download]");
+    expect(downloadButton.disabled).toBe(true);
+    downloadButton.click();
+    expect(download).not.toHaveBeenCalled();
+    document.body.innerHTML = "";
+  });
+
+  it("ignores a stale failure and lets the next run at the new revision succeed", async () => {
+    const deferred = createDeferred<ConvertResult>();
+    const convert = vi
+      .fn<SvgDropzoneDependencies["convert"]>()
+      .mockImplementationOnce(() => deferred.promise)
+      .mockImplementation(async () => createConversion());
+    const { root } = mountWithConvert(convert);
+    selectStoryFile(root);
+
+    requireElement<HTMLButtonElement>(root, "[data-generate]").click();
+    await flushAsync();
+
+    const slugInput = requireElement<HTMLInputElement>(root, "[data-slug]");
+    slugInput.value = "edited";
+    slugInput.dispatchEvent(new Event("input"));
+
+    deferred.reject(new Error("stale boom"));
+    await flushAsync();
+
+    // The stale failure must not render an error state for the new inputs.
+    expect(root.querySelector("[data-summary]")?.textContent).not.toContain("Generation failed.");
+    expect(root.querySelector("[data-warnings]")?.textContent).not.toContain("stale boom");
+
+    requireElement<HTMLButtonElement>(root, "[data-generate]").click();
+    await flushAsync();
+
+    expect(root.querySelector<HTMLIFrameElement>("iframe")?.srcdoc).toContain("preview");
+    expect(root.querySelector("[data-warnings]")?.textContent).not.toContain("stale boom");
+    document.body.innerHTML = "";
+  });
+
+  it("disables Generate while a run is active and re-enables it afterwards", async () => {
+    const deferred = createDeferred<ConvertResult>();
+    const convert = vi.fn(() => deferred.promise);
+    const { root } = mountWithConvert(convert);
+    selectStoryFile(root);
+
+    const generateButton = requireElement<HTMLButtonElement>(root, "[data-generate]");
+    expect(generateButton.disabled).toBe(false);
+    generateButton.click();
+    await flushAsync();
+
+    expect(generateButton.disabled).toBe(true);
+    generateButton.click();
+    await flushAsync();
+    expect(convert).toHaveBeenCalledTimes(1);
+
+    deferred.resolve(createConversion());
+    await flushAsync();
+    expect(generateButton.disabled).toBe(false);
+    document.body.innerHTML = "";
+  });
+
+  it("re-enables Generate after a failed run", async () => {
+    const deferred = createDeferred<ConvertResult>();
+    const { root } = mountWithConvert(() => deferred.promise);
+    selectStoryFile(root);
+
+    const generateButton = requireElement<HTMLButtonElement>(root, "[data-generate]");
+    generateButton.click();
+    await flushAsync();
+    expect(generateButton.disabled).toBe(true);
+
+    deferred.reject(new Error("boom"));
+    await flushAsync();
+    expect(generateButton.disabled).toBe(false);
+    expect(root.querySelector("[data-warnings]")?.textContent).toContain("boom");
+    document.body.innerHTML = "";
+  });
+
+  it("invalidates the committed run and its download when inputs change", async () => {
+    const { root, download } = mountWithConvert(async () => createConversion());
+    selectStoryFile(root);
+
+    requireElement<HTMLButtonElement>(root, "[data-generate]").click();
+    await flushAsync();
+
+    const downloadButton = requireElement<HTMLButtonElement>(root, "[data-download]");
+    expect(downloadButton.disabled).toBe(false);
+
+    const formatSelect = requireElement<HTMLSelectElement>(root, "[data-format]");
+    formatSelect.value = "react";
+    formatSelect.dispatchEvent(new Event("change"));
+
+    expect(downloadButton.disabled).toBe(true);
+    expect(root.querySelector("iframe")).toBeNull();
+    downloadButton.click();
+    expect(download).not.toHaveBeenCalled();
+    document.body.innerHTML = "";
+  });
+
+  it("snapshots format and slug before the first await", async () => {
+    const loadDeferred = createDeferred<LoadedFiles>();
+    const convert = vi
+      .fn<SvgDropzoneDependencies["convert"]>()
+      .mockImplementation(async () => createConversion());
+    const root = document.createElement("div");
+    document.body.append(root);
+    mountSvgDropzoneApp(root, {
+      ...createUnusedDependencies(),
+      async createRasterizer() {
+        return {
+          async rasterizeSvg() {
+            throw new Error("not used");
+          },
+        };
+      },
+      loadFiles: () => loadDeferred.promise,
+      convert,
+      download: vi.fn(),
+    });
+    selectStoryFile(root);
+
+    const slugInput = requireElement<HTMLInputElement>(root, "[data-slug]");
+    slugInput.value = "before";
+    requireElement<HTMLButtonElement>(root, "[data-generate]").click();
+    await flushAsync();
+
+    // Mutate the controls without dispatching events: no revision bump, so the
+    // run stays current — but its values must be the ones read at click time.
+    slugInput.value = "after";
+    requireElement<HTMLSelectElement>(root, "[data-format]").value = "react";
+
+    loadDeferred.resolve(createLoadedFiles());
+    await flushAsync();
+
+    expect(convert).toHaveBeenCalledTimes(1);
+    const options = convert.mock.calls[0][0];
+    expect(options.slug).toBe("before");
+    expect(options.format).toBe("html");
     document.body.innerHTML = "";
   });
 });
@@ -552,8 +814,16 @@ describe("browser pipeline surface", () => {
           irDocument: createDocument(),
           bundle: createOutputBundle({
             irDocument: createDocument(),
-            emittedFiles: [{ slug: "story", extension: ".html", output: "<div>preview</div>" }],
+            emittedFiles: [
+              {
+                slug: "story",
+                extension: ".html",
+                output: "<div>preview</div>",
+                mimeType: "text/html",
+              },
+            ],
             assetFiles: [],
+            slug: "story",
           }),
           emittedPath: "story.html",
           importWarnings: [hostileWarning],

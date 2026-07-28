@@ -9,7 +9,9 @@
     "output": "one-file",
     "clickableLink": "https://example.com/story"
   },
-  "fonts": [],
+  "fonts": [
+    
+  ],
   "artboards": [
     {
       "id": "illustrator:artboard:desktop-1",
@@ -115,7 +117,9 @@
       ]
     }
   ],
-  "customBlocks": [],
+  "customBlocks": [
+    
+  ],
   "assets": {
     "hyperlinks-desktop": {
       "id": "hyperlinks-desktop",

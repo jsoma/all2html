@@ -1,9 +1,10 @@
-import { strToU8, zipSync } from "fflate";
 import {
-  assertSafeBundleEntryPath,
+  bundleToZipBytes,
   createOutputBundle,
   getBrowserEmitter,
+  type OutputBundle,
   processDocumentInBrowser,
+  resolvedManifestSlug,
 } from "../../../src/browser.js";
 import { artifactAssetBase } from "../../../src/core/artifact-path.js";
 import { type EmitterConfig, withAssetBase } from "../../../src/emitters/types.js";
@@ -19,6 +20,8 @@ export interface ExportBundleEntry {
 export interface FigmaExportBundle {
   format: FigmaOutputFormat;
   ir: Document;
+  /** The shared bundle object; `zipExportBundle` hands it to the shared ZIP writer. */
+  outputBundle: OutputBundle;
   entries: ExportBundleEntry[];
   warnings: string[];
 }
@@ -26,12 +29,11 @@ export interface FigmaExportBundle {
 function normalizeAssetFiles(assets: readonly ExtractedAsset[]): ImportedAssetFile[] {
   const files: ImportedAssetFile[] = [];
   for (const asset of assets) {
+    // An extracted asset without bytes stays out of the sidecar list; the
+    // bundle's byte reconciliation then rejects the export naming the asset,
+    // instead of shipping HTML that references an image the ZIP lacks.
     if (!asset.bytes) continue;
-    files.push({
-      path: asset.path,
-      bytes: asset.bytes,
-      mimeType: asset.mimeType,
-    });
+    files.push({ assetId: asset.id, bytes: asset.bytes });
   }
   return files;
 }
@@ -43,7 +45,7 @@ export function buildExportBundle(
     assetFiles?: readonly ExtractedAsset[];
     /**
      * Canonical emitter options, read from the plugin config's `emit` block.
-     * The CLI passes the same object into `emitAll` (`src/cli/index.ts`);
+     * The CLI passes the same object into `emitAll` (`src/cli/run.ts`);
      * without it `positionMode`, `allowUnsafeHtml` and `responsiveImageMode`
      * were unreachable from Figma even though the emitters implement them.
      */
@@ -76,6 +78,9 @@ export function buildExportBundle(
     // got through `assetBase`. Omitting it is what made a non-default
     // `imageOutputPath` produce HTML pointing outside the ZIP.
     assetRoot,
+    // From the *processed* document, like `assetRoot` above — the manifest and
+    // the layout must read the same resolved settings.
+    slug: resolvedManifestSlug(document),
     emittedFormat: options.format,
     warnings,
   });
@@ -83,6 +88,7 @@ export function buildExportBundle(
   return {
     format: options.format,
     ir,
+    outputBundle: bundle,
     entries: bundle.files.map((file) => ({
       path: file.path,
       content: file.text ?? file.bytes,
@@ -92,33 +98,13 @@ export function buildExportBundle(
 }
 
 /**
- * This is the sink that actually ships a ZIP to a machine — the user downloads
- * it from the plugin and extracts it — and it builds its entry names from
- * `FigmaExportBundle.entries` rather than calling `bundleToZipBytes()`, so the
- * containment `createOutputBundle()` enforces at construction is re-asserted
- * here. Same relationship as `resolveInsideOutputDir()` on the CLI: one rule,
- * stated where the paths are built, backstopped at the write.
+ * ZIP assembly is the shared writer (`bundleToZipBytes`), which re-asserts
+ * entry-path containment and refuses the one entry name fflate cannot store
+ * (`__proto__`). The plugin-local writer that used to sit here duplicated both
+ * rules over its own `entries` list.
  */
-export function createZipArchive(bundle: FigmaExportBundle): Uint8Array {
-  // Null prototype: fflate needs real entry names as keys, and on a plain
-  // object literal an entry named "__proto__" (which passes the path check —
-  // it is a legal filename) is silently absent from the ZIP.
-  const zipEntries: Record<string, Uint8Array> = Object.create(null);
-  for (const entry of bundle.entries) {
-    const path = assertSafeBundleEntryPath(entry.path);
-    // A null-prototype map on our side is not enough for this one name:
-    // fflate flattens entries into its own plain object, where assigning the
-    // "__proto__" key sets that object's prototype instead of storing the
-    // entry — the file would either vanish from the ZIP or corrupt archive
-    // assembly. Refuse loudly rather than drop silently. ("constructor",
-    // "toString", etc. are ordinary own-key assignments and stay legal.)
-    if (path === "__proto__") {
-      throw new Error(
-        `Refusing to build a ZIP with an entry named "__proto__": the ZIP encoder cannot store that name. Rename the frame or file that produced it.`,
-      );
-    }
-    zipEntries[path] =
-      typeof entry.content === "string" ? strToU8(entry.content) : new Uint8Array(entry.content);
-  }
-  return zipSync(zipEntries, { level: 0 });
+export function zipExportBundle(bundle: FigmaExportBundle): Uint8Array {
+  // level 0, explicitly: the Figma plugin sandbox is CPU-constrained, and this
+  // surface has always shipped its ZIP uncompressed.
+  return bundleToZipBytes(bundle.outputBundle, { level: 0 });
 }

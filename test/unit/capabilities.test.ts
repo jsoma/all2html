@@ -571,7 +571,7 @@ describe("declarations match what the code actually does", () => {
     it("is threaded from the CLI and the browser, the two surfaces that can select react", () => {
       // A declaration the callers do not populate is decoration; both entry
       // points build the context from `formatDictatedExtension`.
-      for (const file of ["src/cli/index.ts", "src/browser.ts"]) {
+      for (const file of ["src/cli/run.ts", "src/browser.ts"]) {
         const source = readFileSync(join(repoRoot, file), "utf-8");
         expect(source, `${file} does not thread formatExtension`).toContain(
           "formatExtension: formatDictatedExtension(",
@@ -810,7 +810,7 @@ describe("declarations are only claimed as enforced where they run", () => {
     const callSites: Record<string, string> = {
       illustrator: "src/extendscript/index.ts",
       figma: "plugins/figma/src/export.ts",
-      cli: "src/cli/index.ts",
+      cli: "src/cli/run.ts",
       browser: "src/browser.ts",
     };
     for (const declaration of SURFACE_CAPABILITIES) {

@@ -26,7 +26,7 @@ describe("svg corpus", () => {
 
       expect(result.document.artboards).toHaveLength(expectation.artboards);
       expect(result.warnings).toEqual(expectation.warnings);
-      expect(result.assetFiles.map((asset) => asset.path).sort()).toEqual(
+      expect(result.assetFiles.map((asset) => asset.assetId).sort()).toEqual(
         expectation.assets.slice().sort(),
       );
     });

@@ -12,6 +12,13 @@ export interface EmitFile {
   slug: string;
   extension: string;
   output: string;
+  /**
+   * Declared by the emitter that produced the file — the one thing that knows
+   * what it wrote. `createOutputBundle` copies this into the manifest; it used
+   * to *infer* MIME from the extension, which called a custom
+   * `htmlOutputExtension` (`.php`) not-HTML.
+   */
+  mimeType: string;
 }
 
 export interface EmitResult {
@@ -61,6 +68,9 @@ export function createBuiltinEmitters(
           doc,
           groups,
           extension,
+          // The content is an HTML fragment whatever `htmlOutputExtension`
+          // renamed the file to — the setting changes the name, not the grammar.
+          "text/html",
           (d, g) => {
             const result = emitHTML(
               d,
@@ -76,7 +86,7 @@ export function createBuiltinEmitters(
     svelte: {
       name: "svelte",
       emitAll: (doc, groups, emitterConfig) =>
-        perGroup(doc, groups, SVELTE_EXTENSION, (d, g) => {
+        perGroup(doc, groups, SVELTE_EXTENSION, SOURCE_MIME_TYPE, (d, g) => {
           const result = emitSvelte(
             d,
             { artboards: g.artboards, slug: g.slug },
@@ -89,10 +99,16 @@ export function createBuiltinEmitters(
       name: "react",
       emitAll: (doc, groups, emitterConfig) => {
         const reactOptions = emitterConfig?.react;
-        return perGroup(doc, groups, reactOutputExtension(emitterConfig), (d, g) => {
-          const result = emitReact(d, { artboards: g.artboards, slug: g.slug }, reactOptions);
-          return { output: result.jsx, warnings: result.structuredWarnings };
-        });
+        return perGroup(
+          doc,
+          groups,
+          reactOutputExtension(emitterConfig),
+          SOURCE_MIME_TYPE,
+          (d, g) => {
+            const result = emitReact(d, { artboards: g.artboards, slug: g.slug }, reactOptions);
+            return { output: result.jsx, warnings: result.structuredWarnings };
+          },
+        );
       },
     },
     // Standalone is group-aware like the other three. The extension stays
@@ -102,7 +118,7 @@ export function createBuiltinEmitters(
     standalone: {
       name: "standalone",
       emitAll: (doc, groups, emitterConfig) =>
-        perGroup(doc, groups, STANDALONE_EXTENSION, (d, g) => {
+        perGroup(doc, groups, STANDALONE_EXTENSION, "text/html", (d, g) => {
           const result = emitStandaloneLike(
             d,
             { artboards: g.artboards, slug: g.slug },
@@ -116,6 +132,12 @@ export function createBuiltinEmitters(
 
 const SVELTE_EXTENSION = ".svelte";
 const STANDALONE_EXTENSION = ".html";
+/**
+ * Svelte and React emit component *source*, which no registered MIME type
+ * names; `text/plain` is the honest declaration (and what the manifest carried
+ * back when the bundle inferred it from the extension).
+ */
+const SOURCE_MIME_TYPE = "text/plain";
 
 /** The single statement of the react rule; `formatDictatedExtension` reuses it. */
 function reactOutputExtension(emitterConfig?: ResolvedEmitterConfig): string {
@@ -147,6 +169,7 @@ function perGroup(
   doc: EmitterReadyDocument,
   groups: ArtboardGroup[],
   extension: string,
+  mimeType: string,
   emit: (
     doc: EmitterReadyDocument,
     group: ArtboardGroup,
@@ -158,7 +181,7 @@ function perGroup(
   const warnings: StructuredWarning[] = seedWarnings ? seedWarnings.slice() : [];
   for (const group of groups) {
     const result = emit(doc, group);
-    files.push({ slug: group.slug, extension, output: result.output });
+    files.push({ slug: group.slug, extension, output: result.output, mimeType });
     for (const warning of result.warnings) warnings.push(warning);
   }
   return { files, warnings: warningMessages(warnings), structuredWarnings: warnings };

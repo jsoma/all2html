@@ -32,7 +32,19 @@ function emitFigmaHtml(
 }
 
 function loadFrames(name: string): ExtractedFrame[] {
-  return JSON.parse(readFileSync(resolve(fixtureDir, name), "utf-8"));
+  const frames: ExtractedFrame[] = JSON.parse(readFileSync(resolve(fixtureDir, name), "utf-8"));
+  // JSON fixtures cannot carry `Uint8Array` bytes, but the live runtime always
+  // attaches them (`runtime-extract.ts` exports every asset before the record is
+  // built) and the bundle now *requires* exactly one byte entry per canonical
+  // asset. Hydrate placeholder bytes so the fixtures exercise the same
+  // contract the runtime does.
+  return frames.map((frame) => ({
+    ...frame,
+    assets: frame.assets?.map((asset) => ({
+      ...asset,
+      bytes: asset.bytes ?? new TextEncoder().encode("fixture-png-bytes"),
+    })),
+  }));
 }
 
 function loadFixtureExport(name: string, slug: string) {

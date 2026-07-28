@@ -323,6 +323,37 @@
     return null;
   }
 
+  // Explicit comp targeting: a supplied targetCompId is honored or the export
+  // fails with an error naming it. Falling back to whatever comp happens to be
+  // active would silently export the wrong comp after a delete/rename.
+  function resolveTargetComp(panelSettings) {
+    var targetCompId =
+      panelSettings &&
+      panelSettings.targetCompId !== undefined &&
+      panelSettings.targetCompId !== null
+        ? String(panelSettings.targetCompId)
+        : "";
+
+    if (targetCompId !== "") {
+      var target = findCompById(targetCompId);
+      if (!target) {
+        fail(
+          'The selected composition (id "' +
+            targetCompId +
+            '") was not found in this project. ' +
+            "Re-select a composition in the panel and export again."
+        );
+      }
+      return target;
+    }
+
+    var active = app.project ? app.project.activeItem : null;
+    if (!active || !(active instanceof CompItem)) {
+      fail("Please make a composition active before export.");
+    }
+    return active;
+  }
+
   function getFontSourceName(fontEntry) {
     if (!fontEntry) return "";
     return String(fontEntry.sourceFont || fontEntry.aifont || "");
@@ -945,9 +976,7 @@
       ensureJsonGlobal(baseFolder);
       var panelSettings = loadPanelSettings();
       var projectConfig = loadProjectConfig();
-      var comp = findCompById(panelSettings.targetCompId) || app.project.activeItem;
-      if (!comp || !(comp instanceof CompItem))
-        fail("Please make a composition active before export.");
+      var comp = resolveTargetComp(panelSettings);
       var overlayPrefix = getOverlayPrefix(projectConfig, panelSettings);
       var outputRoot = getOutputRoot(projectConfig, panelSettings);
       var preferredVideoTemplate = getVideoTemplatePreference(projectConfig, panelSettings);
@@ -967,6 +996,7 @@
 
       var fontMappings = loadFontMappings(projectConfig);
       var model = buildModel(comp, videoName, fontMappings, overlayPrefix);
+      var posterRequested = !!preferredPosterTemplate;
       var posterSummary = renderPoster(
         comp,
         outFolder,
@@ -981,29 +1011,78 @@
 
       writeFile(outFolder + "/" + jsonName, JSON.stringify(model, null, 2) + "\n");
       writeFile(outFolder + "/" + htmlName, buildHtml(templatePath, model, googleFontsMode, fontMappings));
+      var expectedVideoPath = outFolder + "/" + videoName;
       var renderSummary = renderVideo(
         comp,
-        outFolder + "/" + videoName,
+        expectedVideoPath,
         overlayPrefix,
         preferredVideoTemplate
       );
+
+      // One status, checked against the filesystem — never an unconditional
+      // success flag. Local render is complete only when the expected output
+      // file exists after render(); an AME submission is queued (the file will
+      // exist later, at the expected path); anything else is failed.
+      var status;
+      var warnings = [];
+      var videoError = null;
+      if (renderSummary.mode === "ame") {
+        status = "queued";
+      } else if (renderSummary.rendered) {
+        status = "complete";
+      } else {
+        status = "failed";
+        videoError =
+          "The render queue finished but the expected video file was not written: " +
+          expectedVideoPath;
+      }
+
+      // Poster disposition: an auto-detected poster that failed is a warning;
+      // a poster the caller explicitly requested that failed fails the run.
+      var posterError = null;
+      if (!posterSummary.rendered) {
+        if (posterSummary.error) {
+          posterError = String(posterSummary.error);
+        } else if (posterSummary.template) {
+          posterError =
+            "The render queue finished but no poster file was written for " +
+            posterBaseName +
+            ".";
+        } else {
+          posterError = "No poster output-module template was found.";
+        }
+        if (posterRequested) {
+          status = "failed";
+        } else {
+          warnings.push("Poster skipped: " + posterError);
+        }
+      }
+
+      var errorParts = [];
+      if (videoError) errorParts.push(videoError);
+      if (posterError && posterRequested) errorParts.push("Poster: " + posterError);
+      var topError = errorParts.length > 0 ? errorParts.join(" ") : null;
+
       var summary = {
+        status: status,
         slug: slug,
         outputFolder: outFolder,
+        error: topError,
+        warnings: warnings,
         video: {
-          path: outFolder + "/" + videoName,
           mode: renderSummary.mode,
           template: renderSummary.template,
-          rendered: renderSummary.rendered
+          path: expectedVideoPath,
+          error: videoError
         },
         poster: {
+          requested: posterRequested,
+          template: posterSummary.template,
           path: posterSummary.path,
           name: posterSummary.name,
           frame: posterSummary.frame,
           time: posterSummary.time,
-          template: posterSummary.template,
-          rendered: posterSummary.rendered,
-          error: posterSummary.error || null
+          error: posterError
         },
         json: outFolder + "/" + jsonName,
         html: outFolder + "/" + htmlName,
@@ -1012,28 +1091,28 @@
 
       writeFile(outFolder + "/" + summaryName, JSON.stringify(summary, null, 2) + "\n");
       setAutomatedResult({
-        success: true,
+        status: status,
+        error: topError,
         outputPath: outFolder,
         slug: slug,
         overlayCount: summary.overlayCount,
         elapsed: round4((new Date().getTime() - startedAt) / 1000) + "s",
         compName: comp.name,
-        videoMode: renderSummary.mode,
-        videoRendered: renderSummary.rendered,
-        videoTemplate: renderSummary.template,
-        posterTemplate: posterSummary.template,
-        posterRendered: posterSummary.rendered,
-        posterPath: posterSummary.path,
-        posterError: posterSummary.error || null,
+        video: summary.video,
+        poster: summary.poster,
+        warnings: warnings,
         summaryPath: outFolder + "/" + summaryName,
         htmlPath: outFolder + "/" + htmlName,
-        jsonPath: outFolder + "/" + jsonName,
-        videoPath: outFolder + "/" + videoName
+        jsonPath: outFolder + "/" + jsonName
       });
-      logDiagnostic("info", "After Effects export finished", outFolder);
+      if (status === "failed") {
+        logDiagnostic("error", "After Effects export failed", topError || "unknown failure");
+      } else {
+        logDiagnostic("info", "After Effects export finished", outFolder);
+      }
     } catch (e) {
       setAutomatedResult({
-        success: false,
+        status: "failed",
         error: String(e)
       });
       throw e;

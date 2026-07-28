@@ -163,9 +163,14 @@ describe("per-transform JSON-purity invariant (D21)", () => {
     expect(findImpureValues(many, 2)).toHaveLength(2);
   });
 
-  it("fires from inside the pipeline when a transform dirties the document", () => {
-    // Proves the guard is wired at the boundary, not merely available as a helper:
-    // a fixture whose settings carry a sentinel is caught at resolveSettings.
+  it("rejects a sentinel arriving through inline config at the config boundary", () => {
+    // Inline config is now the pipeline's only config entry point (file paths
+    // are the CLI's business), and `processDocument` runtime-validates it with
+    // `parseConfigObject` before `resolveSettings` runs — so a sentinel in the
+    // config is refused by the schema (`maxWidth` is `.finite()`), not merely
+    // caught later by the purity walk. The walk still stands behind it: the
+    // ExtendScript assertions below prove the same sentinel cannot ride a
+    // Zod-free path either.
     const raw = loadRaw("single-artboard-basic.json");
     const inlineConfig = {
       emit: {},
@@ -173,7 +178,7 @@ describe("per-transform JSON-purity invariant (D21)", () => {
     } as unknown as NonNullable<Parameters<typeof processDocument>[1]>["inlineConfig"];
 
     expect(() => processDocument(raw, { inlineConfig })).toThrowError(
-      /resolveSettings produced a non-JSON-representable value/,
+      /Invalid config file "inline config": settings.maxWidth/,
     );
   });
 
@@ -211,7 +216,7 @@ describe("per-transform JSON-purity invariant (D21)", () => {
       const elements = layers[0].elements as Record<string, unknown>[];
       (elements[0].position as Record<string, unknown>).x = Number.POSITIVE_INFINITY;
 
-      // Caught at the entry boundary: `resolveSettingsPure` returns the whole
+      // Caught at the entry boundary: `resolveSettings` returns the whole
       // document, so the walk covers artboards and elements, not only `settings`.
       // The exit boundary is what covers numbers the *transforms themselves* coin —
       // the original D21 shape, `computeBreakpoints` writing `Infinity` into

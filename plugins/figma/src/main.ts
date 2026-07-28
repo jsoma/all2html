@@ -2,7 +2,7 @@
 
 import { parsePluginConfig } from "./config.js";
 import { FigmaPluginError } from "./errors.js";
-import { buildExportBundle, createZipArchive } from "./export.js";
+import { buildExportBundle, zipExportBundle } from "./export.js";
 import { extractFrameInfo, getSelectedTopLevelFrames, groupFrameInfos } from "./extract/frames.js";
 import { buildDocument } from "./ir-builder.js";
 import { isUiToSandboxMessage } from "./messages.js";
@@ -118,7 +118,7 @@ export function exportExtractedFrames(
     assetFiles: frames.flatMap((frame) => frame.assets ?? []),
     emit: config.emit,
   });
-  const zip = createZipArchive(bundle);
+  const zip = zipExportBundle(bundle);
 
   return {
     config,

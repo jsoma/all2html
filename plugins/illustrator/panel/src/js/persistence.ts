@@ -15,13 +15,14 @@ import type {
   SettingSource,
   XmpData,
 } from "../shared/types.js";
-import { exporterToPanelKey, exporterToPanelSettings } from "./adapter.js";
+import { exporterToPanelKey, exporterToPanelSettings, PANEL_SETTING_KEYS } from "./adapter.js";
 import { loadXmpSettings, readConfigFile, readSettingsBlock } from "./bridge.js";
 import { parseHostObjectResult } from "./bridge-shared.js";
 import {
   normalizeStoredFonts,
   readStoredDefaults,
   type StoredDefaults,
+  type StoredDefaultsReadResult,
   writeStoredDefaults,
 } from "./default-storage.js";
 
@@ -34,20 +35,36 @@ export type AppDefaults = StoredDefaults<PanelSettings>;
 // Layer 1: App defaults (CEP user data dir)
 // ============================================================
 
-/** Load global app defaults from the user data directory. */
-export function loadAppDefaults(): AppDefaults | null {
-  return readStoredDefaults<PanelSettings>(DEFAULTS_FILE);
+/**
+ * Decode stored panel settings: keep recognized keys with JSON-primitive
+ * values, drop everything else. Stored defaults are a convenience layer, so
+ * unknown keys are dropped rather than rejected.
+ */
+function decodeStoredPanelSettings(raw: Record<string, unknown>): PanelSettings {
+  const settings: Record<string, unknown> = {};
+  for (const key of PANEL_SETTING_KEYS) {
+    const value = raw[key];
+    if (value === undefined) continue;
+    if (
+      value === null ||
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean"
+    ) {
+      settings[key] = value;
+    }
+  }
+  return settings as PanelSettings;
 }
 
-/** Save global app defaults to the user data directory. */
+/** Load global app defaults from the user data directory. */
+export function loadAppDefaults(): StoredDefaultsReadResult<PanelSettings> {
+  return readStoredDefaults(DEFAULTS_FILE, SCHEMA_VERSION, decodeStoredPanelSettings);
+}
+
+/** Save global app defaults to the user data directory. Throws on failure. */
 export function saveAppDefaults(settings: PanelSettings, fonts: FontEntry[]): void {
-  writeStoredDefaults(
-    DEFAULTS_FILE,
-    SCHEMA_VERSION,
-    settings,
-    fonts,
-    "Failed to save app defaults:",
-  );
+  writeStoredDefaults(DEFAULTS_FILE, SCHEMA_VERSION, settings, fonts);
 }
 
 // ============================================================
@@ -70,6 +87,8 @@ export interface ResolvedSettings {
   source: "document-xmp" | "config-file" | "app-defaults" | "core-defaults" | "mixed";
   fieldSources: Partial<Record<PanelSettingKey, SettingSource>>;
   documentControlledKeys: PanelSettingKey[];
+  /** Problems reading persisted state (e.g. a corrupt defaults file) the panel must show. */
+  storageWarnings: string[];
 }
 
 function assignSettingSources(
@@ -162,6 +181,7 @@ export function resolveSettingsLayers(input: ResolveSettingsLayersInput): Resolv
       ...Object.fromEntries(documentControlledKeys.map((key) => [key, "text-block"] as const)),
     },
     documentControlledKeys,
+    storageWarnings: [],
   };
 }
 
@@ -175,8 +195,9 @@ export async function resolveSettings(): Promise<ResolvedSettings> {
   const xmpData = await loadDocumentSettings();
   const textBlockRaw = await readSettingsBlock();
 
-  return resolveSettingsLayers({
-    appDefaults: loadAppDefaults(),
+  const appDefaultsRead = loadAppDefaults();
+  const resolved = resolveSettingsLayers({
+    appDefaults: appDefaultsRead.kind === "ok" ? appDefaultsRead.value : null,
     configSettings: config
       ? exporterToPanelSettings((config.settings ?? {}) as Record<string, unknown>)
       : undefined,
@@ -184,4 +205,13 @@ export async function resolveSettings(): Promise<ResolvedSettings> {
     xmpData,
     textBlockRaw,
   });
+
+  if (appDefaultsRead.kind === "corrupt") {
+    resolved.storageWarnings.push(
+      `Saved panel defaults (${DEFAULTS_FILE}) could not be read: ${appDefaultsRead.error}. ` +
+        "They were ignored — re-save your defaults to repair the file.",
+    );
+  }
+
+  return resolved;
 }

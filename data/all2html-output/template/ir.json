@@ -17,7 +17,9 @@
     "pngNumberOfColors": 128,
     "useLazyLoader": false
   },
-  "fonts": [],
+  "fonts": [
+    
+  ],
   "artboards": [
     {
       "id": "illustrator:artboard:full-1",
@@ -368,7 +370,9 @@
       ]
     }
   ],
-  "customBlocks": [],
+  "customBlocks": [
+    
+  ],
   "assets": {
     "template-full": {
       "id": "template-full",

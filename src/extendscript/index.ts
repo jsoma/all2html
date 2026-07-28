@@ -14,7 +14,7 @@ import { deduplicateStyles } from "../core/deduplicate-styles.js";
 import { groupArtboards } from "../core/group-artboards.js";
 import { assertJsonPure } from "../core/json-purity.js";
 import { resolveOutputExtension } from "../core/output-extension.js";
-import { resolveSettingsPure } from "../core/resolve-settings-pure.js";
+import { resolveSettings } from "../core/resolve-settings.js";
 import { createWarning, type StructuredWarning, warningMessages } from "../core/warnings.js";
 import { emitHTML } from "../emitters/html.js";
 import { defaultSettings } from "../ir/defaults.js";
@@ -31,11 +31,14 @@ import { installPolyfills } from "./polyfills.js";
 installPolyfills();
 
 /**
- * One emitted file. Field names match `EmitFile` in
- * `src/emitters/registry-shared.ts` — the Node registry's file record — so the
- * two surfaces describe an emitted file the same way. The registry itself is not
- * reachable from here: it imports the Svelte and React emitters, which are
- * Node-only, so this path loops the groups and calls the HTML emitter directly.
+ * One emitted file. Field names match the `slug`/`extension`/`output` core of
+ * `EmitFile` in `src/emitters/registry-shared.ts` — the Node registry's file
+ * record — so the two surfaces describe an emitted file the same way.
+ * `EmitFile.mimeType` is deliberately absent: it exists for bundle manifests,
+ * and this surface writes files to disk and builds no bundle. The registry
+ * itself is not reachable from here: it imports the Svelte and React emitters,
+ * which are Node-only, so this path loops the groups and calls the HTML emitter
+ * directly.
  */
 export interface ProcessFile {
   slug: string;
@@ -195,8 +198,8 @@ export function processAndEmit(
   assertUsableArtboardDimensions(irDoc, "processAndEmit");
   phase("assertUsableArtboardDimensions");
 
-  const resolved = resolveSettingsPure(irDoc, config);
-  phase("resolveSettingsPure");
+  const resolved = resolveSettings(irDoc, config);
+  phase("resolveSettings");
   // JSON sentinels are contract violations, not ordinary invalid settings.
   // Check before fallback normalization so Infinity/NaN/undefined cannot be
   // silently converted into defaults.

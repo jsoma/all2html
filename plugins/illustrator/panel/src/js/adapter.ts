@@ -44,6 +44,9 @@ for (const [panel, exporter] of Object.entries(KEY_MAP)) {
   REVERSE_KEY_MAP[exporter] = panel;
 }
 
+/** Every panel setting key, derived from the adapter map (the panel's key authority). */
+export const PANEL_SETTING_KEYS = Object.keys(KEY_MAP) as PanelSettingKey[];
+
 export function exporterToPanelKey(exporterKey: string): PanelSettingKey | undefined {
   return REVERSE_KEY_MAP[exporterKey] as PanelSettingKey | undefined;
 }

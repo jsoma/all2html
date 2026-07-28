@@ -16,7 +16,9 @@
     "jpgQuality": 60,
     "pngNumberOfColors": 128
   },
-  "fonts": [],
+  "fonts": [
+    
+  ],
   "artboards": [
     {
       "id": "illustrator:artboard:artboard-3-1",
@@ -40,7 +42,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:artboard-3-1:layer:layer-1-2",
@@ -769,7 +773,9 @@
           },
           "visible": true,
           "opacity": 100,
-          "elements": []
+          "elements": [
+            
+          ]
         },
         {
           "id": "illustrator:artboard:artboard-4-2:layer:layer-1-2",

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getConfigSettings, getEmitterConfig, parseConfigText } from "../../src/core/config.js";
+import {
+  getConfigSettings,
+  getEmitterConfig,
+  parseConfigObject,
+  parseConfigText,
+} from "../../src/core/config.js";
 
 describe("config parser", () => {
   it("parses jsonc config for shared browser and CLI use", () => {
@@ -47,6 +52,18 @@ describe("config parser", () => {
     expect(() =>
       parseConfigText(`{ "emit": { "react": { "fitMode": "cover" } } }`, "emit.json"),
     ).toThrow(/emit.react/);
+  });
+
+  // One validator: `parseConfigText` is JSONC parsing plus `parseConfigObject`,
+  // which the pipeline also calls directly on inline config objects.
+  it("parseConfigObject validates an already-parsed object with the same schema", () => {
+    expect(
+      parseConfigObject({ emit: { react: { typescript: true } } }).emit?.react?.typescript,
+    ).toBe(true);
+    expect(() => parseConfigObject({ settings: { maxWidth: "oops" } }, "inline")).toThrow(
+      /Invalid config file "inline": settings.maxWidth/,
+    );
+    expect(() => parseConfigObject({ bogus: 1 })).toThrow(/Invalid config file/);
   });
 
   it("allows settings-only config files", () => {

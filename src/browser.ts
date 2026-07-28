@@ -1,10 +1,15 @@
 import { artifactAssetBase } from "./core/artifact-path.js";
 import type { SurfaceContext } from "./core/capabilities.js";
-import { type All2HtmlConfig, getEmitterConfig, parseConfigText } from "./core/config.js";
+import {
+  type All2HtmlConfig,
+  getEmitterConfig,
+  parseConfigObject,
+  parseConfigText,
+} from "./core/config.js";
 import type { ArtboardGroup } from "./core/group-artboards.js";
 import type { ObservableLogger } from "./core/logger.js";
 import { processDocumentShared } from "./core/pipeline-shared.js";
-import { resolveSettingsPure } from "./core/resolve-settings-pure.js";
+import { resolveSettings } from "./core/resolve-settings.js";
 import type { StructuredWarning } from "./core/warnings.js";
 import {
   createBuiltinEmitters,
@@ -37,6 +42,7 @@ import {
   getBundleFile,
   type OutputBundle,
   type OutputBundleFile,
+  resolvedManifestSlug,
 } from "./output-bundle.js";
 
 export interface BrowserPipelineOptions {
@@ -101,14 +107,18 @@ export function processDocumentInBrowser(
   irJson: unknown,
   options: BrowserPipelineOptions = {},
 ): BrowserPipelineResult {
+  // Same rule as `processDocument`: `inlineConfig` is validated by the one
+  // config validator before anything reads it, because typed or not it arrives
+  // from JavaScript callers.
+  const inlineConfig = options.inlineConfig ? parseConfigObject(options.inlineConfig) : undefined;
   return processDocumentShared(irJson, {
     logger: options.logger,
     surface: options.surface ?? { surface: "browser", path: "import", format: options.format },
-    resolveSettingsSpanData: { inlineConfig: options.inlineConfig ? "present" : "absent" },
+    resolveSettingsSpanData: { inlineConfig: inlineConfig ? "present" : "absent" },
     resolveSettings(raw) {
-      return resolveSettingsPure(raw, {
-        fonts: options.inlineConfig?.fonts,
-        settings: options.inlineConfig?.settings,
+      return resolveSettings(raw, {
+        fonts: inlineConfig?.fonts,
+        settings: inlineConfig?.settings,
       });
     },
   });
@@ -161,6 +171,9 @@ export async function convertLoadedSvgFilesInBrowser(
     emittedFiles: emitResult.files,
     assetFiles: imported.assetFiles,
     assetRoot,
+    // The manifest slug comes from the *resolved* document, like `assetRoot`
+    // just above — never from the unresolved settings the IR happens to carry.
+    slug: resolvedManifestSlug(processed.document),
     emittedFormat: options.format,
     warnings: [...imported.warnings, ...renderWarnings],
   });
@@ -222,6 +235,7 @@ export {
   type OutputBundleFile,
   parseConfigText,
   type RasterizedImage,
+  resolvedManifestSlug,
   type SVGImportOptions,
   type SvgRasterizeRequest,
   type SvgRasterizer,

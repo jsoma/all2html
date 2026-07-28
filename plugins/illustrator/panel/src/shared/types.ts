@@ -241,27 +241,53 @@ export interface AeConfigData {
 export interface AeTemplateCatalog {
   outputModuleTemplates: string[];
   canQueueInAME?: boolean;
+  /** Set when the host could not answer — e.g. a stale targetCompId. */
+  error?: string;
 }
 
+/**
+ * One export status, checked against the filesystem by the exporter:
+ * `complete` — the expected video file exists after a local render;
+ * `queued` — the render was submitted to AME with an expected output path;
+ * `failed` — target resolution, video, or an explicitly requested poster failed.
+ */
+export type AeExportStatus = "complete" | "queued" | "failed";
+
+export interface AeVideoDetail {
+  mode?: string;
+  template?: string | null;
+  /** Expected output path — present even for `queued` (AME writes it later). */
+  path?: string | null;
+  error?: string | null;
+}
+
+export interface AePosterDetail {
+  /** True when the caller explicitly selected a poster template. */
+  requested?: boolean;
+  template?: string | null;
+  path?: string | null;
+  name?: string | null;
+  frame?: number;
+  time?: number;
+  error?: string | null;
+}
+
+/** Result returned by runAeExport(). Matches the AE exporter automated output. */
 export interface AeRunResult {
-  success: boolean;
+  status: AeExportStatus;
   outputPath?: string;
   slug?: string;
   overlayCount?: number;
   elapsed?: string;
   compName?: string;
-  videoMode?: string;
-  videoRendered?: boolean;
-  videoTemplate?: string | null;
-  posterTemplate?: string | null;
-  posterRendered?: boolean;
-  posterPath?: string | null;
-  posterError?: string | null;
+  video?: AeVideoDetail;
+  poster?: AePosterDetail;
+  /** Non-fatal problems, e.g. an auto-detected poster that could not render. */
+  warnings?: string[];
   summaryPath?: string;
   htmlPath?: string;
   jsonPath?: string;
-  videoPath?: string;
-  error?: string;
+  error?: string | null;
   diagnostics?: DiagnosticsPayload;
 }
 

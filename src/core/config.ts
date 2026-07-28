@@ -61,6 +61,24 @@ function formatSchemaError(error: z.ZodError): string {
     .join("; ");
 }
 
+/**
+ * The one config validator. `parseConfigText` is JSONC parsing plus this; the
+ * pipeline calls it directly on the object a surface hands in as inline config,
+ * so a JS caller passing junk fails here with a named path instead of deep in a
+ * transform. There is deliberately no second schema anywhere.
+ */
+export function parseConfigObject(
+  input: unknown,
+  sourceLabel: string = "inline config",
+): All2HtmlConfig {
+  const validated = All2HtmlConfigSchema.safeParse(input);
+  if (!validated.success) {
+    throw new Error(`Invalid config file "${sourceLabel}": ${formatSchemaError(validated.error)}`);
+  }
+
+  return validated.data;
+}
+
 export function parseConfigText(
   raw: string,
   sourceLabel: string = "inline config",
@@ -71,12 +89,7 @@ export function parseConfigText(
     throw new Error(`Invalid config file "${sourceLabel}": ${formatParseErrors(parseErrors)}`);
   }
 
-  const validated = All2HtmlConfigSchema.safeParse(parsed);
-  if (!validated.success) {
-    throw new Error(`Invalid config file "${sourceLabel}": ${formatSchemaError(validated.error)}`);
-  }
-
-  return validated.data;
+  return parseConfigObject(parsed, sourceLabel);
 }
 
 export function getConfigSettings(config?: All2HtmlConfig): Partial<Settings> | undefined {

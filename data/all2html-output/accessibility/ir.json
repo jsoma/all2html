@@ -8,7 +8,9 @@
   "settings": {
     "clickableLink": "https://example.com/accessibility"
   },
-  "fonts": [],
+  "fonts": [
+    
+  ],
   "artboards": [
     {
       "id": "illustrator:artboard:desktop-1",
@@ -114,7 +116,9 @@
       ]
     }
   ],
-  "customBlocks": [],
+  "customBlocks": [
+    
+  ],
   "assets": {
     "accessibility-desktop": {
       "id": "accessibility-desktop",

@@ -407,11 +407,12 @@ describe("browser entry point (convertLoadedSvgFilesInBrowser)", () => {
       },
       importFiles: async () => ({
         document: assetDocument(settings),
+        // The byte sidecar names the canonical asset (`bg-desktop` in the
+        // fixture); its path and MIME come from the asset record.
         assetFiles: [
           {
-            path: "test-desktop.png",
+            assetId: "bg-desktop",
             bytes: new TextEncoder().encode("png-bytes"),
-            mimeType: "image/png",
           },
         ],
         warnings: [],
@@ -430,6 +431,10 @@ describe("browser entry point (convertLoadedSvgFilesInBrowser)", () => {
     for (const src of srcs) {
       expect(result.bundle.files.map((file) => file.path)).toContain(src);
     }
+    // The manifest slug comes from the *resolved* document: no projectName in
+    // the fixture, so it falls back to the document slug — the same pair the
+    // output files are named from.
+    expect(result.bundle.manifest.slug).toBe("test-graphic");
   });
 
   it("constructs the same asset path when imageOutputPath omits its trailing slash", async () => {
