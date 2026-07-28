@@ -1,11 +1,11 @@
 /// <reference types="@figma/plugin-typings" />
 
 import type { FontMapping, Paragraph, TextElement } from "../../../src/ir/types.js";
-import { parseLayerType } from "./extract/layers.js";
-import { figmaFontToMapping, segmentsToParagraphs, type FigmaTextSegment } from "./extract/text.js";
 import { extractFrameInfo } from "./extract/frames.js";
+import { parseLayerType } from "./extract/layers.js";
+import { type FigmaTextSegment, figmaFontToMapping, segmentsToParagraphs } from "./extract/text.js";
 import { makeFigmaArtboardId, makeFigmaLayerId } from "./ir-ids.js";
-import type { ExtractedAsset, ExtractedFrame, ExtractedLayer } from "./types.js";
+import type { ExtractedAsset, ExtractedFrame, ExtractedLayer, FrameInfo } from "./types.js";
 
 const TEXT_SEGMENT_FIELDS = [
   "fontName",
@@ -66,13 +66,23 @@ export interface SpecialLayerCandidate {
   inlineSvg: boolean;
 }
 
+/** The message a `:symbol` / `:div` node gets, since Figma cannot honor either. */
+export function unsupportedLayerTokenWarning(nodeName: string, token: string): string {
+  return `Layer "${nodeName}" tagged ${token} is not supported on Figma. The tag was ignored and the layer exported as ordinary artwork.`;
+}
+
 export function discoverTopLevelSpecialLayerNodes(
   frame: Pick<FrameNode, "children">,
+  warnings?: string[],
 ): SpecialLayerCandidate[] {
   const candidates: SpecialLayerCandidate[] = [];
 
   for (const child of frame.children) {
     const parsed = parseLayerType(child.name);
+    if (parsed.unsupportedToken) {
+      warnings?.push(unsupportedLayerTokenWarning(child.name, parsed.unsupportedToken));
+      continue;
+    }
     if (parsed.type === "default") {
       continue;
     }
@@ -163,9 +173,7 @@ function extractParagraphs(
   warnings: string[],
   fontMappings: Map<string, FontMapping>,
 ): Paragraph[] {
-  const segments = textNode.getStyledTextSegments([
-    ...TEXT_SEGMENT_FIELDS,
-  ]) as FigmaTextSegment[];
+  const segments = textNode.getStyledTextSegments([...TEXT_SEGMENT_FIELDS]) as FigmaTextSegment[];
   warnings.push(...collectSegmentWarnings(segments, { name: textNode.name, id: textNode.id }));
   addSegmentFontMappings(segments, fontMappings);
   return segmentsToParagraphs(segments, { alignment: mapAlignment(textNode) });
@@ -176,6 +184,7 @@ function extractTextElement(
   frame: FrameNode,
   warnings: string[],
   fontMappings: Map<string, FontMapping>,
+  disposition: TextRenderDisposition,
 ): TextElement {
   const position = getNodeBoundsRelativeToFrame(textNode, frame);
   const paragraphs = extractParagraphs(textNode, warnings, fontMappings);
@@ -186,11 +195,13 @@ function extractTextElement(
     id: makeTextId(textNode.id),
     kind: mapKind(textNode),
     position,
-    rotation: textNode.rotation ? textNode.rotation * -1 : undefined,
+    // Omitted, not set to undefined: the document model must survive a JSON
+    // round-trip, and assertJsonPure rejects explicit-undefined keys.
+    ...(textNode.rotation ? { rotation: textNode.rotation * -1 } : {}),
     opacity,
     valign: mapValign(textNode),
     paragraphs,
-    renderAs: "html",
+    ...disposition,
   };
 }
 
@@ -266,6 +277,22 @@ function hideTextNodes(node: SceneNode): void {
   }
 }
 
+/**
+ * The single image-only disposition. Two sites must agree on it: the IR builder
+ * (`buildDefaultLayer` records image-only text with `renderAs: "image"`) and the
+ * raster export (`extractFramesFromSelection` leaves exactly that text visible in
+ * the clone so the background PNG contains it). When the two sites decided
+ * independently, an image-only frame's text ended up in neither the IR nor the
+ * exported raster.
+ */
+export function rendersTextIntoBackground(frameInfo: Pick<FrameInfo, "imageOnly">): boolean {
+  return frameInfo.imageOnly === true;
+}
+
+type TextRenderDisposition =
+  | { renderAs: "html" }
+  | { renderAs: "image"; renderAsReason: "imageOnly" };
+
 function makeSpecialLayerBase(
   candidate: SpecialLayerCandidate,
 ): Omit<ExtractedLayer, "elements" | "sourceNodeId"> {
@@ -274,7 +301,8 @@ function makeSpecialLayerBase(
     type: candidate.type,
     inlineSvg: candidate.inlineSvg,
     visible: candidate.node.visible,
-    opacity: Math.round((("opacity" in candidate.node ? candidate.node.opacity : 1) || 1) * 100),
+    // Nullish, not `||`: opacity 0 is a valid value and must survive into the IR.
+    opacity: Math.round((("opacity" in candidate.node ? candidate.node.opacity : 1) ?? 1) * 100),
   };
 }
 
@@ -331,7 +359,43 @@ export function resolveSpecialLayerTextValue(
   return { value, warning: null };
 }
 
-function createBackgroundAsset(
+/**
+ * What `exportAsync({ format: "PNG" })` actually produces.
+ *
+ * The Figma image export takes no bit-depth, palette, or matte option
+ * (`ExportSettingsImage` in @figma/plugin-typings is `format`, `contentsOnly`,
+ * `useAbsoluteBounds`, `suffix`, `constraint`, `colorProfile`), so the result is
+ * always a full-color PNG that preserves the node's alpha — i.e. `png24`,
+ * transparent. No `constraint` is passed anywhere in this file, and the
+ * documented default is `{ type: "SCALE", value: 1 }`, so the scale is 1.
+ *
+ * These are the same three facts `figmaCapabilities` declares in
+ * `src/core/capabilities.ts` (`imageFormat` partial at png24,
+ * `pngTransparent` divergesAtDefault true, `use2xImages` divergesAtDefault
+ * false). The asset record and the declaration are pinned to each other by
+ * `test/unit/figma-runtime.test.ts`; the two must not drift, because an
+ * `exportParams` that misdescribes its own bytes is exactly the defect
+ * `capability-matrix.md` cites as D1 evidence on Illustrator.
+ */
+const FIGMA_PNG_EXPORT_PARAMS = {
+  format: "png24",
+  scale: 1,
+  transparent: true,
+} as const;
+
+/** Figma SVG export carries no background either. */
+const FIGMA_SVG_EXPORT_PARAMS = {
+  format: "svg",
+  scale: 1,
+  transparent: true,
+} as const;
+
+export const FIGMA_EXPORT_PARAMS = {
+  png: FIGMA_PNG_EXPORT_PARAMS,
+  svg: FIGMA_SVG_EXPORT_PARAMS,
+} as const;
+
+export function createBackgroundAsset(
   slug: string,
   frameInfo: ReturnType<typeof extractFrameInfo>,
   actualWidth: number,
@@ -339,19 +403,33 @@ function createBackgroundAsset(
   bytes: Uint8Array,
 ): ExtractedAsset {
   const keyword = makeKeyword(frameInfo.originalName || frameInfo.name);
+  const artboardId = makeFigmaArtboardId(frameInfo);
   return {
-    id: `bg-${keyword}`,
-    path: `all2html-output/${slug}-${keyword}.png`,
+    // Identity derives from the owning artboard's canonical id plus a role
+    // suffix, never from display names: same-named frames are legal (they form
+    // a responsive group), and name-derived ids collapsed their assets onto one
+    // record.
+    id: `${artboardId}:background`,
+    // Asset paths are relative to `settings.imageOutputPath`, exactly like the
+    // Illustrator exporter (`exporter.jsx` writes `imageName + ext`) and the SVG
+    // importer. The output directory is applied twice, in two places that must
+    // agree: `resolveAssetPath()` prefixes it into the emitted `src`, and
+    // `createOutputBundle({ assetRoot })` prefixes it into the bundle layout.
+    // Baking it in here instead made a non-default `imageOutputPath` emit HTML
+    // pointing at a path the ZIP did not contain.
+    // The readable slug keeps the filename recognizable; the owner id keeps it
+    // unique across same-named frames.
+    path: `${makeAssetKeyword(`${slug}-${keyword}-${artboardId}`)}.png`,
     mimeType: "image/png",
     width: actualWidth,
     height: actualHeight,
-    artboardId: makeFigmaArtboardId(frameInfo),
+    artboardId,
     source: {
       tool: "figma",
       id: frameInfo.sourceNodeId,
       name: frameInfo.originalName,
     },
-    exportParams: { format: "png", scale: 1, transparent: false },
+    exportParams: { ...FIGMA_PNG_EXPORT_PARAMS },
     bytes,
   };
 }
@@ -365,32 +443,33 @@ function createSpecialLayerAsset(
     bytes: Uint8Array;
     extension: "png" | "svg";
     mimeType: "image/png" | "image/svg+xml";
-    transparent?: boolean;
   },
 ): ExtractedAsset {
   const artboardKeyword = makeAssetKeyword(frameInfo.originalName || frameInfo.name);
   const layerKeyword = makeAssetKeyword(layer.name);
+  const layerId = makeFigmaLayerId(frameInfo, layer);
   const width = ("width" in node ? node.width : frameInfo.width) ?? frameInfo.width;
   const height = ("height" in node ? node.height : frameInfo.height) ?? frameInfo.height;
 
   return {
-    id: `${layer.type}-${artboardKeyword}-${layerKeyword}`,
-    path: `all2html-output/${slug}-${artboardKeyword}-${layerKeyword}.${options.extension}`,
+    // Owner id plus role suffix — see `createBackgroundAsset` for why display
+    // names cannot be the identity.
+    id: `${layerId}:asset`,
+    // Relative to `settings.imageOutputPath` — see `createBackgroundAsset`.
+    path: `${makeAssetKeyword(`${slug}-${artboardKeyword}-${layerKeyword}-${layerId}`)}.${options.extension}`,
     mimeType: options.mimeType,
     width,
     height,
     artboardId: makeFigmaArtboardId(frameInfo),
-    layerId: makeFigmaLayerId(frameInfo, layer),
+    layerId,
     source: {
       tool: "figma",
       id: layer.sourceNodeId,
       name: layer.name,
     },
-    exportParams: {
-      format: options.extension,
-      scale: 1,
-      ...(options.transparent ? { transparent: true } : {}),
-    },
+    // The file extension is not the format: Figma writes `.png` files that are
+    // png24, so the record names the format it actually produced.
+    exportParams: { ...FIGMA_EXPORT_PARAMS[options.extension] },
     bytes: options.bytes,
   };
 }
@@ -404,14 +483,21 @@ function buildDefaultLayer(
   const textNodes: TextNode[] = [];
   walkVisibleTextNodes(frameClone, textNodes);
 
-  const elements = frameInfo.imageOnly
-    ? []
-    : textNodes
-        .map((textNode) => extractTextElement(textNode, frameClone, warnings, fontMappings))
-        .sort((a, b) => {
-          if (a.position.y !== b.position.y) return a.position.y - b.position.y;
-          return a.position.x - b.position.x;
-        });
+  // Same predicate as the raster-export site in `extractFramesFromSelection`:
+  // image-only text is recorded as baked into the background raster; all other
+  // text becomes live HTML and is hidden before the raster export.
+  const disposition: TextRenderDisposition = rendersTextIntoBackground(frameInfo)
+    ? { renderAs: "image", renderAsReason: "imageOnly" }
+    : { renderAs: "html" };
+
+  const elements = textNodes
+    .map((textNode) =>
+      extractTextElement(textNode, frameClone, warnings, fontMappings, disposition),
+    )
+    .sort((a, b) => {
+      if (a.position.y !== b.position.y) return a.position.y - b.position.y;
+      return a.position.x - b.position.x;
+    });
 
   return {
     sourceNodeId: frameClone.id,
@@ -430,11 +516,6 @@ export async function extractSpecialLayer(
   slug: string,
   warnings: string[],
 ): Promise<{ layer: ExtractedLayer | null; assets: ExtractedAsset[] }> {
-  if (candidate.type === "symbol" || candidate.type === "div") {
-    warnings.push(makeSpecialLayerWarning(candidate, "is not supported in the Figma plugin yet and was skipped."));
-    return { layer: null, assets: [] };
-  }
-
   const baseLayer = makeSpecialLayerBase(candidate);
 
   switch (candidate.type) {
@@ -514,7 +595,6 @@ export async function extractSpecialLayer(
             bytes,
             extension: "svg",
             mimeType: "image/svg+xml",
-            transparent: true,
           }),
         ],
       };
@@ -544,12 +624,15 @@ export async function extractSpecialLayer(
             bytes,
             extension: "png",
             mimeType: "image/png",
-            transparent: true,
           }),
         ],
       };
     }
     default:
+      // `discoverTopLevelSpecialLayerNodes` only ever produces the types above:
+      // `:symbol` / `:div` are rejected by the parser and `default` is filtered.
+      // If a caller hands one in anyway, say so rather than dropping it.
+      warnings.push(unsupportedLayerTokenWarning(candidate.name, makeLayerToken(candidate)));
       return { layer: null, assets: [] };
   }
 }
@@ -571,14 +654,19 @@ export async function extractFramesFromSelection(
     const extracted: ExtractedFrame[] = [];
 
     for (const selected of selection) {
-      const movedClone = normalizeCloneTree(selected.clone());
+      const clone = selected.clone();
+      // Parent the clone into tempRoot before normalizing so the finally
+      // cleanup covers it even if normalization throws mid-tree.
+      tempRoot.appendChild(clone);
+      const movedClone = normalizeCloneTree(clone);
       if (movedClone.type !== "FRAME") {
         movedClone.remove();
-        warnings.push(`Skipped selected node "${selected.name}" because its clone did not remain a frame.`);
+        warnings.push(
+          `Skipped selected node "${selected.name}" because its clone did not remain a frame.`,
+        );
         continue;
       }
 
-      tempRoot.appendChild(movedClone);
       const frameInfo = extractFrameInfo({
         id: selected.id,
         name: selected.name,
@@ -590,7 +678,7 @@ export async function extractFramesFromSelection(
       const specialLayersByIndex = new Map<number, ExtractedLayer>();
       const specialAssets: ExtractedAsset[] = [];
       const fontMappings = new Map<string, FontMapping>();
-      const discovered = discoverTopLevelSpecialLayerNodes(movedClone);
+      const discovered = discoverTopLevelSpecialLayerNodes(movedClone, warnings);
       const children = [...movedClone.children];
 
       for (let index = 0; index < children.length; index++) {
@@ -631,7 +719,12 @@ export async function extractFramesFromSelection(
         orderedLayers.push(defaultLayer);
       }
 
-      hideTextNodes(movedClone);
+      // The other half of the disposition `buildDefaultLayer` used above:
+      // image-only frames keep their text visible so the background raster
+      // contains it; other frames hide text because it re-renders as live HTML.
+      if (!rendersTextIntoBackground(frameInfo)) {
+        hideTextNodes(movedClone);
+      }
       const bytes = await movedClone.exportAsync({ format: "PNG" });
 
       extracted.push({

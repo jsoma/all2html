@@ -102,6 +102,15 @@
         font-size: 12px;
         color: var(--muted);
       }
+      .capability-note {
+        color: var(--warning);
+      }
+      select:disabled,
+      input:disabled,
+      textarea:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
       .legend-chip,
       .mode-chip {
         border: 1px solid var(--border);
@@ -309,6 +318,7 @@
               <option value="image-only-graphic">Image-only graphic</option>
               <option value="custom">Custom</option>
             </select>
+            <p class="helper capability-note" data-capability-note="preset" hidden></p>
           </div>
           <div class="field">
             <label for="format">Output format</label>
@@ -323,6 +333,7 @@
               <option value="one-file">One file</option>
               <option value="multiple-files">One file per group</option>
             </select>
+            <p class="helper capability-note" data-capability-note="output" hidden></p>
           </div>
           <div class="field field-wide">
             <label for="project-name">Export name / slug</label>
@@ -375,6 +386,7 @@
               <option value="jpg">JPG</option>
               <option value="svg">SVG</option>
             </select>
+            <p class="helper capability-note" data-capability-note="imageFormat" hidden></p>
           </div>
           <div class="field">
             <label for="render-text-as">Text rendering</label>
@@ -382,6 +394,7 @@
               <option value="html">HTML text</option>
               <option value="image">Image fallback</option>
             </select>
+            <p class="helper capability-note" data-capability-note="renderTextAs" hidden></p>
           </div>
           <div class="field">
             <label for="render-rotated">Rotated/skewed text</label>
@@ -389,6 +402,11 @@
               <option value="html">HTML text</option>
               <option value="image">Image fallback</option>
             </select>
+            <p
+              class="helper capability-note"
+              data-capability-note="renderRotatedSkewedTextAs"
+              hidden
+            ></p>
           </div>
           <div class="field">
             <label for="google-fonts">Google Fonts</label>

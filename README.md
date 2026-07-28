@@ -1,6 +1,6 @@
 # all2html
 
-all2html converts design documents into responsive web output. Illustrator, After Effects, Figma, and SVG import all feed the same canonical IR and rendering pipeline, which then emits HTML, Standalone HTML, Svelte, or React output.
+all2html converts design documents into responsive web output. Illustrator, Figma, and SVG import all feed the same canonical IR and rendering pipeline, which then emits HTML, Standalone HTML, Svelte, or React output. After Effects export is separate and limited: one comp at a time, video plus timed HTML overlays, without the shared pipeline.
 
 This project is **pre-launch** right now. The public docs are the best place to start:
 
@@ -17,7 +17,7 @@ pnpm install
 pnpm build
 pnpm build:illustrator
 pnpm build:panel
-pnpm package:after-effects
+pnpm build:after-effects
 pnpm build:figma
 pnpm build:svg-dropzone
 ```

@@ -1,6 +1,5 @@
 import type { FontMapping } from "../../ir/types.js";
-
-export const GOOGLE_FONTS_LINK_MARKER = "data-all2html-google-fonts";
+import { escapeAttr } from "./escape.js";
 
 export interface GoogleFontLinkTag {
   href: string;
@@ -137,6 +136,13 @@ function collectFamilyRequests(fonts: readonly FontMapping[]): FamilyRequest[] {
   const requests: FamilyRequest[] = [];
 
   for (const font of fonts) {
+    // The type is a claim, not a guarantee: Illustrator and After Effects reach
+    // this with no Zod between them and the file on disk. `compute-styles.ts`
+    // already checks a non-string family and falls back; this consumer did not,
+    // so the same malformed mapping that merely warned in the CSS path turned an
+    // optional Google Fonts feature into `cssFamily.charAt is not a function`
+    // and failed the whole export.
+    if (!font || typeof font.family !== "string") continue;
     const family = getPrimaryCssFamily(font.family);
     if (!family) continue;
 
@@ -209,34 +215,24 @@ export function getGoogleFontsLinkTags(fonts: readonly FontMapping[]): GoogleFon
   ];
 }
 
-function escapeAttr(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
+/**
+ * Renders the `<link>` tags for `googleFonts: "link"`.
+ *
+ * The tags used to carry a `data-all2html-google-fonts="true"` marker so that the
+ * Svelte and React emitters could regex them back out of serialized HTML. Since
+ * SPEC §12.6 / D23 those emitters consume the node tree and simply never build
+ * the links (`shared/component-tree.ts` carries the href out separately), so the
+ * stripper and its marker were removed: nothing read the attribute, and it
+ * shipped into every exported page.
+ */
 export function renderGoogleFontsLinkTags(fonts: readonly FontMapping[]): string {
   const links = getGoogleFontsLinkTags(fonts);
   return links
     .map((link) => {
       const crossorigin = link.crossorigin ? " crossorigin" : "";
       return (
-        "<link " +
-        GOOGLE_FONTS_LINK_MARKER +
-        '="true" rel="' +
-        link.rel +
-        '" href="' +
-        escapeAttr(link.href) +
-        '"' +
-        crossorigin +
-        ">"
+        '<link rel="' + link.rel + '" href="' + escapeAttr(link.href) + '"' + crossorigin + ">"
       );
     })
     .join("");
-}
-
-export function stripGoogleFontsLinkTags(html: string): string {
-  return html.replace(/<link\b[^>]*data-all2html-google-fonts[^>]*>\s*/g, "");
 }

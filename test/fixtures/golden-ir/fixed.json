@@ -1,32 +1,41 @@
 {
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "29.8.9",
+    "adapterVersion": "0.1.0"
+  },
   "settings": {
-    "settings_version": "0.106.0",
-    "image_format": "auto",
-    "responsiveness": "fixed",
+    "imageFormat": ["auto"],
     "output": "one-file",
-    "html_output_path": "/ai2html-output/",
-    "html_output_extension": ".html",
-    "image_output_path": "",
-    "local_preview_template": "",
-    "png_number_of_colors": "128",
-    "jpg_quality": "60",
-    "headline": "",
-    "leadin": "",
-    "notes": "",
-    "sources": "",
-    "credit": ""
+    "responsiveness": "fixed",
+    "htmlOutputPath": "/ai2html-output/",
+    "htmlOutputExtension": ".html",
+    "jpgQuality": 60,
+    "pngNumberOfColors": 128
   },
   "fonts": [],
   "artboards": [
     {
+      "id": "illustrator:artboard:artboard-1-1",
       "name": "Artboard 1",
       "width": 859,
       "height": 475,
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 1",
+        "width": 859,
+        "height": 475
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:layer-1-1",
           "name": "Layer 1",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 1"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -60,9 +69,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -98,9 +107,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -136,9 +145,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -174,9 +183,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -212,9 +221,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -250,9 +259,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -288,9 +297,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -326,9 +335,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -364,39 +373,38 @@
                         "g": 255,
                         "b": 255
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
               ]
             }
-          ],
-          "id": "artboard:artboard-1:layer:layer-1",
-          "source": {
-            "tool": "illustrator",
-            "name": "Layer 1"
-          }
+          ]
         }
-      ],
-      "id": "artboard:artboard-1",
-      "source": {
-        "tool": "illustrator",
-        "name": "Artboard 1",
-        "width": 859,
-        "height": 475
-      }
+      ]
     },
     {
+      "id": "illustrator:artboard:artboard-3-2",
       "name": "Artboard 3",
       "width": 730,
       "height": 420,
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 3",
+        "width": 730,
+        "height": 420
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:artboard-3-2:layer:layer-1-1",
           "name": "Layer 1",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 1"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -430,9 +438,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -468,9 +476,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 },
@@ -490,9 +498,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -528,9 +536,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -566,9 +574,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -604,9 +612,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 },
@@ -626,9 +634,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -664,9 +672,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -702,9 +710,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -740,9 +748,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -778,29 +786,17 @@
                         "g": 255,
                         "b": 255
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
               ]
             }
-          ],
-          "id": "artboard:artboard-3:layer:layer-1",
-          "source": {
-            "tool": "illustrator",
-            "name": "Layer 1"
-          }
+          ]
         }
-      ],
-      "id": "artboard:artboard-3",
-      "source": {
-        "tool": "illustrator",
-        "name": "Artboard 3",
-        "width": 730,
-        "height": 420
-      }
+      ]
     }
   ],
   "customBlocks": [],
@@ -811,17 +807,17 @@
       "mimeType": "image/png",
       "width": 1718,
       "height": 950,
+      "artboardId": "illustrator:artboard:artboard-1-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 1"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 60,
         "colors": 128
-      },
-      "artboardId": "artboard:artboard-1",
-      "source": {
-        "tool": "illustrator",
-        "name": "Artboard 1"
       }
     },
     "fixed-artboard-3": {
@@ -830,17 +826,17 @@
       "mimeType": "image/png",
       "width": 1460,
       "height": 840,
+      "artboardId": "illustrator:artboard:artboard-3-2",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 3"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 60,
         "colors": 128
-      },
-      "artboardId": "artboard:artboard-3",
-      "source": {
-        "tool": "illustrator",
-        "name": "Artboard 3"
       }
     }
   },
@@ -852,11 +848,5 @@
     "notes": "",
     "sources": "",
     "credit": ""
-  },
-  "irVersion": "0.1.0",
-  "source": {
-    "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "adapterVersion": "0.1.0"
   }
 }

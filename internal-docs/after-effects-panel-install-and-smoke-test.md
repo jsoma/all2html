@@ -98,6 +98,40 @@ Confirm these behaviors during the smoke run:
 4. A bad explicit template selection fails clearly instead of silently falling back.
 5. Failed exports or bad template selections surface diagnostics in-panel, not just a generic error.
 6. `Open folder` works from the CEP panel after a successful export.
+7. **New since the exporter got the bundle slot (D13):** `all2html-ae.jsx` now concatenates
+   `dist/extendscript/all2html-ae-core.js` ahead of `exporter.jsx`, and that bundle installs the
+   ES5 polyfills and owns the escaping and Google Fonts helpers. Nothing in the repo can prove it
+   evaluates inside ExtendScript's ES3 engine, so the host run has to:
+   - export once with `googleFonts: "link"` and once with `"import"`, and confirm the exported HTML
+     carries the three `<link>` tags / the `@import url(...)` rule with a real fonts.googleapis.com
+     URL. An empty result means `All2HtmlAE` did not load or the ES5 lowering broke.
+   - export a comp with an `overlay:` layer whose text contains `</script>` and a `$&`, and confirm
+     the player renders it rather than breaking out of the inline `<script>`.
+   - confirm no `[all2html-ae] The all2html core helper bundle is missing` error, which is what a
+     mis-ordered or missing concatenation now produces instead of a silent `ReferenceError`.
+   `pnpm diagnostics:after-effects` is the documented probe if any of these fail.
+
+   **Run 2026-07-27, After Effects 2026 (host build 33415), and what it settled.** The bundle was
+   evaluated in the real ES3 engine via `DoScriptFile` and every helper exercised directly:
+
+   | Check | Result |
+   |---|---|
+   | `$.evalFile(all2html-ae-core.js)` → `typeof All2HtmlAE` | `object` — it loads |
+   | The five exports are callable | all `function` |
+   | Polyfills installed by the bundle (`map`, `indexOf`, `trim`, `Number.isNaN`) | all `function` |
+   | `googleFontsUrl([{sourceFont,family:"Roboto",weight:"700"}])` | `https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap` |
+   | `googleFontsLinkTags(...)` | 3 tags, first `rel=preconnect` |
+   | `escapeInlineJson` on `<!--<script>alert(1)</script>` | no raw `<` survives; every one is `<` |
+   | `escapeAttr` / `escapeHtml` | correct per grammar |
+   | `new Function(all2html-ae.jsx)` — the assembled 79,337-byte artifact | parses |
+
+   That closes the "does it evaluate / did ES5 lowering break" question, which is the part no repo
+   test can reach, and confirms the inline-JSON `<` fix in the host rather than only in jsdom.
+
+   **Still not done here:** a full comp export producing a rendered video plus a playable page. That
+   exercises the render queue and output modules rather than the bundle slot, and needs a real
+   project file. Do it before any AE release; the escaping bullet above is already covered both in
+   the host (table) and by the jsdom test that parses the real player template with the payload.
 
 ## Current Gaps
 

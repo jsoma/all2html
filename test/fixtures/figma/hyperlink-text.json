@@ -65,14 +65,14 @@
     "assets": [
       {
         "id": "bg-links",
-        "path": "all2html-output/links.png",
+        "path": "links.png",
         "mimeType": "image/png",
         "width": 800,
         "height": 400,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-frame-links",
         "source": {

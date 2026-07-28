@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { PanelSettingKey, PanelSettings } from "../../shared/types";
+  import { capabilityNote, isControlDisabledByCapability } from "../capability.js";
   import TextInput from "../components/TextInput.svelte";
   import {
     getFieldBadge,
@@ -71,12 +72,13 @@
       (v) => { settings.imageOutputPath = v; onchange(); }
     }
     placeholder="all2html-output/"
-    disabled={isLocked("imageOutputPath")}
+    disabled={isLocked("imageOutputPath") || isControlDisabledByCapability("imageOutputPath")}
     locked={isLocked("imageOutputPath")}
     badge={badgeFor("imageOutputPath")}
     badgeTitle={badgeTitleFor("imageOutputPath")}
     helpId="imageOutputPath"
     help={helpFor("imageOutputPath")}
+    note={capabilityNote("imageOutputPath")}
     {onchange}
   />
 </div>

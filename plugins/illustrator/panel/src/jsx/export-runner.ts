@@ -57,7 +57,12 @@ function resolveScriptFile(
   file: ScriptFileLike | null;
   expectedPath: string;
 } {
-  var primaryPath = env.getCurrentScriptPath().replace(/[^\/\\]+$/, scriptFileName);
+  // RegExp constructor, not a literal: ExtendScript's tokenizer ends a regex
+  // literal at the first unescaped `/` even inside a character class, so
+  // /[^/\\]+$/ is a load-time SyntaxError that takes the whole hostscript
+  // down with it. Guarded by extendscript-regex-safety.test.ts.
+  // biome-ignore lint/complexity/useRegexLiterals: the literal form is the bug -- biome's auto-fix reintroduced it once already
+  var primaryPath = env.getCurrentScriptPath().replace(new RegExp("[^/\\\\]+$"), scriptFileName);
   var scriptFile = env.createFile(primaryPath);
 
   if (scriptFile.exists) {
@@ -77,15 +82,11 @@ function resolveScriptFile(
   return { file: null, expectedPath: primaryPath };
 }
 
-function runPanelExport(
-  env: ExportRunnerEnv,
-  options: ExportRunnerOptions,
-): string {
+function runPanelExport(env: ExportRunnerEnv, options: ExportRunnerOptions): string {
   var settingsFile = null as ScriptFileLike | null;
-  var attachResultDiagnostics = options.attachDiagnostics || function (resultText: string): string {
-    return resultText;
-  };
-  var log = options.onLog || function (): void {};
+  var attachResultDiagnostics =
+    options.attachDiagnostics || ((resultText: string): string => resultText);
+  var log = options.onLog || ((): void => {});
 
   try {
     options.onClearDiagnostics && options.onClearDiagnostics();
@@ -99,7 +100,11 @@ function runPanelExport(
         options.tempSettingsFileName || "all2html-panel-settings.json",
         options.settingsJson,
       );
-      log("info", "Wrote temporary panel settings", settingsFile.fsName || settingsFile.fullName || "");
+      log(
+        "info",
+        "Wrote temporary panel settings",
+        settingsFile.fsName || settingsFile.fullName || "",
+      );
       env.globalState[options.settingsPathGlobalKey] =
         settingsFile.fsName || settingsFile.fullName || "";
     }
@@ -117,13 +122,20 @@ function runPanelExport(
 
     if (!scriptFileResult.file) {
       log("error", "Export script not found", scriptFileResult.expectedPath);
-      return attachResultDiagnostics(JSON.stringify({
-        success: false,
-        error: options.missingScriptError + scriptFileResult.expectedPath,
-      }), "Export script not found");
+      return attachResultDiagnostics(
+        JSON.stringify({
+          success: false,
+          error: options.missingScriptError + scriptFileResult.expectedPath,
+        }),
+        "Export script not found",
+      );
     }
 
-    log("info", "Evaluating export script", scriptFileResult.file.fsName || scriptFileResult.expectedPath);
+    log(
+      "info",
+      "Evaluating export script",
+      scriptFileResult.file.fsName || scriptFileResult.expectedPath,
+    );
     env.evalFile(scriptFileResult.file);
 
     var result = env.globalState.__ALL2HTML_RESULT__;
@@ -135,15 +147,22 @@ function runPanelExport(
     return attachResultDiagnostics(String(result), "Export failed");
   } catch (e) {
     log("error", "Panel export execution failed", String(e));
-    return attachResultDiagnostics(JSON.stringify({
-      success: false,
-      error: options.failurePrefix + String(e),
-    }), options.failurePrefix + String(e));
+    return attachResultDiagnostics(
+      JSON.stringify({
+        success: false,
+        error: options.failurePrefix + String(e),
+      }),
+      options.failurePrefix + String(e),
+    );
   } finally {
     try {
       if (settingsFile && settingsFile.exists) {
         settingsFile.remove();
-        log("info", "Removed temporary panel settings", settingsFile.fsName || settingsFile.fullName || "");
+        log(
+          "info",
+          "Removed temporary panel settings",
+          settingsFile.fsName || settingsFile.fullName || "",
+        );
       }
       if (options.settingsPathGlobalKey) {
         delete env.globalState[options.settingsPathGlobalKey];

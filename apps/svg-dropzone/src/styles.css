@@ -1,12 +1,7 @@
 :root {
   color-scheme: light;
-  font-family:
-    "IBM Plex Sans",
-    "Avenir Next",
-    system-ui,
-    sans-serif;
-  background:
-    radial-gradient(circle at top left, #f9f2e5 0%, #f1ebe1 38%, #ebe4d8 100%);
+  font-family: "IBM Plex Sans", "Avenir Next", system-ui, sans-serif;
+  background: radial-gradient(circle at top left, #f9f2e5 0%, #f1ebe1 38%, #ebe4d8 100%);
   color: #1f1d1a;
 }
 

@@ -4,7 +4,6 @@
     "imageFormat": [
       "auto"
     ],
-    "writeImageFiles": true,
     "pngTransparent": false,
     "pngNumberOfColors": 128,
     "jpgQuality": 85,
@@ -28,8 +27,6 @@
     "includeResizerWidths": true,
     "responsiveImageMode": "img-src",
     "useLazyLoader": true,
-    "inlineSvg": false,
-    "svgIdPrefix": "",
     "svgEmbedImages": false,
     "clickableLink": "",
     "createPromoImage": false,
@@ -42,7 +39,6 @@
       "name": "photo-card",
       "width": 720,
       "height": 480,
-      "imageOnly": true,
       "layers": [],
       "id": "artboard:photo-card-image",
       "source": {

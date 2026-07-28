@@ -21,7 +21,7 @@ describe("SVG importer", () => {
     expect(result.document.artboards[0].name).toBe("canva-card");
     expect(result.document.artboards[0].layers.map((layer) => layer.type)).toEqual(["default"]);
     expect(result.document.fonts).toHaveLength(1);
-    expect(result.assetFiles.map((asset) => asset.path)).toContain("canva-card-640.png");
+    expect(result.assetFiles.map((asset) => asset.assetId)).toContain("canva-card-640.png");
     expect(result.warnings).toEqual([]);
 
     const processed = processDocument(result.document);
@@ -136,9 +136,10 @@ describe("SVG importer", () => {
       "rotated.svg: no live HTML text could be recovered from SVG text nodes.",
     );
     expect(result.document.artboards[0].layers).toHaveLength(0);
-    const pngAsset = result.assetFiles.find((asset) => asset.path.endsWith(".png"));
+    const pngAsset = result.assetFiles.find((asset) => asset.assetId.endsWith(".png"));
     expect(pngAsset).toBeDefined();
-    expect(pngAsset?.mimeType).toBe("image/png");
+    // MIME lives on the canonical asset record the byte sidecar references.
+    expect(pngAsset && result.document.assets[pngAsset.assetId]?.mimeType).toBe("image/png");
   });
 
   it("recovers text inside translated parent groups at the correct position", async () => {
@@ -196,8 +197,7 @@ describe("SVG importer", () => {
     );
 
     expect(result.assetFiles).toHaveLength(1);
-    expect(result.assetFiles[0].path).toBe("graphic.jpg");
-    expect(result.assetFiles[0].mimeType).toBe("image/jpeg");
+    expect(result.assetFiles[0].assetId).toBe("graphic.jpg");
     expect(result.document.assets["graphic.jpg"]?.mimeType).toBe("image/jpeg");
   });
 
@@ -222,7 +222,7 @@ describe("SVG importer", () => {
     expect(result.warnings.some((warning) => /missing linked image asset/.test(warning))).toBe(
       false,
     );
-    expect(result.assetFiles[0].path).toBe("graphic.jpg");
+    expect(result.assetFiles[0].assetId).toBe("graphic.jpg");
   });
 
   it("honors explicit jpg import settings", async () => {
@@ -241,7 +241,7 @@ describe("SVG importer", () => {
       },
     );
 
-    expect(result.assetFiles[0].path).toBe("graphic.jpg");
+    expect(result.assetFiles[0].assetId).toBe("graphic.jpg");
     expect(result.document.assets["graphic.jpg"]?.exportParams.quality).toBe(72);
   });
 
@@ -296,7 +296,272 @@ describe("SVG importer", () => {
     );
 
     expect(calls).toBe(1);
-    expect(result.assetFiles[0].path).toBe("custom.png");
-    expect(result.assetFiles[0].mimeType).toBe("image/png");
+    expect(result.assetFiles[0].assetId).toBe("custom.png");
+    expect(result.document.assets["custom.png"]?.mimeType).toBe("image/png");
+  });
+});
+
+describe("SVG importer matrix transforms", () => {
+  async function importSvg(body: string, width = 400, height = 300) {
+    return importSVGFiles(
+      [
+        {
+          path: "chart.svg",
+          content: `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><rect width="${width}" height="${height}" fill="#f6f6f6"/>${body}</svg>`,
+        },
+      ],
+      { entrypointPaths: ["chart.svg"], slug: "chart" },
+    );
+  }
+
+  function textElements(document: { artboards: { layers: { elements: unknown[] }[] }[] }) {
+    return document.artboards
+      .flatMap((artboard) => artboard.layers)
+      .flatMap((layer) => layer.elements)
+      .filter((element): element is TextElement => (element as TextElement).type === "text");
+  }
+
+  it("recovers Illustrator text positioned only by a translate matrix", async () => {
+    // Illustrator omits x/y entirely and carries the position in the matrix.
+    const result = await importSvg(
+      '<text transform="matrix(1 0 0 1 120 80)" font-size="20" font-family="Arial">Live label</text>',
+    );
+
+    const texts = textElements(result.document);
+    expect(texts).toHaveLength(1);
+    expect(texts[0].paragraphs[0].text).toBe("Live label");
+    expect(texts[0].position.x).toBeCloseTo(120, 4);
+    // Top is the baseline minus the font size.
+    expect(texts[0].position.y).toBeCloseTo(60, 4);
+    expect(texts[0].transformMatrix).toBeUndefined();
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("folds a uniform matrix scale into font size and position", async () => {
+    const result = await importSvg(
+      '<text transform="matrix(2 0 0 2 50 60)" font-size="10" font-family="Arial">Scaled</text>',
+    );
+
+    const [text] = textElements(result.document);
+    expect(text.paragraphs[0].runs[0].fontSize).toBeCloseTo(20, 4);
+    expect(text.position.x).toBeCloseTo(50, 4);
+    expect(text.position.y).toBeCloseTo(40, 4);
+    // Uniform scale needs no residual CSS transform.
+    expect(text.transformMatrix).toBeUndefined();
+  });
+
+  it("keeps a non-uniform matrix scale as a horizontal CSS stretch", async () => {
+    const uniform = await importSvg(
+      '<text transform="matrix(1 0 0 1 60 100)" font-size="16" font-family="Arial">Squeezed</text>',
+    );
+    const stretched = await importSvg(
+      '<text transform="matrix(1.0375 0 0 1 60 100)" font-size="16" font-family="Arial">Squeezed</text>',
+    );
+
+    const [plain] = textElements(uniform.document);
+    const [scaled] = textElements(stretched.document);
+
+    // Vertical metrics are untouched by a horizontal-only scale...
+    expect(scaled.paragraphs[0].runs[0].fontSize).toBe(plain.paragraphs[0].runs[0].fontSize);
+    expect(scaled.position.width).toBeCloseTo(plain.position.width, 6);
+    // ...and the stretch survives as an explicit transform rather than silently
+    // rendering the text at the wrong width.
+    expect(scaled.transformMatrix).toEqual([1.0375, 0, 0, 1, 0, 0]);
+
+    const processed = processDocument(stretched.document);
+    const emitted = getEmitter("html").emitAll(processed.document, processed.groups);
+    expect(emitted.files[0].output).toContain("transform:matrix(1.0375,0,0,1,0,0)");
+    expect(emitted.files[0].output).toContain("transform-origin:0% 0%");
+  });
+
+  it("leaves rotated matrix text in the raster background", async () => {
+    const result = await importSvg(
+      '<text transform="matrix(0.7071 0.7071 -0.7071 0.7071 100 50)" font-size="16">Rotated</text>',
+    );
+
+    expect(textElements(result.document)).toHaveLength(0);
+    expect(result.warnings).toContain("chart.svg: left transformed text in SVG background asset.");
+  });
+
+  it("names mirrored text specifically instead of using the generic transform warning", async () => {
+    const result = await importSvg(
+      '<text transform="matrix(1 0 0 -1 100 200)" font-size="16">Flipped</text>',
+    );
+
+    expect(textElements(result.document)).toHaveLength(0);
+    expect(result.warnings).toContain(
+      "chart.svg: left mirrored or flipped text in SVG background asset.",
+    );
+  });
+
+  it("recovers unrotated siblings of rotated text", async () => {
+    const result = await importSvg(
+      [
+        '<text transform="matrix(0.7071 0.7071 -0.7071 0.7071 100 50)" font-size="16">Rotated</text>',
+        '<text transform="matrix(1 0 0 1 40 120)" font-size="16">Upright</text>',
+      ].join(""),
+    );
+
+    const texts = textElements(result.document);
+    expect(texts).toHaveLength(1);
+    expect(texts[0].paragraphs[0].text).toBe("Upright");
+  });
+
+  it("composes group transforms with the text transform", async () => {
+    const result = await importSvg(
+      '<g transform="translate(10 20)"><g transform="scale(2)"><text transform="matrix(1 0 0 1 5 10)" font-size="8" font-family="Arial">Nested</text></g></g>',
+    );
+
+    const [text] = textElements(result.document);
+    // translate(10,20) · scale(2) · translate(5,10) => x = 10 + 2*5, y = 20 + 2*10
+    expect(text.position.x).toBeCloseTo(20, 4);
+    expect(text.paragraphs[0].runs[0].fontSize).toBeCloseTo(16, 4);
+    expect(text.position.y).toBeCloseTo(40 - 16, 4);
+  });
+
+  it("skips text inside display:none subtrees", async () => {
+    const result = await importSvg(
+      [
+        '<g id="ai2html-settings" display="none"><text transform="matrix(1 0 0 1 20 20)" display="inline" font-size="12">settings: do not publish</text></g>',
+        '<text transform="matrix(1 0 0 1 40 120)" font-size="16" font-family="Arial">Visible</text>',
+      ].join(""),
+    );
+
+    const texts = textElements(result.document);
+    expect(texts).toHaveLength(1);
+    expect(texts[0].paragraphs[0].text).toBe("Visible");
+  });
+
+  it("skips text placed entirely outside the artboard", async () => {
+    const result = await importSvg(
+      [
+        '<text transform="matrix(1 0 0 1 -452 -91)" font-size="12">off-canvas note</text>',
+        '<text transform="matrix(1 0 0 1 40 120)" font-size="16" font-family="Arial">On canvas</text>',
+      ].join(""),
+    );
+
+    const texts = textElements(result.document);
+    expect(texts).toHaveLength(1);
+    expect(texts[0].paragraphs[0].text).toBe("On canvas");
+    expect(result.warnings).toContain(
+      "chart.svg: left text positioned outside the artboard in the background asset.",
+    );
+  });
+
+  it("synthesizes reviewable alt text when no text at all could be recovered", async () => {
+    const result = await importSvg(
+      '<text transform="matrix(0.7071 0.7071 -0.7071 0.7071 100 50)" font-size="16">Unemployment by county</text>',
+    );
+
+    expect(result.document.metadata.imageAltText).toBe("Unemployment by county");
+    // It also travels with the asset it describes, which is what survives a
+    // multi-file import.
+    expect(Object.values(result.document.assets).map((asset) => asset.altText)).toEqual([
+      "Unemployment by county",
+    ]);
+    expect(result.warnings).toContain(
+      "chart.svg: generated placeholder image alt text; review the alt text before publishing.",
+    );
+
+    const processed = processDocument(result.document);
+    const emitted = getEmitter("html").emitAll(processed.document, processed.groups);
+    expect(emitted.files[0].output).toContain('alt="Unemployment by county"');
+    expect(emitted.files[0].output).not.toContain('alt=""');
+  });
+
+  /**
+   * Alt text is per-graphic. It used to be stored once per *document*
+   * (`imageAltText ??= parsed.imageAltText` in the per-file loop), so the first
+   * rasterized file's recovered copy was stamped onto every rasterized
+   * artboard. A screen-reader user then heard one graphic described as the
+   * other, which is worse than an unlabelled image because nothing signals the
+   * mismatch.
+   */
+  it("gives each rasterized file in a multi-SVG import its own alt text", async () => {
+    const rotated = (label: string) =>
+      `<text transform="matrix(0.7071 0.7071 -0.7071 0.7071 100 50)" font-size="16">${label}</text>`;
+    const result = await importSVGFiles(
+      [
+        {
+          path: "unemployment.svg",
+          content: `<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="300" fill="#eee"/>${rotated("Unemployment by county")}</svg>`,
+        },
+        {
+          path: "rainfall.svg",
+          content: `<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="300" fill="#ddd"/>${rotated("Rainfall since 1950")}</svg>`,
+        },
+      ],
+      { entrypointPaths: ["unemployment.svg", "rainfall.svg"], slug: "two-charts" },
+    );
+
+    const altByArtboard = Object.fromEntries(
+      Object.values(result.document.assets).map((asset) => [asset.artboardId, asset.altText]),
+    );
+    expect(Object.values(altByArtboard).sort()).toEqual([
+      "Rainfall since 1950",
+      "Unemployment by county",
+    ]);
+
+    // No document-level value to leak across the two graphics.
+    expect(result.document.metadata.imageAltText).toBeUndefined();
+
+    const processed = processDocument(result.document);
+    const emitted = getEmitter("html").emitAll(processed.document, processed.groups);
+    const html = emitted.files.map((file) => file.output).join("\n");
+    expect(html).toContain('alt="Unemployment by county"');
+    expect(html).toContain('alt="Rainfall since 1950"');
+  });
+
+  it("leaves an undescribed artboard undescribed in a multi-SVG import", async () => {
+    const result = await importSVGFiles(
+      [
+        {
+          path: "unemployment.svg",
+          content:
+            '<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="300" fill="#eee"/><text transform="matrix(0.7071 0.7071 -0.7071 0.7071 100 50)" font-size="16">Unemployment by county</text></svg>',
+        },
+        {
+          path: "plain.svg",
+          content:
+            '<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="300" fill="#ddd"/></svg>',
+        },
+      ],
+      { entrypointPaths: ["unemployment.svg", "plain.svg"], slug: "two-charts" },
+    );
+
+    const plainAsset = Object.values(result.document.assets).find((asset) =>
+      asset.artboardId.includes("plain"),
+    );
+    expect(plainAsset).toBeDefined();
+    expect(plainAsset?.altText).toBeUndefined();
+
+    const processed = processDocument(result.document);
+    const emitted = getEmitter("html").emitAll(processed.document, processed.groups);
+    const byFile = Object.fromEntries(emitted.files.map((file) => [file.slug, file.output]));
+
+    // The described graphic keeps its description; the undescribed one stays
+    // decorative instead of inheriting the other file's label.
+    expect(byFile["two-charts-unemployment"]).toContain('alt="Unemployment by county"');
+    expect(byFile["two-charts-plain"]).toContain('alt=""');
+    expect(byFile["two-charts-plain"]).not.toContain("Unemployment by county");
+  });
+
+  it("falls back to the artboard name when the discarded text is unusable", async () => {
+    const result = await importSvg(
+      '<text transform="matrix(1 0 0 1 -900 -900)" font-size="12">off-canvas only</text>',
+    );
+
+    expect(result.document.metadata.imageAltText).toBe("chart");
+  });
+
+  it("does not warn about unrecovered text when the only text is hidden", async () => {
+    const result = await importSvg(
+      '<g display="none"><text transform="matrix(1 0 0 1 20 20)" font-size="12">hidden</text></g>',
+    );
+
+    expect(result.warnings).not.toContain(
+      "chart.svg: no live HTML text could be recovered from SVG text nodes.",
+    );
+    expect(result.document.metadata.imageAltText).toBeUndefined();
   });
 });

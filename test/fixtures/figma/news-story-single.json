@@ -157,14 +157,14 @@
     "assets": [
       {
         "id": "bg-news-story-single",
-        "path": "all2html-output/news-story-single-news-story-single.png",
+        "path": "news-story-single-news-story-single.png",
         "mimeType": "image/png",
         "width": 640,
         "height": 420,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-news-single",
         "source": {

@@ -1,9 +1,9 @@
 {
-  "irVersion": "0.0.0",
-  "generator": {
+  "irVersion": "0.1.0",
+  "source": {
     "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "pluginVersion": "0.1.0"
+    "toolVersion": "29.8.9",
+    "adapterVersion": "0.1.0"
   },
   "settings": {
     
@@ -13,17 +13,25 @@
   ],
   "artboards": [
     {
+      "id": "illustrator:artboard:desktop-1",
       "name": "desktop",
-      "originalName": "desktop",
       "width": 760,
       "height": 500,
-      "actualWidth": 760,
-      "actualHeight": 500,
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop",
+        "width": 760,
+        "height": 500
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:desktop-1:layer:blank-video-1",
           "name": "blank-video",
           "type": "video",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "blank-video:video"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -31,9 +39,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:desktop-1:layer:bad-protocol-2",
           "name": "bad-protocol",
           "type": "video",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "bad-protocol:video"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -41,9 +53,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:desktop-1:layer:bad-ext-3",
           "name": "bad-ext",
           "type": "video",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "bad-ext:video"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -51,9 +67,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:desktop-1:layer:hero-video-4",
           "name": "hero-video",
           "type": "video",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "hero-video:video"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -64,9 +84,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:desktop-1:layer:content-5",
           "name": "content",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -199,7 +223,11 @@
       "mimeType": "image/png",
       "width": 1520,
       "height": 1000,
-      "artboardName": "desktop",
+      "artboardId": "illustrator:artboard:desktop-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,

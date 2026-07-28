@@ -42,8 +42,6 @@
     if (settings.testingMode) count++;
     if (settings.includeResizerCss === false) count++;
     if (settings.includeResizerWidths === false) count++;
-    if (settings.inlineSvg) count++;
-    if (settings.svgIdPrefix) count++;
     if (settings.svgEmbedImages) count++;
     if (settings.pngTransparent) count++;
     if (settings.clickableLink) count++;
@@ -70,7 +68,7 @@
 
 <Collapsible
   title="Advanced"
-  count={advancedCount > 0 ? `${advancedCount} changed` : "17 settings"}
+  count={advancedCount > 0 ? `${advancedCount} changed` : "15 settings"}
 >
   <div class="section-label" style="margin-top: 4px">Output</div>
 
@@ -237,35 +235,6 @@
     locked={isLocked("includeResizerWidths")}
     badge={badgeFor("includeResizerWidths")}
     badgeTitle={badgeTitleFor("includeResizerWidths")}
-    {onchange}
-  />
-
-  <Checkbox
-    label="Inline SVG layers"
-    bind:checked={
-      () => settings.inlineSvg ?? false,
-      (v) => { settings.inlineSvg = v; onchange(); }
-    }
-    disabled={isLocked("inlineSvg")}
-    locked={isLocked("inlineSvg")}
-    badge={badgeFor("inlineSvg")}
-    badgeTitle={badgeTitleFor("inlineSvg")}
-    helpId="inlineSvg"
-    help={helpFor("inlineSvg")}
-    {onchange}
-  />
-
-  <TextInput
-    label="SVG ID prefix"
-    bind:value={
-      () => settings.svgIdPrefix ?? "",
-      (v) => { settings.svgIdPrefix = v; onchange(); }
-    }
-    placeholder="(none)"
-    disabled={isLocked("svgIdPrefix")}
-    locked={isLocked("svgIdPrefix")}
-    badge={badgeFor("svgIdPrefix")}
-    badgeTitle={badgeTitleFor("svgIdPrefix")}
     {onchange}
   />
 

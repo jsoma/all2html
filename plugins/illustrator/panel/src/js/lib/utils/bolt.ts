@@ -56,13 +56,14 @@ export function initBolt(): void {
 }
 
 /**
- * Type-safe ExtendScript function call.
+ * ExtendScript function call.
  * Calls $["com.all2html.panel"].functionName(...args) and parses the JSON result.
+ *
+ * Returns `unknown`: the host is untyped ExtendScript, so whatever comes back
+ * is a claim, not a guarantee. Bridge wrappers validate the results that feed
+ * logic before asserting a type — never here.
  */
-export function evalTS<T = unknown>(
-  fnName: string,
-  ...args: unknown[]
-): Promise<T> {
+export function evalTS(fnName: string, ...args: unknown[]): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const csi = getCsi();
     const serializedArgs = args
@@ -81,10 +82,10 @@ export function evalTS<T = unknown>(
         return;
       }
       try {
-        resolve(JSON.parse(result) as T);
+        resolve(JSON.parse(result));
       } catch {
-        // If not valid JSON, return as-is
-        resolve(result as unknown as T);
+        // If not valid JSON, return the raw string
+        resolve(result);
       }
     });
   });

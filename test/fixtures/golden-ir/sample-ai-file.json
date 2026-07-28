@@ -1,34 +1,43 @@
 {
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "29.8.9",
+    "adapterVersion": "0.1.0"
+  },
   "settings": {
-    "settings_version": "0.56",
-    "image_format": "png",
-    "responsiveness": "fixed",
+    "imageFormat": ["png"],
     "output": "one-file",
-    "html_output_path": "/ai2html-output/",
-    "html_output_extension": ".html",
-    "image_output_path": "",
-    "local_preview_template": "template-nyt.html",
-    "png_number_of_colors": "128",
-    "jpg_quality": "60",
-    "headline": "Ai Graphic Headline",
-    "leadin": "Introductory text here.",
-    "notes": "Notes: Text goes here.",
-    "sources": "Source: Name goes here.",
-    "credit": "By ai2html",
-    "show_completion_dialog_box": "no",
-    "clickable_link": "http://nytimes.com"
+    "responsiveness": "fixed",
+    "htmlOutputPath": "/ai2html-output/",
+    "htmlOutputExtension": ".html",
+    "clickableLink": "http://nytimes.com",
+    "localPreviewTemplate": "template-nyt.html",
+    "jpgQuality": 60,
+    "pngNumberOfColors": 128
   },
   "fonts": [],
   "artboards": [
     {
+      "id": "illustrator:artboard:mobile-3",
       "name": "mobile",
       "width": 300,
       "height": 400,
+      "source": {
+        "tool": "illustrator",
+        "name": "mobile",
+        "width": 300,
+        "height": 400
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:mobile-3:layer:layer-3-1",
           "name": "Layer 3",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 3"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -62,9 +71,9 @@
                         "g": 204,
                         "b": 153
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -100,9 +109,9 @@
                         "g": 153,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -138,9 +147,9 @@
                         "g": 0,
                         "b": 51
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -176,55 +185,41 @@
                         "g": 51,
                         "b": 255
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
               ]
             }
-          ],
-          "id": "artboard:mobile:layer:layer-3",
-          "source": {
-            "tool": "illustrator",
-            "name": "Layer 3"
-          }
+          ]
         },
         {
+          "id": "illustrator:artboard:mobile-3:layer:area-text-2",
           "name": "area text",
           "type": "default",
-          "inlineSvg": false,
-          "visible": true,
-          "opacity": 100,
-          "elements": [],
-          "id": "artboard:mobile:layer:area-text",
           "source": {
             "tool": "illustrator",
             "name": "area text"
-          }
-        },
-        {
-          "name": "background",
-          "type": "default",
-          "inlineSvg": false,
+          },
           "visible": true,
           "opacity": 100,
-          "elements": [],
-          "id": "artboard:mobile:layer:background",
+          "elements": []
+        },
+        {
+          "id": "illustrator:artboard:mobile-3:layer:background-3",
+          "name": "background",
+          "type": "default",
           "source": {
             "tool": "illustrator",
             "name": "background"
-          }
+          },
+          "visible": true,
+          "opacity": 100,
+          "elements": []
         }
-      ],
-      "id": "artboard:mobile",
-      "source": {
-        "tool": "illustrator",
-        "name": "mobile",
-        "width": 300,
-        "height": 400
-      }
+      ]
     }
   ],
   "customBlocks": [],
@@ -235,17 +230,17 @@
       "mimeType": "image/png",
       "width": 600,
       "height": 800,
+      "artboardId": "illustrator:artboard:mobile-3",
+      "source": {
+        "tool": "illustrator",
+        "name": "mobile"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 60,
         "colors": 128
-      },
-      "artboardId": "artboard:mobile",
-      "source": {
-        "tool": "illustrator",
-        "name": "mobile"
       }
     }
   },
@@ -257,11 +252,5 @@
     "notes": "Notes: Text goes here.",
     "sources": "Source: Name goes here.",
     "credit": "By ai2html"
-  },
-  "irVersion": "0.1.0",
-  "source": {
-    "tool": "illustrator",
-    "toolVersion": "29.8.5",
-    "adapterVersion": "0.1.0"
   }
 }

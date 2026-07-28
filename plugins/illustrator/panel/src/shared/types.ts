@@ -3,6 +3,11 @@
  * These define the JSON payloads that cross the evalTS bridge.
  */
 
+import {
+  type StructuredWarning,
+  WARNING_CATEGORY_ORDER,
+  type WarningCategory,
+} from "../../../../../src/core/warnings.js";
 import { getSettingDefault } from "../../../../../src/ir/settings-definitions.js";
 
 /** Settings as the panel UI understands them. camelCase, all optional (sparse). */
@@ -23,7 +28,6 @@ export interface PanelSettings {
   projectName?: string;
   htmlOutputExtension?: string;
   imageSourcePath?: string;
-  writeImageFiles?: boolean;
 
   // Advanced - responsive
   textResponsiveness?: "fixed" | "dynamic";
@@ -38,8 +42,6 @@ export interface PanelSettings {
   // Advanced - CSS/features
   includeResizerCss?: boolean;
   includeResizerWidths?: boolean;
-  inlineSvg?: boolean;
-  svgIdPrefix?: string;
   svgEmbedImages?: boolean;
 
   // Advanced - image
@@ -104,14 +106,57 @@ export function normalizeFontEntry(font: FontEntry): FontEntry {
   };
 }
 
-/** Grouped warnings returned by the exporter in automated mode. */
-export interface GroupedWarnings {
-  fonts: string[];
-  masks: string[];
-  rotation: string[];
-  overset: string[];
-  settings: string[];
-  other: string[];
+/**
+ * Warnings returned by the exporter in automated mode, grouped by the category
+ * each warning declared at its call site. The keys are the core
+ * `WarningCategory` values — the exporter no longer classifies by substring, so
+ * these are the same buckets the core, the CLI, and the Figma UI use.
+ */
+export type GroupedWarnings = Record<WarningCategory, string[]>;
+
+/**
+ * Coerce whatever the host actually returned into `GroupedWarnings`.
+ *
+ * `exporter.jsx` is ExtendScript: nothing type-checks it, so `RunResult.warnings`
+ * is a claim about the payload, not a guarantee. It was wrong on the error path —
+ * the plain `string[]` accumulator was returned where the grouped object was
+ * declared, and every consumer here reads it with `Object.values(...)`, which on
+ * a *string* yields one entry per character. One 48-character warning rendered as
+ * "48 warnings" and 48 single-character rows. Grouping on the error path is the
+ * fix; this is the reason a second malformed payload cannot reach the DOM.
+ *
+ * A bare string becomes a single `other` warning, an array of strings becomes the
+ * `other` group, and non-string members are dropped rather than stringified.
+ */
+const KNOWN_WARNING_CATEGORIES = new Set<string>(WARNING_CATEGORY_ORDER);
+
+export function normalizeGroupedWarnings(value: unknown): GroupedWarnings {
+  const groups = {} as GroupedWarnings;
+  for (const category of WARNING_CATEGORY_ORDER) groups[category] = [];
+  if (value === null || value === undefined) return groups;
+
+  const collect = (target: WarningCategory, items: unknown): void => {
+    if (typeof items === "string") {
+      if (items.length > 0) groups[target].push(items);
+      return;
+    }
+    if (!Array.isArray(items)) return;
+    for (const item of items) {
+      if (typeof item === "string" && item.length > 0) groups[target].push(item);
+    }
+  };
+
+  if (typeof value === "string" || Array.isArray(value)) {
+    collect("other", value);
+    return groups;
+  }
+  if (typeof value !== "object") return groups;
+
+  for (const [key, items] of Object.entries(value as Record<string, unknown>)) {
+    const category = (KNOWN_WARNING_CATEGORIES.has(key) ? key : "other") as WarningCategory;
+    collect(category, items);
+  }
+  return groups;
 }
 
 export interface DiagnosticEntry {
@@ -136,6 +181,12 @@ export interface RunResult {
   imageCount?: number;
   elapsed?: string;
   warnings?: GroupedWarnings;
+  /**
+   * Every warning with its stable code, category, and context, in emit order —
+   * exporter call sites and the core's own warnings alike. `warnings` above is
+   * the grouped presentation of this list.
+   */
+  structuredWarnings?: StructuredWarning[];
   error?: string;
   diagnostics?: DiagnosticsPayload;
 }
@@ -190,27 +241,53 @@ export interface AeConfigData {
 export interface AeTemplateCatalog {
   outputModuleTemplates: string[];
   canQueueInAME?: boolean;
+  /** Set when the host could not answer — e.g. a stale targetCompId. */
+  error?: string;
 }
 
+/**
+ * One export status, checked against the filesystem by the exporter:
+ * `complete` — the expected video file exists after a local render;
+ * `queued` — the render was submitted to AME with an expected output path;
+ * `failed` — target resolution, video, or an explicitly requested poster failed.
+ */
+export type AeExportStatus = "complete" | "queued" | "failed";
+
+export interface AeVideoDetail {
+  mode?: string;
+  template?: string | null;
+  /** Expected output path — present even for `queued` (AME writes it later). */
+  path?: string | null;
+  error?: string | null;
+}
+
+export interface AePosterDetail {
+  /** True when the caller explicitly selected a poster template. */
+  requested?: boolean;
+  template?: string | null;
+  path?: string | null;
+  name?: string | null;
+  frame?: number;
+  time?: number;
+  error?: string | null;
+}
+
+/** Result returned by runAeExport(). Matches the AE exporter automated output. */
 export interface AeRunResult {
-  success: boolean;
+  status: AeExportStatus;
   outputPath?: string;
   slug?: string;
   overlayCount?: number;
   elapsed?: string;
   compName?: string;
-  videoMode?: string;
-  videoRendered?: boolean;
-  videoTemplate?: string | null;
-  posterTemplate?: string | null;
-  posterRendered?: boolean;
-  posterPath?: string | null;
-  posterError?: string | null;
+  video?: AeVideoDetail;
+  poster?: AePosterDetail;
+  /** Non-fatal problems, e.g. an auto-detected poster that could not render. */
+  warnings?: string[];
   summaryPath?: string;
   htmlPath?: string;
   jsonPath?: string;
-  videoPath?: string;
-  error?: string;
+  error?: string | null;
   diagnostics?: DiagnosticsPayload;
 }
 
@@ -239,7 +316,6 @@ export const panelDefaults: Required<
     | "projectName"
     | "htmlOutputExtension"
     | "imageSourcePath"
-    | "writeImageFiles"
     | "textResponsiveness"
     | "centerHtmlOutput"
     | "renderRotatedSkewedTextAs"
@@ -247,8 +323,6 @@ export const panelDefaults: Required<
     | "testingMode"
     | "includeResizerCss"
     | "includeResizerWidths"
-    | "inlineSvg"
-    | "svgIdPrefix"
     | "svgEmbedImages"
     | "pngTransparent"
   >
@@ -266,7 +340,6 @@ export const panelDefaults: Required<
   projectName: getSettingDefault("projectName"),
   htmlOutputExtension: getSettingDefault("htmlOutputExtension"),
   imageSourcePath: getSettingDefault("imageSourcePath"),
-  writeImageFiles: getSettingDefault("writeImageFiles"),
   textResponsiveness: getSettingDefault("textResponsiveness"),
   centerHtmlOutput: getSettingDefault("centerHtmlOutput"),
   renderRotatedSkewedTextAs: getSettingDefault("renderRotatedSkewedTextAs"),
@@ -274,8 +347,6 @@ export const panelDefaults: Required<
   testingMode: getSettingDefault("testingMode"),
   includeResizerCss: getSettingDefault("includeResizerCss"),
   includeResizerWidths: getSettingDefault("includeResizerWidths"),
-  inlineSvg: getSettingDefault("inlineSvg"),
-  svgIdPrefix: getSettingDefault("svgIdPrefix"),
   svgEmbedImages: getSettingDefault("svgEmbedImages"),
   pngTransparent: getSettingDefault("pngTransparent"),
 };

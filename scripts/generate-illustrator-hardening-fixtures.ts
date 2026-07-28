@@ -24,7 +24,9 @@ const fixtureNames = [
   "large-story",
 ] as const;
 
-const unknownNames = requestedNames.filter((name) => !fixtureNames.includes(name as (typeof fixtureNames)[number]));
+const unknownNames = requestedNames.filter(
+  (name) => !fixtureNames.includes(name as (typeof fixtureNames)[number]),
+);
 if (unknownNames.length > 0) {
   throw new Error(
     `Unknown Illustrator hardening fixture(s): ${unknownNames.join(", ")}. Known fixtures: ${fixtureNames.join(", ")}`,
@@ -526,7 +528,7 @@ function createHtmlHooksEditorial() {
   );
 
   var layerBefore = addLayer(doc, "deck-hook:html-before");
-  addPointText(doc, layerBefore, "<div data-hook=\\\"layer-before\\\">Layer before hook</div>", 430, 390, {
+  addPointText(doc, layerBefore, "<div data-hook=\\"layer-before\\">Layer before hook</div>", 430, 390, {
     name: "layer-before-html",
     fontNames: ["ArialMT", "MyriadPro-Regular"],
     size: 12
@@ -540,7 +542,7 @@ function createHtmlHooksEditorial() {
   });
 
   var layerAfter = addLayer(doc, "footer-hook:html-after");
-  addPointText(doc, layerAfter, "<div data-hook=\\\"layer-after\\\">Layer after hook</div>", 430, 330, {
+  addPointText(doc, layerAfter, "<div data-hook=\\"layer-after\\">Layer after hook</div>", 430, 330, {
     name: "layer-after-html",
     fontNames: ["ArialMT", "MyriadPro-Regular"],
     size: 12

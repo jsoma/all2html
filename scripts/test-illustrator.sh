@@ -1,5 +1,22 @@
 #!/bin/bash
 # Test all2html.js against all .ai files in data/
+#
+# DIALOG HANDLING — read before running this against a live Illustrator session.
+# This harness dismisses exactly one dialog: the "Missing Fonts" window, once per
+# file, via the inline `System Events` block below. Any other modal (a font
+# warning, a colour-profile prompt, a script error) will block the `do javascript`
+# call until the 120s `with timeout` expires, and that file is reported as a
+# failure. That is deliberate: a stalled run is recoverable, a wrongly-accepted
+# dialog is not.
+#
+# `scripts/dismiss-ai-dialogs.sh` used to sit beside this file as a background
+# `while true` loop that clicked OK on *any* window named "Adobe Illustrator"
+# every 2 seconds. It had zero call sites, was referenced by no doc, and would
+# blind-accept destructive prompts in whatever Illustrator session happened to be
+# open. It has been deleted; the inline Missing Fonts dismissal below is its
+# replacement for the only case it was documented to handle. If a future run
+# needs more dialogs dismissed, add a *named* window case here rather than
+# reintroducing a blanket clicker.
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"

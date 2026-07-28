@@ -83,3 +83,43 @@ describe("google fonts helper", () => {
     );
   });
 });
+
+/**
+ * The Zod-free call path.
+ *
+ * `FontMapping` is a compile-time claim, and two surfaces reach these helpers
+ * with nothing enforcing it at runtime: Illustrator and After Effects both read
+ * font mappings out of an unvalidated `all2html.config.json`. `compute-styles.ts`
+ * already checked a non-string family and fell back with a warning; this module
+ * did not, so the same malformed mapping that merely warned in the CSS path
+ * threw `cssFamily.charAt is not a function` and failed the entire export.
+ *
+ * These cast deliberately — the point is what happens when the type is wrong.
+ */
+describe("malformed font mappings from a surface with no schema", () => {
+  const malformed = [
+    { label: "a numeric family", font: { sourceFont: "ArialMT", family: 700 } },
+    { label: "an array family", font: { sourceFont: "ArialMT", family: [] } },
+    { label: "an object family", font: { sourceFont: "ArialMT", family: { a: 1 } } },
+    { label: "a missing family", font: { sourceFont: "ArialMT" } },
+    { label: "a null entry", font: null },
+  ];
+
+  for (const { label, font } of malformed) {
+    it(`skips ${label} instead of throwing`, () => {
+      const fonts = [font, { sourceFont: "Inter-Bold", family: "Inter", weight: "700" }];
+      const list = fonts as unknown as FontMapping[];
+
+      expect(() => buildGoogleFontsUrl(list)).not.toThrow();
+      // The well-formed sibling is still requested.
+      expect(buildGoogleFontsUrl(list)).toContain("Inter");
+      expect(renderGoogleFontsLinkTags(list)).toContain("Inter");
+      expect(renderGoogleFontsImport(list)).toContain("Inter");
+    });
+  }
+
+  it("returns no URL when every mapping is malformed", () => {
+    const list = [{ sourceFont: "ArialMT", family: 700 }] as unknown as FontMapping[];
+    expect(buildGoogleFontsUrl(list)).toBeNull();
+  });
+});

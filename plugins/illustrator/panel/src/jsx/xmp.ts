@@ -12,9 +12,7 @@ var _xmpLoaded = false;
 function ensureXmp(): void {
   if (!_xmpLoaded) {
     if ((ExternalObject as any).AdobeXMPScript === undefined) {
-      (ExternalObject as any).AdobeXMPScript = new ExternalObject(
-        "lib:AdobeXMPScript",
-      );
+      (ExternalObject as any).AdobeXMPScript = new ExternalObject("lib:AdobeXMPScript");
     }
     // Register namespace on first load
     XMPMeta.registerNamespace(XMP_NAMESPACE, XMP_PREFIX);
@@ -59,4 +57,4 @@ function xmpDeleteVariable(key: string): void {
   }
 }
 
-export { xmpGetVariable, xmpSetVariable, xmpDeleteVariable, XMP_DATA_KEY };
+export { XMP_DATA_KEY, xmpDeleteVariable, xmpGetVariable, xmpSetVariable };

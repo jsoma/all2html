@@ -1,9 +1,9 @@
 {
-  "irVersion": "0.0.0",
-  "generator": {
+  "irVersion": "0.1.0",
+  "source": {
     "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "pluginVersion": "0.1.0"
+    "toolVersion": "29.8.9",
+    "adapterVersion": "0.1.0"
   },
   "settings": {
     "output": "one-file",
@@ -14,17 +14,25 @@
   ],
   "artboards": [
     {
+      "id": "illustrator:artboard:desktop-1",
       "name": "desktop",
-      "originalName": "desktop",
       "width": 680,
       "height": 420,
-      "actualWidth": 680,
-      "actualHeight": 420,
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop",
+        "width": 680,
+        "height": 420
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:desktop-1:layer:content-1",
           "name": "content",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -119,7 +127,11 @@
       "mimeType": "image/png",
       "width": 1360,
       "height": 840,
-      "artboardName": "desktop",
+      "artboardId": "illustrator:artboard:desktop-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,

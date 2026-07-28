@@ -37,6 +37,7 @@
     ondetectmissing,
   }: Props = $props();
   let detecting = $state(false);
+  let detectError = $state("");
 
   const mappedCount = $derived(fonts.filter((f) => f.family).length);
   const missingCount = $derived(fonts.filter((f) => !f.family).length);
@@ -50,6 +51,7 @@
   async function detectMissing(): Promise<void> {
     if (!ondetectmissing) return;
     detecting = true;
+    detectError = "";
     try {
       const missing = await ondetectmissing(fonts);
       for (const fontName of missing.filter((name) => typeof name === "string" && name.trim())) {
@@ -59,6 +61,11 @@
       }
       fonts = fonts;
       onchange();
+    } catch (e) {
+      // The AE bridge now throws on a stale/absent target comp instead of
+      // returning an empty list; a swallowed rejection here looked like
+      // "no missing fonts", which is the failure mode it replaced.
+      detectError = String(e instanceof Error ? e.message : e);
     } finally {
       detecting = false;
     }
@@ -117,6 +124,9 @@
     <button class="btn-secondary" onclick={detectMissing} disabled={detecting || !ondetectmissing}>
       {detecting ? "Detecting..." : "Detect missing fonts"}
     </button>
+    {#if detectError}
+      <div class="panel-note panel-note-warning">{detectError}</div>
+    {/if}
   </div>
 
   {#if fonts.length > 0}

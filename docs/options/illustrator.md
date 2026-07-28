@@ -40,7 +40,7 @@ The panel is the better install for people who use all2html frequently.
 2. Create one or more artboards.
 3. Add text, overlays, and special layers.
 4. Run the script or export from the panel.
-5. Rejoice in the the generated HTML/images.
+5. Rejoice in the generated HTML/images.
 
 Output is written next to the document by default in `all2html-output/`.
 
@@ -60,11 +60,26 @@ Illustrator supports much of the classic ai2html-style setting surface. The high
 
 You can set them in:
 
-- an `ai2html-settings` text block in the document
+- an `all2html-settings` text block in the document
 - `all2html.config.json` next to the document
 - the CEP panel
 
 The panel also shows where values are coming from and lets you save defaults.
+
+Names in an `all2html-settings` text block are snake_case (`image_format`); everywhere else — `all2html.config.json`, `ir.json`, the panel — they are camelCase (`imageFormat`). Both resolve to the same setting.
+
+One of these does less than it looks like it does on Illustrator: `image_format` only distinguishes `jpg` from everything else, so `png24` and `svg` both come out as 8-bit PNG. The export warns when you ask for something Illustrator will not produce. (`output: multiple-files` now works — the exporter writes one HTML file per responsive group.) The full list is in the [Settings Reference](../reference/settings.md).
+
+## Text Blocks
+
+Settings and custom code travel in the document as text blocks whose **first line** is the block name:
+
+- `all2html-settings` — snake_case `key: value` settings
+- `all2html-text` — `key: value` text fields (headline, credit, and so on)
+- `all2html-css`, `all2html-js`, `all2html-html`
+- `all2html-html-before`, `all2html-html-after`
+
+Every one of these also accepts the legacy `ai2html-` spelling, so documents authored against ai2html keep working unchanged. If a document somehow contains both an `all2html-settings` and an `ai2html-settings` block, the `all2html-` values win key by key; keys that appear only in the `ai2html-` block are still used. The order of the blocks in the document does not matter.
 
 ## Special Layers
 
@@ -72,14 +87,20 @@ Illustrator supports the richest set of special layers today. The main ones are:
 
 - `:png`
 - `:svg`
-- `:svg:inline`
+- `:svg,inline` (or the shorthand `:inline`)
 - `:video`
 - `:html-before`
 - `:html-after`
 - `:symbol`
 - `:div`
 
-These either stay as overlays/hooks or influence how the final background and HTML are built. They are explained in more detail in [Special Layers](../how-it-works/special-layers.md).
+Inline SVG is spelled **`:svg,inline`** — with a comma. `:svg:inline` is the *Figma* spelling and matches nothing in Illustrator: the layer will silently export as ordinary artwork instead.
+
+Illustrator splits the layer name on the first `:`, lowercases the rest, and matches it exactly, so `My chart:PNG` works but `:png ` with a trailing space does not.
+
+The document-level `inlineSvg` setting is not read by any surface. Tag the individual layer instead.
+
+These either stay as overlays/hooks or influence how the final background and HTML are built. They are explained in more detail in [Special Layers](../how-it-works/special-layers.md), and compared across surfaces in the [Support Matrix](../reference/support-matrix.md).
 
 ## Fonts
 
@@ -107,6 +128,3 @@ The panel also has a `Google Fonts` control. It writes the canonical `googleFont
 - classic newsroom ai2html workflows
 - special-layer overlays and hooks
 - deterministic background image generation
-
-> Screenshot placeholder
-> Crop the main panel settings area plus one visible badge or font-mapping row.

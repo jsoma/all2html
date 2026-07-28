@@ -17,12 +17,32 @@ const matches: LayerTypeMatch[] = [
   { token: ":svg:inline", type: "svg", inlineSvg: true },
   { token: ":svg", type: "svg" },
   { token: ":png", type: "png" },
-  { token: ":symbol", type: "symbol" },
-  { token: ":div", type: "div" },
   { token: ":video", type: "video" },
 ];
 
-export function parseLayerType(name: string): { type: LayerType; cleanName: string; inlineSvg: boolean } {
+/**
+ * Tokens the canonical IR defines and Illustrator honors, which the Figma
+ * runtime has no implementation for.
+ *
+ * These used to be in `matches`, which made the parser claim a `symbol`/`div`
+ * layer it then refused three files later — the parser advertised what the
+ * runtime would not do. They are now reported as unsupported at the point of
+ * recognition, so the layer exports as ordinary artwork *and* the user is told
+ * why, instead of the tag being silently accepted or silently ignored.
+ */
+const UNSUPPORTED_TOKENS = [":symbol", ":div"] as const;
+
+export type UnsupportedLayerToken = (typeof UNSUPPORTED_TOKENS)[number];
+
+export interface ParsedLayerType {
+  type: LayerType;
+  cleanName: string;
+  inlineSvg: boolean;
+  /** Set when the name carries a tag the Figma runtime cannot honor. */
+  unsupportedToken?: UnsupportedLayerToken;
+}
+
+export function parseLayerType(name: string): ParsedLayerType {
   const lower = name.toLowerCase().trim();
 
   for (const match of matches) {
@@ -40,6 +60,12 @@ export function parseLayerType(name: string): { type: LayerType; cleanName: stri
         cleanName: name.slice(0, -match.token.length).trim() || name,
         inlineSvg: match.inlineSvg ?? false,
       };
+    }
+  }
+
+  for (const token of UNSUPPORTED_TOKENS) {
+    if (lower.startsWith(token) || lower.endsWith(token)) {
+      return { type: "default", cleanName: name, inlineSvg: false, unsupportedToken: token };
     }
   }
 

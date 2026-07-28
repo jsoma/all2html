@@ -5,7 +5,7 @@ description: Output formats and bundles produced by all2html.
 
 # Formats
 
-all2html currently emits four main web output targets.
+all2html currently emits four main web output targets. Not every surface can produce every one of them — see the [Support Matrix](support-matrix.md) for which formats each surface actually emits.
 
 ## HTML
 

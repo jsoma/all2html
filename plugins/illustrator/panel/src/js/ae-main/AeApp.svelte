@@ -50,6 +50,9 @@
   let canQueueInAME = $state(false);
   let templateLoadError = $state("");
   let templateLoadGeneration = 0;
+  let storageWarnings = $state<string[]>([]);
+  let saveDefaultsError = $state("");
+  let saveDefaultsConfirmed = $state(false);
 
   function emptyToUndefined(value: string | null | undefined): string | undefined {
     const trimmed = String(value || "").trim();
@@ -99,6 +102,7 @@
         const [resolved, listedComps] = await Promise.all([resolveAeState(), listAeComps()]);
         comps = listedComps;
         fonts = resolved.fonts;
+        storageWarnings = resolved.storageWarnings;
 
         const selectedCompId =
           resolved.settings.targetCompId &&
@@ -130,6 +134,7 @@
         outputTemplates = [];
         canQueueInAME = false;
         templateLoadError = "";
+        storageWarnings = [];
       },
     });
   }
@@ -176,14 +181,21 @@
           JSON.stringify(fonts),
         ),
       mapError: (error) => ({
-        success: false,
+        status: "failed",
         error: String(error),
       }),
     });
   }
 
   function handleSaveAsDefault(): void {
-    saveAeAppDefaults(buildPersistedSettings(false), fonts);
+    try {
+      saveAeAppDefaults(buildPersistedSettings(false), fonts);
+      saveDefaultsError = "";
+      saveDefaultsConfirmed = true;
+    } catch (e) {
+      saveDefaultsConfirmed = false;
+      saveDefaultsError = `Could not save defaults: ${String(e)}`;
+    }
   }
 
   function handleOpenFolder(): void {
@@ -230,25 +242,33 @@
     return !!selected && !outputTemplates.includes(selected);
   });
 
+  const runSucceeded = $derived(
+    lastResult?.status === "complete" || lastResult?.status === "queued",
+  );
+
   const runSummary = $derived.by(() => {
-    if (!lastResult?.success) return "";
-    const verb = lastResult.videoMode === "ame" ? "Queued video to AME" : "Rendered video locally";
+    if (!lastResult || !runSucceeded) return "";
+    const verb =
+      lastResult.status === "queued"
+        ? "Queued video to Adobe Media Encoder"
+        : "Rendered video locally";
     const overlays = `${lastResult.overlayCount ?? 0} overlay${lastResult.overlayCount === 1 ? "" : "s"}`;
     return lastResult.elapsed ? `${verb} · ${overlays} · ${lastResult.elapsed}` : `${verb} · ${overlays}`;
   });
 
   const posterSummary = $derived.by(() => {
-    if (!lastResult?.success) return "";
-    if (lastResult.posterRendered) {
-      return lastResult.posterTemplate
-        ? `Rendered via ${lastResult.posterTemplate}`
+    const poster = lastResult?.poster;
+    if (!poster) return "Skipped";
+    if (poster.error) return poster.error;
+    if (poster.path || poster.name) {
+      return poster.template
+        ? `Rendered via ${poster.template}`
         : "Rendered via auto-detected template";
-    }
-    if (lastResult.posterError) {
-      return lastResult.posterError;
     }
     return "Skipped";
   });
+
+  const runWarnings = $derived(lastResult?.warnings ?? []);
 
   onMount(() => {
     startAeWatching(reloadPanelState);
@@ -272,6 +292,10 @@
           <code>all2html-ae.config.json</code> next to the <code>.aep</code>.
         </div>
       {/if}
+
+      {#each storageWarnings as warning}
+        <div class="panel-note panel-note-warning">{warning}</div>
+      {/each}
 
       <div class="section">
         <div class="section-label">Composition</div>
@@ -392,8 +416,14 @@
         sourceLabel="AE Font"
       />
 
+      {#if saveDefaultsError}
+        <div class="panel-note panel-note-warning">{saveDefaultsError}</div>
+      {/if}
+
       <div class="section">
-        <button class="btn-secondary" onclick={handleSaveAsDefault}>Save as Default</button>
+        <button class="btn-secondary" onclick={handleSaveAsDefault}>
+          Save as Default{saveDefaultsConfirmed ? " ✓" : ""}
+        </button>
       </div>
     {/if}
   {/snippet}
@@ -414,25 +444,30 @@
         </button>
 
         {#if lastResult}
-          {#if lastResult.success}
+          {#if runSucceeded}
             <RunResultRow
               success={true}
               message={runSummary}
               outputPath={lastResult.outputPath}
               onopenfolder={handleOpenFolder}
             />
+            {#each runWarnings as warning}
+              <div class="panel-note panel-note-warning" style="margin-top: 6px">
+                {warning}
+              </div>
+            {/each}
             <Collapsible title="Details" bind:open={detailsOpen}>
               <div class="panel-note" style="margin-top: 2px; margin-bottom: 0">
                 <div><strong>Comp:</strong> {lastResult.compName || activeCompLabel}</div>
                 <div>
                   <strong>Video:</strong>
-                  {#if lastResult.videoMode === "ame"}
-                    Queued to Adobe Media Encoder
+                  {#if lastResult.status === "queued"}
+                    Queued to Adobe Media Encoder — the video file appears when AME finishes
                   {:else}
                     Rendered in After Effects
                   {/if}
-                  {#if lastResult.videoTemplate}
-                    via <code>{lastResult.videoTemplate}</code>
+                  {#if lastResult.video?.template}
+                    via <code>{lastResult.video.template}</code>
                   {/if}
                 </div>
                 <div>
@@ -463,16 +498,16 @@
                     <code class="diagnostic-path">{lastResult.jsonPath}</code>
                   </div>
                 {/if}
-                {#if lastResult.videoPath}
+                {#if lastResult.video?.path}
                   <div>
                     <strong>Video</strong>
-                    <code class="diagnostic-path">{lastResult.videoPath}</code>
+                    <code class="diagnostic-path">{lastResult.video.path}</code>
                   </div>
                 {/if}
-                {#if lastResult.posterPath}
+                {#if lastResult.poster?.path}
                   <div>
                     <strong>Poster</strong>
-                    <code class="diagnostic-path">{lastResult.posterPath}</code>
+                    <code class="diagnostic-path">{lastResult.poster.path}</code>
                   </div>
                 {/if}
               </div>
@@ -482,6 +517,16 @@
             <div class="panel-note panel-note-warning" style="margin-top: 6px">
               {lastResult.error || "Export failed"}
             </div>
+            {#if lastResult.video?.error}
+              <div class="panel-note panel-note-warning" style="margin-top: 6px">
+                Video: {lastResult.video.error}
+              </div>
+            {/if}
+            {#if lastResult.poster?.error}
+              <div class="panel-note panel-note-warning" style="margin-top: 6px">
+                Poster: {lastResult.poster.error}
+              </div>
+            {/if}
           {/if}
           <DiagnosticsPanel result={lastResult} />
         {/if}

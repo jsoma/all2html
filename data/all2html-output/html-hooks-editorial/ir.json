@@ -1,9 +1,9 @@
 {
-  "irVersion": "0.0.0",
-  "generator": {
+  "irVersion": "0.1.0",
+  "source": {
     "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "pluginVersion": "0.1.0"
+    "toolVersion": "29.8.9",
+    "adapterVersion": "0.1.0"
   },
   "settings": {
     
@@ -13,17 +13,25 @@
   ],
   "artboards": [
     {
+      "id": "illustrator:artboard:desktop-1",
       "name": "desktop",
-      "originalName": "desktop",
       "width": 760,
       "height": 520,
-      "actualWidth": 760,
-      "actualHeight": 520,
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop",
+        "width": 760,
+        "height": 520
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:desktop-1:layer:footer-hook-1",
           "name": "footer-hook",
           "type": "html-after",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "footer-hook:html-after"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -34,9 +42,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:desktop-1:layer:blank-layer-hook-2",
           "name": "blank-layer-hook",
           "type": "html-before",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "blank-layer-hook:html-before"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -44,9 +56,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:desktop-1:layer:deck-hook-3",
           "name": "deck-hook",
           "type": "html-before",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "deck-hook:html-before"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -57,9 +73,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:desktop-1:layer:content-4",
           "name": "content",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -199,7 +219,11 @@
       "mimeType": "image/png",
       "width": 1520,
       "height": 1040,
-      "artboardName": "desktop",
+      "artboardId": "illustrator:artboard:desktop-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,

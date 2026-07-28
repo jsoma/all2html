@@ -97,6 +97,31 @@ Then do host-app smoke:
 - Illustrator: open a saved file, edit it so it becomes dirty, confirm the panel does not lose the document path, run export, verify `Open folder`
 - After Effects: open a saved project, confirm comp and template loading, run export, verify `Open folder`
 
+## Packaging
+
+`@all2html/panel` has three build targets and they share one `dist/`:
+
+| script | writes | run by |
+| --- | --- | --- |
+| `build` | `dist/cep/` | `pnpm build:panel` |
+| `zxp` | `dist/cep/`, `dist/zxp/<id>.zxp` | `pnpm package:panel` |
+| `zip` | `dist/cep/`, `dist/zxp/<id>.zxp`, `dist/zip/<name>_<version>.zip` | `pnpm package:panel:zip` |
+
+Two things follow, and both have already broken CI once:
+
+- **`zip` produces the `.zxp` too.** `vite-cep-plugin` signs the extension whenever
+  `isPackage` is set and only *additionally* wraps it when `isMetaPackage` is set,
+  so `package:panel:zip` alone yields both release artifacts. Signing needs no
+  secret — `ZXPSignCmd` (bundled with the plugin) generates a self-signed
+  certificate from the `zxp` block in `cep.config.ts` and timestamps it against a
+  public TSA, falling back to an untimestamped signature via `allowSkipTSA`.
+- **Each target cleans only what it owns.** The scripts used to start with
+  `rimraf dist/*`, which the shell expanded, so whichever target ran second
+  deleted the other's output — `package:panel:zip && package:panel` left no zip
+  behind, and `pnpm check:release-artifacts` then failed on a zip that had
+  existed a minute earlier. They now clean `dist/cep` plus their own output
+  directory, so the two targets can run in either order.
+
 ## Known Test Gaps
 
 The largest remaining gap is hostscript-focused unit coverage. Shared panel logic is tested well, but the ExtendScript-side helpers still rely more heavily on live host-app verification than the panel-side code.

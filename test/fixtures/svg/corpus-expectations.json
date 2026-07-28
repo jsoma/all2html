@@ -25,6 +25,14 @@
     ],
     "assets": ["effects.png"]
   },
+  "illustrator/chart-labels": {
+    "entrypoints": ["illustrator/chart-labels.svg"],
+    "artboards": 1,
+    "warnings": [
+      "illustrator/chart-labels.svg: left text positioned outside the artboard in the background asset."
+    ],
+    "assets": ["chart-labels.png"]
+  },
   "generic/diagram": {
     "entrypoints": ["generic/diagram.svg"],
     "artboards": 1,

@@ -2,7 +2,15 @@ name: CI
 
 on:
   pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
+
+# One run per ref. A new push to a PR cancels the in-flight run for that PR;
+# main is not cancelled, because its run is what CI Artifacts is paired with.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verify:
@@ -14,8 +22,6 @@ jobs:
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -35,6 +41,17 @@ jobs:
       - name: Audit Illustrator fixtures
         run: pnpm check:illustrator-fixtures
 
+      # docs/reference/settings.md and docs/reference/support-matrix.md are
+      # generated from the setting definitions and capability declarations.
+      # Fails when the committed docs no longer match the source of truth.
+      - name: Verify generated docs are current
+        run: pnpm check:generated-docs
+
+      # Every `file:line` / `file#symbol` citation in CLAUDE.md, PROGRESS.md,
+      # SPEC.md and internal-docs/ must still point at code that supports it.
+      - name: Verify doc citations
+        run: pnpm check:doc-citations
+
       - name: Run tests
         run: pnpm test
 
@@ -43,6 +60,12 @@ jobs:
 
       - name: Run typecheck
         run: pnpm run typecheck
+
+      - name: Build publishable package
+        run: pnpm build
+
+      - name: Verify package entry points resolve
+        run: node scripts/check-package-entrypoints.mjs
 
       - name: Run panel typecheck
         run: pnpm run typecheck:panel
@@ -56,8 +79,46 @@ jobs:
       - name: Build Illustrator bundle
         run: pnpm build:illustrator
 
+      - name: Build Figma plugin
+        run: pnpm build:figma
+
       - name: Build panel
         run: pnpm build:panel
 
       - name: Build docs
         run: pnpm docs:build
+
+  visual:
+    # Baselines in test/visual/__screenshots__ were captured on macOS;
+    # font rendering differs on Linux runners.
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright chromium
+        run: pnpm exec playwright install chromium
+
+      - name: Run visual regression tests
+        run: pnpm test:visual
+
+      - name: Upload visual diff report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-visual-diffs
+          path: test-results/
+          retention-days: 7

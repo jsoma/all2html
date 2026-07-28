@@ -1,5 +1,11 @@
 import { parseSync, stringify } from "svgson";
 import { makeKeyword } from "../../core/identifiers.js";
+import {
+  createWarning,
+  type StructuredWarning,
+  type WarningCategory,
+} from "../../core/warnings.js";
+import { isSafeUrl } from "../../emitters/shared/escape.js";
 import { defaultSettings } from "../../ir/defaults.js";
 import type {
   Artboard,
@@ -15,6 +21,15 @@ import type {
 import { CURRENT_IR_VERSION } from "../../ir/types.js";
 import type { ImportedAssetFile, ImportedFile, ImportOptions, ImportResult } from "../types.js";
 import { encodeRasterImage, type SvgRasterizer } from "./rasterizer.js";
+import type { Matrix2D, MatrixRejectionReason } from "./transform.js";
+import {
+  describeAxisAlignedTransform,
+  IDENTITY_MATRIX,
+  isUnitScale,
+  matricesEqual,
+  multiplyMatrix,
+  parseTransformList,
+} from "./transform.js";
 
 interface SvgNode {
   name: string;
@@ -44,14 +59,28 @@ interface StyleContext {
   letterSpacing?: string;
   lineHeight?: string;
   textAnchor?: string;
-  direction?: "ltr" | "rtl";
+  visibility?: string;
   hyperlink?: string;
 }
 
 interface TransformContext {
-  tx: number;
-  ty: number;
+  /** Composed transform from the SVG root down to (and including) this node. */
+  matrix: Matrix2D;
+  /** False once the composed transform stops being a translate + positive scale. */
   supported: boolean;
+  reason?: MatrixRejectionReason;
+}
+
+/** Per-file state for one text-recovery scan. */
+interface TextScanContext {
+  state: ImportState;
+  svgPath: string;
+  /** Artboard bounds in SVG user units; used to drop off-canvas text. */
+  bounds: { width: number; height: number };
+  /** Visible text nodes the scan looked at (recovered or not). */
+  consideredCount: number;
+  /** Text content of visible in-bounds nodes that could not be recovered. */
+  discardedText: string[];
 }
 
 interface TextLine {
@@ -70,7 +99,9 @@ interface ImportedTextNode {
 }
 
 interface ImportState {
-  warnings: Set<string>;
+  /** Deduplicated by message; sorted on the way out so import output is stable. */
+  warnings: StructuredWarning[];
+  warningMessages: Set<string>;
   fonts: Map<string, FontMapping>;
   assetFiles: ImportedAssetFile[];
   writtenAssetPaths: Set<string>;
@@ -176,8 +207,16 @@ function parseFileName(stem: string): NamingInfo {
   };
 }
 
-function addWarning(state: ImportState, message: string): void {
-  state.warnings.add(message);
+function addWarning(
+  state: ImportState,
+  code: string,
+  category: WarningCategory,
+  message: string,
+  context?: { setting?: string },
+): void {
+  if (state.warningMessages.has(message)) return;
+  state.warningMessages.add(message);
+  state.warnings.push(createWarning(code, category, message, context));
 }
 
 function parseStyleAttribute(styleAttr: string | undefined): Record<string, string> {
@@ -213,13 +252,10 @@ function mergeStyleContext(parent: StyleContext, node: SvgNode): StyleContext {
   const lineHeight = getAttr(node, "line-height") ?? styleMap["line-height"] ?? parent.lineHeight;
   const anchor =
     getAttr(node, "text-anchor") ?? styleMap["text-anchor"] ?? parent.textAnchor ?? "start";
-  const direction =
-    ((getAttr(node, "direction") ?? styleMap.direction ?? parent.direction) as
-      | "ltr"
-      | "rtl"
-      | undefined) ?? "ltr";
-  const hyperlink =
-    getAttr(node, "href") ?? getAttr(node, "xlink:href") ?? styleMap.href ?? parent.hyperlink;
+  // `visibility` is inherited and a descendant may re-enable itself, unlike
+  // `display: none`, which removes the whole subtree.
+  const visibility = getAttr(node, "visibility") ?? styleMap.visibility ?? parent.visibility;
+  const hyperlink = resolveNodeHyperlink(node) ?? parent.hyperlink;
 
   return {
     fill,
@@ -232,9 +268,41 @@ function mergeStyleContext(parent: StyleContext, node: SvgNode): StyleContext {
     letterSpacing,
     lineHeight,
     textAnchor: anchor,
-    direction,
+    visibility,
     hyperlink,
   };
+}
+
+/**
+ * `display: none` removes an element and its entire subtree from rendering,
+ * regardless of what descendants declare. Illustrator uses it for hidden
+ * layers, including the off-canvas `ai2html-settings` text block.
+ */
+function isDisplayNone(node: SvgNode): boolean {
+  if (getAttr(node, "display")?.trim().toLowerCase() === "none") return true;
+  return parseStyleAttribute(getAttr(node, "style")).display?.toLowerCase() === "none";
+}
+
+function collectTextContent(node: SvgNode): string {
+  if (node.type === "text") return node.value;
+  return node.children.map((child) => collectTextContent(child)).join("");
+}
+
+// Only <a> carries link semantics in SVG (href on <use>/<image> is a resource
+// reference), and emitted hrefs land in output HTML, so unsafe schemes like
+// javascript: must not survive import.
+//
+// This delegates to the shared `isSafeUrl` rather than scheme-matching locally.
+// A local check that only trimmed the value was bypassable: browsers strip
+// ASCII tabs and newlines from URLs before resolving, so `java&#x0A;script:`
+// fails a `^scheme:` regex here, passes through as "no scheme detected", and
+// then executes once the browser normalizes it away.
+function resolveNodeHyperlink(node: SvgNode): string | undefined {
+  if (node.name !== "a") return undefined;
+  const href = (getAttr(node, "href") ?? getAttr(node, "xlink:href"))?.trim();
+  if (!href) return undefined;
+  if (!isSafeUrl(href)) return undefined;
+  return href;
 }
 
 function parseOpacity(raw: string | undefined, fallback: number): number {
@@ -290,25 +358,13 @@ function parseSvgDimensions(root: SvgNode): { width: number; height: number } {
   throw new Error("SVG is missing readable width/height or viewBox dimensions.");
 }
 
-function parseTransform(raw: string | undefined): { tx: number; ty: number; supported: boolean } {
-  if (!raw) return { tx: 0, ty: 0, supported: true };
-  const trimmed = raw.trim();
-  if (!trimmed) return { tx: 0, ty: 0, supported: true };
-
-  const translateOnly = /^translate\(([^)]+)\)$/i.exec(trimmed);
-  if (!translateOnly) return { tx: 0, ty: 0, supported: false };
-
-  const parts = translateOnly[1]
-    .split(/[ ,]+/)
-    .map((part) => Number.parseFloat(part))
-    .filter((part) => Number.isFinite(part));
-  return {
-    tx: parts[0] ?? 0,
-    ty: parts[1] ?? 0,
-    supported: true,
-  };
-}
-
+/**
+ * Compose a node's `transform` onto its inherited transform.
+ *
+ * A transform stays "supported" for live text recovery while it remains a
+ * translation plus a positive axis-aligned scale. Rotation, skew, and mirroring
+ * cannot be expressed as flowing HTML text and fall back to the raster.
+ */
 function mergeTransformContext(
   parent: TransformContext,
   raw: string | undefined,
@@ -317,20 +373,35 @@ function mergeTransformContext(
     return parent;
   }
 
-  const current = parseTransform(raw);
-  if (!current.supported) {
-    return {
-      tx: parent.tx,
-      ty: parent.ty,
-      supported: false,
-    };
+  const parsed = parseTransformList(raw);
+  if (!parsed) {
+    return { matrix: parent.matrix, supported: false, reason: "unparsed" };
   }
 
-  return {
-    tx: parent.tx + current.tx,
-    ty: parent.ty + current.ty,
-    supported: true,
-  };
+  const composed = multiplyMatrix(parent.matrix, parsed);
+  const described = describeAxisAlignedTransform(composed);
+  if (!described.supported) {
+    return { matrix: composed, supported: false, reason: described.reason };
+  }
+
+  return { matrix: composed, supported: true };
+}
+
+/** Map a local x coordinate into artboard space (valid because `c === 0`). */
+function mapX(matrix: Matrix2D, x: number): number {
+  return matrix.a * x + matrix.e;
+}
+
+/** Map a local y coordinate into artboard space (valid because `b === 0`). */
+function mapY(matrix: Matrix2D, y: number): number {
+  return matrix.d * y + matrix.f;
+}
+
+function unsupportedTransformWarning(svgPath: string, reason: MatrixRejectionReason): string {
+  if (reason === "mirrored") {
+    return `${svgPath}: left mirrored or flipped text in SVG background asset.`;
+  }
+  return `${svgPath}: left transformed text in SVG background asset.`;
 }
 
 function parseColor(raw: string | undefined): Color | null {
@@ -348,7 +419,7 @@ function parseColor(raw: string | undefined): Color | null {
         value.length === 4
           ? Math.round((Number.parseInt(value[3] + value[3], 16) / 255) * 100)
           : undefined;
-      return { r, g, b, opacity: alpha };
+      return rgbColor(r, g, b, alpha);
     }
     if (value.length === 6 || value.length === 8) {
       const r = Number.parseInt(value.slice(0, 2), 16);
@@ -358,7 +429,7 @@ function parseColor(raw: string | undefined): Color | null {
         value.length === 8
           ? Math.round((Number.parseInt(value.slice(6, 8), 16) / 255) * 100)
           : undefined;
-      return { r, g, b, opacity: alpha };
+      return rgbColor(r, g, b, alpha);
     }
   }
 
@@ -371,12 +442,24 @@ function parseColor(raw: string | undefined): Color | null {
       const b = Number.parseFloat(parts[2]);
       const alpha = parts.length >= 4 ? Math.round(Number.parseFloat(parts[3]) * 100) : undefined;
       if ([r, g, b].every((part) => Number.isFinite(part))) {
-        return { r, g, b, opacity: alpha };
+        return rgbColor(r, g, b, alpha);
       }
     }
   }
 
   return null;
+}
+
+/**
+ * Build a colour with the alpha channel *omitted* when the source had none.
+ *
+ * `{ r, g, b, opacity: undefined }` is not the same document as `{ r, g, b }`:
+ * `JSON.stringify` drops the key, so the model stopped surviving the round trip
+ * it is required to survive. `assertJsonPure` only looked for non-finite numbers
+ * at the time, so nothing caught it.
+ */
+function rgbColor(r: number, g: number, b: number, opacity: number | undefined): Color {
+  return opacity === undefined ? { r, g, b } : { r, g, b, opacity };
 }
 
 function hasDescendant(node: SvgNode, tagName: string): boolean {
@@ -444,7 +527,7 @@ function normalizeTextContent(text: string): string[] {
 }
 
 function collectTextLines(
-  state: ImportState,
+  scan: TextScanContext,
   node: SvgNode,
   context: StyleContext,
   transformContext: TransformContext,
@@ -452,6 +535,8 @@ function collectTextLines(
   lines: TextLine[],
 ): TextLine {
   let activeLine = currentLine;
+  // Guaranteed axis-aligned: the caller rejected rotation, skew, and mirroring.
+  const verticalScale = transformContext.matrix.d;
 
   for (const child of node.children) {
     if (child.type === "text") {
@@ -467,13 +552,18 @@ function collectTextLines(
           continue;
         }
 
-        const fontSize = parseLength(context.fontSize, 16);
-        const lineHeight = parseLength(context.lineHeight, fontSize * 1.2, fontSize);
+        // Lengths come out of the SVG in the node's local space; the vertical
+        // scale folds into font size, and the horizontal stretch relative to it
+        // is carried separately as a CSS transform on the element.
+        const localFontSize = parseLength(context.fontSize, 16);
+        const localLineHeight = parseLength(context.lineHeight, localFontSize * 1.2, localFontSize);
+        const localLetterSpacing = parseLength(context.letterSpacing, 0, localFontSize);
+        const fontSize = localFontSize * verticalScale;
+        const lineHeight = localLineHeight * verticalScale;
         const weight = context.fontWeight?.trim() || "400";
         const style = context.fontStyle?.trim() || "normal";
         const family = context.fontFamily?.trim() || "sans-serif";
-        const letterSpacingPx = parseLength(context.letterSpacing, 0, fontSize);
-        const letterSpacingEm = fontSize ? letterSpacingPx / fontSize : 0;
+        const letterSpacingEm = localFontSize ? localLetterSpacing / localFontSize : 0;
         const preferredColorValue =
           context.fill?.trim().toLowerCase() === "none"
             ? context.color
@@ -483,7 +573,7 @@ function collectTextLines(
           (context.fill?.trim().toLowerCase() === "none"
             ? { r: 0, g: 0, b: 0, opacity: 0 }
             : { r: 0, g: 0, b: 0 });
-        const fontName = createFontMapping(state, family, weight, style);
+        const fontName = createFontMapping(scan.state, family, weight, style);
         const run: CharacterRun = {
           text: segment,
           fontName,
@@ -492,7 +582,8 @@ function collectTextLines(
           letterSpacing: letterSpacingEm,
           capitalization: "normal",
           baselineShift: "normal",
-          hyperlink: context.hyperlink ? { href: context.hyperlink } : undefined,
+          // Absent, not `undefined`: the document model must survive JSON.
+          ...(context.hyperlink ? { hyperlink: { href: context.hyperlink } } : {}),
         };
 
         activeLine.runs.push(run);
@@ -530,8 +621,7 @@ function collectTextLines(
     }
     if (
       !childTransform.supported ||
-      childTransform.tx !== transformContext.tx ||
-      childTransform.ty !== transformContext.ty
+      !matricesEqual(childTransform.matrix, transformContext.matrix)
     ) {
       throw new Error("Transformed nested text is not recoverable as live HTML text.");
     }
@@ -546,72 +636,112 @@ function collectTextLines(
       (xValues != null || yValues != null || dyValues != null);
 
     if (startsNewLine) {
-      const nextX = xValues?.[0] != null ? xValues[0] + transformContext.tx : activeLine.x;
-      const dy = dyValues?.[0] ?? (activeLine.leading || activeLine.maxFontSize * 1.2 || 16);
-      const nextY = yValues?.[0] != null ? yValues[0] + transformContext.ty : activeLine.y + dy;
+      const nextX = xValues?.[0] != null ? mapX(transformContext.matrix, xValues[0]) : activeLine.x;
+      const dy =
+        dyValues?.[0] != null
+          ? dyValues[0] * verticalScale
+          : activeLine.leading || activeLine.maxFontSize * 1.2 || 16;
+      const nextY =
+        yValues?.[0] != null ? mapY(transformContext.matrix, yValues[0]) : activeLine.y + dy;
       activeLine = newTextLine(nextX, nextY, activeLine.anchor);
       lines.push(activeLine);
     } else if (repositionsCurrentLine) {
       if (xValues?.[0] != null) {
-        activeLine.x = xValues[0] + transformContext.tx;
+        activeLine.x = mapX(transformContext.matrix, xValues[0]);
       }
       if (yValues?.[0] != null) {
-        activeLine.y = yValues[0] + transformContext.ty;
+        activeLine.y = mapY(transformContext.matrix, yValues[0]);
       } else if (dyValues?.[0] != null) {
-        activeLine.y += dyValues[0];
+        activeLine.y += dyValues[0] * verticalScale;
       }
     }
 
-    activeLine = collectTextLines(state, child, childContext, childTransform, activeLine, lines);
+    activeLine = collectTextLines(scan, child, childContext, childTransform, activeLine, lines);
   }
 
   return activeLine;
 }
 
+type TextBuildResult =
+  /** Recovered as live HTML text. */
+  | { kind: "element"; element: TextElement }
+  /** Visible in the raster but not recoverable; its content can seed alt text. */
+  | { kind: "discarded" }
+  /** Nothing a reader would ever see (empty, or entirely off the artboard). */
+  | { kind: "invisible" };
+
 function buildTextElement(
-  state: ImportState,
-  svgPath: string,
+  scan: TextScanContext,
   node: SvgNode,
   inherited: StyleContext,
   transform: TransformContext,
   index: number,
-): TextElement | null {
+): TextBuildResult {
+  const { state, svgPath } = scan;
+
   if (hasDescendant(node, "textPath")) {
-    addWarning(state, `${svgPath}: skipped live text recovery for path text.`);
-    return null;
+    addWarning(
+      state,
+      "import:path-text",
+      "text",
+      `${svgPath}: skipped live text recovery for path text.`,
+    );
+    return { kind: "discarded" };
   }
 
   if (!transform.supported) {
-    addWarning(state, `${svgPath}: left transformed text in SVG background asset.`);
-    return null;
+    const reason = transform.reason ?? "unparsed";
+    addWarning(
+      state,
+      reason === "mirrored" ? "import:mirrored-text" : "import:transformed-text",
+      "text",
+      unsupportedTransformWarning(svgPath, reason),
+    );
+    return { kind: "discarded" };
   }
 
   const context = mergeStyleContext(inherited, node);
   const fontSize = parseLength(context.fontSize, 16);
   const xValues = parseLengthList(getAttr(node, "x"), fontSize);
   const yValues = parseLengthList(getAttr(node, "y"), fontSize);
-  if (!xValues?.length || !yValues?.length || xValues.length > 1 || yValues.length > 1) {
-    addWarning(state, `${svgPath}: skipped positioned text that cannot map cleanly to HTML.`);
-    return null;
+  if ((xValues && xValues.length > 1) || (yValues && yValues.length > 1)) {
+    addWarning(
+      state,
+      "import:positioned-text",
+      "text",
+      `${svgPath}: skipped positioned text that cannot map cleanly to HTML.`,
+    );
+    return { kind: "discarded" };
   }
 
+  // Per SVG, absent x/y default to 0. Illustrator relies on that and carries the
+  // real position in the node's transform matrix instead.
+  const localX = xValues?.[0] ?? 0;
+  const localY = yValues?.[0] ?? 0;
+
   const anchor = anchorToAlignment(context.textAnchor);
-  const baseLine = newTextLine(xValues[0] + transform.tx, yValues[0] + transform.ty, anchor);
+  const baseLine = newTextLine(
+    mapX(transform.matrix, localX),
+    mapY(transform.matrix, localY),
+    anchor,
+  );
   const lines = [baseLine];
 
   try {
-    collectTextLines(state, node, context, transform, baseLine, lines);
+    collectTextLines(scan, node, context, transform, baseLine, lines);
   } catch (error) {
     addWarning(
       state,
+      "import:text-layout",
+      "text",
       `${svgPath}: ${error instanceof Error ? error.message : "Skipped unsupported text layout."}`,
     );
-    return null;
+    return { kind: "discarded" };
   }
 
   const populatedLines = lines.filter((line) => line.runs.length > 0);
   if (populatedLines.length === 0) {
-    return null;
+    return { kind: "invisible" };
   }
 
   const firstLine = populatedLines[0];
@@ -629,17 +759,46 @@ function buildTextElement(
         ? firstLine.x - width
         : firstLine.x;
 
+  // Vertical scale is already folded into font size; what remains is the
+  // horizontal stretch relative to it (Illustrator's horizontal-scale slider).
+  const horizontalStretch = transform.matrix.a / transform.matrix.d;
+  const stretched = !isUnitScale(horizontalStretch);
+  const renderedWidth = width * (stretched ? horizontalStretch : 1);
+
+  // The raster clips to the artboard, so text entirely outside it must not be
+  // resurrected as live HTML clamped back onto the canvas. The stretch is
+  // applied around the alignment anchor, so measure from there.
+  const renderedLeft =
+    alignment === "center"
+      ? firstLine.x - renderedWidth / 2
+      : alignment === "right"
+        ? firstLine.x - renderedWidth
+        : firstLine.x;
+  if (
+    renderedLeft + renderedWidth <= 0 ||
+    top + totalHeight <= 0 ||
+    renderedLeft >= scan.bounds.width ||
+    top >= scan.bounds.height
+  ) {
+    addWarning(
+      state,
+      "import:offscreen-text",
+      "text",
+      `${svgPath}: left text positioned outside the artboard in the background asset.`,
+    );
+    return { kind: "invisible" };
+  }
+
   const paragraphs: Paragraph[] = populatedLines.map((line) => ({
     text: line.runs.map((run) => run.text).join(""),
     alignment,
-    direction: context.direction,
     leading: Math.max(line.leading || line.maxFontSize * 1.2, 1),
     spaceBefore: 0,
     spaceAfter: 0,
     runs: line.runs,
   }));
 
-  return {
+  const element: TextElement = {
     type: "text",
     id: `${makeKeyword(stripExtension(svgPath) || "svg")}-text-${index}`,
     kind: "point",
@@ -654,11 +813,16 @@ function buildTextElement(
     paragraphs,
     renderAs: "html",
   };
+
+  if (stretched) {
+    element.transformMatrix = [horizontalStretch, 0, 0, 1, 0, 0];
+  }
+
+  return { kind: "element", element };
 }
 
 function collectRecoverableText(
-  state: ImportState,
-  svgPath: string,
+  scan: TextScanContext,
   node: SvgNode,
   parentContext: StyleContext,
   parentTransform: TransformContext,
@@ -666,28 +830,32 @@ function collectRecoverableText(
   extracted: ImportedTextNode[] = [],
 ): ImportedTextNode[] {
   if (node.type !== "element") return extracted;
+  // `display: none` hides the whole subtree — Illustrator uses it for hidden
+  // layers and for the off-canvas ai2html settings block.
+  if (isDisplayNone(node)) return extracted;
+
   const context = mergeStyleContext(parentContext, node);
   const transform = mergeTransformContext(parentTransform, getAttr(node, "transform"));
 
   if (node.name === "text") {
-    if (!UNSUPPORTED_TEXT_CONTAINERS.has(parentTag || "")) {
-      const element = buildTextElement(
-        state,
-        svgPath,
-        node,
-        parentContext,
-        transform,
-        extracted.length + 1,
-      );
-      if (element) {
-        extracted.push({ node, element });
+    if (
+      !UNSUPPORTED_TEXT_CONTAINERS.has(parentTag || "") &&
+      context.visibility?.trim().toLowerCase() !== "hidden"
+    ) {
+      scan.consideredCount += 1;
+      const result = buildTextElement(scan, node, parentContext, transform, extracted.length + 1);
+      if (result.kind === "element") {
+        extracted.push({ node, element: result.element });
+      } else if (result.kind === "discarded") {
+        const content = collectTextContent(node).replace(/\s+/g, " ").trim();
+        if (content) scan.discardedText.push(content);
       }
     }
     return extracted;
   }
 
   for (const child of node.children) {
-    collectRecoverableText(state, svgPath, child, context, transform, node.name, extracted);
+    collectRecoverableText(scan, child, context, transform, node.name, extracted);
   }
 
   return extracted;
@@ -811,7 +979,12 @@ function resolveImageHrefForRendering(
   if (href.startsWith("data:")) {
     const decoded = decodeDataUrl(href);
     if (!decoded) {
-      addWarning(state, `${svgPath}: could not decode embedded SVG image data.`);
+      addWarning(
+        state,
+        "import:image-decode",
+        "image",
+        `${svgPath}: could not decode embedded SVG image data.`,
+      );
       return href;
     }
     const dataUrl = encodeDataUrl(decoded.mimeType, decoded.bytes);
@@ -820,14 +993,24 @@ function resolveImageHrefForRendering(
   }
 
   if (/^[a-z]+:/i.test(href)) {
-    addWarning(state, `${svgPath}: leaving external image reference ${href} in imported SVG.`);
+    addWarning(
+      state,
+      "import:external-image",
+      "image",
+      `${svgPath}: leaving external image reference ${href} in imported SVG.`,
+    );
     return href;
   }
 
   const resolved = resolveLinkedAssetPath(svgPath, href);
   const source = filesByPath.get(resolved);
   if (!source) {
-    addWarning(state, `${svgPath}: missing linked image asset ${href}.`);
+    addWarning(
+      state,
+      "import:missing-image",
+      "image",
+      `${svgPath}: missing linked image asset ${href}.`,
+    );
     return href;
   }
 
@@ -935,7 +1118,10 @@ function resolveBackgroundImageFormat(
     if (requestedFormat === "svg") {
       addWarning(
         state,
+        "setting:unsupported",
+        "setting",
         `${svgPath}: SVG background export is not supported for imported SVG artboards; using png instead.`,
+        { setting: "imageFormat" },
       );
       return "png";
     }
@@ -962,17 +1148,29 @@ function createInitialContext(): StyleContext {
     fill: "#000000",
     color: "#000000",
     opacity: 1,
-    direction: "ltr",
     textAnchor: "start",
   };
 }
 
 function createInitialTransformContext(): TransformContext {
   return {
-    tx: 0,
-    ty: 0,
+    matrix: { ...IDENTITY_MATRIX },
     supported: true,
   };
+}
+
+const MAX_SYNTHESIZED_ALT_TEXT_LENGTH = 240;
+
+/**
+ * Build placeholder alt text for a graphic that ended up as a flat image.
+ * Prefers the text that was discarded during recovery, falls back to the
+ * artboard name. Always paired with a warning telling the user to review it.
+ */
+function synthesizeImageAltText(discardedText: readonly string[], artboardName: string): string {
+  const joined = discardedText.join(" ").replace(/\s+/g, " ").trim();
+  if (!joined) return artboardName;
+  if (joined.length <= MAX_SYNTHESIZED_ALT_TEXT_LENGTH) return joined;
+  return `${joined.slice(0, MAX_SYNTHESIZED_ALT_TEXT_LENGTH - 1).trimEnd()}…`;
 }
 
 function stripHrefQueryAndFragment(href: string): string {
@@ -1005,7 +1203,12 @@ async function parseSvgFile(
   naming: NamingInfo,
   settings: Settings,
   rasterizer: SvgRasterizer,
-): Promise<{ artboard: Artboard; backgroundAsset?: Asset; backgroundFile?: ImportedAssetFile }> {
+): Promise<{
+  artboard: Artboard;
+  backgroundAsset?: Asset;
+  backgroundFile?: ImportedAssetFile;
+  imageAltText?: string;
+}> {
   const svgContent =
     typeof file.content === "string" ? file.content : new TextDecoder().decode(file.content);
   const root = parseSync(svgContent) as SvgNode;
@@ -1017,19 +1220,27 @@ async function parseSvgFile(
   const artboardId = `artboard:${makeKeyword(stripPathExtension(file.path), "artboard")}`;
   const contentLayerId = `${artboardId}:layer:content`;
   const shouldRecoverText = !naming.imageOnly && settings.renderTextAs !== "image";
+  const scan: TextScanContext = {
+    state,
+    svgPath: file.path,
+    bounds: dimensions,
+    consideredCount: 0,
+    discardedText: [],
+  };
   const extractedText = shouldRecoverText
-    ? collectRecoverableText(
-        state,
-        file.path,
-        root,
-        createInitialContext(),
-        createInitialTransformContext(),
-      )
+    ? collectRecoverableText(scan, root, createInitialContext(), createInitialTransformContext())
     : [];
   const recoveredTextNodes = new Set(extractedText.map((entry) => entry.node));
 
-  if (shouldRecoverText && extractedText.length === 0 && hasDescendant(root, "text")) {
-    addWarning(state, `${file.path}: no live HTML text could be recovered from SVG text nodes.`);
+  const textRecoveryFailed =
+    shouldRecoverText && extractedText.length === 0 && scan.consideredCount > 0;
+  if (textRecoveryFailed) {
+    addWarning(
+      state,
+      "import:text-recovery-failed",
+      "text",
+      `${file.path}: no live HTML text could be recovered from SVG text nodes.`,
+    );
   }
 
   if (
@@ -1039,6 +1250,8 @@ async function parseSvgFile(
   ) {
     addWarning(
       state,
+      "import:preserved-effects",
+      "image",
       `${file.path}: preserving filters, masks, or clip paths inside SVG asset output.`,
     );
   }
@@ -1072,10 +1285,11 @@ async function parseSvgFile(
       state,
       `${makeKeyword(stripExtension(file.path) || "svg")}.${extensionForMimeType(rasterized.mimeType)}`,
     );
+    // The byte sidecar names the asset; path and MIME live on the asset record
+    // below, so the two can no longer drift apart.
     backgroundFile = {
-      path: backgroundPath,
+      assetId: backgroundPath,
       bytes: rasterized.bytes,
-      mimeType: rasterized.mimeType,
     };
     backgroundAsset = {
       id: backgroundPath,
@@ -1089,16 +1303,19 @@ async function parseSvgFile(
         id: file.path,
         name: naming.originalName,
       },
+      // Format-specific parameters are *omitted* for the formats they do not
+      // apply to. Writing `quality: undefined` on a PNG left an enumerable key
+      // that JSON.stringify drops, so the asset record did not round-trip.
       exportParams: {
         format: extensionForMimeType(rasterized.mimeType) as "png" | "jpg",
         scale: settings.use2xImages ? 2 : 1,
-        transparent:
-          rasterized.mimeType === "image/png" ? settings.pngTransparent || false : undefined,
-        quality: rasterized.mimeType === "image/jpeg" ? settings.jpgQuality || 85 : undefined,
-        colors:
-          rasterized.mimeType === "image/png" && resolvedFormat === "png"
-            ? settings.pngNumberOfColors || 128
-            : undefined,
+        ...(rasterized.mimeType === "image/png"
+          ? { transparent: settings.pngTransparent || false }
+          : {}),
+        ...(rasterized.mimeType === "image/jpeg" ? { quality: settings.jpgQuality ?? 85 } : {}),
+        ...(rasterized.mimeType === "image/png" && resolvedFormat === "png"
+          ? { colors: settings.pngNumberOfColors || 128 }
+          : {}),
       },
     };
   }
@@ -1114,7 +1331,6 @@ async function parseSvgFile(
         id: `${file.path}#content`,
         name: "content",
       },
-      inlineSvg: false,
       visible: true,
       opacity: 100,
       elements: extractedText.map((entry) => entry.element),
@@ -1123,6 +1339,25 @@ async function parseSvgFile(
 
   if (layers.length === 0 && !backgroundAsset) {
     throw new Error(`${file.path}: no importable content was found.`);
+  }
+
+  // A graphic that rasterized every one of its text objects would otherwise ship
+  // with alt="". Seed alt text from the discarded copy so the output is at least
+  // describable, and tell the user to review it.
+  //
+  // The text is stored on the background asset, not only on the document: this
+  // runs once per imported file, and a document-level field can hold only one
+  // description for a whole batch of unrelated graphics.
+  let imageAltText: string | undefined;
+  if (textRecoveryFailed && backgroundAsset) {
+    imageAltText = synthesizeImageAltText(scan.discardedText, naming.artboardName);
+    backgroundAsset.altText = imageAltText;
+    addWarning(
+      state,
+      "import:placeholder-alt-text",
+      "text",
+      `${file.path}: generated placeholder image alt text; review the alt text before publishing.`,
+    );
   }
 
   return {
@@ -1138,12 +1373,17 @@ async function parseSvgFile(
         width: dimensions.width,
         height: dimensions.height,
       },
-      responsiveness: naming.responsiveness,
-      imageOnly: naming.imageOnly,
+      // Optional in the IR and absent for an unannotated filename; assigning
+      // `undefined` would put an enumerable key on the artboard that
+      // JSON.stringify drops. `naming.imageOnly` stays importer-local: its
+      // canonical trace is the absence of recovered text plus the background
+      // asset, not an artboard field.
+      ...(naming.responsiveness === undefined ? {} : { responsiveness: naming.responsiveness }),
       layers,
     },
     backgroundAsset,
     backgroundFile,
+    imageAltText,
   };
 }
 
@@ -1202,7 +1442,8 @@ export async function importSVGFilesWithRasterizer(
   }
 
   const state: ImportState = {
-    warnings: new Set<string>(),
+    warnings: [],
+    warningMessages: new Set<string>(),
     fonts: new Map<string, FontMapping>(),
     assetFiles: [],
     writtenAssetPaths: new Set<string>(),
@@ -1211,6 +1452,7 @@ export async function importSVGFilesWithRasterizer(
 
   const assets: Record<string, Asset> = {};
   const artboards: Artboard[] = [];
+  let imageAltText: string | undefined;
   const importSettings: Settings = {
     ...defaultSettings,
     ...(options.settings ?? {}),
@@ -1226,12 +1468,22 @@ export async function importSVGFilesWithRasterizer(
     if (naming.ambiguousBase) {
       addWarning(
         state,
+        "import:ambiguous-filename",
+        "other",
         `${entrypointPath}: treated "${naming.originalName}" as a standalone artboard because its suffix is not recognized.`,
       );
     }
 
     const parsed = await parseSvgFile(state, file, filesByPath, naming, importSettings, rasterizer);
     artboards.push(parsed.artboard);
+    // Document-level alt text is only meaningful when the document describes a
+    // single graphic. `imageAltText ??= parsed.imageAltText` kept the *first*
+    // file's recovered text and the emitter then stamped it onto every
+    // rasterized artboard, so a two-file import labelled one graphic with the
+    // other's description. Per-file text lives on `backgroundAsset.altText`;
+    // this field is populated only for the single-entrypoint case, where the
+    // two are the same thing.
+    if (entrypointPaths.length === 1) imageAltText = parsed.imageAltText;
     if (parsed.backgroundAsset && parsed.backgroundFile) {
       assets[parsed.backgroundAsset.id] = parsed.backgroundAsset;
       state.assetFiles.push(parsed.backgroundFile);
@@ -1266,13 +1518,17 @@ export async function importSVGFilesWithRasterizer(
     assets,
     metadata: {
       slug,
+      ...(imageAltText ? { imageAltText } : {}),
     },
   };
+
+  const sortedWarnings = state.warnings.slice().sort((a, b) => a.message.localeCompare(b.message));
 
   return {
     document,
     assetFiles: state.assetFiles,
-    warnings: Array.from(state.warnings.values()).sort((a, b) => a.localeCompare(b)),
+    warnings: sortedWarnings.map((warning) => warning.message),
+    structuredWarnings: sortedWarnings,
   };
 }
 

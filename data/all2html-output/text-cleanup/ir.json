@@ -1,43 +1,45 @@
 {
-  "irVersion": "0.0.0",
-  "generator": {
+  "irVersion": "0.1.0",
+  "source": {
     "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "pluginVersion": "0.1.0"
+    "toolVersion": "29.8.9",
+    "adapterVersion": "0.1.0"
   },
   "settings": {
-    "settings_version": "0.106.0",
-    "image_format": "auto",
-    "responsiveness": "fixed",
+    "imageFormat": [
+      "auto"
+    ],
     "output": "one-file",
-    "html_output_path": "/ai2html-output/",
-    "html_output_extension": ".html",
-    "image_output_path": "",
-    "local_preview_template": "",
-    "png_number_of_colors": "128",
-    "jpg_quality": "60",
-    "headline": "",
-    "leadin": "",
-    "notes": "",
-    "sources": "",
-    "credit": ""
+    "responsiveness": "fixed",
+    "htmlOutputPath": "/ai2html-output/",
+    "htmlOutputExtension": ".html",
+    "jpgQuality": 60,
+    "pngNumberOfColors": 128
   },
   "fonts": [
     
   ],
   "artboards": [
     {
+      "id": "illustrator:artboard:artboard-1-1",
       "name": "Artboard 1",
-      "originalName": "Artboard 1",
       "width": 780,
       "height": 400,
-      "actualWidth": 780,
-      "actualHeight": 400,
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 1",
+        "width": 780,
+        "height": 400
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:shadow-text-1",
           "name": "shadow-text",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "shadow-text"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -82,9 +84,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:layer-1-2",
           "name": "Layer 1",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 1"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -107,7 +113,11 @@
       "mimeType": "image/png",
       "width": 1560,
       "height": 800,
-      "artboardName": "Artboard 1",
+      "artboardId": "illustrator:artboard:artboard-1-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 1"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,

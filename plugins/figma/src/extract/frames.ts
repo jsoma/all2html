@@ -4,7 +4,28 @@
  */
 
 import { FigmaPluginError } from "../errors.js";
-import type { ExtractedFrame, FrameGroup, FrameInfo, FrameSelectionNodeLike, SelectionNodeLike } from "../types.js";
+import type {
+  ExtractedFrame,
+  FrameGroup,
+  FrameInfo,
+  FrameSelectionNodeLike,
+  SelectionNodeLike,
+} from "../types.js";
+
+/**
+ * Image-only frame tokens.
+ *
+ * `image-only` is the documented spelling — it matches the vocabulary used
+ * everywhere else in the docs. (The decision is extraction-local: its
+ * canonical IR trace is renderAs:"image" text plus the background asset, not
+ * an artboard field.)
+ * `image` is the spelling this parser shipped with, so it stays accepted; a
+ * frame already named `story:image` in a live file must not silently start
+ * exporting live text.
+ */
+const IMAGE_ONLY_TOKENS = ["image-only", "image"];
+
+export const DOCUMENTED_IMAGE_ONLY_TOKEN = IMAGE_ONLY_TOKENS[0];
 
 export function parseFrameName(rawName: string): {
   name: string;
@@ -24,7 +45,7 @@ export function parseFrameName(rawName: string): {
       responsiveness = "dynamic";
     } else if (annotation === "fixed") {
       responsiveness = "fixed";
-    } else if (annotation === "image") {
+    } else if (IMAGE_ONLY_TOKENS.indexOf(annotation) !== -1) {
       imageOnly = true;
     } else {
       const num = Number.parseInt(annotation, 10);
@@ -55,7 +76,9 @@ export function extractFrameInfo(frame: FrameSelectionNodeLike): FrameInfo {
   };
 }
 
-export function getSelectedTopLevelFrames(selection: readonly SelectionNodeLike[]): FrameSelectionNodeLike[] {
+export function getSelectedTopLevelFrames(
+  selection: readonly SelectionNodeLike[],
+): FrameSelectionNodeLike[] {
   if (selection.length === 0) {
     throw new FigmaPluginError("Select one or more top-level frames before exporting.");
   }

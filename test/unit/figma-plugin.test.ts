@@ -2,7 +2,7 @@ import { strFromU8, unzipSync } from "fflate";
 import { describe, expect, it } from "vitest";
 import { parsePluginConfig } from "../../plugins/figma/src/config.js";
 import { FigmaPluginError } from "../../plugins/figma/src/errors.js";
-import { buildExportBundle, createZipArchive } from "../../plugins/figma/src/export.js";
+import { buildExportBundle, zipExportBundle } from "../../plugins/figma/src/export.js";
 import {
   extractFrameInfo,
   getSelectedTopLevelFrames,
@@ -84,17 +84,34 @@ function makeFrame(overrides: Partial<ExtractedFrame> = {}): ExtractedFrame {
       {
         id: "story-bg",
         sourceNodeId: "frame-1",
-        path: "all2html-output/story-bg.png",
+        path: "story-bg.png",
         mimeType: "image/png",
         width: 640,
         height: 360,
         artboardId: makeFigmaArtboardId({ sourceNodeId, originalName }),
-        exportParams: { format: "png", scale: 1, transparent: false },
+        exportParams: { format: "png24", scale: 1, transparent: true },
         bytes: new TextEncoder().encode("png-bytes"),
       },
     ],
     ...overrides,
   };
+}
+
+/**
+ * The Figma runtime always exports full-color alpha PNG at scale 1 with no
+ * quantizer, so every Figma export warns about the three raster defaults it
+ * cannot implement (`src/core/capabilities.ts`). These tests are about bundle
+ * contents, so they subtract the standing surface warnings.
+ */
+const FIGMA_STANDING_SETTING_WARNINGS = ["pngTransparent", "pngNumberOfColors", "use2xImages"];
+
+function bundleWarnings(warnings: string[]): string[] {
+  return warnings.filter(
+    (warning) =>
+      !FIGMA_STANDING_SETTING_WARNINGS.some((setting) =>
+        warning.startsWith(`Setting "${setting}"`),
+      ),
+  );
 }
 
 describe("Figma plugin foundation", () => {
@@ -105,6 +122,21 @@ describe("Figma plugin foundation", () => {
       expect(result.widthOverride).toBe(320);
       expect(result.responsiveness).toBe("dynamic");
       expect(result.imageOnly).toBe(true);
+    });
+
+    /**
+     * `image-only` is the documented spelling everywhere else in the project
+     * (it is the name of the IR field). `image` is what this parser shipped
+     * with, so both have to work or live files silently start exporting text.
+     */
+    it("accepts both image-only spellings on frame names", () => {
+      expect(parseFrameName("story:image-only").imageOnly).toBe(true);
+      expect(parseFrameName("story:image").imageOnly).toBe(true);
+      expect(parseFrameName("story:IMAGE-ONLY").imageOnly).toBe(true);
+      expect(parseFrameName("story:640").imageOnly).toBe(false);
+      expect(parseFrameName("story:imagery").imageOnly).toBe(false);
+      // The token must not be mistaken for a width override.
+      expect(parseFrameName("story:image-only:640").widthOverride).toBe(640);
     });
 
     it("requires selected top-level frames", () => {
@@ -161,6 +193,21 @@ describe("Figma plugin foundation", () => {
       expect(parseLayerType(":snippet Chart").type).toBe("default");
       expect(parseLayerType(":text Headlines").type).toBe("default");
       expect(parseLayerType(":htext Content").type).toBe("default");
+      expect(parseLayerType(":snippet Chart").unsupportedToken).toBeUndefined();
+    });
+
+    /**
+     * The parser used to return `type: "symbol"` / `type: "div"`, which the
+     * runtime then refused. Advertising a type nothing can build is the defect;
+     * these must resolve to `default` *and* say why.
+     */
+    it("does not claim :symbol / :div, and reports them as unsupported", () => {
+      for (const name of [":symbol Chart", "Chart :symbol", ":DIV Wrapper", "Wrapper :div"]) {
+        const parsed = parseLayerType(name);
+        expect(parsed.type).toBe("default");
+        expect(parsed.cleanName).toBe(name);
+        expect(parsed.unsupportedToken).toMatch(/^:(symbol|div)$/);
+      }
     });
   });
 
@@ -292,7 +339,26 @@ describe("Figma plugin foundation", () => {
       expect(doc.metadata.slug).toBe("figma-story");
       expect(doc.metadata.headline).toBe("Figma Story");
       expect(doc.artboards).toHaveLength(1);
-      expect(doc.assets["story-bg"].path).toBe("all2html-output/story-bg.png");
+      expect(doc.assets["story-bg"].path).toBe("story-bg.png");
+    });
+
+    it("refuses duplicate asset ids instead of silently overwriting", () => {
+      // Two frames whose assets collapse onto one id: last-wins merging used to
+      // silently drop the first asset from the merged record.
+      const first = makeFrame();
+      const second = makeFrame({
+        sourceNodeId: "frame-2",
+        originalName: "story:1024:dynamic",
+        width: 1024,
+        actualWidth: 1024,
+      });
+
+      expect(() => buildDocument([first, second], { slug: "figma-story" })).toThrow(
+        FigmaPluginError,
+      );
+      expect(() => buildDocument([first, second], { slug: "figma-story" })).toThrow(
+        /Duplicate asset id "story-bg"/,
+      );
     });
 
     it("auto-adds Figma font mappings and lets config override them", () => {
@@ -317,7 +383,7 @@ describe("Figma plugin foundation", () => {
         format: "html",
         assetFiles: frame.assets,
       });
-      expect(bundle.warnings).toEqual([]);
+      expect(bundleWarnings(bundle.warnings)).toEqual([]);
       const htmlEntry = bundle.entries.find((entry) => entry.path === "figma-story.html");
       expect(htmlEntry?.content).toContain("font-family: Poppins,system-ui,sans-serif;");
 
@@ -346,7 +412,7 @@ describe("Figma plugin foundation", () => {
             assets: [
               {
                 id: "story-bg-wide",
-                path: "all2html-output/story-bg-wide.png",
+                path: "story-bg-wide.png",
                 mimeType: "image/png",
                 width: 1024,
                 height: 360,
@@ -354,7 +420,7 @@ describe("Figma plugin foundation", () => {
                   sourceNodeId: "frame-2",
                   originalName: "story:1024:dynamic",
                 }),
-                exportParams: { format: "png", scale: 1, transparent: false },
+                exportParams: { format: "png24", scale: 1, transparent: true },
                 bytes: new TextEncoder().encode("wide-png"),
               },
             ],
@@ -375,7 +441,7 @@ describe("Figma plugin foundation", () => {
             assets: [
               {
                 id: "story-bg-wide",
-                path: "all2html-output/story-bg-wide.png",
+                path: "story-bg-wide.png",
                 mimeType: "image/png",
                 width: 1024,
                 height: 360,
@@ -383,7 +449,7 @@ describe("Figma plugin foundation", () => {
                   sourceNodeId: "frame-2",
                   originalName: "story:1024:dynamic",
                 }),
-                exportParams: { format: "png", scale: 1, transparent: false },
+                exportParams: { format: "png24", scale: 1, transparent: true },
                 bytes: new TextEncoder().encode("wide-png"),
               },
             ],
@@ -401,7 +467,7 @@ describe("Figma plugin foundation", () => {
       expect(html).toContain("Hello from Figma");
       expect(html).toContain("all2html-output/story-bg.png");
       expect(html).toContain("all2html-output/story-bg-wide.png");
-      expect(bundle.warnings).toEqual([]);
+      expect(bundleWarnings(bundle.warnings)).toEqual([]);
     });
 
     it("packages export bundle entries into a zip archive", () => {
@@ -411,13 +477,270 @@ describe("Figma plugin foundation", () => {
         assetFiles: makeFrame().assets ?? [],
       });
 
-      const archive = createZipArchive(bundle);
+      const archive = zipExportBundle(bundle);
       const files = unzipSync(archive);
 
       expect(strFromU8(files["ir.json"])).toContain('"source"');
       expect(Object.keys(files)).toContain("figma-story.html");
       expect(strFromU8(files["figma-story.html"])).toContain("Hello from Figma");
       expect(strFromU8(files["all2html-output/story-bg.png"])).toBe("png-bytes");
+    });
+
+    /**
+     * Figma used to bake `all2html-output/` into every asset path and omit
+     * `assetRoot` from the bundle, so the two ways the output directory reaches
+     * the output — the emitted `src` and the ZIP layout — disagreed the moment
+     * `imageOutputPath` was not the default. The HTML pointed at a path the ZIP
+     * did not contain. `export.ts` now reads the setting once and hands it to
+     * both (`withAssetBase` → `src`, `assetRoot` → layout).
+     *
+     * The assertion is the agreement itself: every `src` the HTML references
+     * must be an entry in the archive.
+     *
+     * **Scoped to an unset `imageSourcePath`**, which is what makes the
+     * invariant true rather than universal: `imageSourcePath` is the user
+     * deliberately pointing `src` at a URL that need not exist in the bundle at
+     * all — a CDN, a site root. The companion test below covers that case.
+     */
+    it.each([
+      { label: "the default imageOutputPath", imageOutputPath: "all2html-output/" },
+      { label: "a non-default imageOutputPath", imageOutputPath: "img/" },
+      { label: "a nested imageOutputPath", imageOutputPath: "assets/graphics/" },
+      { label: "an empty imageOutputPath", imageOutputPath: "" },
+      // `imageOutputPath: "/"` is a site-root `<img src>` prefix, so the `src`
+      // keeps its leading slash and the ZIP directory is the ZIP root. This used
+      // to abort the export outright.
+      { label: "a site-root imageOutputPath", imageOutputPath: "/", src: "/story-bg.png" },
+      {
+        label: "a site-root nested imageOutputPath",
+        imageOutputPath: "/img/",
+        src: "/img/story-bg.png",
+      },
+      // `Asset.path` is only required to be non-empty, so these spellings are all
+      // valid IR. Each must still name an entry the ZIP contains.
+      {
+        label: "a root-relative asset path",
+        imageOutputPath: "img/",
+        assetPath: "/story-bg.png",
+        src: "img/story-bg.png",
+      },
+      {
+        label: "a dot-relative asset path",
+        imageOutputPath: "img/",
+        assetPath: "./story-bg.png",
+        src: "img/story-bg.png",
+      },
+      {
+        label: "a doubled separator in the asset path",
+        imageOutputPath: "img/",
+        assetPath: "a//story-bg.png",
+        src: "img/a/story-bg.png",
+      },
+      {
+        label: "a plain asset path",
+        imageOutputPath: "img/",
+        assetPath: "story-bg.png",
+        src: "img/story-bg.png",
+      },
+    ])("keeps HTML src paths and ZIP entries in sync for $label, with no imageSourcePath", ({
+      imageOutputPath,
+      assetPath = "story-bg.png",
+      src,
+    }) => {
+      const expectedSrc = src ?? `${imageOutputPath}${assetPath}`;
+      const baseAssets = makeFrame().assets ?? [];
+      const assets = baseAssets.map((asset) => ({ ...asset, path: assetPath }));
+      const ir = buildDocument([makeFrame({ assets })], {
+        slug: "figma-story",
+        settings: { imageOutputPath, projectName: "figma-story" },
+      });
+      const bundle = buildExportBundle(ir, { format: "html", assetFiles: assets });
+      const files = unzipSync(zipExportBundle(bundle));
+
+      const htmlEntry = bundle.entries.find((entry) => entry.path.endsWith(".html"));
+      const html = htmlEntry?.content;
+      if (typeof html !== "string") throw new Error("Expected an emitted HTML entry.");
+
+      const srcPaths = Array.from(html.matchAll(/src="([^"]+\.png)"/g)).map((match) => match[1]);
+      expect(srcPaths).toHaveLength(1);
+      expect(srcPaths[0]).toBe(expectedSrc);
+
+      // A site-root `src` names the ZIP root: the leading `/` is the URL half
+      // of the one value, and a ZIP has no entries above its root. Everything
+      // after it must match an entry character for character.
+      const expectedEntry = expectedSrc.replace(/^\/+/, "");
+      expect(Object.keys(files)).toContain(expectedEntry);
+      expect(strFromU8(files[expectedEntry])).toBe("png-bytes");
+
+      // The manifest is the machine-readable inventory; it must agree too.
+      expect(bundle.entries.map((entry) => entry.path)).toContain(expectedEntry);
+    });
+
+    /**
+     * The NYT shape: `image_output_path` and `image_source_path` set to
+     * *different* values on purpose (`../public/_assets/` on disk,
+     * `_assets/` in the markup — `research/ai2html-feature-spec.md` §16). This
+     * is the case that proves the two are separate contracts and neither can be
+     * derived from the other: `imageSourcePath` is the `<img src>` prefix and is
+     * used verbatim, `imageOutputPath` is where the files go.
+     */
+    it("honors imageSourcePath verbatim in src while the ZIP layout follows imageOutputPath", () => {
+      const ir = buildDocument([makeFrame()], {
+        slug: "figma-story",
+        settings: {
+          imageOutputPath: "public/_assets/",
+          imageSourcePath: "https://cdn.example.com/_assets/",
+          projectName: "figma-story",
+        },
+      });
+      const bundle = buildExportBundle(ir, {
+        format: "html",
+        assetFiles: makeFrame().assets ?? [],
+      });
+      const files = unzipSync(zipExportBundle(bundle));
+
+      const htmlEntry = bundle.entries.find((entry) => entry.path.endsWith(".html"));
+      const html = htmlEntry?.content;
+      if (typeof html !== "string") throw new Error("Expected an emitted HTML entry.");
+
+      const srcPaths = Array.from(html.matchAll(/src="([^"]+\.png)"/g)).map((match) => match[1]);
+      expect(srcPaths).toEqual(["https://cdn.example.com/_assets/story-bg.png"]);
+      // The bytes still ship, under the directory the user asked for — the
+      // `src` simply does not describe the bundle any more, which is the point
+      // of setting it.
+      expect(Object.keys(files)).toContain("public/_assets/story-bg.png");
+      expect(strFromU8(files["public/_assets/story-bg.png"])).toBe("png-bytes");
+    });
+
+    /**
+     * The hostile half of the same `it.each`. Figma is the surface that actually
+     * ships a ZIP to a machine — the user downloads and extracts it — so an entry
+     * name containing `..` is a zip-slip, and `imageOutputPath` is user text in
+     * the plugin's JSONC.
+     *
+     * These refuse at construction rather than falling back to a safe prefix:
+     * `imageOutputPath` is applied twice and the two must agree
+     * (`resolveAssetPath()` → `src`, `assetRoot` → ZIP layout), so any
+     * substituted value would ship HTML pointing at entries the ZIP does not
+     * contain. Refusing is what keeps the invariant above absolute — *every*
+     * bundle that exists has its `src` paths present as entries.
+     */
+    it.each([
+      "../../evil/",
+      "..",
+      "a/../../b",
+      "img/../../../etc/",
+      "C:/evil/",
+      "img\u0000evil/",
+    ])("refuses to build a bundle for hostile imageOutputPath %j", (imageOutputPath) => {
+      const ir = buildDocument([makeFrame()], {
+        slug: "figma-story",
+        settings: { imageOutputPath, projectName: "figma-story" },
+      });
+
+      expect(() =>
+        buildExportBundle(ir, { format: "html", assetFiles: makeFrame().assets ?? [] }),
+      ).toThrow(/Refusing to build an output bundle/);
+    });
+
+    /**
+     * The ZIP sink is the shared writer now (`zipExportBundle` →
+     * `bundleToZipBytes`), which re-asserts entry-path containment and the
+     * `__proto__` refusal at the write. The full hostile-name matrix for that
+     * writer lives in `test/unit/output-bundle.test.ts` and
+     * `test/unit/opaque-key-lookups.test.ts`; this pins that the Figma surface
+     * actually rides it — a tampered file list still cannot reach a ZIP.
+     */
+    it("refuses to zip a tampered bundle whose entry escapes the bundle root", () => {
+      const ir = buildDocument([makeFrame()], { slug: "figma-story" });
+      const bundle = buildExportBundle(ir, { format: "html", assetFiles: makeFrame().assets });
+
+      expect(() =>
+        zipExportBundle({
+          ...bundle,
+          outputBundle: {
+            ...bundle.outputBundle,
+            files: [
+              ...bundle.outputBundle.files,
+              { path: "../../evil.png", bytes: new Uint8Array([1]), mimeType: "image/png" },
+            ],
+          },
+        }),
+      ).toThrow(/Refusing to build an output bundle/);
+    });
+
+    it("records the resolved slug in the manifest", () => {
+      // projectName deliberately differs from the document slug, so this can
+      // only pass if the manifest reads the *resolved* settings — the same
+      // value the emitted file is named from.
+      const ir = buildDocument([makeFrame()], {
+        slug: "figma-story",
+        settings: { projectName: "figma-renamed" },
+      });
+      const bundle = buildExportBundle(ir, { format: "html", assetFiles: makeFrame().assets });
+      expect(bundle.outputBundle.manifest.slug).toBe("figma-renamed");
+      expect(bundle.outputBundle.files.map((file) => file.path)).toContain("figma-renamed.html");
+    });
+
+    /**
+     * The honest failure for an extracted asset whose bytes never arrived: the
+     * bundle refuses, naming the asset, instead of shipping HTML that references
+     * an image the ZIP does not contain.
+     */
+    it("refuses to bundle when an extracted asset has no bytes", () => {
+      const bytelessAssets = (makeFrame().assets ?? []).map(({ bytes: _bytes, ...asset }) => asset);
+      const ir = buildDocument([makeFrame()], { slug: "figma-story" });
+
+      expect(() => buildExportBundle(ir, { format: "html", assetFiles: bytelessAssets })).toThrow(
+        /no bytes were supplied for asset "story-bg"/,
+      );
+    });
+
+    /**
+     * `emitAll` was called with no emitter config, so every shipped emitter
+     * option was unreachable from Figma. The CLI passes `parsedConfig.emit`
+     * straight through (`src/cli/index.ts`); the plugin now reads the same
+     * canonical block out of its own JSONC.
+     */
+    it("routes the config emit block into the emitters", () => {
+      const config = parsePluginConfig(`{
+        "settings": { "projectName": "figma-story" },
+        "emit": { "html": { "positionMode": "percentage" } }
+      }`);
+      expect(config.emit?.html?.positionMode).toBe("percentage");
+
+      const ir = buildDocument([makeFrame()], {
+        slug: "figma-story",
+        settings: config.settings,
+      });
+
+      const absolute = buildExportBundle(ir, { format: "html", assetFiles: makeFrame().assets });
+      const percentage = buildExportBundle(ir, {
+        format: "html",
+        assetFiles: makeFrame().assets,
+        emit: config.emit,
+      });
+
+      const htmlOf = (bundle: ReturnType<typeof buildExportBundle>): string => {
+        const entry = bundle.entries.find((file) => file.path.endsWith(".html"));
+        if (typeof entry?.content !== "string") throw new Error("Expected emitted HTML.");
+        return entry.content;
+      };
+
+      const absoluteHtml = htmlOf(absolute);
+      const percentageHtml = htmlOf(percentage);
+
+      expect(absoluteHtml).not.toBe(percentageHtml);
+      // percentage mode converts the remaining absolute text widths to `%`.
+      expect(absoluteHtml).toMatch(/width:\s*\d+(\.\d+)?px/);
+      expect(percentageHtml).not.toMatch(/width:\s*\d+(\.\d+)?px/);
+      expect(percentageHtml).toMatch(/width:\s*\d+(\.\d+)?%/);
+    });
+
+    it("rejects an unknown emit option instead of ignoring it", () => {
+      expect(() => parsePluginConfig(`{ "emit": { "html": { "nope": true } } }`)).toThrow(
+        FigmaPluginError,
+      );
     });
   });
 

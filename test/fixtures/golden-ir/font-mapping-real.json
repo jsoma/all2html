@@ -1,23 +1,39 @@
 {
   "irVersion": "0.1.0",
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "29.8.9",
+    "adapterVersion": "0.1.0"
+  },
   "settings": {},
   "fonts": [
     {
+      "sourceFont": "MyriadPro-Regular",
       "family": "'Fixture Sans', sans-serif",
-      "weight": "700",
-      "sourceFont": "MyriadPro-Regular"
+      "weight": "700"
     }
   ],
   "artboards": [
     {
+      "id": "illustrator:artboard:desktop-1",
       "name": "desktop",
       "width": 700,
       "height": 420,
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop",
+        "width": 700,
+        "height": 420
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:desktop-1:layer:content-1",
           "name": "content",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -135,21 +151,9 @@
                 }
               ]
             }
-          ],
-          "id": "artboard:desktop:layer:content",
-          "source": {
-            "tool": "illustrator",
-            "name": "content"
-          }
+          ]
         }
-      ],
-      "id": "artboard:desktop",
-      "source": {
-        "tool": "illustrator",
-        "name": "desktop",
-        "width": 700,
-        "height": 420
-      }
+      ]
     }
   ],
   "customBlocks": [],
@@ -160,17 +164,17 @@
       "mimeType": "image/png",
       "width": 1400,
       "height": 840,
+      "artboardId": "illustrator:artboard:desktop-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "desktop"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
-      },
-      "artboardId": "artboard:desktop",
-      "source": {
-        "tool": "illustrator",
-        "name": "desktop"
       }
     }
   },
@@ -182,10 +186,5 @@
     "notes": "",
     "sources": "",
     "credit": ""
-  },
-  "source": {
-    "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "adapterVersion": "0.1.0"
   }
 }

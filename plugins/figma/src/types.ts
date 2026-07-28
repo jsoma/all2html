@@ -1,6 +1,6 @@
+import type { EmitterConfig } from "../../../src/emitters/types.js";
 import type {
   Asset,
-  CharacterRun,
   CustomBlock,
   Element,
   FontMapping,
@@ -49,11 +49,6 @@ export interface FrameGroup {
   frames: FrameInfo[];
 }
 
-export interface ExtractedTextRun extends CharacterRun {
-  start: number;
-  end: number;
-}
-
 export interface ExtractedTextElement extends Omit<TextElement, "paragraphs"> {
   sourceNodeId: string;
   paragraphs: Paragraph[];
@@ -88,14 +83,18 @@ export interface FigmaPluginConfig {
   metadata?: Partial<Metadata>;
   fonts?: FontMapping[];
   customBlocks?: CustomBlock[];
+  /**
+   * Canonical emitter options, the same `emit` block the CLI reads out of
+   * `all2html.config.json` (`EmitterConfigSchema` in `src/emitters/types.ts`).
+   * Not a Figma-only contract — it is the one seam through which shipped
+   * emitter behavior (`positionMode`, `allowUnsafeHtml`, `responsiveImageMode`)
+   * is reachable at all.
+   */
+  emit?: EmitterConfig;
 }
 
 export type FigmaOutputFormat = "html" | "standalone";
-export type FigmaPresetId =
-  | "standard-story"
-  | "responsive-story"
-  | "image-only-graphic"
-  | "custom";
+export type FigmaPresetId = "standard-story" | "responsive-story" | "image-only-graphic" | "custom";
 
 export type SelectionExportKind = "empty" | "single" | "responsive" | "mixed";
 
@@ -159,7 +158,7 @@ export type SandboxToUiMessage =
       warningCount: number;
       warnings: string[];
       zipFilename: string;
-      zipBytes: number[];
+      zipBytes: Uint8Array;
     }
   | {
       type: "export-error";

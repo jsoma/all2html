@@ -4,6 +4,12 @@ import { describe, expect, it } from "vitest";
 import { processDocument } from "../../src/core/pipeline.js";
 import { emitHTML } from "../../src/emitters/html.js";
 import { getEmitter } from "../../src/emitters/registry.js";
+import {
+  type Artboard,
+  type Asset,
+  CURRENT_IR_VERSION,
+  type Document,
+} from "../../src/ir/types.js";
 
 const fixturesDir = resolve(import.meta.dirname, "../fixtures/ir");
 
@@ -97,6 +103,67 @@ describe("multiple-files output mode", () => {
     expect(mapHtml).toContain("#g-multi-file-test-map-box");
   });
 
+  /**
+   * The standalone descriptor used to name its group parameter `_groups` and
+   * emit a single file containing every artboard, while html, svelte and react
+   * emitted one per group off the same `groups` array. `output:
+   * "multiple-files"` was therefore silently a no-op on exactly one format —
+   * and Figma, which offers html and standalone only, was half broken.
+   */
+  it("emits one standalone file per group, like every other format", () => {
+    const raw = loadFixture("multiple-files-output.json");
+    const { document: doc, groups } = processDocument(raw);
+
+    const html = getEmitter("html").emitAll(doc, groups);
+    const standalone = getEmitter("standalone").emitAll(doc, groups);
+
+    expect(standalone.files).toHaveLength(html.files.length);
+    expect(standalone.files.map((file) => file.slug).sort()).toEqual(
+      html.files.map((file) => file.slug).sort(),
+    );
+    expect([...new Set(standalone.files.map((file) => file.extension))]).toEqual([".html"]);
+  });
+
+  it("puts each group's content in its own standalone file and nowhere else", () => {
+    const raw = loadFixture("multiple-files-output.json");
+    const { document: doc, groups } = processDocument(raw);
+    const { files } = getEmitter("standalone").emitAll(doc, groups);
+
+    const chart = files.find((file) => file.slug === "multi-file-test-chart")?.output;
+    const map = files.find((file) => file.slug === "multi-file-test-map")?.output;
+
+    for (const output of [chart, map]) {
+      // Still a whole document, not a fragment — that is what standalone means.
+      expect(output).toContain("<!DOCTYPE html>");
+      expect(output).toContain("</html>");
+    }
+
+    expect(chart).toContain("Chart Title");
+    expect(chart).not.toContain("Map Title");
+    expect(map).toContain("Map Title");
+    expect(map).not.toContain("Chart Title");
+
+    // The DOM ids and the stylesheet follow the group slug, exactly as they do
+    // for the html emitter.
+    expect(chart).toContain('id="g-multi-file-test-chart-box"');
+    expect(chart).toContain("#g-multi-file-test-chart-box");
+    expect(chart).not.toContain("g-multi-file-test-map");
+    expect(map).toContain('id="g-multi-file-test-map-box"');
+    expect(map).not.toContain("g-multi-file-test-chart");
+  });
+
+  it("still emits a single standalone file in one-file mode", () => {
+    const raw = loadFixture("multiple-files-output.json");
+    raw.settings.output = "one-file";
+    const { document: doc, groups } = processDocument(raw);
+    const { files } = getEmitter("standalone").emitAll(doc, groups);
+
+    expect(files).toHaveLength(1);
+    expect(files[0].slug).toBe("multi-file-test");
+    expect(files[0].output).toContain("Chart Title");
+    expect(files[0].output).toContain("Map Title");
+  });
+
   it("one-file mode puts all artboards in single group", () => {
     const raw = loadFixture("single-artboard-basic.json");
     const { groups } = processDocument(raw);
@@ -112,5 +179,101 @@ describe("multiple-files output mode", () => {
     // All artboards have different names, so in one-file mode they're all together
     expect(groups).toHaveLength(1);
     expect(groups[0].artboards).toHaveLength(3);
+  });
+});
+
+/**
+ * Artboards that share a *name* but not an id.
+ *
+ * These two came from `html-string-emitter.test.ts`, which was otherwise an
+ * emitter-vs-itself parity sweep (`emitHTMLString` was a re-export of `emitHTML`
+ * after the emitter collapse, SPEC §12.6 / D23; the alias is deleted too). The
+ * assertions below are the part of that file that tested something: background
+ * asset selection and group scoping key off the stable artboard id, not the
+ * display name, so duplicate names must not collapse into one another.
+ */
+describe("duplicate artboard names resolve by stable id", () => {
+  function artboard(id: string, width: number, height: number, sourceName: string): Artboard {
+    return {
+      id,
+      name: "card",
+      width,
+      height,
+      source: { tool: "test", name: sourceName, width, height },
+      layers: [],
+    };
+  }
+
+  function asset(id: string, artboardId: string, width: number, height: number): Asset {
+    return {
+      id,
+      path: id,
+      mimeType: "image/png",
+      width,
+      height,
+      artboardId,
+      exportParams: { format: "png", scale: 1, transparent: false },
+    };
+  }
+
+  function docWith(artboards: Artboard[], assets: Record<string, Asset>, slug: string): Document {
+    return {
+      irVersion: CURRENT_IR_VERSION,
+      source: { tool: "test", toolVersion: "1.0", adapterVersion: "0.1.0" },
+      settings: { namespace: "g-" },
+      fonts: [],
+      artboards,
+      customBlocks: [],
+      assets,
+      metadata: { slug },
+    };
+  }
+
+  it("gives each same-named artboard its own background image", () => {
+    const raw = docWith(
+      [
+        artboard("artboard:card-640", 640, 360, "card--640"),
+        artboard("artboard:card-960", 960, 540, "card--960"),
+      ],
+      {
+        "card-640.png": asset("card-640.png", "artboard:card-640", 640, 360),
+        "card-960.png": asset("card-960.png", "artboard:card-960", 960, 540),
+      },
+      "duplicate-assets",
+    );
+    const { document: doc } = processDocument(raw);
+    const { html } = emitHTML(doc);
+
+    // Bare filenames: no surface stated an `assetBase`, so the emitted file and
+    // its images are siblings. The prefix is a layout fact the surface supplies
+    // (`withAssetBase`), not something the emitter infers from `imageOutputPath`.
+    expect(html).toContain('src="card-640.png"');
+    expect(html).toContain('src="card-960.png"');
+  });
+
+  it("scopes a grouped emit to the requested artboard id", () => {
+    // The widths differ only because `computeBreakpoints` now refuses two
+    // artboards of the same width on one page — it cannot say which is the
+    // narrow variant. What this test is about is the *id*: the two artboards
+    // have different names and different assets, and the emit must follow the
+    // id it was handed rather than a name or a position.
+    const raw = docWith(
+      [
+        artboard("artboard:first", 640, 360, "card"),
+        artboard("artboard:second", 960, 540, "card copy"),
+      ],
+      {
+        "first.png": asset("first.png", "artboard:first", 640, 360),
+        "second.png": asset("second.png", "artboard:second", 960, 540),
+      },
+      "duplicate-scope",
+    );
+    const { document: doc } = processDocument(raw);
+    const second = doc.artboards.find((entry) => entry.id === "artboard:second");
+    if (!second) throw new Error("Missing second artboard");
+
+    const { html } = emitHTML(doc, { artboards: [second], slug: "second-card" });
+    expect(html).not.toContain("first.png");
+    expect(html).toContain('src="second.png"');
   });
 });

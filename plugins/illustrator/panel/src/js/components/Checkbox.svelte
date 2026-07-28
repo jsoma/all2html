@@ -13,6 +13,7 @@
     badgeTitle?: string;
     helpId?: PanelSettingKey;
     help?: SettingHelpEntry;
+    note?: string;
   }
 
   let {
@@ -25,7 +26,12 @@
     badgeTitle,
     helpId,
     help,
+    note,
   }: Props = $props();
+
+  const wrapperTitle = $derived(
+    locked ? "Controlled by ai2html-settings in the document" : note || undefined,
+  );
 </script>
 
 <FieldHelp
@@ -35,8 +41,9 @@
   {badgeTitle}
   {helpId}
   {help}
+  {note}
   checkbox={true}
-  wrapperTitle={locked ? "Controlled by ai2html-settings in the document" : undefined}
+  {wrapperTitle}
 >
   {#snippet children()}
     <input type="checkbox" bind:checked onchange={onchange} {disabled} />

@@ -17,7 +17,22 @@ The public site for this repo lives at:
 
 - `https://jsoma.github.io/all2html/`
 
-Docs source is authored in `/docs`.
+Docs source is authored in `/docs`, with two exceptions.
+
+### Generated pages
+
+`docs/reference/settings.md` and `docs/reference/support-matrix.md` are **generated** by `scripts/generate-settings-docs.ts` from `src/ir/settings-definitions.ts`, `src/core/capabilities.ts`, and `src/ir/schema.ts`. Do not hand-edit them; the next regeneration discards the edit.
+
+```bash
+pnpm docs:generate        # rewrite both pages
+pnpm check:generated-docs # fail if the committed pages are stale (runs in CI)
+```
+
+To change what those pages say, change the declarations. Prose that has nowhere to live in the declarations (per-setting descriptions for settings with no panel `help`, feature labels, and the tag-grammar notes) lives in the generator itself, in one clearly-marked table each.
+
+### Pending screenshots
+
+`internal-docs/docs-screenshot-checklist.md` tracks the images the public pages still want. Placeholders must not be committed to `docs/` — they render live on the site.
 
 Preview locally:
 

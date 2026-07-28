@@ -1,11 +1,7 @@
 /// <reference lib="dom" />
 
-import type {
-  FigmaDirectControls,
-  FigmaOutputFormat,
-  SandboxToUiMessage,
-  UiToSandboxMessage,
-} from "./types.js";
+import { escapeHtml } from "../../../src/emitters/shared/escape.js";
+import type { FigmaDirectControls, SandboxToUiMessage, UiToSandboxMessage } from "./types.js";
 import {
   applyDirectControlsToConfig,
   buildLocalUiState,
@@ -15,20 +11,23 @@ import {
   directControlsFromConfig,
   exportBlockedMessage,
   exportWarningNoticeCopy,
-  getValidationMessages,
   getPresetControls,
+  getValidationMessages,
   hydrateUiStateFromLocalState,
   isExportBlocked,
   parseConfigEditorText,
-  selectionSummaryCopy,
   selectionModeLabel,
+  selectionSummaryCopy,
   serializePluginConfig,
   shouldShowReadyStatus,
 } from "./ui.js";
+import { applyCapabilityGating } from "./ui-capability-dom.js";
 
 declare global {
   interface Window {
-    onmessage: ((this: Window, ev: MessageEvent<{ pluginMessage: SandboxToUiMessage }>) => any) | null;
+    onmessage:
+      | ((this: Window, ev: MessageEvent<{ pluginMessage: SandboxToUiMessage }>) => any)
+      | null;
   }
 }
 
@@ -36,23 +35,16 @@ function post(message: UiToSandboxMessage): void {
   parent.postMessage({ pluginMessage: message }, "*");
 }
 
-function downloadZip(filename: string, bytes: number[]): void {
-  const blob = new Blob([new Uint8Array(bytes)], { type: "application/zip" });
+function downloadZip(filename: string, bytes: Uint8Array): void {
+  // Structured-cloned bytes are never SharedArrayBuffer-backed; the cast
+  // only satisfies TS's ArrayBufferLike-generic Uint8Array default.
+  const blob = new Blob([bytes as Uint8Array<ArrayBuffer>], { type: "application/zip" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = filename;
   anchor.click();
   URL.revokeObjectURL(url);
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
 }
 
 interface UiElements {
@@ -110,7 +102,9 @@ function getRequiredElements(): UiElements {
   const renderTextAsEl = document.querySelector<HTMLSelectElement>("[data-render-text-as]");
   const renderRotatedEl = document.querySelector<HTMLSelectElement>("[data-render-rotated]");
   const googleFontsEl = document.querySelector<HTMLSelectElement>("[data-google-fonts]");
-  const responsiveImageModeEl = document.querySelector<HTMLSelectElement>("[data-responsive-image-mode]");
+  const responsiveImageModeEl = document.querySelector<HTMLSelectElement>(
+    "[data-responsive-image-mode]",
+  );
   const centerOutputEl = document.querySelector<HTMLInputElement>("[data-center-output]");
   const statusEl = document.querySelector<HTMLElement>("[data-status]");
   const saveButton = document.querySelector<HTMLButtonElement>("[data-save]");
@@ -120,7 +114,9 @@ function getRequiredElements(): UiElements {
   const resultHeadlineEl = document.querySelector<HTMLElement>("[data-result-headline]");
   const resultEl = document.querySelector<HTMLElement>("[data-result]");
   const advancedPanelEl = document.querySelector<HTMLDetailsElement>("[data-advanced-panel]");
-  const moreSettingsPanelEl = document.querySelector<HTMLDetailsElement>("[data-more-settings-panel]");
+  const moreSettingsPanelEl = document.querySelector<HTMLDetailsElement>(
+    "[data-more-settings-panel]",
+  );
 
   if (
     !selectionEl ||
@@ -210,17 +206,25 @@ function renderExportNotice(
   elements.exportNoticeCopyEl.textContent = notice.detail;
 }
 
-function renderSelection(elements: UiElements, selection: ReturnType<typeof createInitialUiState>["selection"]): void {
+function renderSelection(
+  elements: UiElements,
+  selection: ReturnType<typeof createInitialUiState>["selection"],
+): void {
   elements.selectionModeEl.textContent = selectionModeLabel(selection);
   elements.selectionModeEl.className =
-    selection.exportKind === "empty" && !selection.error ? "mode-chip" : "mode-chip mode-chip-active";
+    selection.exportKind === "empty" && !selection.error
+      ? "mode-chip"
+      : "mode-chip mode-chip-active";
 
   elements.selectionEl.innerHTML = `
     <p class="${selection.error ? "validation-error" : selection.eligibleFrames === 0 ? "empty-state" : "helper"}">${escapeHtml(selectionSummaryCopy(selection))}</p>
   `;
 }
 
-function renderValidation(elements: UiElements, state: ReturnType<typeof createInitialUiState>): void {
+function renderValidation(
+  elements: UiElements,
+  state: ReturnType<typeof createInitialUiState>,
+): void {
   const messages = getValidationMessages(state.selection, state.configError);
 
   if (messages.length === 0) {
@@ -251,7 +255,9 @@ function renderExportSummary(
       ? "<li>none</li>"
       : summary.files.map((file) => `<li>${escapeHtml(file)}</li>`).join("");
   const warningItems =
-    warnings.length === 0 ? "<li>none</li>" : warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join("");
+    warnings.length === 0
+      ? "<li>none</li>"
+      : warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join("");
 
   elements.resultEl.innerHTML = `
     <li class="result-item"><strong>Format:</strong> ${summary.format === "html" ? "HTML" : "Standalone HTML"}</li>
@@ -266,9 +272,17 @@ function renderExportSummary(
   `;
 }
 
-function renderStatus(target: HTMLElement, message: string, tone: "info" | "error" | "success" = "info"): void {
+function renderStatus(
+  target: HTMLElement,
+  message: string,
+  tone: "info" | "error" | "success" = "info",
+): void {
   target.className =
-    tone === "error" ? "status status-error" : tone === "success" ? "status status-success" : "status";
+    tone === "error"
+      ? "status status-error"
+      : tone === "success"
+        ? "status status-success"
+        : "status";
   target.textContent = message;
 }
 
@@ -289,8 +303,7 @@ function readControls(elements: UiElements): FigmaDirectControls {
       elements.googleFontsEl.value === "import" || elements.googleFontsEl.value === "link"
         ? elements.googleFontsEl.value
         : "none",
-    responsiveImageMode:
-      elements.responsiveImageModeEl.value === "css-var" ? "css-var" : "img-src",
+    responsiveImageMode: elements.responsiveImageModeEl.value === "css-var" ? "css-var" : "img-src",
   };
 }
 
@@ -347,7 +360,7 @@ function applyConfigTextToState(
 function syncButtons(elements: UiElements, state: ReturnType<typeof createInitialUiState>): void {
   const blocked = isExportBlocked(state.selection, state.configError);
   elements.saveButton.disabled = Boolean(state.configError);
-  elements.exportButton.disabled = blocked;
+  elements.exportButton.disabled = blocked || state.exporting;
 }
 
 export function bootstrapUi(): void {
@@ -360,9 +373,13 @@ export function bootstrapUi(): void {
   renderExportNotice(elements, state.exportSummary);
   renderStatus(elements.statusEl, "Loading selection and shared config...");
   syncButtons(elements, state);
+  applyCapabilityGating(document, state.format);
 
   elements.formatEl.addEventListener("change", () => {
     state.format = elements.formatEl.value === "standalone" ? "standalone" : "html";
+    // `output` is honored by the html emitter and discarded by standalone, so
+    // the layout control is gated by the format that is actually selected.
+    applyCapabilityGating(document, state.format);
     persistLocalUiState(state);
   });
 
@@ -382,7 +399,10 @@ export function bootstrapUi(): void {
       updateConfigFromControls(elements, state);
       renderValidation(elements, state);
       syncButtons(elements, state);
-      renderStatus(elements.statusEl, `${elements.presetEl.selectedOptions[0]?.textContent ?? "Preset"} applied.`);
+      renderStatus(
+        elements.statusEl,
+        `${elements.presetEl.selectedOptions[0]?.textContent ?? "Preset"} applied.`,
+      );
     }
     persistLocalUiState(state);
   });
@@ -462,6 +482,9 @@ export function bootstrapUi(): void {
   });
 
   elements.exportButton.addEventListener("click", () => {
+    if (state.exporting) {
+      return;
+    }
     if (state.configError) {
       renderStatus(elements.statusEl, state.configError, "error");
       return;
@@ -470,6 +493,8 @@ export function bootstrapUi(): void {
       renderStatus(elements.statusEl, exportBlockedMessage(state.selection), "error");
       return;
     }
+    state.exporting = true;
+    syncButtons(elements, state);
     renderStatus(elements.statusEl, "Exporting selected frames...");
     post({
       type: "export",
@@ -512,6 +537,7 @@ export function bootstrapUi(): void {
           updateConfigFromControls(elements, state);
         }
         elements.configEl.value = state.configText;
+        applyCapabilityGating(document, state.format);
         renderValidation(elements, state);
         syncButtons(elements, state);
         renderExportNotice(elements, state.exportSummary);
@@ -527,6 +553,8 @@ export function bootstrapUi(): void {
         renderStatus(elements.statusEl, "Shared config saved.", "success");
         break;
       case "export-success":
+        state.exporting = false;
+        syncButtons(elements, state);
         state.warnings = pluginMessage.warnings;
         state.exportSummary = {
           format: pluginMessage.format,
@@ -545,6 +573,8 @@ export function bootstrapUi(): void {
         );
         break;
       case "export-error":
+        state.exporting = false;
+        syncButtons(elements, state);
         renderExportNotice(elements, state.exportSummary);
         renderStatus(
           elements.statusEl,

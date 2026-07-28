@@ -1,13 +1,14 @@
 import { defaultSettings } from "../../../src/ir/defaults.js";
+import { type FigmaCapabilityContext, isValueRequestable } from "./capability.js";
+import { parsePluginConfig } from "./config.js";
 import type {
-  FigmaPluginConfig,
   FigmaDirectControls,
   FigmaLocalUiState,
   FigmaOutputFormat,
+  FigmaPluginConfig,
   FigmaPresetId,
   SelectionSummary,
 } from "./types.js";
-import { parsePluginConfig } from "./config.js";
 
 export interface FigmaUiState {
   configText: string;
@@ -20,6 +21,7 @@ export interface FigmaUiState {
   selection: SelectionSummary;
   warnings: string[];
   exportSummary: ExportResultSummary | null;
+  exporting: boolean;
 }
 
 export interface ExportResultSummary {
@@ -78,6 +80,7 @@ export function createInitialUiState(selection: SelectionSummary): FigmaUiState 
     selection,
     warnings: [],
     exportSummary: null,
+    exporting: false,
   };
 }
 
@@ -87,6 +90,10 @@ function cloneConfig(config: FigmaPluginConfig): FigmaPluginConfig {
     metadata: config.metadata ? { ...config.metadata } : undefined,
     fonts: config.fonts ? [...config.fonts] : undefined,
     customBlocks: config.customBlocks ? [...config.customBlocks] : undefined,
+    // No direct control edits `emit`, so it only ever arrives from the Advanced
+    // JSONC view. Dropping it here would delete an author's emitter options the
+    // first time any form field changed.
+    emit: config.emit ? { ...config.emit } : undefined,
   };
 }
 
@@ -104,6 +111,9 @@ function cleanupConfig(config: FigmaPluginConfig): FigmaPluginConfig {
   }
   if (cleaned.customBlocks && cleaned.customBlocks.length === 0) {
     delete cleaned.customBlocks;
+  }
+  if (cleaned.emit && Object.keys(cleaned.emit).length === 0) {
+    delete cleaned.emit;
   }
 
   return cleaned;
@@ -174,6 +184,55 @@ export function getPresetControls(preset: Exclude<FigmaPresetId, "custom">): Fig
   }
 }
 
+/**
+ * The direct controls that are canonical settings (as opposed to metadata), so
+ * a preset can be checked against the surface declaration without restating it.
+ */
+const PRESET_GATED_SETTINGS = [
+  "output",
+  "responsiveness",
+  "imageFormat",
+  "centerHtmlOutput",
+  "renderTextAs",
+  "renderRotatedSkewedTextAs",
+  "googleFonts",
+  "responsiveImageMode",
+] as const;
+
+type PresetGatedSetting = (typeof PRESET_GATED_SETTINGS)[number];
+
+/**
+ * The settings a preset would change to a value this surface will not produce.
+ *
+ * A preset is a bundle of requests, so it is gated by the same rule as the
+ * controls it drives: `image-only-graphic` asks for 8-bit PNG and image text
+ * fallback, none of which the Figma runtime does. A preset value that already
+ * equals the default is not a request, so it is never counted.
+ */
+export function presetUnsupportedSettings(
+  preset: Exclude<FigmaPresetId, "custom">,
+  context: FigmaCapabilityContext = {},
+): PresetGatedSetting[] {
+  const presetControls = getPresetControls(preset);
+  const defaults = createInitialDirectControls();
+  const unsupported: PresetGatedSetting[] = [];
+  for (const key of PRESET_GATED_SETTINGS) {
+    const value = String(presetControls[key]);
+    if (value === String(defaults[key])) continue;
+    if (!isValueRequestable(key, value, context)) unsupported.push(key);
+  }
+  return unsupported;
+}
+
+/** True when every setting the preset changes is one this surface honors. */
+export function isPresetRequestable(
+  preset: FigmaPresetId,
+  context: FigmaCapabilityContext = {},
+): boolean {
+  if (preset === "custom") return true;
+  return presetUnsupportedSettings(preset, context).length === 0;
+}
+
 export function directControlsFromConfig(config: FigmaPluginConfig): FigmaDirectControls {
   return {
     projectName: config.settings?.projectName ?? defaultSettings.projectName,
@@ -189,7 +248,8 @@ export function directControlsFromConfig(config: FigmaPluginConfig): FigmaDirect
     renderRotatedSkewedTextAs:
       config.settings?.renderRotatedSkewedTextAs ?? defaultSettings.renderRotatedSkewedTextAs,
     googleFonts: config.settings?.googleFonts ?? defaultSettings.googleFonts,
-    responsiveImageMode: config.settings?.responsiveImageMode ?? defaultSettings.responsiveImageMode,
+    responsiveImageMode:
+      config.settings?.responsiveImageMode ?? defaultSettings.responsiveImageMode,
   };
 }
 
@@ -238,7 +298,12 @@ export function applyDirectControlsToConfig(
 
   setOptionalString(settings, "projectName", controls.projectName, defaultSettings.projectName);
   setOptionalValue(settings, "output", controls.output, defaultSettings.output);
-  setOptionalValue(settings, "responsiveness", controls.responsiveness, defaultSettings.responsiveness);
+  setOptionalValue(
+    settings,
+    "responsiveness",
+    controls.responsiveness,
+    defaultSettings.responsiveness,
+  );
   if (controls.imageFormat === defaultSettings.imageFormat[0]) {
     delete settings.imageFormat;
   } else {
@@ -358,7 +423,10 @@ export function isExportBlocked(selection: SelectionSummary, configError: string
   return Boolean(configError || selection.error || selection.eligibleFrames === 0);
 }
 
-export function shouldShowReadyStatus(selection: SelectionSummary, configError: string | null): boolean {
+export function shouldShowReadyStatus(
+  selection: SelectionSummary,
+  configError: string | null,
+): boolean {
   return !isExportBlocked(selection, configError);
 }
 
@@ -366,7 +434,9 @@ export function exportBlockedMessage(selection: SelectionSummary): string {
   return selection.error ?? "Select one or more top-level frames before exporting.";
 }
 
-export function exportWarningNoticeCopy(warningCount: number): { title: string; detail: string } | null {
+export function exportWarningNoticeCopy(
+  warningCount: number,
+): { title: string; detail: string } | null {
   if (warningCount <= 0) {
     return null;
   }

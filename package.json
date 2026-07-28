@@ -11,21 +11,29 @@
       "default": "./dist/index.js"
     },
     "./browser": {
-      "types": "./dist/src/browser.d.ts",
-      "default": "./dist/src/browser.js"
+      "types": "./dist/browser.d.ts",
+      "default": "./dist/browser.js"
     },
     "./svg-node": {
-      "types": "./dist/src/importers/svg/node.d.ts",
-      "default": "./dist/src/importers/svg/node.js"
+      "types": "./dist/importers/svg/node.d.ts",
+      "default": "./dist/importers/svg/node.js"
     }
   },
   "bin": {
     "all2html": "./dist/cli/index.js"
   },
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "README.md"
+  ],
   "scripts": {
-    "build": "tsc",
+    "clean:dist": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "pnpm clean:dist && tsc -p tsconfig.build.json",
     "dev": "tsx watch src/cli/index.ts",
-    "test": "vitest run",
+    "preinstall": "node -e \"if(process.env.INIT_CWD===process.cwd()&&!(process.env.npm_config_user_agent||'').startsWith('pnpm/')){console.error('This repo is pnpm-only. Run: pnpm install');process.exit(1)}\"",
+    "prepack": "pnpm build",
+    "test": "node scripts/check-node-version.mjs && vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "typecheck:panel": "pnpm --filter @all2html/panel typecheck",
@@ -33,10 +41,12 @@
     "typecheck:panel:jsx": "pnpm --filter @all2html/panel check:jsx",
     "check:illustrator-fixtures": "pnpm exec tsx scripts/audit-illustrator-fixtures.ts",
     "check:release-artifacts": "node scripts/check-release-artifacts.mjs",
+    "check:generated-docs": "pnpm exec tsx scripts/generate-settings-docs.ts --check",
+    "check:doc-citations": "pnpm exec tsx scripts/check-doc-citations.ts",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
-    "check": "pnpm lint && pnpm typecheck && pnpm typecheck:panel && pnpm typecheck:panel:svelte && pnpm typecheck:panel:jsx && pnpm test",
+    "check": "pnpm lint && pnpm typecheck && pnpm typecheck:panel && pnpm typecheck:panel:svelte && pnpm typecheck:panel:jsx && pnpm check:doc-citations && pnpm test",
     "build:extendscript": "node scripts/build-extendscript.mjs",
     "build:figma": "node scripts/build-figma-plugin.mjs",
     "build:illustrator": "pnpm build:extendscript && node scripts/assemble-illustrator.mjs",
@@ -45,12 +55,12 @@
     "dev:panel": "pnpm build:panel && pnpm --filter @all2html/panel dev",
     "package:panel": "pnpm build:illustrator && pnpm build:after-effects && pnpm --filter @all2html/panel zxp",
     "package:panel:zip": "pnpm build:illustrator && pnpm build:after-effects && pnpm --filter @all2html/panel zip",
-    "build:after-effects": "node scripts/package-after-effects.mjs",
+    "build:after-effects": "pnpm build:extendscript && node scripts/package-after-effects.mjs",
     "build:svg-dropzone": "pnpm --filter @all2html/svg-dropzone build",
     "dev:svg-dropzone": "pnpm --filter @all2html/svg-dropzone dev",
+    "docs:generate": "pnpm exec tsx scripts/generate-settings-docs.ts",
     "docs:serve": "uvx --from zensical zensical serve",
     "docs:build": "node scripts/build-docs-site.mjs",
-    "package:after-effects": "node scripts/package-after-effects.mjs",
     "test:visual": "playwright test",
     "diagnostics:illustrator": "pnpm exec tsx scripts/read-cep-diagnostics.ts illustrator",
     "diagnostics:after-effects": "pnpm exec tsx scripts/read-cep-diagnostics.ts after-effects"
@@ -59,8 +69,6 @@
     "@resvg/resvg-js": "^2.6.2",
     "@resvg/resvg-wasm": "^2.6.2",
     "fflate": "^0.8.2",
-    "hast-util-to-html": "^9.0.4",
-    "hastscript": "^9.0.1",
     "jpeg-js": "^0.4.4",
     "jsonc-parser": "^3.3.1",
     "svgson": "^5.3.1",
@@ -71,21 +79,24 @@
     "@biomejs/biome": "^2.4.10",
     "@figma/plugin-typings": "^1.124.0",
     "@playwright/test": "^1.59.1",
-    "@rollup/plugin-typescript": "^12.3.0",
     "@types/hast": "^3.0.4",
+    "@types/jsdom": "^28.0.3",
     "@types/node": "^22.0.0",
     "esbuild": "^0.28.0",
+    "hast-util-to-html": "^9.0.4",
+    "hastscript": "^9.0.1",
     "jsdom": "^29.0.2",
     "lefthook": "^2.1.4",
     "rollup": "^4.60.1",
-    "tslib": "^2.8.1",
+    "svelte": "^5.55.1",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": "^20.19.0 || ^22.12.0 || >=23.0.0"
   },
+  "packageManager": "pnpm@10.34.5",
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild",

@@ -34,18 +34,13 @@ export function resolveDocumentSettings(
     resolvedSettings.projectName = makeKeyword(doc.metadata.slug, "all2html");
   }
 
+  // No breakpoints are invented here. `ResolvedArtboard` has no `breakpoint` field at
+  // all, so the placeholder this function used to fabricate purely to satisfy the type
+  // is gone; only `computeBreakpoints` can produce one (SPEC §12.1).
   return {
     ...doc,
+    pipelinePhase: "resolved",
     fonts: mergeFonts(doc.fonts, inlineConfig?.fonts),
     settings: resolvedSettings,
-    artboards: doc.artboards.map((artboard) => ({
-      ...artboard,
-      breakpoint: {
-        minWidth: 0,
-        maxWidth: Number.POSITIVE_INFINITY,
-        widthRangeMin: 0,
-        widthRangeMax: Number.POSITIVE_INFINITY,
-      },
-    })),
   };
 }

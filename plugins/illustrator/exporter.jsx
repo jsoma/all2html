@@ -7,8 +7,18 @@
 // ============================================================
 
 var warnings = [];
-var objectsToRelock = [];
-var textFramesToUnhide = [];
+// Structured mirror of `warnings`, in the same order. Every entry carries the
+// stable code and the category its call site declared, plus the surface, and
+// core warnings are appended verbatim from result.structuredWarnings. Nothing
+// here is ever derived from message text.
+var structuredWarnings = [];
+// LIFO stack of restore closures. Push one at the exact moment a document
+// mutation happens so restores always run in inverse order of mutation
+// (e.g. an item is always unhidden before it is relocked — setting .hidden
+// on a relocked item throws).
+var restoreActions = [];
+var unlockedObjectCount = 0;
+var docToMarkSaved = null;
 
 function logDiagnostic(level, message, detail) {
   try {
@@ -18,9 +28,31 @@ function logDiagnostic(level, message, detail) {
   } catch (e) {}
 }
 
-function warn(msg) {
+// code and category are assigned here, at the call site, exactly as
+// src/core/warnings.ts requires. category must be one of the core
+// WarningCategory values (see WARNING_CATEGORY_ORDER below).
+function warn(msg, code, category) {
   warnings.push(msg);
+  structuredWarnings.push({
+    code: code || "illustrator:other",
+    category: category || "other",
+    message: msg,
+    surface: "illustrator"
+  });
   logDiagnostic("warn", msg);
+}
+
+// Appends the core's structured warnings verbatim, keeping the plain-string
+// list in the same order.
+function pushCoreWarnings(result) {
+  var messages = result.warnings || [];
+  for (var i = 0; i < messages.length; i++) {
+    warnings.push(messages[i]);
+  }
+  var structured = result.structuredWarnings || [];
+  for (var j = 0; j < structured.length; j++) {
+    structuredWarnings.push(structured[j]);
+  }
 }
 
 // ============================================================
@@ -60,6 +92,27 @@ function validateDocument() {
 
 function trim(s) {
   return s.replace(/^[\s\uFEFF\xA0\x03]+|[\s\uFEFF\xA0\x03]+$/g, "");
+}
+
+/**
+ * The document's output directory, as one relative path under the .ai file.
+ *
+ * A named function so a test can execute the *real* one out of this file: the
+ * shared constructor rejecting traversal proves nothing if this call site stops
+ * calling it, and a source-level grep would not notice either. See
+ * `test/unit/extendscript-setting-safety.test.ts`.
+ */
+function resolveDocumentOutputPath(settings, docPath) {
+  // The *validated* bag, not raw docSettings: a path sanitizeCanonicalSettings had
+  // rejected still chose the output directory, so the run wrote where ir.json denied.
+  var rawOutputPath = settings.htmlOutputPath || settings.imageOutputPath || "all2html-output/";
+  // Construct a relative filesystem directory at the boundary. This shared
+  // rule rejects traversal, drive prefixes and controls, contains leading
+  // slashes under the document directory, and returns one trailing slash.
+  rawOutputPath = All2Html.relativeOutputDirectory(String(rawOutputPath));
+  var outputPath = docPath + rawOutputPath;
+  if (outputPath.charAt(outputPath.length - 1) !== "/") outputPath += "/";
+  return outputPath;
 }
 
 function makeKeyword(name) {
@@ -139,7 +192,8 @@ function unlockObjects(doc) {
     if (o.hidden === true || o.visible === false) return;
     if (o.locked) {
       o.locked = false;
-      objectsToRelock.push(o);
+      unlockedObjectCount++;
+      pushRelockRestore(o);
     }
     // Unlock clipping paths
     var pathCount = 0;
@@ -151,7 +205,8 @@ function unlockObjects(doc) {
           var item = o.pathItems[i];
           if (!item.hidden && item.clipping && item.locked) {
             item.locked = false;
-            objectsToRelock.push(item);
+            unlockedObjectCount++;
+            pushRelockRestore(item);
             break;
           }
         } catch(e) {}
@@ -176,19 +231,78 @@ function unlockObjects(doc) {
   }
 }
 
-function relockObjects() {
-  for (var i = objectsToRelock.length - 1; i >= 0; i--) {
-    try { objectsToRelock[i].locked = true; } catch(e) {}
+// Save-for-Web asks the host to interact with the user before writing each
+// file. Driven over AppleEvents nothing answers, so every exportFile() blocked
+// for the full ~120s interaction timeout. Suppressing alerts removes the
+// handshake. Restore is pushed first so it runs last: cleanup stays
+// non-interactive, and the level is back before any completion dialog.
+//
+// The observed level is never trusted as "previous" when it is already
+// suppressed. A run that dies between suppression and runRestoreActions()
+// (cancelled script, host crash) leaves DONTDISPLAYALERTS in place; the next run
+// would then read the suppressed value as the level to restore and pin
+// Illustrator to auto-answered dialogs for the rest of the session. Restoring to
+// DISPLAYALERTS is the only self-healing choice.
+function suppressUserInteraction() {
+  try {
+    var previousLevel = app.userInteractionLevel;
+    if (previousLevel === UserInteractionLevel.DONTDISPLAYALERTS) {
+      previousLevel = UserInteractionLevel.DISPLAYALERTS;
+    }
+    app.userInteractionLevel = UserInteractionLevel.DONTDISPLAYALERTS;
+    pushInteractionLevelRestore(previousLevel);
+  } catch(e) {}
+}
+
+function pushInteractionLevelRestore(previousLevel) {
+  restoreActions.push(function() { app.userInteractionLevel = previousLevel; });
+}
+
+// Restore helpers. Each pusher is a separate function so the captured item is
+// bound per call (ExtendScript has no block scope).
+function pushRelockRestore(item) {
+  restoreActions.push(function() { item.locked = true; });
+}
+
+function pushUnhideRestore(item) {
+  restoreActions.push(function() { item.hidden = false; });
+}
+
+// Runs every pending restore in LIFO order and returns how many failed.
+// Failures are warned rather than swallowed — a failed restore leaves the
+// user's .ai file mutated (e.g. a permanently hidden all2html-settings block) —
+// and the count is what stops executeAll2Html from marking it saved.
+function runRestoreActions() {
+  var failures = 0;
+  while (restoreActions.length > 0) {
+    var action = restoreActions.pop();
+    try {
+      action();
+    } catch(e) {
+      failures++;
+      warn("Could not restore document state after export: " + (e.message || e.toString()) + " The document was left modified and is not marked saved.", "illustrator:restore-failed", "other");
+    }
   }
+  return failures;
 }
 
 // ============================================================
 // Settings + custom block parsing
 // ============================================================
 
+// Block/layer names are recognized under `all2html-` first, with `ai2html-` as a
+// compatibility alias. INPUT names only — emitted classes/markers are unaffected.
+// Precedence when a document carries both: `all2html-` wins key-by-key over
+// `ai2html-`. Custom code blocks do not conflict, so both are kept in doc order.
+var LEGACY_BLOCK_PREFIX = "ai2html-";
+var SPECIAL_BLOCK_PREFIXES = ["all2html-", LEGACY_BLOCK_PREFIX];
+var SPECIAL_BLOCK_RXP = /^(all2html|ai2html)-(css|js|html|settings|text|html-before|html-after)\s*$/;
+var SPECIAL_NAME_RXP = /^(all2html|ai2html)-/;
+var SETTINGS_BLOCK_RXP = /^(all2html|ai2html)-settings\s*$/;
+
 function parseSpecialBlocks(doc) {
-  var rxp = /^ai2html-(css|js|html|settings|text|html-before|html-after)\s*$/;
   var settings = {};
+  var legacySettings = {};
   var customBlocks = [];
 
   for (var i = 0; i < doc.textFrames.length; i++) {
@@ -199,15 +313,17 @@ function parseSpecialBlocks(doc) {
       firstLine = tf.lines[0].contents;
     } catch(e) { continue; }
 
-    var match = rxp.exec(firstLine);
+    var match = SPECIAL_BLOCK_RXP.exec(firstLine);
     if (!match) continue;
-    var blockType = match[1];
+    var prefix = match[1] + "-";
+    var blockType = match[2];
+    var blockName = prefix + blockType;
 
     if (objectIsHidden(tf)) {
       if (blockType === "settings") {
-        throw new Error("Found a hidden ai2html-settings text block. Please unhide it.");
+        throw new Error("Found a hidden " + blockName + " text block. Please unhide it.");
       }
-      warn("Skipping hidden ai2html-" + blockType + " block.");
+      warn("Skipping hidden " + blockName + " block.", "block:hidden", "markup");
       continue;
     }
 
@@ -215,16 +331,21 @@ function parseSpecialBlocks(doc) {
     lines.shift(); // remove header line
 
     if (blockType === "settings" || blockType === "text") {
+      // Legacy keys land in their own bag and are merged underneath at return,
+      // so cross-prefix precedence does not depend on text-frame order. Within a
+      // prefix it does: duplicates assign into one bag, so the last one wins.
+      // panel-settings-block.test.ts holds the panel's merge to both halves.
+      var bag = prefix === LEGACY_BLOCK_PREFIX ? legacySettings : settings;
       // Parse key: value entries
       for (var j = 0; j < lines.length; j++) {
         var line = trim(lines[j]);
         var entryMatch = /^([\w-]+)\s*:\s*(.*)$/.exec(line);
         if (entryMatch) {
-          settings[entryMatch[1]] = straightenCurlyQuotesInAngleBrackets(entryMatch[2]);
+          bag[entryMatch[1]] = straightenCurlyQuotesInAngleBrackets(entryMatch[2]);
         }
       }
       if (blockType === "settings") {
-        tf.name = "ai2html-settings";
+        tf.name = blockName; // keep the user's own spelling
       }
     } else {
       // Custom code block
@@ -238,7 +359,7 @@ function parseSpecialBlocks(doc) {
         content = straightenCurlyQuotesInAngleBrackets(content);
       }
       if (!trim(content)) {
-        warn("Skipping empty ai2html-" + blockType + " block.");
+        warn("Skipping empty " + blockName + " block.", "block:empty", "markup");
         continue;
       }
       customBlocks.push({ type: blockType, content: content });
@@ -248,13 +369,30 @@ function parseSpecialBlocks(doc) {
     if (blockOverlapsArtboard(doc, tf)) {
       if (tf.locked) {
         tf.locked = false;
-        objectsToRelock.push(tf);
+        unlockedObjectCount++;
+        pushRelockRestore(tf);
       }
       tf.hidden = true;
-      textFramesToUnhide.push(tf);
+      pushUnhideRestore(tf);
+    }
+  }
+  // `all2html-` wins key-by-key over the legacy `ai2html-` spelling.
+  for (var k in legacySettings) {
+    if (hasOwn(legacySettings, k) && !hasOwn(settings, k)) {
+      settings[k] = legacySettings[k];
     }
   }
   return { settings: settings, customBlocks: customBlocks };
+}
+
+// parseSpecialBlocks names the frame with whichever spelling the user typed.
+function findSettingsTextFrame(doc) {
+  for (var i = 0; i < SPECIAL_BLOCK_PREFIXES.length; i++) {
+    try {
+      return doc.textFrames.getByName(SPECIAL_BLOCK_PREFIXES[i] + "settings");
+    } catch(e) {}
+  }
+  return null;
 }
 
 function blockOverlapsArtboard(doc, tf) {
@@ -350,7 +488,7 @@ function extractLayers(doc) {
   var layers = [];
   for (var i = 0; i < doc.layers.length; i++) {
     var layer = doc.layers[i];
-    if (layer.name === "ai2html-settings") continue;
+    if (SETTINGS_BLOCK_RXP.test(layer.name)) continue;
 
     var parsedName = layer.name;
     var layerType = "default";
@@ -370,78 +508,34 @@ function extractLayers(doc) {
       else if (tag === "html-after") layerType = "html-after";
     }
 
-    layers.push({
+    var layerRecord = {
       name: trim(parsedName),
       type: layerType,
       source: {
         tool: "illustrator",
         name: layer.name
       },
-      inlineSvg: inlineSvg,
       visible: layer.visible,
-      opacity: layer.opacity || 100,
+      // 0 is a real opacity; default only on absence (matches computeOpacity).
+      opacity: typeof layer.opacity === "number" ? layer.opacity : 100,
       elements: [],
       _aiLayer: layer
-    });
+    };
+    // Only `true` means anything: absent is "external svg asset", and the
+    // schema rejects the key on non-svg layers, so `inlineSvg: false` is noise.
+    if (inlineSvg) layerRecord.inlineSvg = true;
+    layers.push(layerRecord);
   }
   return layers;
 }
 
-// ============================================================
-// Clipping mask detection (best-effort)
-// ============================================================
-
-function findClippedTextFrames(doc) {
-  var clippedFrames = [];
-  try {
-    // Select all clipping masks via menu command
-    app.executeMenuCommand("Clipping Masks menu item");
-    // Convert selection to plain array (ExtendScript collections don't have .slice)
-    var masks = [];
-    if (doc.selection) {
-      for (var si = 0; si < doc.selection.length; si++) {
-        masks.push(doc.selection[si]);
-      }
-    }
-    doc.selection = null;
-
-    if (masks.length === 0) return clippedFrames;
-
-    // Lock all masks, then process each
-    for (var i = 0; i < masks.length; i++) {
-      try { masks[i].locked = true; } catch(e) {}
-    }
-
-    for (var i = 0; i < masks.length; i++) {
-      var mask = masks[i];
-      try {
-        // Check if mask's parent group contains text frames
-        var parent = mask.parent;
-        if (parent && parent.typename === "GroupItem") {
-          // Find text frames inside this group
-          for (var j = 0; j < parent.textFrames.length; j++) {
-            clippedFrames.push(parent.textFrames[j]);
-          }
-        }
-      } catch(e) {}
-    }
-
-    // Unlock all masks
-    for (var i = 0; i < masks.length; i++) {
-      try { masks[i].locked = false; } catch(e) {}
-    }
-  } catch(e) {
-    warn("Clipping mask detection failed: " + e.message + ". Some masked text may appear in output.");
-  }
-  return clippedFrames;
-}
-
-function isClippedFrame(tf, clippedFrames) {
-  for (var i = 0; i < clippedFrames.length; i++) {
-    if (clippedFrames[i] === tf) return true;
-  }
-  return false;
-}
+// Clipping-mask filtering: not implemented. Masked text still exports. The
+// uncalled findClippedTextFrames/isClippedFrame helpers were removed here
+// rather than wired: they excluded every text frame in a clipping group, not
+// just the clipped ones, and did it by selecting and locking every mask in the
+// document. A real filter belongs in extractTextFramesForArtboard's loop,
+// comparing visibleBounds against the mask path the way boundsIntersect
+// already compares against artboards. See PROGRESS.md, "Known Limitations".
 
 // ============================================================
 // Text frame extraction
@@ -450,7 +544,7 @@ function isClippedFrame(tf, clippedFrames) {
 function isSpecialBlock(tf) {
   try {
     var first = tf.lines[0].contents;
-    return /^ai2html-/.test(first);
+    return SPECIAL_NAME_RXP.test(first);
   } catch(e) {
     return false;
   }
@@ -481,7 +575,7 @@ function convertColor(c) {
       return { r: v, g: v, b: v };
     }
     if (c.typename === "NoColor") {
-      warn("Found a text element with no fill color. Using green as placeholder.");
+      warn("Found a text element with no fill color. Using green as placeholder.", "text:no-fill", "text");
       return { r: 0, g: 255, b: 0 };
     }
   } catch(e) {}
@@ -596,6 +690,41 @@ function extractParagraph(para) {
   return result;
 }
 
+// Rotation detected from the frame's matrix. Callable both at element
+// extraction and at raster-export time (hideTextFramesForExport) with the
+// same result: it reads only the frame, never mutable export state.
+function computeTextFrameRotation(tf) {
+  var rotation = { angle: 0, matrix: null };
+  try {
+    var m = tf.matrix;
+    var angle = Math.atan2(m.mValueB, m.mValueA) * (180 / Math.PI);
+    if (Math.abs(angle) > 1) {
+      rotation.angle = angle;
+      rotation.matrix = [
+        m.mValueA, m.mValueB, m.mValueC, m.mValueD, m.mValueTX, m.mValueTY
+      ];
+    }
+  } catch(e) {}
+  return rotation;
+}
+
+// The ONE renderAs disposition, shared by element extraction and
+// hideTextFramesForExport. Whatever sets renderAs "image" on a frame's
+// element must also keep that frame visible during raster export —
+// otherwise the text appears in neither the HTML nor the raster.
+// Precedence: imageOnly > global setting > rotation setting > html.
+function decideTextFrameRenderAs(tf, artboard, settings, rotation) {
+  if (rotation === undefined || rotation === null) {
+    rotation = computeTextFrameRotation(tf);
+  }
+  if (artboard.imageOnly) return { renderAs: "image", reason: "imageOnly" };
+  if (settings.renderTextAs === "image") return { renderAs: "image", reason: "setting" };
+  if (rotation.angle !== 0 && settings.renderRotatedSkewedTextAs === "image") {
+    return { renderAs: "image", reason: "rotation" };
+  }
+  return { renderAs: "html", reason: undefined };
+}
+
 function extractTextFramesForArtboard(doc, artboard, layers, settings) {
   var abRect = artboard._aiRect;
   var abLeft = abRect[0];
@@ -631,7 +760,12 @@ function extractTextFramesForArtboard(doc, artboard, layers, settings) {
     return a.left - b.left;
   });
 
-  // Find the default layer to add elements to
+  // Find the default layer to add elements to. Prefer a visible default
+  // layer, then an invisible default layer (warned below): the emitter
+  // renders text only on `default`-type layers, so a visible `:div`/`:png`
+  // layer is NOT a better home than an invisible default — text attached
+  // there vanishes with no visibility warning to explain it. Tagged layers
+  // are a last resort only, and that attach warns too.
   var defaultLayer = null;
   for (var li = 0; li < layers.length; li++) {
     if (layers[li].type === "default" && layers[li].visible) {
@@ -639,45 +773,48 @@ function extractTextFramesForArtboard(doc, artboard, layers, settings) {
       break;
     }
   }
+  if (!defaultLayer) {
+    for (var ld = 0; ld < layers.length; ld++) {
+      if (layers[ld].type === "default") {
+        defaultLayer = layers[ld];
+        break;
+      }
+    }
+  }
   if (!defaultLayer && layers.length > 0) {
     defaultLayer = layers[0];
   }
+  var warnedInvisibleLayer = false;
+  var warnedUnrenderableLayer = false;
 
   var abIndex = artboard._aiIndex;
+  // Element ids already used on THIS artboard. Two frames with the same name
+  // on one artboard would otherwise emit the same DOM id; keys are $-prefixed
+  // so a frame named "constructor" cannot collide with Object.prototype.
+  var usedElementIds = {};
   for (var fi = 0; fi < frames.length; fi++) {
     var tf = frames[fi];
-    // Detect rotation before deciding renderAs
-    var rotationAngle = 0;
-    var rotationMatrix = null;
-    try {
-      var m = tf.matrix;
-      rotationAngle = Math.atan2(m.mValueB, m.mValueA) * (180 / Math.PI);
-      if (Math.abs(rotationAngle) > 1) {
-        rotationMatrix = [
-          m.mValueA, m.mValueB, m.mValueC, m.mValueD, m.mValueTX, m.mValueTY
-        ];
-      } else {
-        rotationAngle = 0;
-      }
-    } catch(e) {}
+    var rotation = computeTextFrameRotation(tf);
+    // Shared with hideTextFramesForExport: see decideTextFrameRenderAs.
+    var disposition = decideTextFrameRenderAs(tf, artboard, settings, rotation);
+    var renderAs = disposition.renderAs;
+    var renderAsReason = disposition.reason;
 
-    // Decide renderAs: imageOnly > global setting > rotation setting > html
-    var renderAs = "html";
-    var renderAsReason;
-    if (artboard.imageOnly) {
-      renderAs = "image";
-      renderAsReason = "imageOnly";
-    } else if (settings.renderTextAs === "image") {
-      renderAs = "image";
-      renderAsReason = "setting";
-    } else if (rotationAngle !== 0 && settings.renderRotatedSkewedTextAs === "image") {
-      renderAs = "image";
-      renderAsReason = "rotation";
+    var baseId = tf.name ? makeKeyword(tf.name) : ("g-ai" + abIndex + "-" + (fi + 1));
+    var elementId = baseId;
+    var dedupeIndex = 2;
+    while (hasOwn(usedElementIds, "$" + elementId)) {
+      elementId = baseId + "-" + dedupeIndex;
+      dedupeIndex++;
     }
+    if (elementId !== baseId) {
+      warn('Duplicate text frame name "' + (tf.name || baseId) + '" on artboard "' + artboard.name + '". Using id "' + elementId + '" for this frame.', "text:duplicate-id", "text");
+    }
+    usedElementIds["$" + elementId] = true;
 
     var element = {
       type: "text",
-      id: tf.name ? makeKeyword(tf.name) : ("g-ai" + abIndex + "-" + (fi + 1)),
+      id: elementId,
       kind: tf.kind === TextType.POINTTEXT ? "point" : "area",
       position: {
         x: tf.left - abLeft,
@@ -697,9 +834,9 @@ function extractTextFramesForArtboard(doc, artboard, layers, settings) {
     if (blend) element.blendMode = blend;
 
     // Apply rotation
-    if (rotationMatrix) {
-      element.rotation = rotationAngle;
-      element.transformMatrix = rotationMatrix;
+    if (rotation.matrix) {
+      element.rotation = rotation.angle;
+      element.transformMatrix = rotation.matrix;
     }
 
     // Extract paragraphs
@@ -717,10 +854,18 @@ function extractTextFramesForArtboard(doc, artboard, layers, settings) {
 
     // Check for overset text
     if (checkOversetText(tf)) {
-      warn("Overset text detected in frame \"" + (tf.name || element.id) + "\". Hidden text will appear in HTML output.");
+      warn("Overset text detected in frame \"" + (tf.name || element.id) + "\". Hidden text will appear in HTML output.", "text:overset", "text");
     }
 
     if (element.paragraphs.length > 0 && defaultLayer) {
+      if (defaultLayer.visible === false && !warnedInvisibleLayer) {
+        warn('Text on artboard "' + artboard.name + '" was attached to invisible layer "' + defaultLayer.name + '" because no visible default layer exists. It will not appear in the HTML output; show the layer to export it.', "layer:invisible-content", "text");
+        warnedInvisibleLayer = true;
+      }
+      if (defaultLayer.type !== "default" && !warnedUnrenderableLayer) {
+        warn('Text on artboard "' + artboard.name + '" was attached to special layer "' + defaultLayer.name + '" because no default layer exists. The HTML output renders text only on plain layers, so it will not appear; add an untagged layer for text.', "layer:unrenderable-content", "text");
+        warnedUnrenderableLayer = true;
+      }
       defaultLayer.elements.push(element);
     }
   }
@@ -754,7 +899,7 @@ function extractLayerContent(doc, artboard, layers, settings, assets) {
           }
         }
         if (!validVideoFound) {
-          warn('Layer "' + layer.name + '" tagged :video does not contain a usable HTTPS .mp4 URL.');
+          warn('Layer "' + layer.name + '" tagged :video does not contain a usable HTTPS .mp4 URL.', "video:invalid-url", "markup");
         }
       } catch(e) {}
     }
@@ -771,7 +916,7 @@ function extractLayerContent(doc, artboard, layers, settings, assets) {
           }
         }
         if (!htmlContentFound) {
-          warn('Layer "' + layer.name + '" tagged :' + layer.type + " has no usable HTML content.");
+          warn('Layer "' + layer.name + '" tagged :' + layer.type + " has no usable HTML content.", "html-hook:empty", "markup");
         }
       } catch(e) {}
     }
@@ -781,26 +926,30 @@ function extractLayerContent(doc, artboard, layers, settings, assets) {
       try {
         extractShapesFromLayer(aiLayer, layer, abRect);
       } catch(e) {
-        warn("Shape detection failed on layer \"" + layer.name + "\": " + e.message);
+        warn("Shape detection failed on layer \"" + layer.name + "\": " + e.message, "shape:detection-failed", "geometry");
       }
     }
 
     // SVG layers: export as SVG file or inline
     if (layer.type === "svg") {
       try {
-        var svgResult = exportSvgLayer(doc, aiLayer, artboard, layer, settings);
+        // The asset id IS the filename base, computed once and passed down —
+        // exportSvgLayer deriving its own name from artboard.name while this
+        // record used source.name is how HTML references and written files
+        // diverged on suffixed artboard names (large-story regression).
+        var svgAssetId = makeAssetName([
+          slug,
+          artboard.source && artboard.source.name ? artboard.source.name : artboard.name,
+          layer.name
+        ]);
+        if (assets[svgAssetId]) {
+          svgAssetId = makeAssetName([svgAssetId, layer.id]);
+        }
+        var svgResult = exportSvgLayer(doc, aiLayer, artboard, layer, svgAssetId, settings);
         if (svgResult) {
           if (layer.inlineSvg && svgResult.content) {
             layer.elements.push({ type: "rawHtml", content: svgResult.content });
           } else if (svgResult.path) {
-            var svgAssetId = makeAssetName([
-              slug,
-              artboard.source && artboard.source.name ? artboard.source.name : artboard.name,
-              layer.name
-            ]);
-            if (assets[svgAssetId]) {
-              svgAssetId = makeAssetName([svgAssetId, layer.id]);
-            }
             assets[svgAssetId] = {
               id: svgAssetId,
               path: svgAssetId + ".svg",
@@ -818,7 +967,7 @@ function extractLayerContent(doc, artboard, layers, settings, assets) {
           }
         }
       } catch(e) {
-        warn("SVG export failed on layer \"" + layer.name + "\": " + e.message);
+        warn("SVG export failed on layer \"" + layer.name + "\": " + e.message, "image:svg-export-failed", "image");
       }
     }
 
@@ -849,7 +998,7 @@ function extractLayerContent(doc, artboard, layers, settings, assets) {
           exportParams: { format: "png", scale: settings.use2xImages ? 2 : 1, transparent: true }
         };
       } catch(e) {
-        warn("PNG layer export failed on layer \"" + layer.name + "\": " + e.message);
+        warn("PNG layer export failed on layer \"" + layer.name + "\": " + e.message, "image:png-export-failed", "image");
       }
     }
   }
@@ -979,7 +1128,17 @@ function isOrthogonal(pts) {
   return true;
 }
 
-function exportSvgLayer(doc, aiLayer, artboard, irLayer, settings) {
+// Reading `.name` off a layer whose restore just failed can throw too, so the
+// name is only ever fetched defensively, for the warning message.
+function describeLayer(layer) {
+  try {
+    return "\"" + layer.name + "\"";
+  } catch(e) {
+    return "(unnamed)";
+  }
+}
+
+function exportSvgLayer(doc, aiLayer, artboard, irLayer, assetId, settings) {
   // Hide all layers except this one, export artboard as SVG
   var hiddenLayers = [];
   for (var i = 0; i < doc.layers.length; i++) {
@@ -994,7 +1153,9 @@ function exportSvgLayer(doc, aiLayer, artboard, irLayer, settings) {
     doc.artboards.setActiveArtboardIndex(artboard._aiIndex);
     var outputPath = settings.outputPath;
     ensureFolder(outputPath);
-    var svgName = settings.projectName + "-" + makeKeyword(artboard.name) + "-" + makeKeyword(irLayer.name);
+    // The caller's asset record points at assetId + ".svg"; writing any other
+    // name ships HTML that references a file that does not exist.
+    var svgName = assetId;
     var svgFile = new File(outputPath + svgName + ".svg");
 
     var opts = new ExportOptionsSVG();
@@ -1022,9 +1183,15 @@ function exportSvgLayer(doc, aiLayer, artboard, irLayer, settings) {
 
     return { path: svgName + ".svg" };
   } finally {
-    // Restore hidden layers
+    // Restore hidden layers. This function hid every other layer in the
+    // document, so a swallowed failure leaves the user's .ai file with layers
+    // permanently invisible while the export still reports success.
     for (var i = 0; i < hiddenLayers.length; i++) {
-      try { hiddenLayers[i].visible = true; } catch(e) {}
+      try {
+        hiddenLayers[i].visible = true;
+      } catch(e) {
+        warn("Could not restore layer " + describeLayer(hiddenLayers[i]) + " after SVG layer export: " + (e.message || e.toString()), "illustrator:restore-failed", "other");
+      }
     }
   }
 }
@@ -1056,8 +1223,14 @@ function exportPngLayer(doc, aiLayer, artboard, assetId, settings) {
     opts.colorCount = 256;
     doc.exportFile(file, ExportType.PNG8, opts);
   } finally {
+    // Same contract as exportSvgLayer: every other layer was hidden, so a
+    // silent restore failure permanently blanks the user's document.
     for (var i = 0; i < hiddenLayers.length; i++) {
-      try { hiddenLayers[i].visible = true; } catch(e) {}
+      try {
+        hiddenLayers[i].visible = true;
+      } catch(e) {
+        warn("Could not restore layer " + describeLayer(hiddenLayers[i]) + " after PNG layer export: " + (e.message || e.toString()), "illustrator:restore-failed", "other");
+      }
     }
   }
 }
@@ -1089,17 +1262,22 @@ function resolveImageFormat(doc, artboard, settings) {
   return "png";
 }
 
-function hideTextFramesForExport(doc, artboard, settings) {
-  // When render_text_as is "image" or testing_mode is on, keep all text visible for raster capture
-  if (settings.renderTextAs === "image" || settings.testingMode) return [];
+// `hidden` is an accumulator supplied by the caller so already-hidden frames
+// are still restorable if this loop throws partway through.
+function hideTextFramesForExport(doc, artboard, settings, hidden) {
+  // When testing_mode is on, keep all text visible for raster capture
+  if (settings.testingMode) return hidden;
   var abRect = artboard._aiRect;
-  var hidden = [];
   for (var i = 0; i < doc.textFrames.length; i++) {
     var tf = doc.textFrames[i];
     if (tf.hidden) continue;
     if (tf.kind === TextType.PATHTEXT) continue;
     if (!boundsIntersect(tf.visibleBounds, abRect)) continue;
-    if (artboard.imageOnly) continue; // Keep text visible for image_only artboards
+    // The same disposition extraction used: any frame whose element is
+    // renderAs "image" (imageOnly artboard, global render_text_as, or a
+    // rotated frame under render_rotated_skewed_text_as) must stay visible
+    // so the raster contains it — its text exists nowhere else.
+    if (decideTextFrameRenderAs(tf, artboard, settings).renderAs === "image") continue;
     tf.hidden = true;
     hidden.push(tf);
   }
@@ -1107,9 +1285,21 @@ function hideTextFramesForExport(doc, artboard, settings) {
 }
 
 function restoreHiddenFrames(frames) {
-  for (var i = 0; i < frames.length; i++) {
-    try { frames[i].hidden = false; } catch(e) {}
+  for (var i = frames.length - 1; i >= 0; i--) {
+    try {
+      frames[i].hidden = false;
+    } catch(e) {
+      warn("Could not unhide a text frame after image export: " + (e.message || e.toString()), "illustrator:restore-failed", "other");
+    }
   }
+}
+
+// 0 is a declared-valid jpgQuality (settings-definitions min 0), so the
+// default applies only on absence — `|| 85` erased a real 0.
+function resolveJpgQuality(settings) {
+  var quality = settings.jpgQuality;
+  if (quality === undefined || quality === null) return 85;
+  return quality;
 }
 
 function exportArtboardImage(doc, path, format, settings) {
@@ -1122,7 +1312,7 @@ function exportArtboardImage(doc, path, format, settings) {
     opts.antiAliasing = false;
     opts.horizontalScale = scale;
     opts.verticalScale = scale;
-    opts.qualitySetting = settings.jpgQuality || 85;
+    opts.qualitySetting = resolveJpgQuality(settings);
     doc.exportFile(file, ExportType.JPEG, opts);
   } else {
     var opts = new ExportOptionsPNG8();
@@ -1136,16 +1326,17 @@ function exportArtboardImage(doc, path, format, settings) {
   }
 }
 
-function hideSpecialLayersForExport(doc, artboard) {
+// `hidden` is an accumulator supplied by the caller so already-hidden layers
+// are still restorable if this loop throws partway through.
+function hideSpecialLayersForExport(doc, artboard, hidden) {
   // Any layer with ":" in its name is a special layer that gets its own export.
   // Hide them before capturing the background artboard image.
-  var hidden = [];
   var knownTags = ["svg", "png", "symbol", "div", "video", "html-before", "html-after", "svg,inline", "inline"];
   for (var i = 0; i < doc.layers.length; i++) {
     var layer = doc.layers[i];
     if (!layer.visible) continue;
     var name = layer.name;
-    if (name.indexOf("ai2html-") === 0) continue; // skip settings blocks
+    if (SPECIAL_NAME_RXP.test(name)) continue; // skip settings blocks
     var colonIdx = name.indexOf(":");
     if (colonIdx >= 0) {
       var tag = name.substring(colonIdx + 1).toLowerCase();
@@ -1154,7 +1345,7 @@ function hideSpecialLayersForExport(doc, artboard) {
         if (tag === knownTags[j]) { recognized = true; break; }
       }
       if (!recognized) {
-        warn("Unrecognized layer tag \":" + tag + "\" on layer \"" + name + "\". Layer will be hidden from background image.");
+        warn("Unrecognized layer tag \":" + tag + "\" on layer \"" + name + "\". Layer will be hidden from background image.", "layer:unknown-tag", "markup");
       }
       layer.visible = false;
       hidden.push(layer);
@@ -1164,8 +1355,12 @@ function hideSpecialLayersForExport(doc, artboard) {
 }
 
 function restoreHiddenLayers(layers) {
-  for (var i = 0; i < layers.length; i++) {
-    try { layers[i].visible = true; } catch(e) {}
+  for (var i = layers.length - 1; i >= 0; i--) {
+    try {
+      layers[i].visible = true;
+    } catch(e) {
+      warn("Could not restore layer visibility after image export: " + (e.message || e.toString()), "illustrator:restore-failed", "other");
+    }
   }
 }
 
@@ -1176,69 +1371,77 @@ function exportImages(doc, artboards, settings) {
 
   for (var i = 0; i < artboards.length; i++) {
     var ab = artboards[i];
-    var hiddenText = hideTextFramesForExport(doc, ab, settings);
-    var hiddenLayers = hideSpecialLayersForExport(doc, ab);
+    // Accumulators are created before the try so a throw inside either hide
+    // pass still restores whatever was already hidden.
+    var hiddenText = [];
+    var hiddenLayers = [];
 
-    doc.artboards.setActiveArtboardIndex(ab._aiIndex);
-
-    var format = resolveImageFormat(doc, ab, settings);
-
-    // Warn about large exports that may exceed Illustrator limits
-    var scaleFactor = settings.use2xImages ? 2 : 1;
-    var pxW = Math.round(ab.actualWidth * scaleFactor);
-    var pxH = Math.round(ab.actualHeight * scaleFactor);
-    var pxCount = pxW * pxH;
-    var mpThreshold = (format === "jpg") ? 32000000 : 5000000;
-    if (pxCount > mpThreshold) {
-      warn("Large " + format.toUpperCase() + " export for '" + ab.name + "' (" + pxW + "\u00d7" + pxH + " = " + Math.round(pxCount / 1000000) + "MP). Consider disabling 2x or reducing artboard size.");
-    }
-
-    var imageName = makeAssetName([
-      slug,
-      ab.source && ab.source.name ? ab.source.name : ab.name
-    ]);
-    if (assets[imageName]) {
-      imageName = makeAssetName([imageName, ab._aiIndex + 1]);
-    }
-    var exportPath = outputPath + imageName;
-
-    exportArtboardImage(doc, exportPath, format, settings);
-
-    // Clean up Illustrator export artifacts (hex-named temp PNGs)
     try {
-      var outFolder = new Folder(outputPath);
-      var junk = outFolder.getFiles(function(f) {
-        return /^[0-9A-F]{16}\.png$/i.test(f.name);
-      });
-      for (var ji = 0; ji < junk.length; ji++) {
-        try { junk[ji].remove(); } catch(e) {}
-      }
-    } catch(e) {}
+      hideTextFramesForExport(doc, ab, settings, hiddenText);
+      hideSpecialLayersForExport(doc, ab, hiddenLayers);
 
-    // Illustrator adds the extension automatically
-    var ext = format === "jpg" ? ".jpg" : ".png";
-    assets[imageName] = {
-      id: imageName,
-      path: imageName + ext,
-      mimeType: format === "jpg" ? "image/jpeg" : "image/png",
-      width: ab.actualWidth * (settings.use2xImages ? 2 : 1),
-      height: ab.actualHeight * (settings.use2xImages ? 2 : 1),
-      artboardId: ab.id,
-      source: {
-        tool: "illustrator",
-        name: ab.source && ab.source.name ? ab.source.name : ab.name
-      },
-      exportParams: {
-        format: format,
-        scale: settings.use2xImages ? 2 : 1,
-        transparent: settings.pngTransparent || false,
-        quality: settings.jpgQuality || 85,
-        colors: settings.pngNumberOfColors || 128
-      }
-    };
+      doc.artboards.setActiveArtboardIndex(ab._aiIndex);
 
-    restoreHiddenFrames(hiddenText);
-    restoreHiddenLayers(hiddenLayers);
+      var format = resolveImageFormat(doc, ab, settings);
+
+      // Warn about large exports that may exceed Illustrator limits
+      var scaleFactor = settings.use2xImages ? 2 : 1;
+      var pxW = Math.round(ab.actualWidth * scaleFactor);
+      var pxH = Math.round(ab.actualHeight * scaleFactor);
+      var pxCount = pxW * pxH;
+      var mpThreshold = (format === "jpg") ? 32000000 : 5000000;
+      if (pxCount > mpThreshold) {
+        warn("Large " + format.toUpperCase() + " export for '" + ab.name + "' (" + pxW + "\u00d7" + pxH + " = " + Math.round(pxCount / 1000000) + "MP). Consider disabling 2x or reducing artboard size.", "image:large-export", "image");
+      }
+
+      var imageName = makeAssetName([
+        slug,
+        ab.source && ab.source.name ? ab.source.name : ab.name
+      ]);
+      if (assets[imageName]) {
+        imageName = makeAssetName([imageName, ab._aiIndex + 1]);
+      }
+      var exportPath = outputPath + imageName;
+
+      exportArtboardImage(doc, exportPath, format, settings);
+
+      // Clean up Illustrator export artifacts (hex-named temp PNGs)
+      try {
+        var outFolder = new Folder(outputPath);
+        var junk = outFolder.getFiles(function(f) {
+          return /^[0-9A-F]{16}\.png$/i.test(f.name);
+        });
+        for (var ji = 0; ji < junk.length; ji++) {
+          try { junk[ji].remove(); } catch(e) {}
+        }
+      } catch(e) {}
+
+      // Illustrator adds the extension automatically
+      var ext = format === "jpg" ? ".jpg" : ".png";
+      assets[imageName] = {
+        id: imageName,
+        path: imageName + ext,
+        mimeType: format === "jpg" ? "image/jpeg" : "image/png",
+        width: ab.actualWidth * (settings.use2xImages ? 2 : 1),
+        height: ab.actualHeight * (settings.use2xImages ? 2 : 1),
+        artboardId: ab.id,
+        source: {
+          tool: "illustrator",
+          name: ab.source && ab.source.name ? ab.source.name : ab.name
+        },
+        exportParams: {
+          format: format,
+          scale: settings.use2xImages ? 2 : 1,
+          transparent: settings.pngTransparent || false,
+          quality: resolveJpgQuality(settings),
+          colors: settings.pngNumberOfColors || 128
+        }
+      };
+    } finally {
+      // Inverse order of mutation: layers were hidden last, so restore first.
+      restoreHiddenLayers(hiddenLayers);
+      restoreHiddenFrames(hiddenText);
+    }
   }
 
   return assets;
@@ -1271,7 +1474,7 @@ function ensureFolder(path) {
       if (!f.exists) {
         var created = f.create();
         if (!created) {
-          warn("Could not create folder: " + current);
+          warn("Could not create folder: " + current, "output:folder-failed", "other");
         }
       }
     }
@@ -1353,6 +1556,9 @@ function log(msg) {
   var elapsed = ((new Date().getTime() - _logStart) / 1000).toFixed(2);
   var line = "[" + elapsed + "s] all2html: " + msg;
   try { $.writeln(line); } catch(e) {}
+  // $.writeln reaches only the ExtendScript console, which neither the panel nor
+  // an AppleEvent caller can read. Diagnostics is where these are looked for.
+  logDiagnostic("info", line);
 }
 
 function logSpan(name) {
@@ -1366,16 +1572,27 @@ function logSpan(name) {
   };
 }
 
-function groupWarnings(warnings) {
-  var groups = { fonts: [], masks: [], rotation: [], overset: [], settings: [], other: [] };
-  for (var i = 0; i < warnings.length; i++) {
-    var w = warnings[i];
-    if (w.indexOf("font") >= 0 || w.indexOf("Font") >= 0) groups.fonts.push(w);
-    else if (w.indexOf("mask") >= 0 || w.indexOf("clip") >= 0) groups.masks.push(w);
-    else if (w.indexOf("rotat") >= 0 || w.indexOf("skew") >= 0) groups.rotation.push(w);
-    else if (w.indexOf("overset") >= 0 || w.indexOf("overflow") >= 0) groups.overset.push(w);
-    else if (w.indexOf("setting") >= 0 || w.indexOf("parameter") >= 0) groups.settings.push(w);
-    else groups.other.push(w);
+// Categories and their display order come from src/core/warnings.ts. Grouping
+// reads the declared category and never inspects the message.
+//
+// This replaces a substring classifier that filed the core's category:"setting"
+// warnings under "other", because it matched lowercase "setting" against
+// messages that begin with a capitalized "Setting". Do not reintroduce one:
+// codes and categories are assigned at the call site on both sides of the
+// boundary, so there is nothing left to guess.
+var WARNING_CATEGORY_ORDER = ["setting", "font", "text", "image", "geometry", "markup", "template", "other"];
+
+function groupStructuredWarnings(list) {
+  var groups = {};
+  for (var i = 0; i < WARNING_CATEGORY_ORDER.length; i++) {
+    groups[WARNING_CATEGORY_ORDER[i]] = [];
+  }
+  for (var j = 0; j < list.length; j++) {
+    var entry = list[j];
+    if (!entry) continue;
+    var category = entry.category;
+    if (!hasOwn(groups, category)) category = "other";
+    groups[category].push(entry.message);
   }
   return groups;
 }
@@ -1405,9 +1622,23 @@ function readNullableIntSetting(obj, key) {
   return isNaN(value) ? undefined : value;
 }
 
+/**
+ * String settings accept strings, and nothing else. `String(obj[key])` ran here,
+ * which is how `project_name: null` became the literal slug "null" and emitted
+ * null.html while the raw `project_name || docName` path read the same key as
+ * falsy and put the document name in metadata.slug. Rejecting applies the
+ * declared default, which is what every other invalid setting already gets.
+ */
 function readStringSetting(obj, key) {
   if (!hasOwn(obj, key)) return undefined;
-  return String(obj[key]);
+  var value = obj[key];
+  if (typeof value === "string") return value;
+  warn('Setting "' + key + '" must be text. Using the default instead.', "setting:invalid-value", "setting");
+  return undefined;
+}
+
+function acceptString(value) {
+  return typeof value === "string" ? value : undefined;
 }
 
 function buildCanonicalIrSettings(docSettings) {
@@ -1453,9 +1684,6 @@ function buildCanonicalIrSettings(docSettings) {
   var imageSourcePath = readStringSetting(docSettings, "image_source_path");
   if (imageSourcePath) settings.imageSourcePath = imageSourcePath;
 
-  var svgIdPrefix = readStringSetting(docSettings, "svg_id_prefix");
-  if (svgIdPrefix) settings.svgIdPrefix = svgIdPrefix;
-
   var clickableLink = readStringSetting(docSettings, "clickable_link");
   if (clickableLink) settings.clickableLink = clickableLink;
 
@@ -1478,7 +1706,6 @@ function buildCanonicalIrSettings(docSettings) {
   if (cacheBustToken !== undefined) settings.cacheBustToken = cacheBustToken;
 
   var boolMap = {
-    write_image_files: "writeImageFiles",
     png_transparent: "pngTransparent",
     use_2x_images_if_possible: "use2xImages",
     center_html_output: "centerHtmlOutput",
@@ -1486,7 +1713,6 @@ function buildCanonicalIrSettings(docSettings) {
     include_resizer_css: "includeResizerCss",
     include_resizer_widths: "includeResizerWidths",
     use_lazy_loader: "useLazyLoader",
-    inline_svg: "inlineSvg",
     svg_embed_images: "svgEmbedImages",
     create_promo_image: "createPromoImage"
   };
@@ -1499,36 +1725,216 @@ function buildCanonicalIrSettings(docSettings) {
   return settings;
 }
 
+/**
+ * Makes the canonical settings bag safe to *persist*, not just safe to render.
+ *
+ * ir.json is written before All2Html.processAndEmit() runs, so the core
+ * sanitizer only ever repaired its in-memory copy. The file on
+ * disk kept whatever the ai2html-settings text block said — a project_name of
+ * "../../pwn" was written verbatim — which made ir.json a document we produced
+ * ourselves and loadAndValidateIR rejects. That is the contract break; the
+ * emitted HTML was already safe.
+ *
+ * project_name gets one repair attempt because its keyword form is already the
+ * emitted slug. Every resulting value then crosses the shared
+ * SETTING_DEFINITIONS-derived boundary; invalid identifiers, enums, arrays and
+ * numeric ranges are removed so the declared default applies.
+ */
+function sanitizeCanonicalSettings(settings) {
+  if (settings.projectName !== undefined && settings.projectName !== "") {
+    var rawProjectName = settings.projectName;
+    settings.projectName = makeKeyword(String(rawProjectName));
+    if (settings.projectName === "") {
+      delete settings.projectName;
+      warn('Setting "projectName" has an invalid value "' + rawProjectName + '". Using the default instead.', "setting:invalid-value", "setting");
+    }
+  }
+  for (var key in settings) {
+    if (!settings.hasOwnProperty(key)) continue;
+    if (All2Html.isValidSettingValue(key, settings[key])) continue;
+    var raw = settings[key];
+    delete settings[key];
+    warn('Setting "' + key + '" has an invalid value "' + raw + '". Using the default instead.', "setting:invalid-value", "setting");
+  }
+}
+
+/**
+ * The export-run view of the settings `sanitizeCanonicalSettings` just validated.
+ *
+ * There used to be two bags: the canonical one, validated and persisted, and a
+ * separate literal that re-parsed the same raw docSettings and drove image
+ * extraction. So `image_format: gif` was stripped from ir.json and still reached
+ * exportParams.format, and an out-of-range jpg_quality changed the exported JPEG
+ * while ir.json recorded the default — the bytes and the record describing them
+ * disagreed, and the file we wrote failed our own schema.
+ *
+ * An absent key here means the value was never set or was rejected; both mean the
+ * declared default applies, which is the core sanitizer's own fallback.
+ * `projectName` is passed in instead: it may legitimately be absent (a legal slug
+ * can be an illegal CSS identifier) while the asset-name base always needs one.
+ */
+function readCanonicalSetting(canonical, key) {
+  return hasOwn(canonical, key) ? canonical[key] : All2Html.defaultSettings[key];
+}
+
+function buildExportSettings(canonical, slug, outputPath) {
+  return {
+    projectName: slug,
+    outputPath: outputPath,
+    imageFormat: readCanonicalSetting(canonical, "imageFormat"),
+    pngTransparent: readCanonicalSetting(canonical, "pngTransparent"),
+    pngNumberOfColors: readCanonicalSetting(canonical, "pngNumberOfColors"),
+    jpgQuality: readCanonicalSetting(canonical, "jpgQuality"),
+    use2xImages: readCanonicalSetting(canonical, "use2xImages"),
+    createPromoImage: readCanonicalSetting(canonical, "createPromoImage"),
+    promoImageWidth: readCanonicalSetting(canonical, "promoImageWidth"),
+    renderTextAs: readCanonicalSetting(canonical, "renderTextAs"),
+    renderRotatedSkewedTextAs: readCanonicalSetting(canonical, "renderRotatedSkewedTextAs"),
+    testingMode: readCanonicalSetting(canonical, "testingMode"),
+    svgEmbedImages: readCanonicalSetting(canonical, "svgEmbedImages")
+  };
+}
+
 function getFontSourceKey(font) {
   return font && (font.sourceFont || font.aifont) ? String(font.sourceFont || font.aifont) : "";
 }
 
-function normalizeFontEntries(fonts) {
+/**
+ * One optional font field. `weight`/`vshift` accept finite numbers (a JSON config
+ * spelling a CSS weight as 700 is well-formed); `style` does not, since no number
+ * is a CSS font-style. Empty strings are kept — the panel writes them for "unset".
+ */
+function appendFontField(target, key, raw, sourceFont, allowNumber) {
+  if (raw === undefined || raw === null) return;
+  if (typeof raw === "string") {
+    target[key] = raw;
+    return;
+  }
+  if (allowNumber && typeof raw === "number" && isFinite(raw)) {
+    target[key] = String(raw);
+    return;
+  }
+  warn('Font mapping "' + sourceFont + '" has an invalid ' + key + '. Ignoring that field.', "font:invalid-mapping", "font");
+}
+
+/**
+ * Font mappings, normalized to what FontMappingSchema accepts. Per-field policy,
+ * not blind stringification: `String(value)` on a structural value persists
+ * "[object Object]" as a family — schema-valid, garbage CSS. The empty check on
+ * the *normalized* family is not redundant: `[]` is truthy but `String([])` is "",
+ * so a `family || sourceFont` fallback applied first lets an array through as
+ * exactly the empty string `min(1)` rejects.
+ */
+function normalizeFontMappings(fonts) {
   var normalized = [];
   for (var i = 0; i < fonts.length; i++) {
     var font = fonts[i];
-    var sourceFont = getFontSourceKey(font);
-    if (!sourceFont) continue;
-    var next = {
-      sourceFont: sourceFont,
-      family: font.family || sourceFont
-    };
-    if (font.weight !== undefined) next.weight = font.weight;
-    if (font.style !== undefined) next.style = font.style;
-    if (font.vshift !== undefined) next.vshift = font.vshift;
+    if (!font || typeof font !== "object") {
+      warn("Ignoring a font mapping that is not an object.", "font:invalid-mapping", "font");
+      continue;
+    }
+    var sourceFont = acceptString(font.sourceFont) || acceptString(font.aifont) || "";
+    if (!sourceFont) {
+      warn("Ignoring a font mapping with no usable source font name.", "font:invalid-mapping", "font");
+      continue;
+    }
+    var family = acceptString(font.family) || "";
+    if (!family) {
+      if (font.family !== undefined && font.family !== null && font.family !== "") {
+        warn('Font mapping "' + sourceFont + '" has an invalid family. Using the source font name.', "font:invalid-mapping", "font");
+      }
+      family = sourceFont;
+    }
+    var next = { sourceFont: sourceFont, family: family };
+    appendFontField(next, "weight", font.weight, sourceFont, true);
+    appendFontField(next, "style", font.style, sourceFont, false);
+    appendFontField(next, "vshift", font.vshift, sourceFont, true);
     normalized.push(next);
   }
   return normalized;
 }
 
+// [source key, canonical key, fallback]. A `null` fallback omits the key entirely
+// when absent or empty: the model must survive a JSON round-trip and assertJsonPure
+// aborts on `undefined`. Adding a metadata string is one row, not a new rule.
+var METADATA_FIELDS = [
+  ["headline", "headline", ""],
+  ["leadin", "leadin", ""],
+  ["summary", "summary", ""],
+  ["notes", "notes", ""],
+  ["sources", "sources", ""],
+  ["credit", "credit", ""],
+  ["alt_text", "altText", null],
+  ["image_alt_text", "imageAltText", null],
+  ["aria_role", "ariaRole", null]
+];
+
+function normalizeMetadataFields(docSettings, slug) {
+  var metadata = { slug: slug };
+  for (var i = 0; i < METADATA_FIELDS.length; i++) {
+    var sourceKey = METADATA_FIELDS[i][0];
+    var canonicalKey = METADATA_FIELDS[i][1];
+    var fallback = METADATA_FIELDS[i][2];
+    var raw = hasOwn(docSettings, sourceKey) ? docSettings[sourceKey] : undefined;
+    if (typeof raw === "string" && raw !== "") {
+      metadata[canonicalKey] = raw;
+      continue;
+    }
+    if (raw !== undefined && raw !== null && typeof raw !== "string") {
+      warn('Metadata "' + sourceKey + '" must be text. Ignoring it.', "metadata:invalid-value", "setting");
+    }
+    if (fallback !== null) metadata[canonicalKey] = fallback;
+  }
+  return metadata;
+}
+
+/**
+ * The one place untyped Illustrator input becomes typed exporter input.
+ *
+ * Three sources arrive with no schema: all2html.config.json (JSON.parse), the CEP
+ * panel payloads, and document text blocks. Their values were read into typed
+ * operations at nine call sites with ad-hoc rules or none, so a non-string
+ * project_name crashed makeKeyword before any settings boundary ran, and fonts and
+ * metadata persisted numbers and objects into typed IR string fields.
+ *
+ * After this call runExporter reads no raw docSettings key and no raw font entry.
+ * `inputs.settings` IS the canonical bag — built here, not copied — so this stays
+ * one validated settings object rather than becoming a second.
+ */
+function normalizeIllustratorInputs(docSettings, fonts, docName) {
+  var settings = buildCanonicalIrSettings(docSettings);
+  sanitizeCanonicalSettings(settings);
+
+  // From the project name that *survived* validation, never the raw key: the two
+  // disagree exactly when the raw value is malformed, and then name different files.
+  var slug = settings.projectName || makeKeyword(docName) || "graphic";
+  var dialog = docSettings.show_completion_dialog_box;
+
+  return {
+    settings: settings,
+    slug: slug,
+    fonts: normalizeFontMappings(fonts),
+    metadata: normalizeMetadataFields(docSettings, slug),
+    controls: {
+      writeIr: readBoolSetting(docSettings, "write_ir") !== false,
+      showDialog: dialog !== "no" && dialog !== "false" && dialog !== false
+    }
+  };
+}
+
 function runExporter() {
   // Reset global state (ExtendScript may persist globals across runs)
   warnings = [];
-  objectsToRelock = [];
-  textFramesToUnhide = [];
+  structuredWarnings = [];
+  restoreActions = [];
+  unlockedObjectCount = 0;
+  docToMarkSaved = null;
 
   var startTime = new Date().getTime();
   var span;
+
+  // Must come before any exportFile() call. See suppressUserInteraction().
+  suppressUserInteraction();
 
   span = logSpan("validateDocument");
   var doc = validateDocument();
@@ -1539,7 +1945,7 @@ function runExporter() {
 
   span = logSpan("unlockObjects");
   unlockObjects(doc);
-  span.end(objectsToRelock.length + " unlocked");
+  span.end(unlockedObjectCount + " unlocked");
 
   span = logSpan("loadConfigFiles");
   var configFile = loadConfigFiles(docPath);
@@ -1568,7 +1974,7 @@ function runExporter() {
       }
     }
   } catch(e) {
-    warn("Panel settings injection failed: " + e.message);
+    warn("Panel settings injection failed: " + e.message, "setting:panel-injection-failed", "setting");
   }
 
   // CEP panel font injection
@@ -1592,7 +1998,7 @@ function runExporter() {
       }
     }
   } catch(e) {
-    warn("Panel font injection failed: " + e.message);
+    warn("Panel font injection failed: " + e.message, "font:panel-injection-failed", "font");
   }
 
   // Resolve settings with explicit precedence:
@@ -1614,35 +2020,19 @@ function runExporter() {
     }
   }
 
-  // Resolve settings
-  var slug = docSettings.project_name || makeKeyword(docName);
-  var rawOutputPath = docSettings.html_output_path || docSettings.image_output_path || "all2html-output/";
-  // Strip leading slash — output path is relative to document
-  if (rawOutputPath.charAt(0) === "/") rawOutputPath = rawOutputPath.substring(1);
-  var outputPath = docPath + rawOutputPath;
-  if (outputPath.charAt(outputPath.length - 1) !== "/") outputPath += "/";
+  // Normalize once, here, and derive everything downstream from the result.
+  // Before irDoc is built, because irDoc is written to disk below and has to
+  // satisfy the canonical schema on its own — and before `settings`, because the
+  // export run must not act on a value the persisted document rejects.
+  var inputs = normalizeIllustratorInputs(docSettings, configFile.fonts || [], docName);
+  var canonicalIrSettings = inputs.settings;
+  var slug = inputs.slug;
+  var outputPath = resolveDocumentOutputPath(canonicalIrSettings, docPath);
 
-  var settings = {
-    projectName: slug,
-    outputPath: outputPath,
-    outputMode: docSettings.output || "one-file",
-    imageFormat: docSettings.image_format ? docSettings.image_format.split(/[,\s]+/) : ["auto"],
-    pngTransparent: docSettings.png_transparent === "true",
-    pngNumberOfColors: parseInt(docSettings.png_number_of_colors, 10) || 128,
-    jpgQuality: parseInt(docSettings.jpg_quality, 10) || 85,
-    use2xImages: docSettings.use_2x_images_if_possible !== "false",
-    htmlOutputExtension: docSettings.html_output_extension || ".html",
-    createPromoImage: docSettings.create_promo_image === "true",
-    renderTextAs: (docSettings.render_text_as === "image") ? "image" : "html",
-    renderRotatedSkewedTextAs: (docSettings.render_rotated_skewed_text_as === "image") ? "image" : "html",
-    testingMode: docSettings.testing_mode === "true",
-    svgEmbedImages: docSettings.svg_embed_images === "true"
-  };
-
-  var canonicalIrSettings = buildCanonicalIrSettings(docSettings);
+  var settings = buildExportSettings(canonicalIrSettings, slug, outputPath);
 
   if (settings.imageFormat && settings.imageFormat.length > 1) {
-    warn("Multiple image formats specified; currently only the first is used: " + settings.imageFormat[0]);
+    warn("Multiple image formats specified; currently only the first is used: " + settings.imageFormat[0], "setting:multiple-image-formats", "setting");
   }
 
   ensureFolder(outputPath);
@@ -1660,16 +2050,18 @@ function runExporter() {
     var abSpan = logSpan("extractText:" + artboards[i].name);
     artboards[i].layers = [];
     for (var j = 0; j < layers.length; j++) {
-      artboards[i].layers.push({
+      var abLayer = {
         id: artboards[i].id + ":layer:" + makeKeyword(layers[j].name || layers[j].type) + "-" + (j + 1),
         name: layers[j].name,
         type: layers[j].type,
         source: layers[j].source,
-        inlineSvg: layers[j].inlineSvg,
         visible: layers[j].visible,
         opacity: layers[j].opacity,
         elements: []
-      });
+      };
+      // Written only when true — see extractLayers.
+      if (layers[j].inlineSvg) abLayer.inlineSvg = true;
+      artboards[i].layers.push(abLayer);
     }
     extractTextFramesForArtboard(doc, artboards[i], artboards[i].layers, settings);
     var textCount = 0;
@@ -1704,7 +2096,8 @@ function runExporter() {
       layers: ab.layers
     };
     if (ab.responsiveness) clean.responsiveness = ab.responsiveness;
-    if (ab.imageOnly) clean.imageOnly = ab.imageOnly;
+    // `imageOnly` stays an exporter-local decision (decideTextFrameRenderAs);
+    // its canonical trace is renderAs:"image" text plus the background asset.
     cleanArtboards.push(clean);
   }
 
@@ -1716,28 +2109,17 @@ function runExporter() {
       adapterVersion: "0.1.0"
     },
     settings: canonicalIrSettings,
-    fonts: normalizeFontEntries(configFile.fonts || []),
+    fonts: inputs.fonts,
     artboards: cleanArtboards,
     customBlocks: customBlocks,
     assets: assets,
-    metadata: {
-      slug: slug,
-      headline: docSettings.headline || "",
-      leadin: docSettings.leadin || "",
-      summary: docSettings.summary || "",
-      notes: docSettings.notes || "",
-      sources: docSettings.sources || "",
-      credit: docSettings.credit || "",
-      altText: docSettings.alt_text || undefined,
-      imageAltText: docSettings.image_alt_text || undefined,
-      ariaRole: docSettings.aria_role || undefined
-    }
+    metadata: inputs.metadata
   };
 
   span.end();
 
   // Write IR JSON for debugging (disable with write_ir: false)
-  if (docSettings.write_ir !== "false") {
+  if (inputs.controls.writeIr) {
     span = logSpan("writeIR");
     writeFile(outputPath + "ir.json", JSON.stringify(irDoc, null, 2));
     span.end();
@@ -1746,17 +2128,27 @@ function runExporter() {
   // Call core to generate HTML
   span = logSpan("processAndEmit");
   var result = All2Html.processAndEmit(irDoc, {
-    fonts: normalizeFontEntries(configFile.fonts || [])
+    // The same array irDoc carries, not a second normalization. Kept rather than
+    // dropped: mergeFonts replaces the FIRST entry matching a sourceFont, so with
+    // duplicate source fonts the merged table is not the base table and removing
+    // this would change which family a duplicate resolves to.
+    fonts: inputs.fonts
   });
-  for (var w = 0; w < result.warnings.length; w++) {
-    warnings.push(result.warnings[w]);
-  }
+  pushCoreWarnings(result);
   span.end(warnings.length + " warnings");
 
-  // Write HTML
+  // Write HTML. One file per artboard group: the core honors `output`
+  // ("one-file" -> a single group named after the document, "multiple-files" ->
+  // one group per artboard base name), and the filename is the group slug, not
+  // the document slug. In one-file mode that slug IS the document slug, so this
+  // writes the same path it always did.
   span = logSpan("writeHTML");
-  writeFile(outputPath + slug + settings.htmlOutputExtension, result.html);
-  span.end();
+  var emittedFiles = result.files || [];
+  for (var fi = 0; fi < emittedFiles.length; fi++) {
+    var emitted = emittedFiles[fi];
+    writeFile(outputPath + emitted.slug + emitted.extension, emitted.output);
+  }
+  span.end(emittedFiles.length + " file(s)");
 
   // Promo image generation
   if (settings.createPromoImage && artboards.length > 0) {
@@ -1772,7 +2164,7 @@ function runExporter() {
         }
       }
       doc.artboards.setActiveArtboardIndex(largestAb._aiIndex);
-      var promoWidth = parseInt(docSettings.promo_image_width, 10) || 1024;
+      var promoWidth = settings.promoImageWidth;
       var promoScale = 100 * promoWidth / largestAb.actualWidth;
       var promoFile = new File(docPath + slug + "-promo");
       var promoOpts = new ExportOptionsPNG8();
@@ -1783,35 +2175,35 @@ function runExporter() {
       promoOpts.colorCount = 256;
       doc.exportFile(promoFile, ExportType.PNG8, promoOpts);
     } catch(e) {
-      warn("Promo image generation failed: " + e.message);
+      warn("Promo image generation failed: " + e.message, "image:promo-failed", "image");
     }
   }
 
-  // Cache bust token auto-increment
-  if (docSettings.cache_bust_token) {
-    try {
-      var token = parseInt(docSettings.cache_bust_token, 10);
-      if (!isNaN(token)) {
-        var newToken = token + 1;
-        // Find and update the settings text frame
-        try {
-          var settingsFrame = doc.textFrames.getByName("ai2html-settings");
-          var contents = settingsFrame.contents;
-          contents = contents.replace(
-            /cache_bust_token\s*:\s*\d+/,
-            "cache_bust_token: " + newToken
-          );
-          settingsFrame.contents = contents;
-        } catch(e2) {
-          // Settings frame not found or can't update
-        }
+  // Cache bust auto-increment, read from the validated bag: it is already a number
+  // or null, where the raw key needed its own parseInt/isNaN dance.
+  var cacheBustToken = canonicalIrSettings.cacheBustToken;
+  if (typeof cacheBustToken === "number") {
+    var newToken = cacheBustToken + 1;
+    // Find and update the settings text frame, under either spelling.
+    var settingsFrame = findSettingsTextFrame(doc);
+    if (settingsFrame) {
+      try {
+        var contents = settingsFrame.contents;
+        contents = contents.replace(
+          /cache_bust_token\s*:\s*\d+/,
+          "cache_bust_token: " + newToken
+        );
+        settingsFrame.contents = contents;
+      } catch(e2) {
+        // Settings frame can't be updated
       }
-    } catch(e) {}
+    }
   }
 
-  // Restore document state
+  // Document saved-flag restore happens in executeAll2Html, after
+  // relock/unhide — restoring it here would be undone by those mutations.
   if (docSaved) {
-    try { doc.saved = true; } catch(e) {}
+    docToMarkSaved = doc;
   }
 
   return {
@@ -1820,7 +2212,7 @@ function runExporter() {
     artboardCount: artboards.length,
     imageCount: Object.keys(assets).length,
     startTime: startTime,
-    showDialog: docSettings.show_completion_dialog_box !== "no" && docSettings.show_completion_dialog_box !== "false"
+    showDialog: inputs.controls.showDialog
   };
 }
 
@@ -1838,24 +2230,37 @@ function executeAll2Html() {
     logDiagnostic("info", "Starting Illustrator export");
     result = runExporter();
   } catch(e) {
-    // Restore state on error
-    relockObjects();
-    for (var i = 0; i < textFramesToUnhide.length; i++) {
-      try { textFramesToUnhide[i].hidden = false; } catch(ex) {}
-    }
+    // Restore state on error (LIFO: inverse order of mutation)
+    runRestoreActions();
     var errMsg = (e.name === "UserError" || e.message) ? e.message : e.toString();
     logDiagnostic("error", "Illustrator export failed", errMsg);
     if (ALL2HTML_AUTOMATED) {
-      return JSON.stringify({ error: errMsg, warnings: warnings });
+      // Same envelope as the success path below: `warnings` is the grouped
+      // object the panel's RunResult type declares, never the plain string
+      // array. Returning the raw array here made the panel read a string as a
+      // category list — "48 warnings" for one 48-character message, one row per
+      // character. Nothing type-checks this file, so the shape is asserted in
+      // test/unit/illustrator-warning-plumbing.test.ts instead.
+      return JSON.stringify({
+        success: false,
+        error: errMsg,
+        warnings: groupStructuredWarnings(structuredWarnings),
+        structuredWarnings: structuredWarnings
+      });
     }
     alert("all2html error:\n\n" + errMsg);
     return;
   }
 
-  // Restore state on success
-  relockObjects();
-  for (var i = 0; i < textFramesToUnhide.length; i++) {
-    try { textFramesToUnhide[i].hidden = false; } catch(e) {}
+  // Restore state on success (LIFO: inverse order of mutation)
+  var failedRestores = runRestoreActions();
+  if (docToMarkSaved) {
+    // Only a fully restored document is clean. A failed restore means the file
+    // really is modified: leave it dirty so Illustrator prompts on close.
+    if (failedRestores === 0) {
+      try { docToMarkSaved.saved = true; } catch(e) {}
+    }
+    docToMarkSaved = null;
   }
 
   var elapsed = ((new Date().getTime() - result.startTime) / 1000).toFixed(1);
@@ -1869,7 +2274,11 @@ function executeAll2Html() {
     artboardCount: result.artboardCount,
     imageCount: result.imageCount,
     elapsed: elapsed + "s",
-    warnings: ALL2HTML_AUTOMATED ? groupWarnings(warnings) : warnings
+    // Automated callers get the warnings grouped by declared category; the
+    // full structured list travels with them so codes, categories, and the
+    // core's setting/artboard/layer context survive the boundary.
+    warnings: ALL2HTML_AUTOMATED ? groupStructuredWarnings(structuredWarnings) : warnings,
+    structuredWarnings: structuredWarnings
   };
 
   if (ALL2HTML_AUTOMATED) {

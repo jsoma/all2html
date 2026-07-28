@@ -22,25 +22,54 @@
   "javascript": {
     "formatter": {
       "quoteStyle": "double",
-      "semicolons": "always"
+      "semicolons": "always",
+      "quoteProperties": "preserve"
     }
   },
   "files": {
     "includes": [
       "src/**",
       "test/**",
-      "plugins/figma/src/export.ts",
-      "plugins/illustrator/panel/src/js/setting-help.ts",
-      "plugins/illustrator/panel/src/shared/types.ts",
-      "plugins/illustrator/panel/src/jsx/extendscript-globals.d.ts",
+      "scripts/**",
+      "apps/*/src/**",
+      "plugins/figma/src/**",
+      "plugins/illustrator/panel/src/**",
       "*.ts",
+      "*.mjs",
       "*.json",
       "!.mcp.json",
+
       "!src/extendscript/polyfills.ts",
       "!src/emitters/html-string.ts",
-      "!test/visual/fixture-output",
+
       "!test/visual/__screenshots__",
-      "!plugins/illustrator/panel/src/js/lib"
+
+      "!plugins/illustrator/panel/src/js/lib",
+      "!plugins/illustrator/panel/src/jsx/lib",
+
+      "!**/dist",
+      "!**/node_modules",
+
+      "!**/*.svelte"
     ]
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["plugins/illustrator/panel/src/jsx/**", "src/extendscript/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off",
+            "noPrototypeBuiltins": "off"
+          },
+          "correctness": {
+            "noInnerDeclarations": "off"
+          },
+          "complexity": {
+            "useDateNow": "off"
+          }
+        }
+      }
+    }
+  ]
 }

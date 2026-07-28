@@ -1,9 +1,9 @@
 {
-  "irVersion": "0.0.0",
-  "generator": {
+  "irVersion": "0.1.0",
+  "source": {
     "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "pluginVersion": "0.1.0"
+    "toolVersion": "29.8.9",
+    "adapterVersion": "0.1.0"
   },
   "settings": {
     "imageFormat": [
@@ -20,17 +20,25 @@
   ],
   "artboards": [
     {
+      "id": "illustrator:artboard:artboard-1-1",
       "name": "Artboard 1",
-      "originalName": "Artboard 1",
       "width": 460,
       "height": 460,
-      "actualWidth": 460,
-      "actualHeight": 460,
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 1",
+        "width": 460,
+        "height": 460
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:fig1-1",
           "name": "Fig1",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "Fig1"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -113,9 +121,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:fig2-2",
           "name": "Fig2",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "Fig2"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -123,9 +135,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:fig5-3",
           "name": "Fig5",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "Fig5"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -133,9 +149,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:fig3-4",
           "name": "Fig3",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "Fig3"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -143,9 +163,13 @@
           ]
         },
         {
+          "id": "illustrator:artboard:artboard-1-1:layer:fig4-5",
           "name": "Fig4",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "Fig4"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -165,7 +189,11 @@
       "mimeType": "image/png",
       "width": 920,
       "height": 920,
-      "artboardName": "Artboard 1",
+      "artboardId": "illustrator:artboard:artboard-1-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "Artboard 1"
+      },
       "exportParams": {
         "format": "svg",
         "scale": 2,

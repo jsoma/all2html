@@ -4,7 +4,6 @@
  */
 
 import type { CharacterRun, FontMapping, Paragraph } from "../../../../src/ir/types.js";
-import type { ExtractedTextRun } from "../types.js";
 
 export interface FigmaTextSegment {
   characters: string;
@@ -87,7 +86,7 @@ export function figmaSourceFontToMapping(sourceFont: string): FontMapping | null
   });
 }
 
-export function segmentToRun(segment: FigmaTextSegment): ExtractedTextRun {
+export function segmentToRun(segment: FigmaTextSegment): CharacterRun {
   const solidFill = segment.fills.find((fill) => fill.type === "SOLID" && fill.color);
   const color: CharacterRun["color"] = solidFill?.color
     ? {
@@ -119,9 +118,10 @@ export function segmentToRun(segment: FigmaTextSegment): ExtractedTextRun {
 
   const fontPostScriptName = figmaFontSourceName(segment.fontName);
 
+  // Canonical CharacterRun only. The segment's own `start`/`end` must NOT ride
+  // along: the schema is strict, and the pre-strict validator was silently
+  // stripping them — a launder, not a contract.
   return {
-    start: segment.start,
-    end: segment.end,
     text: segment.characters,
     fontName: fontPostScriptName,
     fontPostScriptName,
@@ -130,7 +130,9 @@ export function segmentToRun(segment: FigmaTextSegment): ExtractedTextRun {
     letterSpacing,
     capitalization,
     baselineShift: "normal",
-    hyperlink,
+    // Omitted, not set to undefined: the document model must survive a JSON
+    // round-trip, and assertJsonPure rejects explicit-undefined keys.
+    ...(hyperlink ? { hyperlink } : {}),
   };
 }
 
@@ -148,7 +150,6 @@ export function segmentsToParagraph(
   segments: readonly FigmaTextSegment[],
   options: {
     alignment?: Paragraph["alignment"];
-    direction?: Paragraph["direction"];
     spaceBefore?: number;
     spaceAfter?: number;
   } = {},
@@ -161,7 +162,6 @@ export function segmentsToParagraph(
   return {
     text: runs.map((run) => run.text).join(""),
     alignment: options.alignment ?? "left",
-    direction: options.direction,
     leading: resolveLeading(segments[0]),
     spaceBefore: options.spaceBefore ?? 0,
     spaceAfter: options.spaceAfter ?? 0,
@@ -173,7 +173,6 @@ export function segmentsToParagraphs(
   segments: readonly FigmaTextSegment[],
   options: {
     alignment?: Paragraph["alignment"];
-    direction?: Paragraph["direction"];
     spaceBefore?: number;
     spaceAfter?: number;
   } = {},
@@ -191,7 +190,6 @@ export function segmentsToParagraphs(
       paragraphs.push({
         text: "",
         alignment: options.alignment ?? "left",
-        direction: options.direction,
         leading,
         spaceBefore: options.spaceBefore ?? 0,
         spaceAfter: options.spaceAfter ?? 0,

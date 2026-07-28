@@ -1,5 +1,29 @@
 export const DEFAULT_KEYWORD_FALLBACK = "item";
 
+/**
+ * Guard an external ID for use as a plain-object key. The `$` prefix keeps
+ * hostile ids (`__proto__`, `constructor`, `toString`) off the prototype chain
+ * without needing `Object.create(null)`, which ES3 (ExtendScript) lacks. Every
+ * record keyed by an artboard/layer/asset id must key by `opaqueKey(id)`, on
+ * write and on read. Same convention as `makeArtboardKey`'s counter below and
+ * `group-artboards.ts`.
+ */
+export function opaqueKey(id: string): string {
+  return `$${id}`;
+}
+
+/**
+ * Own-property membership test. `in` walks the prototype chain, so a raw-keyed
+ * record answers `true` for `toString`; this does not.
+ *
+ * NOT `Object.hasOwn` — ExtendScript is ES3 and has neither it nor a polyfill
+ * for it. `biome check --write` will "fix" this back; do not let it.
+ */
+export function hasOwn(obj: object, key: string): boolean {
+  // biome-ignore lint/suspicious/noPrototypeBuiltins: ES3 host, see above
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
 function normalizeKeyword(value: string): string {
   return value
     .trim()
@@ -60,7 +84,7 @@ export function makeArtboardKey<
 
   for (const candidate of artboards) {
     const baseKey = makeArtboardBaseKey(candidate, artboards);
-    const countKey = `$${baseKey}`;
+    const countKey = opaqueKey(baseKey);
     const nextCount = (usedCounts[countKey] || 0) + 1;
     usedCounts[countKey] = nextCount;
     const candidateKey = nextCount === 1 ? baseKey : `${baseKey}-${nextCount}`;

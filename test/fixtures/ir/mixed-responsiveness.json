@@ -15,7 +15,6 @@
         {
           "name": "Layer1",
           "type": "default",
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -82,7 +81,6 @@
         {
           "name": "Layer1",
           "type": "default",
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [

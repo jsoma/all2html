@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, extname, relative, resolve } from "node:path";
-import { unzipSync } from "fflate";
 import type { ImportedFile } from "../types.js";
+import { loadSVGImportFilesFromArchive } from "./archive.js";
 import { importSVGFilesWithRasterizer, type SVGImportOptions } from "./import-core.js";
 import { type LoadedSVGImportFiles, normalizeSVGImportPath } from "./loaded.js";
 import type { SvgRasterizer } from "./rasterizer.js";
@@ -60,26 +60,9 @@ export function loadSVGImportFiles(inputPath: string): LoadedSVGImportFiles {
   const extension = extname(resolvedInput).toLowerCase();
 
   if (extension === ".zip") {
-    const archive = unzipSync(readFileSync(resolvedInput));
-    const files: ImportedFile[] = Object.entries(archive)
-      .filter(([path]) => !path.endsWith("/") && !path.startsWith("__MACOSX/"))
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([path, bytes]) => {
-        const normalized = normalizePath(path);
-        const isSvg = normalized.toLowerCase().endsWith(".svg");
-        return {
-          path: normalized,
-          content: isSvg ? new TextDecoder().decode(bytes) : bytes,
-        };
-      });
-
-    return {
-      files,
-      entrypointPaths: files
-        .filter((file) => file.path.toLowerCase().endsWith(".svg"))
-        .map((file) => file.path),
+    return loadSVGImportFilesFromArchive(new Uint8Array(readFileSync(resolvedInput)), {
       slug: basename(resolvedInput, ".zip"),
-    };
+    });
   }
 
   if (extension === ".svg") {

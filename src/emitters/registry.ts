@@ -5,31 +5,28 @@ import {
   type EmitResult,
   type SharedEmitterDescriptor,
 } from "./registry-shared.js";
-import { emitStandalone } from "./standalone.js";
-import type { EmitterConfig } from "./types.js";
+import { emitStandaloneGroup } from "./standalone.js";
+import type { ResolvedEmitterConfig } from "./types.js";
 
 export type { EmitFile, EmitResult } from "./registry-shared.js";
+export { formatDictatedExtension } from "./registry-shared.js";
 
 export interface EmitterDescriptor {
   name: string;
   emitAll: (
     doc: EmitterReadyDocument,
     groups: ArtboardGroup[],
-    emitterConfig?: EmitterConfig,
+    emitterConfig?: ResolvedEmitterConfig,
   ) => EmitResult;
 }
 
 const builtinEmitters: Record<string, SharedEmitterDescriptor> =
-  createBuiltinEmitters(emitStandalone);
+  createBuiltinEmitters(emitStandaloneGroup);
 
+// A fixed table of the built-in emitters. There is no runtime registration:
+// `registerEmitter` was deleted with zero call sites, so the set of formats is
+// exactly what `createBuiltinEmitters` seeds and no exported mutator exists.
 const emitters = new Map<string, SharedEmitterDescriptor>(Object.entries(builtinEmitters));
-
-export function registerEmitter(emitter: SharedEmitterDescriptor): void {
-  if (!emitter.name) {
-    throw new Error("Emitter name is required.");
-  }
-  emitters.set(emitter.name, emitter);
-}
 
 export function getEmitter(name: string): EmitterDescriptor {
   const emitter = emitters.get(name);

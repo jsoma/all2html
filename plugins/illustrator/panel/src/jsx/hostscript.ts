@@ -6,12 +6,13 @@
  */
 
 import {
-  xmpGetVariable,
-  xmpSetVariable,
-  xmpDeleteVariable,
-  XMP_DATA_KEY,
-} from "./xmp";
-import { collectDocumentFonts, findMissingFonts } from "./fonts";
+  AE_HOST_COMMANDS,
+  COMMON_HOST_COMMANDS,
+  HOST_NAMESPACE,
+  type HostCommandArgs,
+  type HostCommandName,
+  ILLUSTRATOR_HOST_COMMANDS,
+} from "../shared/host-contract";
 import {
   aeFindMissingFonts,
   aeGetProjectInfo,
@@ -21,14 +22,6 @@ import {
   aeSaveConfigFile,
 } from "./after-effects";
 import {
-  AE_HOST_COMMANDS,
-  COMMON_HOST_COMMANDS,
-  HOST_NAMESPACE,
-  ILLUSTRATOR_HOST_COMMANDS,
-  type HostCommandArgs,
-  type HostCommandName,
-} from "../shared/host-contract";
-import {
   attachDiagnosticsToResult,
   clearDiagnostics,
   getDiagnosticsSnapshot,
@@ -37,6 +30,8 @@ import {
   uninstallExporterDiagnosticSink,
 } from "./diagnostics";
 import { runPanelExport } from "./export-runner";
+import { collectDocumentFonts, findMissingFonts } from "./fonts";
+import { XMP_DATA_KEY, xmpDeleteVariable, xmpGetVariable, xmpSetVariable } from "./xmp";
 
 // ============================================================
 // Namespace registration — bolt-cep convention
@@ -45,7 +40,7 @@ import { runPanelExport } from "./export-runner";
 ($ as any)[HOST_NAMESPACE] = {};
 
 function getHostGlobalState(): any {
-  return ($.global as any);
+  return $.global as any;
 }
 
 type SerializedHostCommandArgs<K extends HostCommandName> = {
@@ -166,11 +161,20 @@ function hashString(value: string): string {
 
 function getSettingsBlockSignature(): string | null {
   try {
-    var tf = findSettingsBlock();
-    if (!tf) {
+    var blocks = findSettingsBlocks();
+    if (blocks.length === 0) {
       return null;
     }
-    return hashString(tf.contents || "");
+    // Both spellings can govern one document, so the change signal has to cover
+    // both — editing the legacy block while a canonical one exists still
+    // changes the resolved settings for any key the canonical block leaves out.
+    var parts: string[] = [];
+    for (var i = 0; i < blocks.length; i++) {
+      var contents = blocks[i].contents || "";
+      // Length-prefixed so ["a", "b c"] and ["a b", "c"] cannot hash alike.
+      parts.push(contents.length + ":" + contents);
+    }
+    return hashString(parts.join("\n"));
   } catch (e) {
     return null;
   }
@@ -205,7 +209,7 @@ function readActiveDocumentInfo(): {
   }
 }
 
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentInfo, function (): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentInfo, (): string => {
   var info = readActiveDocumentInfo();
   if (!info) {
     return "null";
@@ -213,7 +217,7 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentInfo, function (): stri
   return JSON.stringify(info);
 });
 
-registerHostCommand(AE_HOST_COMMANDS.getAeProjectInfo, function (): string {
+registerHostCommand(AE_HOST_COMMANDS.getAeProjectInfo, (): string => {
   try {
     return JSON.stringify(aeGetProjectInfo());
   } catch (e) {
@@ -221,7 +225,7 @@ registerHostCommand(AE_HOST_COMMANDS.getAeProjectInfo, function (): string {
   }
 });
 
-registerHostCommand(AE_HOST_COMMANDS.listAeComps, function (): string {
+registerHostCommand(AE_HOST_COMMANDS.listAeComps, (): string => {
   try {
     return JSON.stringify(aeListComps());
   } catch (e) {
@@ -229,18 +233,19 @@ registerHostCommand(AE_HOST_COMMANDS.listAeComps, function (): string {
   }
 });
 
-registerHostCommand(AE_HOST_COMMANDS.getAeOutputTemplates, function (compId: string): string {
+registerHostCommand(AE_HOST_COMMANDS.getAeOutputTemplates, (compId: string): string => {
   try {
     return JSON.stringify(aeListOutputModuleTemplates(unwrapBridgeStringArg(compId) || null));
   } catch (e) {
-    return JSON.stringify({ outputModuleTemplates: [], canQueueInAME: false });
+    // A stale targetCompId must surface as a real error, not an empty catalog.
+    return JSON.stringify({ outputModuleTemplates: [], canQueueInAME: false, error: String(e) });
   }
 });
 
 /**
  * Get the document directory path.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentPath, function (): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentPath, (): string => {
   try {
     return app.activeDocument.path.fsName;
   } catch (e) {
@@ -251,7 +256,7 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentPath, function (): stri
 /**
  * Open a folder in the OS file browser.
  */
-registerHostCommand(COMMON_HOST_COMMANDS.openFolder, function (folderPath: string): string {
+registerHostCommand(COMMON_HOST_COMMANDS.openFolder, (folderPath: string): string => {
   try {
     var normalizedPath = unwrapBridgeStringArg(folderPath);
     var folder = new Folder(normalizedPath);
@@ -273,7 +278,10 @@ registerHostCommand(COMMON_HOST_COMMANDS.openFolder, function (folderPath: strin
       }
 
       if (resolvedFolder.execute()) {
-        return JSON.stringify({ success: true, path: resolvedFolder.fsName || resolvedFolder.fullName });
+        return JSON.stringify({
+          success: true,
+          path: resolvedFolder.fsName || resolvedFolder.fullName,
+        });
       }
 
       return JSON.stringify({
@@ -288,11 +296,11 @@ registerHostCommand(COMMON_HOST_COMMANDS.openFolder, function (folderPath: strin
   }
 });
 
-registerHostCommand(COMMON_HOST_COMMANDS.getDiagnostics, function (): string {
-  return JSON.stringify(getDiagnosticsSnapshot(getHostGlobalState()));
-});
+registerHostCommand(COMMON_HOST_COMMANDS.getDiagnostics, (): string =>
+  JSON.stringify(getDiagnosticsSnapshot(getHostGlobalState())),
+);
 
-registerHostCommand(COMMON_HOST_COMMANDS.clearDiagnostics, function (): string {
+registerHostCommand(COMMON_HOST_COMMANDS.clearDiagnostics, (): string => {
   clearDiagnostics(getHostGlobalState());
   return JSON.stringify({ success: true });
 });
@@ -304,7 +312,7 @@ registerHostCommand(COMMON_HOST_COMMANDS.clearDiagnostics, function (): string {
 /**
  * Load all XMP panel data from the active document.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.loadXmpSettings, function (): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.loadXmpSettings, (): string => {
   try {
     var data = xmpGetVariable(XMP_DATA_KEY);
     return data || "null";
@@ -316,7 +324,7 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.loadXmpSettings, function (): stri
 /**
  * Save XMP panel data to the active document.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.saveXmpSettings, function (dataJson: string): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.saveXmpSettings, (dataJson: string): string => {
   try {
     xmpSetVariable(XMP_DATA_KEY, unwrapBridgeStringArg(dataJson));
     return JSON.stringify({ success: true });
@@ -328,7 +336,7 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.saveXmpSettings, function (dataJso
 /**
  * Clear all XMP panel data from the active document.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.clearXmpSettings, function (): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.clearXmpSettings, (): string => {
   try {
     xmpDeleteVariable(XMP_DATA_KEY);
     return JSON.stringify({ success: true });
@@ -344,7 +352,7 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.clearXmpSettings, function (): str
 /**
  * Get all fonts used in the active document.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentFonts, function (): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentFonts, (): string => {
   try {
     return JSON.stringify(collectDocumentFonts());
   } catch (e) {
@@ -355,7 +363,7 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getDocumentFonts, function (): str
 /**
  * Get fonts used in the document but not in the provided config.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getMissingFonts, function (fontConfigJson: string): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getMissingFonts, (fontConfigJson: string): string => {
   try {
     return JSON.stringify(findMissingFonts(fontConfigJson));
   } catch (e) {
@@ -363,13 +371,19 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.getMissingFonts, function (fontCon
   }
 });
 
-registerHostCommand(AE_HOST_COMMANDS.getAeMissingFonts, function (fontConfigJson: string, compId: string): string {
-  try {
-    return JSON.stringify(aeFindMissingFonts(fontConfigJson, unwrapBridgeStringArg(compId) || null));
-  } catch (e) {
-    return "[]";
-  }
-});
+registerHostCommand(
+  AE_HOST_COMMANDS.getAeMissingFonts,
+  (fontConfigJson: string, compId: string): string => {
+    try {
+      return JSON.stringify(
+        aeFindMissingFonts(fontConfigJson, unwrapBridgeStringArg(compId) || null),
+      );
+    } catch (e) {
+      // A stale targetCompId must surface as a real error, not an empty list.
+      return JSON.stringify({ error: String(e) });
+    }
+  },
+);
 
 // ============================================================
 // Config file operations
@@ -378,13 +392,10 @@ registerHostCommand(AE_HOST_COMMANDS.getAeMissingFonts, function (fontConfigJson
 /**
  * Read all2html.config.json from the document directory.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.readConfigFile, function (): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.readConfigFile, (): string => {
   try {
     var docPath = app.activeDocument.path.fsName + "/";
-    var paths = [
-      docPath + "all2html.config.json",
-      docPath + "ai2html-config.json",
-    ];
+    var paths = [docPath + "all2html.config.json", docPath + "ai2html-config.json"];
 
     for (var i = 0; i < paths.length; i++) {
       var f = new File(paths[i]);
@@ -403,20 +414,28 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.readConfigFile, function (): strin
   }
 });
 
-registerHostCommand(AE_HOST_COMMANDS.readAeConfigFile, function (): string {
-  return aeReadConfigFile();
-});
+registerHostCommand(AE_HOST_COMMANDS.readAeConfigFile, (): string => aeReadConfigFile());
 
-registerHostCommand(AE_HOST_COMMANDS.saveAeConfigFile, function (configJson: string): string {
-  return aeSaveConfigFile(unwrapBridgeStringArg(configJson));
-});
+registerHostCommand(AE_HOST_COMMANDS.saveAeConfigFile, (configJson: string): string =>
+  aeSaveConfigFile(unwrapBridgeStringArg(configJson)),
+);
 
 /**
- * Check if the document has an ai2html-settings text block.
+ * The exporter's own settings-block matcher (`SETTINGS_BLOCK_RXP` in
+ * `plugins/illustrator/exporter.jsx`). Both spellings are honored there, so a
+ * panel that only recognized `ai2html-settings` under-reported the doc lock:
+ * the export was governed by an `all2html-settings` block the badges never
+ * mentioned.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.hasSettingsBlock, function (): string {
+var PANEL_SETTINGS_BLOCK_RXP = /^(all2html|ai2html)-settings\s*$/;
+var PANEL_LEGACY_SETTINGS_HEADER = "ai2html-settings";
+
+/**
+ * Check if the document has an all2html-settings or ai2html-settings block.
+ */
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.hasSettingsBlock, (): string => {
   try {
-    if (findSettingsBlock()) {
+    if (findSettingsBlocks().length > 0) {
       return "true";
     }
     return "false";
@@ -425,20 +444,48 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.hasSettingsBlock, function (): str
   }
 });
 
-function findSettingsBlock(): TextFrame | null {
+/**
+ * Every settings block in the document, split by spelling and kept in document
+ * order inside each group.
+ *
+ * Both halves matter, and for different reasons. Across prefixes the exporter
+ * lets `all2html-` win key-by-key over `ai2html-` (`parseSpecialBlocks` fills two
+ * bags and merges the legacy one underneath). Within one prefix the exporter
+ * assigns into a single bag while walking text frames in document order, so a
+ * *later* duplicate wins. Preserving the document order inside each group is
+ * what lets `readMergedSettingsBlocks` reproduce both rules.
+ */
+function findSettingsBlockGroups(): { canonical: TextFrame[]; legacy: TextFrame[] } {
   var doc = app.activeDocument;
+  var canonical: TextFrame[] = [];
+  var legacy: TextFrame[] = [];
   for (var i = 0; i < doc.textFrames.length; i++) {
     var tf = doc.textFrames[i];
     try {
       var firstLine = tf.lines[0].contents;
-      if (/^ai2html-settings\s*$/.test(firstLine)) {
-        return tf;
+      if (!PANEL_SETTINGS_BLOCK_RXP.test(firstLine)) {
+        continue;
+      }
+      if (trimHostString(firstLine) === PANEL_LEGACY_SETTINGS_HEADER) {
+        legacy.push(tf);
+      } else {
+        canonical.push(tf);
       }
     } catch (e) {
       // Skip frames without text
     }
   }
-  return null;
+  return { canonical: canonical, legacy: legacy };
+}
+
+/** Every settings block in the document, canonical spelling first. */
+function findSettingsBlocks(): TextFrame[] {
+  var groups = findSettingsBlockGroups();
+  return groups.canonical.concat(groups.legacy);
+}
+
+function trimHostString(value: string): string {
+  return String(value).replace(/^\s+|\s+$/g, "");
 }
 
 function parseSettingsBlock(tf: TextFrame): { [key: string]: string } {
@@ -458,18 +505,12 @@ function parseSettingsBlock(tf: TextFrame): { [key: string]: string } {
 function createExportRunnerEnv() {
   return {
     globalState: getHostGlobalState(),
-    createFile: function (path: string): File {
-      return new File(path);
-    },
-    evalFile: function (file: File): void {
+    createFile: (path: string): File => new File(path),
+    evalFile: (file: File): void => {
       $.evalFile(file);
     },
-    getCurrentScriptPath: function (): string {
-      return decodeURI($.fileName as string);
-    },
-    getTempDirPath: function (): string {
-      return Folder.temp.fsName;
-    },
+    getCurrentScriptPath: (): string => decodeURI($.fileName as string),
+    getTempDirPath: (): string => Folder.temp.fsName,
   };
 }
 
@@ -482,19 +523,46 @@ function getIllustratorFallbackScriptPath(): string | null {
 }
 
 /**
- * Read parsed ai2html-settings values from the active document.
+ * Read parsed settings-block values from the active document.
+ *
+ * Mirrors the exporter's precedence: both spellings are read, and `all2html-`
+ * wins key-by-key over `ai2html-` while uncontested legacy keys survive.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.readSettingsBlock, function (): string {
+registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.readSettingsBlock, (): string => {
   try {
-    var tf = findSettingsBlock();
-    if (!tf) {
-      return "{}";
-    }
-    return JSON.stringify(parseSettingsBlock(tf));
+    return JSON.stringify(readMergedSettingsBlocks());
   } catch (e) {
     return "{}";
   }
 });
+
+function readMergedSettingsBlocks(): { [key: string]: string } {
+  var groups = findSettingsBlockGroups();
+  var merged: { [key: string]: string } = {};
+  // The exporter's rule, stated once and applied in the only order that
+  // produces it: within a prefix the last block in document order wins, and the
+  // canonical bag then lands on top of the legacy one key-by-key while
+  // uncontested `ai2html-` keys survive.
+  //
+  // Merging the flat canonical-first list in reverse used to reproduce only the
+  // cross-prefix half; it silently inverted the within-prefix half, so a
+  // document with two `all2html-settings` blocks exported under the last one
+  // while the panel showed values and `doc` badges from the first.
+  mergeSettingsBlocksInto(merged, groups.legacy);
+  mergeSettingsBlocksInto(merged, groups.canonical);
+  return merged;
+}
+
+function mergeSettingsBlocksInto(merged: { [key: string]: string }, blocks: TextFrame[]): void {
+  for (var i = 0; i < blocks.length; i++) {
+    var parsed = parseSettingsBlock(blocks[i]);
+    for (var key in parsed) {
+      if (Object.prototype.hasOwnProperty.call(parsed, key)) {
+        merged[key] = parsed[key];
+      }
+    }
+  }
+}
 
 // ============================================================
 // Export execution
@@ -506,62 +574,60 @@ registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.readSettingsBlock, function (): st
  * Writes settings to a temp file, sets globals for the exporter to read,
  * then $.evalFile()s the assembled all2html.js script.
  */
-registerHostCommand(ILLUSTRATOR_HOST_COMMANDS.runExport, function (
-  settingsJson: string,
-  fontsJson: string,
-): string {
-  var globalState = getHostGlobalState();
-  installExporterDiagnosticSink(globalState);
-  try {
-    return runPanelExport(createExportRunnerEnv(), {
-      settingsJson: unwrapBridgeStringArg(settingsJson),
-      fontsJson: unwrapBridgeStringArg(fontsJson),
-      scriptFileName: "all2html.js",
-      missingScriptError: "Cannot find all2html.js. Expected at: ",
-      failurePrefix: "Export failed: ",
-      settingsPathGlobalKey: "__ALL2HTML_PANEL_SETTINGS_PATH__",
-      tempSettingsFileName: "all2html-panel-settings.json",
-      fallbackScriptPaths: [getIllustratorFallbackScriptPath()],
-      onClearDiagnostics: function (): void {
-        clearDiagnostics(globalState);
-      },
-      onLog: function (level, message, detail): void {
-        logDiagnostic(globalState, "host", level, message, detail);
-      },
-      attachDiagnostics: function (resultText, fallbackError): string {
-        return attachDiagnosticsToResult(resultText, globalState, fallbackError);
-      },
-    });
-  } finally {
-    uninstallExporterDiagnosticSink(globalState);
-  }
-});
+registerHostCommand(
+  ILLUSTRATOR_HOST_COMMANDS.runExport,
+  (settingsJson: string, fontsJson: string): string => {
+    var globalState = getHostGlobalState();
+    installExporterDiagnosticSink(globalState);
+    try {
+      return runPanelExport(createExportRunnerEnv(), {
+        settingsJson: unwrapBridgeStringArg(settingsJson),
+        fontsJson: unwrapBridgeStringArg(fontsJson),
+        scriptFileName: "all2html.js",
+        missingScriptError: "Cannot find all2html.js. Expected at: ",
+        failurePrefix: "Export failed: ",
+        settingsPathGlobalKey: "__ALL2HTML_PANEL_SETTINGS_PATH__",
+        tempSettingsFileName: "all2html-panel-settings.json",
+        fallbackScriptPaths: [getIllustratorFallbackScriptPath()],
+        onClearDiagnostics: (): void => {
+          clearDiagnostics(globalState);
+        },
+        onLog: (level, message, detail): void => {
+          logDiagnostic(globalState, "host", level, message, detail);
+        },
+        attachDiagnostics: (resultText, fallbackError): string =>
+          attachDiagnosticsToResult(resultText, globalState, fallbackError),
+      });
+    } finally {
+      uninstallExporterDiagnosticSink(globalState);
+    }
+  },
+);
 
-registerHostCommand(AE_HOST_COMMANDS.runAeExport, function (
-  settingsJson: string,
-  fontsJson: string,
-): string {
-  var globalState = getHostGlobalState();
-  installExporterDiagnosticSink(globalState);
-  try {
-    return runPanelExport(createExportRunnerEnv(), {
-      settingsJson: unwrapBridgeStringArg(settingsJson),
-      fontsJson: unwrapBridgeStringArg(fontsJson),
-      scriptFileName: "all2html-ae.jsx",
-      missingScriptError: "Cannot find all2html-ae.jsx. Expected at: ",
-      failurePrefix: "AE export failed: ",
-      settingsValueGlobalKey: "__ALL2HTML_AE_PANEL_SETTINGS__",
-      onClearDiagnostics: function (): void {
-        clearDiagnostics(globalState);
-      },
-      onLog: function (level, message, detail): void {
-        logDiagnostic(globalState, "host", level, message, detail);
-      },
-      attachDiagnostics: function (resultText, fallbackError): string {
-        return attachDiagnosticsToResult(resultText, globalState, fallbackError);
-      },
-    });
-  } finally {
-    uninstallExporterDiagnosticSink(globalState);
-  }
-});
+registerHostCommand(
+  AE_HOST_COMMANDS.runAeExport,
+  (settingsJson: string, fontsJson: string): string => {
+    var globalState = getHostGlobalState();
+    installExporterDiagnosticSink(globalState);
+    try {
+      return runPanelExport(createExportRunnerEnv(), {
+        settingsJson: unwrapBridgeStringArg(settingsJson),
+        fontsJson: unwrapBridgeStringArg(fontsJson),
+        scriptFileName: "all2html-ae.jsx",
+        missingScriptError: "Cannot find all2html-ae.jsx. Expected at: ",
+        failurePrefix: "AE export failed: ",
+        settingsValueGlobalKey: "__ALL2HTML_AE_PANEL_SETTINGS__",
+        onClearDiagnostics: (): void => {
+          clearDiagnostics(globalState);
+        },
+        onLog: (level, message, detail): void => {
+          logDiagnostic(globalState, "host", level, message, detail);
+        },
+        attachDiagnostics: (resultText, fallbackError): string =>
+          attachDiagnosticsToResult(resultText, globalState, fallbackError),
+      });
+    } finally {
+      uninstallExporterDiagnosticSink(globalState);
+    }
+  },
+);

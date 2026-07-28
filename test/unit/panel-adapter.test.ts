@@ -241,7 +241,6 @@ describe("round-trip: panel → exporter → panel", () => {
     const original: PanelSettings = {
       namespace: "my-prefix-",
       htmlOutputPath: "/some/deep/path/",
-      svgIdPrefix: "svg-prefix-",
       altText: "A chart showing data",
       clickableLink: "https://example.com",
       ariaRole: "img",

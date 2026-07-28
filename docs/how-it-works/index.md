@@ -17,7 +17,7 @@ Design tool or importer
 → output files
 ```
 
-That means Illustrator, After Effects, Figma, and SVG import all target the same downstream contract instead of carrying their own private HTML renderers.
+That means Illustrator, Figma, and SVG import all target the same downstream contract instead of carrying their own private HTML renderers. After Effects is the exception: it produces video plus timed HTML overlays from its own player template and never constructs IR, so nothing on this page describes what it does.
 
 ## Why The IR Matters
 

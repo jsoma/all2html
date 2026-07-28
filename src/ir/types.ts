@@ -12,6 +12,17 @@ export interface Document {
   customBlocks: CustomBlock[];
   assets: Record<string, Asset>;
   metadata: Metadata;
+  /**
+   * Type-level marker only — never present at runtime and never serialized.
+   *
+   * The pipeline phase documents (`ResolvedDocument` and friends) carry a
+   * `pipelinePhase` literal. Declaring the source document's slot as `never`
+   * is what stops a *later* phase from being handed back to a transform that
+   * consumes the source document, which structural typing would otherwise
+   * allow (SPEC §12.1, decision D20). It costs zero runtime bytes and is
+   * absent from `DocumentSchema`, so the persisted IR is unaffected.
+   */
+  pipelinePhase?: never;
 }
 
 /** JSON-serializable value for arbitrary metadata fields. */
@@ -57,7 +68,6 @@ export interface Metadata {
 
 export interface Settings {
   imageFormat: ImageFormat[];
-  writeImageFiles: boolean;
   pngTransparent: boolean;
   pngNumberOfColors: number;
   jpgQuality: number;
@@ -82,8 +92,6 @@ export interface Settings {
   includeResizerWidths: boolean;
   responsiveImageMode: "img-src" | "css-var";
   useLazyLoader: boolean;
-  inlineSvg: boolean;
-  svgIdPrefix: string;
   svgEmbedImages: boolean;
   clickableLink: string;
   createPromoImage: boolean;
@@ -94,6 +102,18 @@ export interface Settings {
 export type ImageFormat = "auto" | "png" | "png24" | "jpg" | "svg";
 export type Responsiveness = "fixed" | "dynamic";
 
+/*
+ * `Artboard.relationship` ("alternates" | "sequence", SPEC §12.10.5) was declared
+ * and validated here and consumed by nothing. Removed under D16 — dead code gets a
+ * test pinning its intended caller or a deletion naming its replacement; a
+ * round-trip test is neither. Its replacement is `groupArtboards`, which is where
+ * the alternates/sequence distinction has to act. That module is ES3-safe now and
+ * every surface runs it, so the D19 blocker is gone — what is still missing is the
+ * behavior: "all of them, in order" (sequence) versus "pick one by width"
+ * (alternates) is a `computeBreakpoints`/emitter distinction, not a grouping one,
+ * and D27 does not specify it. The field returns with that behavior, not before.
+ */
+
 export interface Artboard {
   /** Stable canonical ID used by assets, grouping, and diagnostics. */
   id: string;
@@ -102,9 +122,15 @@ export interface Artboard {
   height: number;
   source?: SourceMetadata;
   responsiveness?: Responsiveness;
-  imageOnly?: boolean;
   layers: Layer[];
 }
+
+/*
+ * `Artboard.imageOnly` was declared here and consumed by nothing downstream —
+ * every reader lived inside a producer, pre-emission. The decision stays
+ * adapter-local; its canonical result is `renderAs: "image"` text (with
+ * `renderAsReason: "imageOnly"`) plus the background asset that contains it.
+ */
 
 export type LayerType =
   | "default"
@@ -122,7 +148,13 @@ export interface Layer {
   name: string;
   type: LayerType;
   source?: SourceMetadata;
-  inlineSvg: boolean;
+  /**
+   * Only meaningful on `type: "svg"` layers, and only `true` means "inline the
+   * SVG markup". Absent means the layer's SVG is an external asset. The schema
+   * rejects the field on any other layer type; producers never write
+   * `inlineSvg: false`.
+   */
+  inlineSvg?: boolean;
   visible: boolean;
   opacity: number;
   elements: Element[];
@@ -145,13 +177,16 @@ export interface BlurEffect {
 
 export type TextEffect = DropShadowEffect | BlurEffect;
 
-export interface TextElement {
+/** CSS `matrix(a, b, c, d, e, f)` entries — exactly six finite numbers. */
+export type TransformMatrix = [number, number, number, number, number, number];
+
+interface TextElementFields {
   type: "text";
   id: string;
   kind: "point" | "area";
   position: BoundingBox;
   rotation?: number;
-  transformMatrix?: number[];
+  transformMatrix?: TransformMatrix;
   /** 0-100 scale (0 = fully transparent, 100 = fully opaque). */
   opacity: number;
   blendMode?: "multiply";
@@ -160,15 +195,36 @@ export interface TextElement {
   effects?: TextEffect[];
   areaFill?: Color;
   areaBorder?: { width: number; color: Color };
-  renderAs: "html" | "image";
   /** Why the exporter chose this renderAs value. Allows core to override if needed. */
   renderAsReason?: "rotation" | "warp" | "pathText" | "imageOnly" | "setting";
-  dataAttributes?: Record<string, string>;
   binding?: {
     path: string;
     allowHtml: boolean;
   };
 }
+
+/**
+ * Text the core renders as live HTML. Only this variant is ever styled, class-assigned
+ * and positioned, so it is the only one that gains `computed*` fields downstream.
+ */
+export interface HtmlTextElement extends TextElementFields {
+  renderAs: "html";
+}
+
+/**
+ * Text baked into the artboard's background image by the exporter. It stays in the
+ * document as a record of what was rasterized, but no transform touches it.
+ *
+ * Modelling it as its own variant (discriminated by `renderAs`, which already exists
+ * in the persisted IR — no schema change) is what removes the cast at the top of
+ * `computeStyles`: the "not styled" branch has a name instead of an assertion
+ * (SPEC §12.1, decision D20).
+ */
+export interface ImageTextElement extends TextElementFields {
+  renderAs: "image";
+}
+
+export type TextElement = HtmlTextElement | ImageTextElement;
 
 export interface ShapeElement {
   type: "shape";
@@ -180,7 +236,6 @@ export interface ShapeElement {
   opacity: number;
   blendMode?: "multiply";
   orientation?: "horizontal" | "vertical";
-  segments?: { x1: number; y1: number; x2: number; y2: number }[];
 }
 
 export interface VideoElement {
@@ -196,17 +251,12 @@ export interface RawHtmlElement {
 export interface SnippetElement {
   type: "snippet";
   key: string;
-  group?: string;
   position: BoundingBox;
-  geometry?: { kind: "rectangle" | "circle" | "line" };
-  visible?: boolean;
 }
 
 export interface Paragraph {
   text: string;
   alignment: "left" | "center" | "right" | "justify";
-  /** Text direction. Defaults to "ltr" if omitted. */
-  direction?: "ltr" | "rtl";
   leading: number;
   spaceBefore: number;
   spaceAfter: number;
@@ -258,12 +308,27 @@ export interface CustomBlock {
 export interface Asset {
   id: string;
   path: string;
-  hash?: string;
   mimeType: string;
   width: number;
   height: number;
   artboardId: string;
   layerId?: string;
+  /**
+   * Alt text describing *this* image.
+   *
+   * Alt text has to travel with the thing it describes. `Metadata.imageAltText`
+   * is document-level, so a multi-file import that rasterizes two unrelated
+   * graphics could only store one description and every artboard rendered it —
+   * labelling one graphic with the other's text, which is worse for a screen
+   * reader than no label at all. The asset is the narrowest thing that owns a
+   * description: it already carries `artboardId`/`layerId`, so per-artboard
+   * scoping is free and no pipeline phase has to carry the field.
+   *
+   * Emitters prefer this over `Metadata.imageAltText`, which stays as the
+   * document-level fallback (Illustrator sets it from its settings block).
+   * Omitted when absent — never `undefined`.
+   */
+  altText?: string;
   source?: SourceMetadata;
   exportParams: {
     format: string;
@@ -317,44 +382,124 @@ export interface StyleClassEntry {
 
 // === Pipeline Phase Types ===
 
+/**
+ * Visibility / sizing bounds for one artboard.
+ *
+ * Absence is modelled by absence: an omitted `maxWidth` / `widthRangeMax` means
+ * "unbounded above". No sentinel value (`Infinity`, `-1`, `99999`) is ever stored,
+ * because the document model must survive a JSON round-trip unchanged and
+ * `JSON.stringify(Infinity)` silently becomes `null`.
+ */
 export interface ArtboardBreakpoint {
   minWidth: number;
-  maxWidth: number;
+  /** Omitted when unbounded above. */
+  maxWidth?: number;
   widthRangeMin: number;
-  widthRangeMax: number;
+  /** Omitted when unbounded above. */
+  widthRangeMax?: number;
 }
 
-export interface ResolvedDocument extends Omit<Document, "settings" | "artboards"> {
+/**
+ * The names of the pipeline's intermediate documents, in order.
+ *
+ * Phase documents are **internal**. The persisted canonical IR is always the
+ * validated source `Document` — `output-bundle.ts` serializes that, never one of
+ * these — so adding a phase here does not widen the public contract (D20).
+ */
+export type PipelinePhase =
+  | "resolved"
+  | "breakpointed"
+  | "styled"
+  | "deduplicated"
+  | "emitterReady";
+
+interface PhaseArtboards {
+  resolved: ResolvedArtboard;
+  breakpointed: BreakpointedArtboard;
+  styled: StyledArtboard;
+  deduplicated: DeduplicatedArtboard;
+  emitterReady: EmitterReadyArtboard;
+}
+
+/**
+ * A document at one named phase of the pipeline.
+ *
+ * The phase name is carried as an explicit literal rather than being implied by
+ * which extra fields happen to be present. TypeScript is structural, so additive
+ * phase fields do **not** stop a later document from satisfying an earlier phase's
+ * parameter — which is exactly why `computeBreakpoints` used to accept and return
+ * the same type and could be called twice, or skipped, with no type error
+ * (SPEC §12.1, decision D20). With the literal, every pair of phases is mutually
+ * unassignable, so each transform's signature names precisely what it consumes and
+ * what it produces.
+ */
+export interface PhaseDocument<P extends PipelinePhase>
+  extends Omit<Document, "settings" | "artboards" | "pipelinePhase"> {
+  pipelinePhase: P;
   settings: Settings;
-  artboards: ResolvedArtboard[];
+  artboards: PhaseArtboards[P][];
 }
 
-export interface ResolvedArtboard extends Artboard {
+/** Settings merged and complete. Breakpoints do not exist yet — by construction. */
+export type ResolvedDocument = PhaseDocument<"resolved">;
+/** Visibility/sizing ranges assigned. */
+export type BreakpointedDocument = PhaseDocument<"breakpointed">;
+/** Text converted to CSS declarations. */
+export type StyledDocument = PhaseDocument<"styled">;
+/** Style classes extracted and assigned. */
+export type DeduplicatedDocument = PhaseDocument<"deduplicated">;
+/** Positions computed. Every element carries its final computed geometry. */
+export type EmitterReadyDocument = PhaseDocument<"emitterReady">;
+
+/**
+ * Post-`resolveSettings` artboard. Deliberately identical to `Artboard`: the whole
+ * point of the `breakpointed` phase is that `breakpoint` is *absent* here, so the
+ * placeholder `{ minWidth: 0, widthRangeMin: 0 }` that `settings-resolver.ts` used
+ * to fabricate purely to satisfy the type has no reason to exist.
+ */
+export type ResolvedArtboard = Artboard;
+
+export interface BreakpointedArtboard extends Artboard {
   breakpoint: ArtboardBreakpoint;
 }
 
-export interface StyledTextElement extends TextElement {
+export interface StyledTextElement extends HtmlTextElement {
   computedParagraphStyles: ComputedTextStyle[];
   computedRunStyles: ComputedTextStyle[][];
 }
 
-export interface StyledArtboard extends ResolvedArtboard {
+export type StyledElement =
+  | StyledTextElement
+  | ImageTextElement
+  | ShapeElement
+  | VideoElement
+  | RawHtmlElement
+  | SnippetElement;
+
+export interface StyledLayer extends Omit<Layer, "elements"> {
+  elements: StyledElement[];
+}
+
+export interface StyledArtboard extends Omit<BreakpointedArtboard, "layers"> {
   layers: StyledLayer[];
 }
 
-export interface StyledLayer extends Layer {
-  elements: (StyledTextElement | ShapeElement | VideoElement | RawHtmlElement | SnippetElement)[];
-}
-
-export interface StyledDocument extends Omit<ResolvedDocument, "artboards"> {
-  artboards: StyledArtboard[];
-}
-
-export interface EmitterReadyTextElement extends StyledTextElement {
+export interface DeduplicatedTextElement extends StyledTextElement {
   paragraphClassNames: (string | null)[];
   runClassNames: (string | null)[][];
   effectClassName: string | null;
-  computedPosition: ComputedPosition;
+}
+
+export type DeduplicatedElement =
+  | DeduplicatedTextElement
+  | ImageTextElement
+  | ShapeElement
+  | VideoElement
+  | RawHtmlElement
+  | SnippetElement;
+
+export interface DeduplicatedLayer extends Omit<Layer, "elements"> {
+  elements: DeduplicatedElement[];
 }
 
 export interface EffectStyleEntry {
@@ -363,11 +508,25 @@ export interface EffectStyleEntry {
   css: string;
 }
 
-export interface EmitterReadyArtboard extends Omit<StyledArtboard, "layers"> {
+export interface DeduplicatedArtboard extends Omit<StyledArtboard, "layers"> {
   baseParagraphStyle: ComputedTextStyle;
   paragraphStyleClasses: StyleClassEntry[];
   characterStyleClasses: StyleClassEntry[];
   effectStyleClasses: EffectStyleEntry[];
+  layers: DeduplicatedLayer[];
+}
+
+/**
+ * `computePositions` is what turns a `DeduplicatedTextElement` into this. Splitting
+ * the two is what removes `deduplicateStyles`' placeholder `computedPosition:
+ * { width: "" }`, which existed only because the emitter-ready shape was demanded
+ * one phase before positions were computed.
+ */
+export interface EmitterReadyTextElement extends DeduplicatedTextElement {
+  computedPosition: ComputedPosition;
+}
+
+export interface EmitterReadyArtboard extends Omit<DeduplicatedArtboard, "layers"> {
   layers: EmitterReadyLayer[];
 }
 
@@ -395,18 +554,20 @@ export interface EmitterReadySnippetElement extends SnippetElement {
   computedPosition: ComputedPosition;
 }
 
-export interface EmitterReadyLayer extends Layer {
-  elements: (
-    | EmitterReadyTextElement
-    | EmitterReadyShapeElement
-    | EmitterReadySnippetElement
-    | ShapeElement
-    | VideoElement
-    | RawHtmlElement
-    | SnippetElement
-  )[];
-}
+/**
+ * The raw `ShapeElement` / `SnippetElement` variants are deliberately absent: every
+ * shape and snippet has been through `computePositions` by this point, so admitting
+ * the un-positioned variants here would make "emitter-ready" mean nothing and force
+ * the emitters back into `"computedShapePosition" in el` probes.
+ */
+export type EmitterReadyElement =
+  | EmitterReadyTextElement
+  | ImageTextElement
+  | EmitterReadyShapeElement
+  | EmitterReadySnippetElement
+  | VideoElement
+  | RawHtmlElement;
 
-export interface EmitterReadyDocument extends Omit<StyledDocument, "artboards"> {
-  artboards: EmitterReadyArtboard[];
+export interface EmitterReadyLayer extends Omit<Layer, "elements"> {
+  elements: EmitterReadyElement[];
 }

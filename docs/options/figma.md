@@ -5,7 +5,9 @@ description: Figma manifest-import workflow, export model, and current plugin be
 
 # Figma
 
-The Figma plugin works well now and fits the same pipeline as the other surfaces.
+**The Figma plugin is beta.** It runs, it fits the same pipeline as the other surfaces, and it exports real newsroom files — but it is not a supported exporter yet. Expect to check the output, and check the [Settings Reference](../reference/settings.md) before relying on a setting: several settings that the Illustrator path honors do nothing here.
+
+Beta means, concretely: no repeated live-export sign-off yet, and the raster export is fixed at transparent full-color PNG at 1x regardless of what you set.
 
 ## Download
 
@@ -28,7 +30,7 @@ The extracted folder needs to stay intact because the manifest points at built f
    - `story:640`
    - `story:960`
    - `story:dynamic`
-   - `story:image`
+   - `story:image-only`
 4. Run the imported all2html plugin.
 5. Choose a preset and output format.
 6. Export the ZIP bundle.
@@ -63,7 +65,7 @@ The plugin keeps shared config in `figma.root` plugin data and local convenience
 
 The settings UI includes `Google Fonts` with `Off`, `CSS @import`, and `Link tag` modes. Figma text fonts are inferred into canonical font mappings automatically, and explicit config mappings still override the inferred mapping for the same `sourceFont`.
 
-Top-level tagged child nodes inside a selected frame can define special layers with the Illustrator-aligned naming contract:
+Top-level tagged child nodes inside a selected frame can define special layers:
 
 - `:png`
 - `:svg`
@@ -71,6 +73,17 @@ Top-level tagged child nodes inside a selected frame can define special layers w
 - `:video`
 - `:html-before`
 - `:html-after`
+
+Figma's tag syntax is **not** the same as Illustrator's, even though the tag names look alike:
+
+- Inline SVG is written `:svg:inline` here. Illustrator's `:svg,inline` and `:inline` do not match in Figma.
+- Matching is case-insensitive and works as a prefix **or** a suffix of the node name.
+- Only direct children of the selected frame are scanned.
+- `:symbol` and `:div` are **not supported on Figma**. The plugin recognizes the spelling only so it can tell you: the layer exports as ordinary artwork and the export warns, rather than the tag being silently accepted or silently ignored.
+
+Frame names take a separate set of tokens: `:dynamic`, `:fixed`, `:image-only`, or a bare integer width override. `:image` is accepted as an older spelling of `:image-only` so existing files keep working; new files should use `:image-only`.
+
+See the [Support Matrix](../reference/support-matrix.md) for the full per-surface tag comparison.
 
 ## What Figma Is Good For Right Now
 
@@ -80,6 +93,3 @@ Top-level tagged child nodes inside a selected frame can define special layers w
 - special hooks and visual overlays
 
 It is less about full-file auto-discovery and more about clean, selected export roots.
-
-> Screenshot placeholder
-> Crop the Figma plugin UI showing the selection summary, preset selector, and export format controls.

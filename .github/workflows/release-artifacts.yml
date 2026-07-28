@@ -13,6 +13,11 @@ on:
 permissions:
   contents: write
 
+# Uploads assets to a release; never cancel a run mid-upload.
+concurrency:
+  group: release-artifacts-${{ github.event.release.tag_name || inputs.release_tag || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: macos-latest
@@ -23,8 +28,6 @@ jobs:
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - name: Set up Node.js
         uses: actions/setup-node@v4

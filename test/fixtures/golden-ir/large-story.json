@@ -1,43 +1,57 @@
 {
   "irVersion": "0.1.0",
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "29.8.9",
+    "adapterVersion": "0.1.0"
+  },
   "settings": {},
   "fonts": [],
   "artboards": [
     {
+      "id": "illustrator:artboard:story-1-dynamic-640-1",
       "name": "story-1",
       "width": 640,
       "height": 480,
+      "source": {
+        "tool": "illustrator",
+        "name": "story-1:dynamic,640",
+        "width": 640,
+        "height": 480
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:story-1-dynamic-640-1:layer:highlight-1",
           "name": "highlight",
           "type": "png",
-          "inlineSvg": false,
-          "visible": true,
-          "opacity": 100,
-          "elements": [],
-          "id": "artboard:story-1-dynamic-640:layer:highlight",
           "source": {
             "tool": "illustrator",
-            "name": "highlight"
-          }
+            "name": "highlight:png"
+          },
+          "visible": true,
+          "opacity": 100,
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:story-1-dynamic-640-1:layer:locator-2",
           "name": "locator",
           "type": "svg",
-          "inlineSvg": false,
-          "visible": true,
-          "opacity": 100,
-          "elements": [],
-          "id": "artboard:story-1-dynamic-640:layer:locator",
           "source": {
             "tool": "illustrator",
-            "name": "locator"
-          }
+            "name": "locator:svg"
+          },
+          "visible": true,
+          "opacity": 100,
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:story-1-dynamic-640-1:layer:content-3",
           "name": "content",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -117,58 +131,55 @@
                 }
               ]
             }
-          ],
-          "id": "artboard:story-1-dynamic-640:layer:content",
-          "source": {
-            "tool": "illustrator",
-            "name": "content"
-          }
+          ]
         }
       ],
-      "responsiveness": "dynamic",
-      "id": "artboard:story-1-dynamic-640",
-      "source": {
-        "tool": "illustrator",
-        "name": "story-1:dynamic,640",
-        "width": 640,
-        "height": 480
-      }
+      "responsiveness": "dynamic"
     },
     {
+      "id": "illustrator:artboard:story-2-dynamic-720-2",
       "name": "story-2",
       "width": 720,
       "height": 480,
+      "source": {
+        "tool": "illustrator",
+        "name": "story-2:dynamic,720",
+        "width": 720,
+        "height": 480
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:story-2-dynamic-720-2:layer:highlight-1",
           "name": "highlight",
           "type": "png",
-          "inlineSvg": false,
-          "visible": true,
-          "opacity": 100,
-          "elements": [],
-          "id": "artboard:story-2-dynamic-720:layer:highlight",
           "source": {
             "tool": "illustrator",
-            "name": "highlight"
-          }
+            "name": "highlight:png"
+          },
+          "visible": true,
+          "opacity": 100,
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:story-2-dynamic-720-2:layer:locator-2",
           "name": "locator",
           "type": "svg",
-          "inlineSvg": false,
-          "visible": true,
-          "opacity": 100,
-          "elements": [],
-          "id": "artboard:story-2-dynamic-720:layer:locator",
           "source": {
             "tool": "illustrator",
-            "name": "locator"
-          }
+            "name": "locator:svg"
+          },
+          "visible": true,
+          "opacity": 100,
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:story-2-dynamic-720-2:layer:content-3",
           "name": "content",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -248,58 +259,55 @@
                 }
               ]
             }
-          ],
-          "id": "artboard:story-2-dynamic-720:layer:content",
-          "source": {
-            "tool": "illustrator",
-            "name": "content"
-          }
+          ]
         }
       ],
-      "responsiveness": "dynamic",
-      "id": "artboard:story-2-dynamic-720",
-      "source": {
-        "tool": "illustrator",
-        "name": "story-2:dynamic,720",
-        "width": 720,
-        "height": 480
-      }
+      "responsiveness": "dynamic"
     },
     {
+      "id": "illustrator:artboard:story-3-fixed-800-3",
       "name": "story-3",
       "width": 800,
       "height": 480,
+      "source": {
+        "tool": "illustrator",
+        "name": "story-3:fixed,800",
+        "width": 800,
+        "height": 480
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:story-3-fixed-800-3:layer:highlight-1",
           "name": "highlight",
           "type": "png",
-          "inlineSvg": false,
-          "visible": true,
-          "opacity": 100,
-          "elements": [],
-          "id": "artboard:story-3-fixed-800:layer:highlight",
           "source": {
             "tool": "illustrator",
-            "name": "highlight"
-          }
+            "name": "highlight:png"
+          },
+          "visible": true,
+          "opacity": 100,
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:story-3-fixed-800-3:layer:locator-2",
           "name": "locator",
           "type": "svg",
-          "inlineSvg": false,
-          "visible": true,
-          "opacity": 100,
-          "elements": [],
-          "id": "artboard:story-3-fixed-800:layer:locator",
           "source": {
             "tool": "illustrator",
-            "name": "locator"
-          }
+            "name": "locator:svg"
+          },
+          "visible": true,
+          "opacity": 100,
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:story-3-fixed-800-3:layer:content-3",
           "name": "content",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -379,58 +387,55 @@
                 }
               ]
             }
-          ],
-          "id": "artboard:story-3-fixed-800:layer:content",
-          "source": {
-            "tool": "illustrator",
-            "name": "content"
-          }
+          ]
         }
       ],
-      "responsiveness": "fixed",
-      "id": "artboard:story-3-fixed-800",
-      "source": {
-        "tool": "illustrator",
-        "name": "story-3:fixed,800",
-        "width": 800,
-        "height": 480
-      }
+      "responsiveness": "fixed"
     },
     {
+      "id": "illustrator:artboard:story-4-dynamic-960-4",
       "name": "story-4",
       "width": 960,
       "height": 480,
+      "source": {
+        "tool": "illustrator",
+        "name": "story-4:dynamic,960",
+        "width": 960,
+        "height": 480
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:story-4-dynamic-960-4:layer:highlight-1",
           "name": "highlight",
           "type": "png",
-          "inlineSvg": false,
-          "visible": true,
-          "opacity": 100,
-          "elements": [],
-          "id": "artboard:story-4-dynamic-960:layer:highlight",
           "source": {
             "tool": "illustrator",
-            "name": "highlight"
-          }
+            "name": "highlight:png"
+          },
+          "visible": true,
+          "opacity": 100,
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:story-4-dynamic-960-4:layer:locator-2",
           "name": "locator",
           "type": "svg",
-          "inlineSvg": false,
-          "visible": true,
-          "opacity": 100,
-          "elements": [],
-          "id": "artboard:story-4-dynamic-960:layer:locator",
           "source": {
             "tool": "illustrator",
-            "name": "locator"
-          }
+            "name": "locator:svg"
+          },
+          "visible": true,
+          "opacity": 100,
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:story-4-dynamic-960-4:layer:content-3",
           "name": "content",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -510,58 +515,55 @@
                 }
               ]
             }
-          ],
-          "id": "artboard:story-4-dynamic-960:layer:content",
-          "source": {
-            "tool": "illustrator",
-            "name": "content"
-          }
+          ]
         }
       ],
-      "responsiveness": "dynamic",
-      "id": "artboard:story-4-dynamic-960",
-      "source": {
-        "tool": "illustrator",
-        "name": "story-4:dynamic,960",
-        "width": 960,
-        "height": 480
-      }
+      "responsiveness": "dynamic"
     },
     {
+      "id": "illustrator:artboard:story-5-fixed-1120-5",
       "name": "story-5",
       "width": 1120,
       "height": 480,
+      "source": {
+        "tool": "illustrator",
+        "name": "story-5:fixed,1120",
+        "width": 1120,
+        "height": 480
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:story-5-fixed-1120-5:layer:highlight-1",
           "name": "highlight",
           "type": "png",
-          "inlineSvg": false,
-          "visible": true,
-          "opacity": 100,
-          "elements": [],
-          "id": "artboard:story-5-fixed-1120:layer:highlight",
           "source": {
             "tool": "illustrator",
-            "name": "highlight"
-          }
+            "name": "highlight:png"
+          },
+          "visible": true,
+          "opacity": 100,
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:story-5-fixed-1120-5:layer:locator-2",
           "name": "locator",
           "type": "svg",
-          "inlineSvg": false,
-          "visible": true,
-          "opacity": 100,
-          "elements": [],
-          "id": "artboard:story-5-fixed-1120:layer:locator",
           "source": {
             "tool": "illustrator",
-            "name": "locator"
-          }
+            "name": "locator:svg"
+          },
+          "visible": true,
+          "opacity": 100,
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:story-5-fixed-1120-5:layer:content-3",
           "name": "content",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -641,58 +643,55 @@
                 }
               ]
             }
-          ],
-          "id": "artboard:story-5-fixed-1120:layer:content",
-          "source": {
-            "tool": "illustrator",
-            "name": "content"
-          }
+          ]
         }
       ],
-      "responsiveness": "fixed",
-      "id": "artboard:story-5-fixed-1120",
-      "source": {
-        "tool": "illustrator",
-        "name": "story-5:fixed,1120",
-        "width": 1120,
-        "height": 480
-      }
+      "responsiveness": "fixed"
     },
     {
+      "id": "illustrator:artboard:story-6-dynamic-1280-6",
       "name": "story-6",
       "width": 1280,
       "height": 480,
+      "source": {
+        "tool": "illustrator",
+        "name": "story-6:dynamic,1280",
+        "width": 1280,
+        "height": 480
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:story-6-dynamic-1280-6:layer:highlight-1",
           "name": "highlight",
           "type": "png",
-          "inlineSvg": false,
-          "visible": true,
-          "opacity": 100,
-          "elements": [],
-          "id": "artboard:story-6-dynamic-1280:layer:highlight",
           "source": {
             "tool": "illustrator",
-            "name": "highlight"
-          }
+            "name": "highlight:png"
+          },
+          "visible": true,
+          "opacity": 100,
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:story-6-dynamic-1280-6:layer:locator-2",
           "name": "locator",
           "type": "svg",
-          "inlineSvg": false,
-          "visible": true,
-          "opacity": 100,
-          "elements": [],
-          "id": "artboard:story-6-dynamic-1280:layer:locator",
           "source": {
             "tool": "illustrator",
-            "name": "locator"
-          }
+            "name": "locator:svg"
+          },
+          "visible": true,
+          "opacity": 100,
+          "elements": []
         },
         {
+          "id": "illustrator:artboard:story-6-dynamic-1280-6:layer:content-3",
           "name": "content",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "content"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -772,348 +771,336 @@
                 }
               ]
             }
-          ],
-          "id": "artboard:story-6-dynamic-1280:layer:content",
-          "source": {
-            "tool": "illustrator",
-            "name": "content"
-          }
+          ]
         }
       ],
-      "responsiveness": "dynamic",
-      "id": "artboard:story-6-dynamic-1280",
-      "source": {
-        "tool": "illustrator",
-        "name": "story-6:dynamic,1280",
-        "width": 1280,
-        "height": 480
-      }
+      "responsiveness": "dynamic"
     }
   ],
   "customBlocks": [],
   "assets": {
-    "large-story-story-1": {
-      "id": "large-story-story-1",
-      "path": "large-story-story-1.png",
+    "large-story-story-1-dynamic-640": {
+      "id": "large-story-story-1-dynamic-640",
+      "path": "large-story-story-1-dynamic-640.png",
       "mimeType": "image/png",
       "width": 1280,
       "height": 960,
+      "artboardId": "illustrator:artboard:story-1-dynamic-640-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-1:dynamic,640"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
-      },
-      "artboardId": "artboard:story-1-dynamic-640",
-      "source": {
-        "tool": "illustrator",
-        "name": "story-1"
       }
     },
-    "large-story-story-2": {
-      "id": "large-story-story-2",
-      "path": "large-story-story-2.png",
+    "large-story-story-2-dynamic-720": {
+      "id": "large-story-story-2-dynamic-720",
+      "path": "large-story-story-2-dynamic-720.png",
       "mimeType": "image/png",
       "width": 1440,
       "height": 960,
+      "artboardId": "illustrator:artboard:story-2-dynamic-720-2",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-2:dynamic,720"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
-      },
-      "artboardId": "artboard:story-2-dynamic-720",
-      "source": {
-        "tool": "illustrator",
-        "name": "story-2"
       }
     },
-    "large-story-story-3": {
-      "id": "large-story-story-3",
-      "path": "large-story-story-3.png",
+    "large-story-story-3-fixed-800": {
+      "id": "large-story-story-3-fixed-800",
+      "path": "large-story-story-3-fixed-800.png",
       "mimeType": "image/png",
       "width": 1600,
       "height": 960,
+      "artboardId": "illustrator:artboard:story-3-fixed-800-3",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-3:fixed,800"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
-      },
-      "artboardId": "artboard:story-3-fixed-800",
-      "source": {
-        "tool": "illustrator",
-        "name": "story-3"
       }
     },
-    "large-story-story-4": {
-      "id": "large-story-story-4",
-      "path": "large-story-story-4.png",
+    "large-story-story-4-dynamic-960": {
+      "id": "large-story-story-4-dynamic-960",
+      "path": "large-story-story-4-dynamic-960.png",
       "mimeType": "image/png",
       "width": 1920,
       "height": 960,
+      "artboardId": "illustrator:artboard:story-4-dynamic-960-4",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-4:dynamic,960"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
-      },
-      "artboardId": "artboard:story-4-dynamic-960",
-      "source": {
-        "tool": "illustrator",
-        "name": "story-4"
       }
     },
-    "large-story-story-5": {
-      "id": "large-story-story-5",
-      "path": "large-story-story-5.png",
+    "large-story-story-5-fixed-1120": {
+      "id": "large-story-story-5-fixed-1120",
+      "path": "large-story-story-5-fixed-1120.png",
       "mimeType": "image/png",
       "width": 2240,
       "height": 960,
+      "artboardId": "illustrator:artboard:story-5-fixed-1120-5",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-5:fixed,1120"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
-      },
-      "artboardId": "artboard:story-5-fixed-1120",
-      "source": {
-        "tool": "illustrator",
-        "name": "story-5"
       }
     },
-    "large-story-story-6": {
-      "id": "large-story-story-6",
-      "path": "large-story-story-6.png",
+    "large-story-story-6-dynamic-1280": {
+      "id": "large-story-story-6-dynamic-1280",
+      "path": "large-story-story-6-dynamic-1280.png",
       "mimeType": "image/png",
       "width": 2560,
       "height": 960,
+      "artboardId": "illustrator:artboard:story-6-dynamic-1280-6",
+      "source": {
+        "tool": "illustrator",
+        "name": "story-6:dynamic,1280"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 85,
         "colors": 128
-      },
-      "artboardId": "artboard:story-6-dynamic-1280",
-      "source": {
-        "tool": "illustrator",
-        "name": "story-6"
       }
     },
-    "large-story-story-1-highlight": {
-      "id": "large-story-story-1-highlight",
-      "path": "large-story-story-1-highlight.png",
+    "large-story-story-1-dynamic-640-highlight": {
+      "id": "large-story-story-1-dynamic-640-highlight",
+      "path": "large-story-story-1-dynamic-640-highlight.png",
       "mimeType": "image/png",
       "width": 1280,
       "height": 960,
+      "artboardId": "illustrator:artboard:story-1-dynamic-640-1",
+      "layerId": "illustrator:artboard:story-1-dynamic-640-1:layer:highlight-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "highlight"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": true
-      },
-      "artboardId": "artboard:story-1-dynamic-640",
-      "layerId": "artboard:story-1-dynamic-640:layer:highlight",
-      "source": {
-        "tool": "illustrator",
-        "name": "highlight"
       }
     },
-    "large-story-story-1-locator": {
-      "id": "large-story-story-1-locator",
-      "path": "large-story-story-1-locator.svg",
+    "large-story-story-1-dynamic-640-locator": {
+      "id": "large-story-story-1-dynamic-640-locator",
+      "path": "large-story-story-1-dynamic-640-locator.svg",
       "mimeType": "image/svg+xml",
       "width": 640,
       "height": 480,
-      "exportParams": {
-        "format": "svg",
-        "scale": 1
-      },
-      "artboardId": "artboard:story-1-dynamic-640",
-      "layerId": "artboard:story-1-dynamic-640:layer:locator",
+      "artboardId": "illustrator:artboard:story-1-dynamic-640-1",
+      "layerId": "illustrator:artboard:story-1-dynamic-640-1:layer:locator-2",
       "source": {
         "tool": "illustrator",
         "name": "locator"
+      },
+      "exportParams": {
+        "format": "svg",
+        "scale": 1
       }
     },
-    "large-story-story-2-highlight": {
-      "id": "large-story-story-2-highlight",
-      "path": "large-story-story-2-highlight.png",
+    "large-story-story-2-dynamic-720-highlight": {
+      "id": "large-story-story-2-dynamic-720-highlight",
+      "path": "large-story-story-2-dynamic-720-highlight.png",
       "mimeType": "image/png",
       "width": 1440,
       "height": 960,
+      "artboardId": "illustrator:artboard:story-2-dynamic-720-2",
+      "layerId": "illustrator:artboard:story-2-dynamic-720-2:layer:highlight-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "highlight"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": true
-      },
-      "artboardId": "artboard:story-2-dynamic-720",
-      "layerId": "artboard:story-2-dynamic-720:layer:highlight",
-      "source": {
-        "tool": "illustrator",
-        "name": "highlight"
       }
     },
-    "large-story-story-2-locator": {
-      "id": "large-story-story-2-locator",
-      "path": "large-story-story-2-locator.svg",
+    "large-story-story-2-dynamic-720-locator": {
+      "id": "large-story-story-2-dynamic-720-locator",
+      "path": "large-story-story-2-dynamic-720-locator.svg",
       "mimeType": "image/svg+xml",
       "width": 720,
       "height": 480,
-      "exportParams": {
-        "format": "svg",
-        "scale": 1
-      },
-      "artboardId": "artboard:story-2-dynamic-720",
-      "layerId": "artboard:story-2-dynamic-720:layer:locator",
+      "artboardId": "illustrator:artboard:story-2-dynamic-720-2",
+      "layerId": "illustrator:artboard:story-2-dynamic-720-2:layer:locator-2",
       "source": {
         "tool": "illustrator",
         "name": "locator"
+      },
+      "exportParams": {
+        "format": "svg",
+        "scale": 1
       }
     },
-    "large-story-story-3-highlight": {
-      "id": "large-story-story-3-highlight",
-      "path": "large-story-story-3-highlight.png",
+    "large-story-story-3-fixed-800-highlight": {
+      "id": "large-story-story-3-fixed-800-highlight",
+      "path": "large-story-story-3-fixed-800-highlight.png",
       "mimeType": "image/png",
       "width": 1600,
       "height": 960,
+      "artboardId": "illustrator:artboard:story-3-fixed-800-3",
+      "layerId": "illustrator:artboard:story-3-fixed-800-3:layer:highlight-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "highlight"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": true
-      },
-      "artboardId": "artboard:story-3-fixed-800",
-      "layerId": "artboard:story-3-fixed-800:layer:highlight",
-      "source": {
-        "tool": "illustrator",
-        "name": "highlight"
       }
     },
-    "large-story-story-3-locator": {
-      "id": "large-story-story-3-locator",
-      "path": "large-story-story-3-locator.svg",
+    "large-story-story-3-fixed-800-locator": {
+      "id": "large-story-story-3-fixed-800-locator",
+      "path": "large-story-story-3-fixed-800-locator.svg",
       "mimeType": "image/svg+xml",
       "width": 800,
       "height": 480,
-      "exportParams": {
-        "format": "svg",
-        "scale": 1
-      },
-      "artboardId": "artboard:story-3-fixed-800",
-      "layerId": "artboard:story-3-fixed-800:layer:locator",
+      "artboardId": "illustrator:artboard:story-3-fixed-800-3",
+      "layerId": "illustrator:artboard:story-3-fixed-800-3:layer:locator-2",
       "source": {
         "tool": "illustrator",
         "name": "locator"
+      },
+      "exportParams": {
+        "format": "svg",
+        "scale": 1
       }
     },
-    "large-story-story-4-highlight": {
-      "id": "large-story-story-4-highlight",
-      "path": "large-story-story-4-highlight.png",
+    "large-story-story-4-dynamic-960-highlight": {
+      "id": "large-story-story-4-dynamic-960-highlight",
+      "path": "large-story-story-4-dynamic-960-highlight.png",
       "mimeType": "image/png",
       "width": 1920,
       "height": 960,
+      "artboardId": "illustrator:artboard:story-4-dynamic-960-4",
+      "layerId": "illustrator:artboard:story-4-dynamic-960-4:layer:highlight-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "highlight"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": true
-      },
-      "artboardId": "artboard:story-4-dynamic-960",
-      "layerId": "artboard:story-4-dynamic-960:layer:highlight",
-      "source": {
-        "tool": "illustrator",
-        "name": "highlight"
       }
     },
-    "large-story-story-4-locator": {
-      "id": "large-story-story-4-locator",
-      "path": "large-story-story-4-locator.svg",
+    "large-story-story-4-dynamic-960-locator": {
+      "id": "large-story-story-4-dynamic-960-locator",
+      "path": "large-story-story-4-dynamic-960-locator.svg",
       "mimeType": "image/svg+xml",
       "width": 960,
       "height": 480,
-      "exportParams": {
-        "format": "svg",
-        "scale": 1
-      },
-      "artboardId": "artboard:story-4-dynamic-960",
-      "layerId": "artboard:story-4-dynamic-960:layer:locator",
+      "artboardId": "illustrator:artboard:story-4-dynamic-960-4",
+      "layerId": "illustrator:artboard:story-4-dynamic-960-4:layer:locator-2",
       "source": {
         "tool": "illustrator",
         "name": "locator"
+      },
+      "exportParams": {
+        "format": "svg",
+        "scale": 1
       }
     },
-    "large-story-story-5-highlight": {
-      "id": "large-story-story-5-highlight",
-      "path": "large-story-story-5-highlight.png",
+    "large-story-story-5-fixed-1120-highlight": {
+      "id": "large-story-story-5-fixed-1120-highlight",
+      "path": "large-story-story-5-fixed-1120-highlight.png",
       "mimeType": "image/png",
       "width": 2240,
       "height": 960,
+      "artboardId": "illustrator:artboard:story-5-fixed-1120-5",
+      "layerId": "illustrator:artboard:story-5-fixed-1120-5:layer:highlight-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "highlight"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": true
-      },
-      "artboardId": "artboard:story-5-fixed-1120",
-      "layerId": "artboard:story-5-fixed-1120:layer:highlight",
-      "source": {
-        "tool": "illustrator",
-        "name": "highlight"
       }
     },
-    "large-story-story-5-locator": {
-      "id": "large-story-story-5-locator",
-      "path": "large-story-story-5-locator.svg",
+    "large-story-story-5-fixed-1120-locator": {
+      "id": "large-story-story-5-fixed-1120-locator",
+      "path": "large-story-story-5-fixed-1120-locator.svg",
       "mimeType": "image/svg+xml",
       "width": 1120,
       "height": 480,
-      "exportParams": {
-        "format": "svg",
-        "scale": 1
-      },
-      "artboardId": "artboard:story-5-fixed-1120",
-      "layerId": "artboard:story-5-fixed-1120:layer:locator",
+      "artboardId": "illustrator:artboard:story-5-fixed-1120-5",
+      "layerId": "illustrator:artboard:story-5-fixed-1120-5:layer:locator-2",
       "source": {
         "tool": "illustrator",
         "name": "locator"
+      },
+      "exportParams": {
+        "format": "svg",
+        "scale": 1
       }
     },
-    "large-story-story-6-highlight": {
-      "id": "large-story-story-6-highlight",
-      "path": "large-story-story-6-highlight.png",
+    "large-story-story-6-dynamic-1280-highlight": {
+      "id": "large-story-story-6-dynamic-1280-highlight",
+      "path": "large-story-story-6-dynamic-1280-highlight.png",
       "mimeType": "image/png",
       "width": 2560,
       "height": 960,
+      "artboardId": "illustrator:artboard:story-6-dynamic-1280-6",
+      "layerId": "illustrator:artboard:story-6-dynamic-1280-6:layer:highlight-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "highlight"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": true
-      },
-      "artboardId": "artboard:story-6-dynamic-1280",
-      "layerId": "artboard:story-6-dynamic-1280:layer:highlight",
-      "source": {
-        "tool": "illustrator",
-        "name": "highlight"
       }
     },
-    "large-story-story-6-locator": {
-      "id": "large-story-story-6-locator",
-      "path": "large-story-story-6-locator.svg",
+    "large-story-story-6-dynamic-1280-locator": {
+      "id": "large-story-story-6-dynamic-1280-locator",
+      "path": "large-story-story-6-dynamic-1280-locator.svg",
       "mimeType": "image/svg+xml",
       "width": 1280,
       "height": 480,
-      "exportParams": {
-        "format": "svg",
-        "scale": 1
-      },
-      "artboardId": "artboard:story-6-dynamic-1280",
-      "layerId": "artboard:story-6-dynamic-1280:layer:locator",
+      "artboardId": "illustrator:artboard:story-6-dynamic-1280-6",
+      "layerId": "illustrator:artboard:story-6-dynamic-1280-6:layer:locator-2",
       "source": {
         "tool": "illustrator",
         "name": "locator"
+      },
+      "exportParams": {
+        "format": "svg",
+        "scale": 1
       }
     }
   },
@@ -1125,10 +1112,5 @@
     "notes": "",
     "sources": "",
     "credit": ""
-  },
-  "source": {
-    "tool": "illustrator",
-    "toolVersion": "30.3.0",
-    "adapterVersion": "0.1.0"
   }
 }

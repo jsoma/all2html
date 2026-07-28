@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { FigmaTextSegment } from "../../plugins/figma/src/extract/text.js";
+import { buildDocument } from "../../plugins/figma/src/ir-builder.js";
 import { isUiToSandboxMessage } from "../../plugins/figma/src/messages.js";
 import {
   loadLocalUiState,
@@ -11,13 +12,17 @@ import {
 } from "../../plugins/figma/src/persistence.js";
 import {
   collectSegmentWarnings,
+  createBackgroundAsset,
   discoverTopLevelSpecialLayerNodes,
   extractSpecialLayer,
+  FIGMA_EXPORT_PARAMS,
   getNodeBoundsRelativeToFrame,
   isValidVideoUrl,
   mapTextAutoResizeToKind,
   resolveSpecialLayerTextValue,
 } from "../../plugins/figma/src/runtime-extract.js";
+import type { ExtractedFrame } from "../../plugins/figma/src/types.js";
+import { figmaCapabilities } from "../../src/core/capabilities.js";
 
 const fixtureDir = resolve(import.meta.dirname, "../fixtures/figma");
 
@@ -172,12 +177,238 @@ describe("Figma runtime helpers", () => {
     ]);
   });
 
+  /**
+   * The parser used to hand `:symbol` / `:div` candidates to the runtime, which
+   * refused them. Now they never become candidates — but they must not go
+   * quiet either: the node still exports as ordinary artwork, and the user is
+   * told the tag did nothing.
+   */
+  it("warns instead of producing candidates for :symbol / :div nodes", () => {
+    const frame = {
+      children: [
+        { id: "sym", name: "chart:symbol", visible: true, children: [] },
+        { id: "wrap", name: ":div sidebar", visible: true, children: [] },
+        { id: "png", name: "highlight:png", visible: true, children: [] },
+      ],
+    };
+    const warnings: string[] = [];
+
+    const candidates = discoverTopLevelSpecialLayerNodes(frame as never, warnings);
+
+    expect(candidates.map((entry) => entry.node.id)).toEqual(["png"]);
+    expect(warnings).toEqual([
+      `Layer "chart:symbol" tagged :symbol is not supported on Figma. The tag was ignored and the layer exported as ordinary artwork.`,
+      `Layer ":div sidebar" tagged :div is not supported on Figma. The tag was ignored and the layer exported as ordinary artwork.`,
+    ]);
+  });
+
+  it("still discovers candidates when no warning sink is passed", () => {
+    const frame = {
+      children: [{ id: "sym", name: "chart:symbol", visible: true, children: [] }],
+    };
+    expect(discoverTopLevelSpecialLayerNodes(frame as never)).toEqual([]);
+  });
+
+  /**
+   * `exportParams` is a record of what the bytes beside it actually are, and
+   * `figmaCapabilities` is a claim about the same thing. When they disagree,
+   * one of them is lying to the user — this is the D1 defect from
+   * `internal-docs/capability-matrix.md` (`exportParams.format` recording `svg`
+   * over PNG8 bytes) reproduced on Figma. Figma's `exportAsync({format:"PNG"})`
+   * takes no bit-depth, palette, or matte option and no `constraint`, so it
+   * produces full-color PNG with alpha at 1x: png24, transparent, scale 1.
+   */
+  describe("PNG export records agree with the Figma capability declaration", () => {
+    const params = FIGMA_EXPORT_PARAMS.png;
+
+    it("records the format the declaration says Figma produces", () => {
+      const imageFormat = figmaCapabilities.settings.imageFormat;
+      expect(imageFormat?.status).toBe("partial");
+      expect(imageFormat?.values).toContain(params.format);
+      expect(params.format).toBe("png24");
+    });
+
+    it("records the alpha and scale the declaration says Figma diverges to", () => {
+      // `divergesAtDefault` is the value the surface really behaves as (D25).
+      expect(figmaCapabilities.settings.pngTransparent?.divergesAtDefault).toBe(params.transparent);
+      expect(params.transparent).toBe(true);
+
+      // use2xImages false <=> scale 1. Any 2x export would set a SCALE constraint.
+      expect(figmaCapabilities.settings.use2xImages?.divergesAtDefault).toBe(false);
+      expect(params.scale).toBe(1);
+    });
+
+    it("stamps those params on both the background and overlay PNG assets", async () => {
+      const frameInfo = {
+        name: "story",
+        originalName: "story:640:dynamic",
+        sourceNodeId: "frame-1",
+        width: 640,
+        height: 360,
+      } as never;
+
+      const background = createBackgroundAsset(
+        "figma-story",
+        frameInfo,
+        640,
+        360,
+        new Uint8Array([1]),
+      );
+      expect(background.exportParams).toEqual(params);
+      expect(background.mimeType).toBe("image/png");
+
+      const overlay = await extractSpecialLayer(
+        {
+          name: "highlight",
+          type: "png",
+          inlineSvg: false,
+          node: {
+            id: "png-1",
+            name: "highlight:png",
+            type: "FRAME",
+            visible: true,
+            width: 200,
+            height: 100,
+            exportAsync: async () => new Uint8Array([2]),
+          } as never,
+        },
+        frameInfo,
+        "figma-story",
+        [],
+      );
+      expect(overlay.assets[0]?.exportParams).toEqual(params);
+      // The extension is not the format: a .png file holding png24 bytes.
+      expect(overlay.assets[0]?.path.endsWith(".png")).toBe(true);
+
+      const svgLayer = await extractSpecialLayer(
+        {
+          name: "map",
+          type: "svg",
+          inlineSvg: false,
+          node: {
+            id: "svg-1",
+            name: "map:svg",
+            type: "FRAME",
+            visible: true,
+            width: 200,
+            height: 100,
+            exportAsync: async () => new Uint8Array([3]),
+          } as never,
+        },
+        frameInfo,
+        "figma-story",
+        [],
+      );
+      expect(svgLayer.assets[0]?.exportParams).toEqual(FIGMA_EXPORT_PARAMS.svg);
+    });
+  });
+
   it("accepts only https mp4 video URLs for :video layers", () => {
     expect(isValidVideoUrl("https://cdn.example.com/video.mp4")).toBe(true);
     expect(isValidVideoUrl("https://cdn.example.com/video.mp4?autoplay=1")).toBe(true);
     expect(isValidVideoUrl("http://cdn.example.com/video.mp4")).toBe(false);
     expect(isValidVideoUrl("https://cdn.example.com/video.mov")).toBe(false);
     expect(isValidVideoUrl("not-a-url")).toBe(false);
+  });
+
+  it("keeps special-layer opacity 0 through extraction and into the IR", async () => {
+    const warnings: string[] = [];
+    const frameInfo = {
+      name: "story",
+      originalName: "story",
+      sourceNodeId: "frame-1",
+      width: 640,
+      height: 360,
+    } as never;
+
+    const extracted = await extractSpecialLayer(
+      {
+        name: "deck-hook",
+        type: "html-before",
+        inlineSvg: false,
+        node: {
+          id: "hook-1",
+          name: "deck-hook:html-before",
+          type: "FRAME",
+          visible: true,
+          // A valid value — `|| 1` used to erase it to full opacity.
+          opacity: 0,
+          children: [{ id: "text-1", type: "TEXT", visible: true, characters: "<em>Deck</em>" }],
+        } as never,
+      },
+      frameInfo,
+      "story",
+      warnings,
+    );
+
+    expect(warnings).toEqual([]);
+    expect(extracted.layer?.opacity).toBe(0);
+
+    const frame: ExtractedFrame = {
+      sourceNodeId: "frame-1",
+      name: "story",
+      originalName: "story",
+      width: 640,
+      height: 360,
+      actualWidth: 640,
+      actualHeight: 360,
+      layers: extracted.layer ? [extracted.layer] : [],
+      assets: [],
+    };
+    const doc = buildDocument([frame], { slug: "story" });
+    expect(doc.artboards[0].layers[0].opacity).toBe(0);
+  });
+
+  it("derives special-layer asset ids and paths from owner ids, so same-named frames stay distinct", async () => {
+    const candidateFor = (nodeId: string) =>
+      ({
+        name: "highlight",
+        type: "png",
+        inlineSvg: false,
+        node: {
+          id: nodeId,
+          name: "highlight:png",
+          type: "FRAME",
+          visible: true,
+          width: 200,
+          height: 100,
+          exportAsync: async () => new Uint8Array([2]),
+        } as never,
+      }) as const;
+
+    // Two frames with the same display name (a legal responsive group) but
+    // different node ids must not collapse onto one asset record.
+    const first = await extractSpecialLayer(
+      candidateFor("9:1"),
+      {
+        name: "story",
+        originalName: "story",
+        sourceNodeId: "1:1",
+        width: 640,
+        height: 360,
+      } as never,
+      "figma-story",
+      [],
+    );
+    const second = await extractSpecialLayer(
+      candidateFor("9:2"),
+      {
+        name: "story",
+        originalName: "story",
+        sourceNodeId: "2:2",
+        width: 960,
+        height: 360,
+      } as never,
+      "figma-story",
+      [],
+    );
+
+    expect(first.assets[0]?.id).toBe("figma:1-1:layer:9-1:asset");
+    expect(second.assets[0]?.id).toBe("figma:2-2:layer:9-2:asset");
+    expect(first.assets[0]?.path).not.toBe(second.assets[0]?.path);
+    // Asset references stay canonical ids.
+    expect(first.assets[0]?.artboardId).toBe("figma:1-1");
+    expect(first.assets[0]?.layerId).toBe("figma:1-1:layer:9-1");
   });
 
   it("warns clearly for hidden, empty, and ambiguous special-layer text content", () => {

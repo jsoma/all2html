@@ -171,14 +171,14 @@
     "assets": [
       {
         "id": "bg-news-story-responsive-640",
-        "path": "all2html-output/news-story-responsive-news-story-responsive-640.png",
+        "path": "news-story-responsive-news-story-responsive-640.png",
         "mimeType": "image/png",
         "width": 640,
         "height": 420,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-news-responsive-640",
         "source": {
@@ -360,14 +360,14 @@
     "assets": [
       {
         "id": "bg-news-story-responsive-960",
-        "path": "all2html-output/news-story-responsive-news-story-responsive-960.png",
+        "path": "news-story-responsive-news-story-responsive-960.png",
         "mimeType": "image/png",
         "width": 960,
         "height": 440,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-news-responsive-960",
         "source": {
@@ -549,14 +549,14 @@
     "assets": [
       {
         "id": "bg-news-story-responsive-1280",
-        "path": "all2html-output/news-story-responsive-news-story-responsive-1280.png",
+        "path": "news-story-responsive-news-story-responsive-1280.png",
         "mimeType": "image/png",
         "width": 1280,
         "height": 480,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-news-responsive-1280",
         "source": {

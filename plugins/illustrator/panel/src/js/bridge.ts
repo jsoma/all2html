@@ -1,32 +1,56 @@
 /**
  * Type-safe bridge from CEP panel to ExtendScript hostscript.
- * Wraps evalTS for each hostscript function with proper typing.
+ * Wraps evalTS for each hostscript function.
+ *
+ * evalTS returns `unknown`; the results that feed panel logic (document info,
+ * export results) get small field-presence decoders here, list/object results
+ * reuse the shared normalizers, and mutations throw on `{success: false}`.
  */
 
 import { HOST_COMMANDS } from "../shared/host-contract.js";
+import type { DocumentInfo, FontEntry, RunResult } from "../shared/types.js";
 import {
+  assertHostMutationSucceeded,
   callHostCommand,
   clearHostDiagnostics,
+  describeHostResult,
   getHostDiagnostics,
   normalizeStringListResult,
   openHostFolder,
   parseHostObjectResult,
 } from "./bridge-shared.js";
-import type {
-  DocumentInfo,
-  FontEntry,
-  RunResult,
-  XmpData,
-} from "../shared/types.js";
+
+function decodeDocumentInfo(raw: unknown): DocumentInfo | null {
+  const parsed = parseHostObjectResult<Record<string, unknown>>(raw);
+  if (!parsed) return null;
+  if (
+    typeof parsed.name !== "string" ||
+    typeof parsed.saved !== "boolean" ||
+    typeof parsed.artboardCount !== "number"
+  ) {
+    throw new Error(
+      `Malformed document info from the Illustrator host: ${describeHostResult(raw)}`,
+    );
+  }
+  return {
+    name: parsed.name,
+    path: typeof parsed.path === "string" ? parsed.path : "",
+    saved: parsed.saved,
+    artboardCount: parsed.artboardCount,
+    settingsBlockSignature:
+      typeof parsed.settingsBlockSignature === "string" ? parsed.settingsBlockSignature : null,
+  };
+}
 
 /** Get info about the active Illustrator document. */
 export async function getDocumentInfo(): Promise<DocumentInfo | null> {
-  return callHostCommand(HOST_COMMANDS.getDocumentInfo);
+  return decodeDocumentInfo(await callHostCommand(HOST_COMMANDS.getDocumentInfo));
 }
 
 /** Get the document directory path. */
 export async function getDocumentPath(): Promise<string> {
-  return callHostCommand(HOST_COMMANDS.getDocumentPath);
+  const result = await callHostCommand(HOST_COMMANDS.getDocumentPath);
+  return typeof result === "string" ? result : "";
 }
 
 /** Open a folder in the OS file browser. */
@@ -36,30 +60,31 @@ export async function openFolder(path: string): Promise<void> {
 
 export { clearHostDiagnostics, getHostDiagnostics };
 
-/** Load XMP settings from the active document. */
-export async function loadXmpSettings(): Promise<string | XmpData | null> {
+/** Load XMP settings from the active document. Raw host payload; the caller parses. */
+export async function loadXmpSettings(): Promise<unknown> {
   return callHostCommand(HOST_COMMANDS.loadXmpSettings);
 }
 
 /** Save XMP data to the active document. */
 export async function saveXmpSettings(dataJson: string): Promise<void> {
-  await callHostCommand(HOST_COMMANDS.saveXmpSettings, dataJson);
+  const result = await callHostCommand(HOST_COMMANDS.saveXmpSettings, dataJson);
+  assertHostMutationSucceeded(result, "Saving document settings");
 }
 
 /** Clear XMP data from the active document. */
 export async function clearXmpSettings(): Promise<void> {
-  await callHostCommand(HOST_COMMANDS.clearXmpSettings);
+  const result = await callHostCommand(HOST_COMMANDS.clearXmpSettings);
+  assertHostMutationSucceeded(result, "Clearing document settings");
 }
 
 /** Get all font names used in the active document. */
 export async function getDocumentFonts(): Promise<string[]> {
-  return callHostCommand(HOST_COMMANDS.getDocumentFonts);
+  const result = await callHostCommand(HOST_COMMANDS.getDocumentFonts);
+  return normalizeStringListResult(result, "Unexpected getDocumentFonts response");
 }
 
 /** Get fonts used in the document but not in the provided config. */
-export async function getMissingFonts(
-  fonts: FontEntry[],
-): Promise<string[]> {
+export async function getMissingFonts(fonts: FontEntry[]): Promise<string[]> {
   const result = await callHostCommand(HOST_COMMANDS.getMissingFonts, fonts);
   return normalizeStringListResult(result, "Unexpected getMissingFonts response");
 }
@@ -73,7 +98,7 @@ export async function readConfigFile(): Promise<Record<string, unknown> | null> 
 /** Check if the document has an ai2html-settings text block. */
 export async function hasSettingsBlock(): Promise<boolean> {
   const result = await callHostCommand(HOST_COMMANDS.hasSettingsBlock);
-  return result === "true" || (result as unknown) === true;
+  return result === "true" || result === true;
 }
 
 /** Read parsed ai2html-settings values from the active document. */
@@ -82,10 +107,17 @@ export async function readSettingsBlock(): Promise<Record<string, unknown>> {
   return parseHostObjectResult(raw, 1) ?? {};
 }
 
+function decodeRunResult(raw: unknown): RunResult {
+  const parsed = parseHostObjectResult<Record<string, unknown>>(raw);
+  if (!parsed || typeof parsed.success !== "boolean") {
+    throw new Error(
+      `Malformed export result from the Illustrator host: ${describeHostResult(raw)}`,
+    );
+  }
+  return parsed as unknown as RunResult;
+}
+
 /** Run all2html export with the given settings. */
-export async function runExport(
-  settingsJson: string,
-  fontsJson: string,
-): Promise<RunResult> {
-  return callHostCommand(HOST_COMMANDS.runExport, settingsJson, fontsJson);
+export async function runExport(settingsJson: string, fontsJson: string): Promise<RunResult> {
+  return decodeRunResult(await callHostCommand(HOST_COMMANDS.runExport, settingsJson, fontsJson));
 }

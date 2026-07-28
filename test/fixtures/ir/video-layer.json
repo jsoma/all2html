@@ -12,7 +12,6 @@
         {
           "name": "default",
           "type": "default",
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -64,7 +63,6 @@
         {
           "name": "bg-video",
           "type": "video",
-          "inlineSvg": false,
           "visible": true,
           "opacity": 100,
           "elements": [

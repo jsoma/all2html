@@ -132,14 +132,14 @@
     "assets": [
       {
         "id": "bg-news-special-visual",
-        "path": "all2html-output/news-special-visual-news-special-visual.png",
+        "path": "news-special-visual-news-special-visual.png",
         "mimeType": "image/png",
         "width": 720,
         "height": 420,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-news-special-visual",
         "source": {
@@ -149,12 +149,12 @@
       },
       {
         "id": "png-news-special-visual-storm-track",
-        "path": "all2html-output/news-special-visual-news-special-visual-storm-track.png",
+        "path": "news-special-visual-news-special-visual-storm-track.png",
         "mimeType": "image/png",
         "width": 720,
         "height": 420,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
           "transparent": true
         },
@@ -167,7 +167,7 @@
       },
       {
         "id": "svg-news-special-visual-cone-map",
-        "path": "all2html-output/news-special-visual-news-special-visual-cone-map.svg",
+        "path": "news-special-visual-news-special-visual-cone-map.svg",
         "mimeType": "image/svg+xml",
         "width": 720,
         "height": 420,

@@ -1,24 +1,25 @@
-import { evalTS } from "./lib/utils/bolt.js";
 import {
   HOST_COMMANDS,
   type HostCommandArgs,
   type HostCommandName,
-  type HostCommandResult,
   type OpenFolderResult,
 } from "../shared/host-contract.js";
-import type { DiagnosticsPayload } from "../shared/types.js";
+import type { DiagnosticEntry, DiagnosticsPayload } from "../shared/types.js";
+import { evalTS } from "./lib/utils/bolt.js";
 
+/**
+ * Returns `unknown` deliberately: the host result is untyped ExtendScript
+ * output. Each bridge wrapper normalizes or field-checks what it needs
+ * (`HostCommandResultMap` in host-contract.ts documents the intended shapes).
+ */
 export function callHostCommand<K extends HostCommandName>(
   command: K,
   ...args: HostCommandArgs<K>
-): Promise<HostCommandResult<K>> {
-  return evalTS<HostCommandResult<K>>(command, ...args);
+): Promise<unknown> {
+  return evalTS(command, ...args);
 }
 
-export function normalizeStringListResult(
-  result: unknown,
-  errorLabel: string,
-): string[] {
+export function normalizeStringListResult(result: unknown, errorLabel: string): string[] {
   if (Array.isArray(result)) {
     return result.filter(
       (entry): entry is string => typeof entry === "string" && entry.trim().length > 0,
@@ -41,10 +42,7 @@ function isRecordLike(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
-export function parseHostObjectResult<T extends object>(
-  raw: unknown,
-  maxDepth = 2,
-): T | null {
+export function parseHostObjectResult<T extends object>(raw: unknown, maxDepth = 2): T | null {
   let current = raw;
 
   for (let depth = 0; depth <= maxDepth; depth += 1) {
@@ -70,12 +68,60 @@ export function parseHostObjectResult<T extends object>(
   return isRecordLike(current) ? (current as T) : null;
 }
 
+/** Compact description of an unexpected host payload for error messages. */
+export function describeHostResult(raw: unknown): string {
+  if (raw === null || raw === undefined) return String(raw);
+  let text: string;
+  if (typeof raw === "string") {
+    text = raw;
+  } else {
+    try {
+      text = JSON.stringify(raw) ?? typeof raw;
+    } catch {
+      text = typeof raw;
+    }
+  }
+  return text.length > 200 ? `${text.slice(0, 200)}…` : text;
+}
+
+/**
+ * Mutation commands answer `{success: false, error}` on failure. Throw that
+ * instead of letting the caller treat a failed write as done.
+ */
+export function assertHostMutationSucceeded(result: unknown, label: string): void {
+  const parsed = parseHostObjectResult<{ success?: unknown; error?: unknown }>(result);
+  if (parsed && parsed.success === false) {
+    const message =
+      typeof parsed.error === "string" && parsed.error ? parsed.error : `${label} failed`;
+    throw new Error(message);
+  }
+}
+
+export function normalizeDiagnosticsPayload(raw: unknown): DiagnosticsPayload {
+  const parsed = parseHostObjectResult<{ entries?: unknown; lastError?: unknown }>(raw);
+  const entries: DiagnosticEntry[] = [];
+  if (parsed && Array.isArray(parsed.entries)) {
+    for (const entry of parsed.entries) {
+      if (isRecordLike(entry) && typeof entry.message === "string") {
+        entries.push(entry as unknown as DiagnosticEntry);
+      }
+    }
+  }
+  const lastError =
+    parsed && typeof parsed.lastError === "string" && parsed.lastError
+      ? parsed.lastError
+      : undefined;
+  return lastError === undefined ? { entries } : { entries, lastError };
+}
+
 function canUseNodeFolderOpen(): boolean {
   return typeof document !== "undefined" && typeof (globalThis as any).require === "function";
 }
 
 function normalizeFolderPath(path: string): string {
-  const trimmed = String(path || "").trim().replace(/^"(.*)"$/, "$1");
+  const trimmed = String(path || "")
+    .trim()
+    .replace(/^"(.*)"$/, "$1");
 
   if (!canUseNodeFolderOpen()) {
     return trimmed;
@@ -112,20 +158,10 @@ async function openFolderViaNode(path: string): Promise<boolean> {
     throw new Error("Folder not found");
   }
 
-  const command =
-    platform === "win32"
-      ? "cmd.exe"
-      : platform === "darwin"
-        ? "open"
-        : "xdg-open";
+  const command = platform === "win32" ? "cmd.exe" : platform === "darwin" ? "open" : "xdg-open";
   const args =
     platform === "win32"
-      ? [
-          "/d",
-          "/s",
-          "/c",
-          `start "" "${normalizedPath.replace(/\//g, "\\").replace(/"/g, '""')}"`,
-        ]
+      ? ["/d", "/s", "/c", `start "" "${normalizedPath.replace(/\//g, "\\").replace(/"/g, '""')}"`]
       : [normalizedPath];
 
   await new Promise<void>((resolve, reject) => {
@@ -146,14 +182,15 @@ export async function openHostFolder(path: string): Promise<void> {
     return;
   }
 
-  const result: OpenFolderResult = await callHostCommand(HOST_COMMANDS.openFolder, path);
+  const raw = await callHostCommand(HOST_COMMANDS.openFolder, path);
+  const result = parseHostObjectResult<OpenFolderResult>(raw);
   if (result && result.success === false) {
     throw new Error(result.error || `Failed to open folder: ${path}`);
   }
 }
 
-export function getHostDiagnostics(): Promise<DiagnosticsPayload> {
-  return callHostCommand(HOST_COMMANDS.getDiagnostics);
+export async function getHostDiagnostics(): Promise<DiagnosticsPayload> {
+  return normalizeDiagnosticsPayload(await callHostCommand(HOST_COMMANDS.getDiagnostics));
 }
 
 export async function clearHostDiagnostics(): Promise<void> {

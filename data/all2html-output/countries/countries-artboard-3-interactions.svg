@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-<!-- Generator: Adobe Illustrator 30.3.0, SVG Export Plug-In . SVG Version: 9.03 Build 0)  -->
+<!-- Generator: Adobe Illustrator 29.8.9, SVG Export Plug-In . SVG Version: 9.03 Build 0)  -->
 <svg version="1.2" baseProfile="tiny" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px"
 	 y="0px" viewBox="0 0 780 489.986" overflow="visible" xml:space="preserve">
 <g id="Layer_1" display="none">
@@ -1258,7 +1258,7 @@
 	<text transform="matrix(1 0 0 1 -354.9478 86.6493)" display="inline" font-family="'MyriadPro-Regular'" font-size="15px">:</text>
 	<text transform="matrix(1 0 0 1 -351.8428 86.6493)" display="inline" font-family="'MyriadPro-Regular'" font-size="15px"> </text>
 	<text transform="matrix(1 0 0 1 -348.6631 86.6493)" display="inline" font-family="'MyriadPro-Regular'" font-size="15px">f</text>
-	<text transform="matrix(1 0 0 1 0 -8454.4258)" display="inline" font-family="'MyriadPro-Regular'" font-size="15px">i</text>
+	<text transform="matrix(1 0 0 1 -7839 -8454.4258)" display="inline" font-family="'MyriadPro-Regular'" font-size="15px">i</text>
 	<text transform="matrix(1 0 0 1 -340.8184 86.6493)" display="inline" font-family="'MyriadPro-Regular'" font-size="15px">x</text>
 	<text transform="matrix(1 0 0 1 -334.0986 86.6493)" display="inline" font-family="'MyriadPro-Regular'" font-size="15px">e</text>
 	<text transform="matrix(1 0 0 1 -326.584 86.6493)" display="inline" font-family="'MyriadPro-Regular'" font-size="15px">d</text>
@@ -1277,7 +1277,7 @@
 	<text transform="matrix(1 0 0 1 -371.3867 105.6493)" display="inline" font-family="'MyriadPro-Regular'" font-size="15px">f</text>
 	<text transform="matrix(1 0 0 1 -363.542 105.6493)" display="inline" font-family="'MyriadPro-Regular'" font-size="15px">i</text>
 	<text transform="matrix(1 0 0 1 -360.002 105.6493)" display="inline" font-family="'MyriadPro-Regular'" font-size="15px">l</text>
-	<text transform="matrix(1 0 0 1 0 -8454.4258)" display="inline" font-family="'MyriadPro-Regular'" font-size="15px">e</text>
+	<text transform="matrix(1 0 0 1 -7839 -8454.4258)" display="inline" font-family="'MyriadPro-Regular'" font-size="15px">e</text>
 	<text transform="matrix(1 0 0 1 -450 124.6493)" display="inline" font-family="'MyriadPro-Regular'" font-size="15px">h</text>
 	<text transform="matrix(1 0 0 1 -441.7354 124.6493)" display="inline" font-family="'MyriadPro-Regular'" font-size="15px">t</text>
 	<text transform="matrix(1 0 0 1 -436.7705 124.6493)" display="inline" font-family="'MyriadPro-Regular'" font-size="15px">m</text>
@@ -1883,11 +1883,9 @@
 			c-1.866,0-3.656,0.715-4.975,1.986s-2.061,2.997-2.061,4.795c0,1.799,0.741,3.524,2.061,4.795
 			C22.621,908.539,24.411,909.253,26.277,909.253z"/>
 	</g>
-	<g id="text-2" display="none">
-		<text transform="matrix(1 0 0 1 413.3202 244.9929)" display="inline" font-family="'ArialMT'" font-size="16px">This country is an</text>
-		<text transform="matrix(1 0 0 1 413.3202 262.993)" display="inline" fill="#8CDBF1" font-family="'ArialMT'" font-size="16px">important country</text>
-		<text transform="matrix(1 0 0 1 413.3202 280.993)" display="inline" font-family="'ArialMT'" font-size="16px">that we want to talk about</text>
-	</g>
+	<text transform="matrix(1 0 0 1 413.3202 244.9929)" font-family="'ArialMT'" font-size="16px">This country is an</text>
+	<text transform="matrix(1 0 0 1 413.3202 262.993)" fill="#8CDBF1" font-family="'ArialMT'" font-size="16px">important country</text>
+	<text transform="matrix(1 0 0 1 413.3202 280.993)" font-family="'ArialMT'" font-size="16px">that we want to talk about</text>
 	<g id="path-2">
 		<path fill="none" stroke="#000000" stroke-miterlimit="10" d="M407.623,249.54c-4.208,1.335-8.689,2.055-13.338,2.055
 			c-24.331,0-44.055-19.724-44.055-44.055c0-13.062,5.684-24.796,14.714-32.863"/>
@@ -1895,12 +1893,9 @@
 			<polygon points="365.113,179.386 364.028,175.511 360.486,173.603 369.653,171.01 			"/>
 		</g>
 	</g>
-	<g id="text-1_00000109746111901079052710000008460959836866514582_" display="none">
-		<text transform="matrix(1.0375 0 0 1 151.0656 788.5939)" display="inline" font-family="'ArialMT'" font-size="16px">This country is an</text>
-		
-			<text transform="matrix(1.0375 0 0 1 151.0656 806.5939)" display="inline" fill="#8CDBF1" font-family="'ArialMT'" font-size="16px">important country</text>
-		<text transform="matrix(1.0375 0 0 1 151.0656 824.5939)" display="inline" font-family="'ArialMT'" font-size="16px">that we want to talk about</text>
-	</g>
+	<text transform="matrix(1.0375 0 0 1 151.0656 788.5939)" font-family="'ArialMT'" font-size="16px">This country is an</text>
+	<text transform="matrix(1.0375 0 0 1 151.0656 806.5939)" fill="#8CDBF1" font-family="'ArialMT'" font-size="16px">important country</text>
+	<text transform="matrix(1.0375 0 0 1 151.0656 824.5939)" font-family="'ArialMT'" font-size="16px">that we want to talk about</text>
 	<g id="path-1_00000106835765794296989640000000025169206686573468_">
 		<path fill="none" stroke="#000000" stroke-miterlimit="10" d="M173.536,767.471c0-13.111,5.942-24.883,15.372-32.954"/>
 		<g>
@@ -1953,7 +1948,7 @@
 	<text transform="matrix(1 0 0 1 -302.2554 459.5126)" font-family="'MyriadPro-Regular'" font-size="12px">d</text>
 	<text transform="matrix(1 0 0 1 -295.4873 459.5126)" font-family="'MyriadPro-Regular'" font-size="12px">f</text>
 	<text transform="matrix(1 0 0 1 -289.2114 459.5126)" font-family="'MyriadPro-Regular'" font-size="12px">l</text>
-	<text transform="matrix(1 0 0 1 0 -8454.4258)" font-family="'MyriadPro-Regular'" font-size="12px">a</text>
+	<text transform="matrix(1 0 0 1 -7839 -8454.4463)" font-family="'MyriadPro-Regular'" font-size="12px">a</text>
 	<text transform="matrix(1 0 0 1 -283.4272 459.5126)" font-family="'MyriadPro-Regular'" font-size="12px">r</text>
 	<text transform="matrix(1 0 0 1 -279.6235 459.5126)" font-family="'MyriadPro-Regular'" font-size="12px">e</text>
 	<text transform="matrix(1 0 0 1 -273.7554 459.5126)" font-family="'MyriadPro-Regular'" font-size="12px">.</text>

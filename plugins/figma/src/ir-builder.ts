@@ -3,6 +3,7 @@
  * This module is the boundary between Figma-specific extraction and the core pipeline.
  */
 
+import { hasOwn } from "../../../src/core/identifiers.js";
 import type {
   Artboard,
   Asset,
@@ -13,8 +14,9 @@ import type {
 } from "../../../src/ir/types.js";
 import { CURRENT_IR_VERSION } from "../../../src/ir/types.js";
 import { loadAndValidateIR } from "../../../src/ir/validate.js";
-import { figmaSourceFontToMapping } from "./extract/text.js";
+import { FigmaPluginError } from "./errors.js";
 import { validateExtractedFrames } from "./extract/frames.js";
+import { figmaSourceFontToMapping } from "./extract/text.js";
 import { makeFigmaArtboardId, makeFigmaLayerId } from "./ir-ids.js";
 import type { ExtractedAsset, ExtractedFrame } from "./types.js";
 
@@ -26,6 +28,14 @@ function mergeAssets(
 
   for (const frame of frames) {
     for (const asset of frame.assets ?? []) {
+      // Last-wins overwriting silently dropped an asset whenever two ids
+      // collided (the failure §3.2 fixed at the producer by deriving ids from
+      // owner ids). A collision reaching this point is a bug, so it throws.
+      if (hasOwn(assets, asset.id)) {
+        throw new FigmaPluginError(
+          `Duplicate asset id "${asset.id}". Every extracted asset needs its own id; overwriting would silently drop one asset from the export.`,
+        );
+      }
       assets[asset.id] = stripAssetBytes(asset);
     }
   }
@@ -97,8 +107,12 @@ export function buildArtboard(frame: ExtractedFrame): Artboard {
       width: frame.actualWidth,
       height: frame.actualHeight,
     },
-    responsiveness: frame.responsiveness,
-    imageOnly: frame.imageOnly,
+    // Omitted, not set to undefined: the document model must survive a JSON
+    // round-trip, and assertJsonPure enforces that per transform.
+    // `frame.imageOnly` stays extraction-local: its canonical trace is
+    // renderAs:"image" text (renderAsReason:"imageOnly") plus the background
+    // asset that contains it, not an artboard field.
+    ...(frame.responsiveness === undefined ? {} : { responsiveness: frame.responsiveness }),
     layers: frame.layers.map((layer) => ({
       id: makeFigmaLayerId(frame, layer),
       name: layer.name,
@@ -108,7 +122,9 @@ export function buildArtboard(frame: ExtractedFrame): Artboard {
         id: layer.sourceNodeId,
         name: layer.name,
       },
-      inlineSvg: layer.inlineSvg,
+      // Only `true` is meaningful, and the schema rejects the key on non-svg
+      // layers — `inlineSvg: false` is producer noise.
+      ...(layer.inlineSvg ? { inlineSvg: true } : {}),
       visible: layer.visible,
       opacity: layer.opacity,
       elements: [...layer.elements],
@@ -130,10 +146,7 @@ export function buildDocument(
   },
 ): Document {
   const validatedFrames = validateExtractedFrames(frames);
-  const fontMappings = mergeFontMappings(
-    collectFigmaFontMappings(validatedFrames),
-    options.fonts,
-  );
+  const fontMappings = mergeFontMappings(collectFigmaFontMappings(validatedFrames), options.fonts);
   const doc = {
     irVersion: CURRENT_IR_VERSION,
     source: {

@@ -1,4 +1,8 @@
-import type { ComputedPosition, EmitterReadyDocument } from "../../ir/types.js";
+import type {
+  ComputedPosition,
+  EmitterReadyDocument,
+  EmitterReadyElement,
+} from "../../ir/types.js";
 
 const CSS_PRECISION = 4;
 
@@ -10,10 +14,19 @@ function round(n: number, decimals: number = CSS_PRECISION): number {
 /**
  * Parse a CSS value like "123px" or "45.6789%" and return the numeric part.
  * Returns null if the value doesn't match the expected unit.
+ *
+ * The bare `parseFloat` is deliberate: this module ships inside the ExtendScript
+ * (ES3) bundle, where the `Number` namespace forms added in ES2015 do not exist
+ * and `polyfills.ts` does not install them. `Number.parseFloat` — one
+ * `style/useNumberNamespace` autofix away — threw here for as long as it took the
+ * source-level scan in `test/integration/es5-runtime-apis.test.ts` to find it;
+ * rollup tree-shakes this module out of the bundle unless `positionMode:
+ * "percentage"` is set, so the artifact scan saw nothing. `Number.isNaN` below is
+ * fine: `polyfills.ts` installs it.
  */
 function parseCssValue(value: string, unit: string): number | null {
   if (!value.endsWith(unit)) return null;
-  const num = Number.parseFloat(value.slice(0, -unit.length));
+  const num = parseFloat(value.slice(0, -unit.length));
   return Number.isNaN(num) ? null : num;
 }
 
@@ -80,8 +93,8 @@ function convertPosition(pos: ComputedPosition, artboardWidth: number): Computed
 export function convertToPercentageMode(doc: EmitterReadyDocument): EmitterReadyDocument {
   const artboards = doc.artboards.map((ab) => {
     const layers = ab.layers.map((layer) => {
-      const elements = layer.elements.map((el) => {
-        if (el.type === "text" && "computedPosition" in el && el.renderAs !== "image") {
+      const elements: EmitterReadyElement[] = layer.elements.map((el) => {
+        if (el.type === "text" && el.renderAs === "html") {
           const converted = convertPosition(el.computedPosition, ab.width);
           return { ...el, computedPosition: converted };
         }

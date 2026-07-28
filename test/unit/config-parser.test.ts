@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getConfigSettings, getEmitterConfig, parseConfigText } from "../../src/core/config.js";
+import {
+  getConfigSettings,
+  getEmitterConfig,
+  parseConfigObject,
+  parseConfigText,
+} from "../../src/core/config.js";
 
 describe("config parser", () => {
   it("parses jsonc config for shared browser and CLI use", () => {
@@ -33,6 +38,34 @@ describe("config parser", () => {
     ).toThrow(/Invalid config file "bad\.json"/);
   });
 
+  // Moved from the deleted `parseEmitterConfig` wrapper: the validated emit
+  // block and the path-qualified rejection are `parseConfigText` behavior.
+  it("parses a validated emit block", () => {
+    const config = parseConfigText(
+      `{ "emit": { "html": { "positionMode": "percentage" } } }`,
+      "emit.json",
+    );
+    expect(getEmitterConfig(config)).toEqual({ html: { positionMode: "percentage" } });
+  });
+
+  it("names the emit path when rejecting an invalid emitter value", () => {
+    expect(() =>
+      parseConfigText(`{ "emit": { "react": { "fitMode": "cover" } } }`, "emit.json"),
+    ).toThrow(/emit.react/);
+  });
+
+  // One validator: `parseConfigText` is JSONC parsing plus `parseConfigObject`,
+  // which the pipeline also calls directly on inline config objects.
+  it("parseConfigObject validates an already-parsed object with the same schema", () => {
+    expect(
+      parseConfigObject({ emit: { react: { typescript: true } } }).emit?.react?.typescript,
+    ).toBe(true);
+    expect(() => parseConfigObject({ settings: { maxWidth: "oops" } }, "inline")).toThrow(
+      /Invalid config file "inline": settings.maxWidth/,
+    );
+    expect(() => parseConfigObject({ bogus: 1 })).toThrow(/Invalid config file/);
+  });
+
   it("allows settings-only config files", () => {
     const config = parseConfigText(
       `{
@@ -59,5 +92,47 @@ describe("config parser", () => {
     expect(config.fonts).toEqual([
       { sourceFont: "HelveticaNeue-Bold", family: "'Helvetica Neue', sans-serif" },
     ]);
+  });
+
+  it("accepts aifont and sourceFont together when they agree", () => {
+    const config = parseConfigText(
+      `{
+        "fonts": [
+          { "sourceFont": "ArialMT", "aifont": "ArialMT", "family": "Arial, sans-serif" }
+        ]
+      }`,
+      "agreeing-fonts.json",
+    );
+    expect(config.fonts).toEqual([{ sourceFont: "ArialMT", family: "Arial, sans-serif" }]);
+  });
+
+  it("rejects a font entry whose aifont and sourceFont disagree", () => {
+    // `sourceFont` used to silently win, hiding the conflict from the one
+    // person who could resolve it.
+    expect(() =>
+      parseConfigText(
+        `{
+          "fonts": [
+            { "sourceFont": "ArialMT", "aifont": "HelveticaNeue", "family": "Arial, sans-serif" }
+          ]
+        }`,
+        "conflicting-fonts.json",
+      ),
+    ).toThrow(/aifont conflicts with sourceFont/);
+  });
+
+  it("rejects an unknown key inside a font entry", () => {
+    // The top-level config was already strict; a typo inside a font entry was
+    // silently stripped.
+    expect(() =>
+      parseConfigText(
+        `{
+          "fonts": [
+            { "sourceFont": "ArialMT", "family": "Arial, sans-serif", "wieght": "700" }
+          ]
+        }`,
+        "typo-fonts.json",
+      ),
+    ).toThrow(/wieght/);
   });
 });

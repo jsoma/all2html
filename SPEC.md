@@ -1,5 +1,13 @@
 # all2html — Technical Specification
 
+> **How to read this document.** This is the **target** design — what the system should be. It is not a description of current behavior, and it is not a record of what has been built.
+>
+> - For what is actually built and working: **`PROGRESS.md`**.
+> - For which settings and features each surface actually honors: **`internal-docs/capability-matrix.md`**.
+> - For rules that must not be violated again: the **Contract Rules** section of `CLAUDE.md`.
+>
+> Where this spec and the implementation disagree, **neither automatically wins**. The implementation is evidence about what the design costs in practice; the spec is evidence about what we intended. §11 records one case where the implementation refuted a spec decision outright.
+
 ## 1. Overview
 
 **all2html** is a plugin-based system that converts design tool documents into responsive HTML. It is a clean-room reimplementation of ai2html (NYT's Illustrator-to-HTML tool) with a canonical IR boundary between exporters and the rendering core. Illustrator is the currently supported production exporter; Figma now has a runnable in-repo beta plugin flow with a newsroom-facing UI, but it is not yet a hardened user-facing exporter.
@@ -30,10 +38,11 @@ Design Tool  →  [Input Plugin: extracts data]  →  IR (JSON + images)  →  [
 
 Features spec'd below but deferred past v1. The IR schema and emitter contracts are designed to accommodate them without breaking changes.
 
-- **v1.1 — Snippets**: SnippetElement support in Svelte/React emitters (interactive component placeholders)
-- **v1.2 — Tagged text**: Binding-based text overrides in Svelte/React emitters
-- **v1.1 — Percentage positioning**: Emitter option `positionMode: 'percentage' | 'absolute'` for fluid text scaling without JS
+- **v1.1 — Snippets**: SnippetElement support in Svelte/React emitters (interactive component placeholders). IR types and `shared/replaceable-nodes.ts` exist; no emitter imports them, so the emitted `data-replaceable` attributes are currently inert.
+- **v1.2 — Tagged text**: Binding-based text overrides in Svelte/React emitters. Same status — `data-binding-path` is emitted but nothing consumes it.
 - **v2 — Artboard change events**: `onArtboardChange` callback in component emitters
+
+**Shipped since this list was written** (do not re-plan): `positionMode: 'percentage' | 'absolute'` (`src/emitters/shared/percentage-positions.ts`) and CSS custom property image loading (`src/emitters/shared/css.ts`).
 
 ### Non-Goals (v1)
 
@@ -42,7 +51,9 @@ Features spec'd below but deferred past v1. The IR schema and emitter contracts 
 - Image bandwidth optimization (`<picture>` tags, lazy loading non-visible artboards)
 - IR versioning (pre-release)
 - A hardened, user-facing Figma or After Effects exporter in v1
-- CEP panel UI, XMP metadata persistence, profile system, shadow/animation presets (see ai2svelte analysis in `research/`)
+- Profile system, shadow/animation presets (see ai2svelte analysis in `research/`)
+
+> **Superseded.** This list originally also excluded "CEP panel UI, XMP metadata persistence." Both were subsequently built and are now among the largest subsystems in the repo (`plugins/illustrator/panel/`, Bolt CEP + Svelte 5, serving both Illustrator and After Effects). The scope decision changed; this line did not. Treat the panel as in-scope.
 
 ---
 
@@ -99,15 +110,17 @@ const svelte = emitSvelte(doc);
 - Validate between phases with lightweight invariants (IDs unique, assets exist, positions resolved)
 - Stable ordering: artboards by width, layers by z-order (bottom to top), elements by position (top-to-bottom, left-to-right)
 
-### 2.3 Output Generation — hast (Hypertext Abstract Syntax Tree)
+### 2.3 Output Generation — a node tree plus one serializer
 
-We use `hast` from the unified ecosystem to build an HTML tree, then serialize it. This gives us:
+**STATUS: SUPERSEDED by §12.6 (shipped).** This section originally specified `hast` from the unified ecosystem as the runtime tree and `hast-util-to-html` as the serializer. That is not what ships: `hast` cannot enter the ExtendScript bundle, so the emitters build their own serializable node tree (`src/emitters/html-tree.ts`) over an ES3-safe serializer (`src/emitters/shared/html-node.ts`), and `hast-util-to-html`/`hastscript` are devDependencies used only by tests. `hast-util-to-jsx-runtime` was never adopted at all.
+
+What survives from the original intent:
 - Type-safe tree construction
-- Correct escaping by default
-- Battle-tested serializer (`hast-util-to-html`)
-- React serializer (`hast-util-to-jsx-runtime`)
-- Deterministic output
+- Escaping owned by the serializer, not by call sites (`src/emitters/shared/escape.ts`)
+- Deterministic output — attributes are an ordered array of pairs, not object-key order
 - Custom code blocks quarantined as explicit raw nodes
+
+`src/emitters/shared/to-hast.ts` converts the node tree *to* hast for rehype-based post-processing, and `test/unit/html-serializer.test.ts` renders every fixture through both paths and asserts byte equality — which is what keeps the escaping contract pinned to hast's own.
 
 Custom code injection (`ai2html-html`, `ai2html-js`, `ai2html-css`) is represented as raw/dangerous nodes — they bypass escaping intentionally.
 
@@ -133,20 +146,23 @@ all2html/
 │   │   ├── font-map.ts             # font lookup + weight guessing
 │   │   └── pipeline.ts             # orchestrates transforms
 │   ├── emitters/
-│   │   ├── html.ts                 # HTML fragment emitter
+│   │   ├── html-tree.ts            # HTML node-tree builder (the one HTML emitter)
+│   │   ├── html.ts                 # re-export entry point (all surfaces incl. ExtendScript)
 │   │   ├── svelte.ts               # Svelte component emitter
 │   │   ├── react.ts                # React component emitter
 │   │   ├── standalone.ts           # Full standalone HTML page
 │   │   ├── types.ts                # EmitterOptions, emitter contract types
 │   │   └── shared/
 │   │       ├── css.ts              # CSS generation (shared across emitters)
-│   │       ├── hast-helpers.ts     # hast tree construction utilities
+│   │       ├── html-node.ts        # ES3-safe node tree + serializer
+│   │       ├── escape.ts           # the four escaping grammars, single-sourced
+│   │       ├── to-hast.ts          # node tree → hast, for rehype post-processing
 │   │       └── assets.ts           # asset path resolution + %%ASSET_PATH%% token
 │   └── cli/
 │       └── index.ts                # CLI entry point
 ├── plugins/
 │   └── illustrator/
-│       ├── all2html.js             # ExtendScript exporter
+│       ├── exporter.jsx            # ExtendScript exporter
 │       └── README.md
 ├── test/
 │   ├── fixtures/
@@ -155,7 +171,7 @@ all2html/
 │   │   │   ├── html/
 │   │   │   └── screenshots/
 │   │   ├── ai-files/               # actual .ai test files
-│   │   └── ai2html-reference/      # ai2html output for same files
+│   │   └── ai2html-reference/      # ai2html output for same files (planned; not created)
 │   ├── unit/                       # per-transform tests
 │   ├── integration/                # full pipeline tests
 │   └── visual/                     # Playwright screenshot tests
@@ -168,17 +184,24 @@ all2html/
 
 ## 3. Intermediate Representation (IR) Schema
 
+**STATUS: RECONCILED with the shipped IR, not superseded.** This section was edited to match `src/ir/types.ts` / `src/ir/schema.ts` — `generator` became the `source` envelope, `irVersion` was added, and the `settings` block was brought in line with `SETTING_DEFINITIONS`. Unlike §2.3, nothing here was overtaken by a different design: the canonical IR is still the target, so the shipped shape and the specced shape are meant to be the same document. The rest of this file remains aspirational; when this section and the code disagree, the code is the contract and this section is the bug. `PROGRESS.md` records what is actually built.
+
 ### 3.1 Document
 
 ```typescript
 interface Document {
-  generator: {
-    tool: string;           // "illustrator", "figma", etc.
-    toolVersion: string;    // "29.0"
-    pluginVersion: string;  // "0.1.0"
+  irVersion: string;        // IR schema version, currently "0.1.0" (pre-release)
+
+  source: {
+    tool: string;           // "illustrator", "figma", "svg", etc.
+    toolVersion?: string;   // "29.0"
+    adapterVersion?: string; // version of the exporter/adapter that produced this IR
+    id?: string;            // source-native document/node identifier
+    name?: string;          // source-native display name
+    [key: string]: JsonValue | undefined; // arbitrary source metadata
   };
 
-  settings: Settings;
+  settings: Partial<Settings>;
   fonts: FontMapping[];
   artboards: Artboard[];
   customBlocks: CustomBlock[];
@@ -247,7 +270,6 @@ Core merges `settings`; each emitter reads its own section from `emit`.
 interface Settings {
   // Image settings
   imageFormat: ("auto" | "png" | "png24" | "jpg" | "svg")[];
-  writeImageFiles: boolean;
   pngTransparent: boolean;
   pngNumberOfColors: number;    // 1-256
   jpgQuality: number;           // 0-100
@@ -276,8 +298,6 @@ interface Settings {
   includeResizerCss: boolean;
   includeResizerWidths: boolean;
   useLazyLoader: boolean;
-  inlineSvg: boolean;
-  svgIdPrefix: string;
   svgEmbedImages: boolean;
   clickableLink?: string;
   createPromoImage: boolean;
@@ -285,6 +305,8 @@ interface Settings {
   localPreviewTemplate?: string;
 }
 ```
+
+Three settings were deleted rather than implemented: `writeImageFiles`, the document-level `inlineSvg` setting, and `svgIdPrefix` were accepted on every surface and read on none (capability matrix D3–D5, D16–D21). Inline SVG remains expressible per layer via `Layer.inlineSvg`.
 
 ### 3.3 Artboard
 
@@ -299,11 +321,12 @@ interface Artboard {
 
   // Per-artboard overrides (from name annotation)
   responsiveness?: "fixed" | "dynamic";
-  imageOnly?: boolean;           // skip text-to-HTML, render all as image
 
   layers: Layer[];
 }
 ```
+
+An artboard-name `image_only` annotation stays an exporter-local decision: its canonical trace is `TextElement.renderAs: "image"` (with `renderAsReason: "imageOnly"`) plus the background asset that contains the rasterized text, not an artboard field.
 
 ### 3.4 Layer
 
@@ -312,7 +335,7 @@ interface Layer {
   name: string;                  // cleaned layer name
   type: "default" | "svg" | "png" | "symbol" | "div"
       | "video" | "html-before" | "html-after";
-  inlineSvg: boolean;            // for svg layers: embed inline?
+  inlineSvg?: boolean;           // svg layers only; true = embed markup inline
   visible: boolean;
   opacity: number;               // 0-100
   elements: Element[];
@@ -332,7 +355,7 @@ interface TextElement {
   kind: "point" | "area";
   position: BoundingBox;         // absolute pixels, artboard-relative, top-left origin
   rotation?: number;             // degrees (only if > 1 degree)
-  transformMatrix?: number[];    // [a, b, c, d, e, f] for rotated text
+  transformMatrix?: [number, number, number, number, number, number]; // CSS matrix(a, b, c, d, e, f)
   opacity: number;               // computed through parent chain, 0-100
   blendMode?: "multiply";        // only multiply is supported
 
@@ -349,7 +372,6 @@ interface TextElement {
 
   // Exporter metadata
   renderAs: "html" | "image";   // what the exporter decided
-  dataAttributes?: Record<string, string>;  // from note field
 
   // Tagged text binding (v1.2+)
   // When present, component emitters replace static text with a runtime expression
@@ -410,7 +432,6 @@ interface ShapeElement {
 
   // Line-specific
   orientation?: "horizontal" | "vertical";
-  segments?: { x1: number; y1: number; x2: number; y2: number }[];
 }
 
 interface VideoElement {
@@ -426,12 +447,7 @@ interface RawHtmlElement {
 interface SnippetElement {
   type: "snippet";
   key: string;                   // stable identifier (from layer name prefix)
-  group?: string;                // optional grouping (layer name, for multi-region snippets)
   position: BoundingBox;         // mount region position, absolute pixels
-  geometry?: {                   // optional shape info (for visual guides)
-    kind: "rectangle" | "circle" | "line";
-  };
-  visible?: boolean;             // whether shape was visible in design (default true)
 }
 ```
 
@@ -439,7 +455,7 @@ interface SnippetElement {
 
 A snippet is a **runtime mount region** — a positioned placeholder where the consumer can inject interactive content. The exporter creates `SnippetElement`s from shapes found on `:snippet`-annotated layers. The `key` field is framework-agnostic; emitters map it to their idiom (Svelte `{@render}` snippet prop, React `ReactNode` prop, Web Component slot).
 
-Multiple `SnippetElement`s can share the same `key` (e.g., one per artboard in a responsive set). The `group` field preserves the layer name for disambiguation.
+Multiple `SnippetElement`s can share the same `key` (e.g., one per artboard in a responsive set).
 
 #### Tagged Text Bindings
 
@@ -494,12 +510,13 @@ interface CustomBlock {
 interface Asset {
   id: string;                    // unique identifier
   path: string;                  // relative file path
-  hash?: string;                 // content hash (computed by core if not provided)
   mimeType: string;              // "image/png", "image/jpeg", "image/svg+xml"
   width: number;                 // pixel width
   height: number;                // pixel height
-  artboardName: string;          // which artboard this belongs to
-  layerName?: string;            // which layer (for :png, :svg layers)
+  artboardId: string;            // which artboard this belongs to (canonical id)
+  layerId?: string;              // which layer (for :png, :svg layers)
+  altText?: string;              // description of *this* image; document-level
+                                 // metadata.imageAltText is the fallback
   exportParams: {
     format: string;
     scale: number;               // 1 or 2 (retina)
@@ -540,7 +557,7 @@ All positions in the IR use:
 
 For each element, the exporter records `renderAs`:
 - `"htmlText"` — text frames that should become HTML overlays
-- `"image"` — text frames that should be baked into the background image (rotated text when `renderRotatedSkewedTextAs: "image"`, or artboards with `imageOnly` flag)
+- `"image"` — text frames that should be baked into the background image (rotated text when `renderRotatedSkewedTextAs: "image"`, or artboards annotated `image_only` in the design tool)
 
 The background image for each artboard is exported with all `renderAs: "htmlText"` frames hidden.
 
@@ -749,7 +766,7 @@ The spec defines **behavior**, not exact Svelte syntax. Implementation should us
 - **Container queries** (default): Same CSS as HTML emitter. `bind:clientWidth` on container for artboard change detection only.
 - **Conditional rendering** (fallback): Reactive width tracking with framework conditionals to show/hide artboards.
 
-**CSS**: Uses `<style>` with `#id`-based scoping (same as HTML emitter). All CSS is generated by the shared CSS module. No SCSS dependency — if consumers want SCSS, they post-process.
+**CSS**: Uses `<style>` with `#id`-based scoping (same as HTML emitter), wrapped in Svelte's `:global { … }` — Svelte cannot see inside `{@html}` and would otherwise prune every selector (see §11). All CSS is generated by the shared CSS module. No SCSS dependency — if consumers want SCSS, they post-process.
 
 **Asset path interpolation**: CSS custom property values use the `assetsPath` prop at runtime:
 ```svelte
@@ -984,7 +1001,7 @@ Every ai2html feature, mapped to our implementation:
 |---|---|---|
 | `namespace` | Implement | CSS class prefix |
 | `image_format` | Implement | auto/png/png24/jpg/svg |
-| `write_image_files` | Implement | Exporter handles this |
+| `write_image_files` | Removed | Deleted: zero readers on every surface (matrix D3–D5) |
 | `responsiveness` | Implement | fixed/dynamic |
 | `text_responsiveness` | Implement | Area text width: % vs px |
 | `output` | Implement | one-file / multiple-files |
@@ -1005,8 +1022,8 @@ Every ai2html feature, mapped to our implementation:
 | `include_resizer_widths` | Implement | data-min/max-width attrs |
 | `include_resizer_script` | Skip | Legacy JS resizer — modern only |
 | `use_lazy_loader` | Implement | Native loading="lazy" only |
-| `inline_svg` | Implement | |
-| `svg_id_prefix` | Implement | |
+| `inline_svg` | Removed | Deleted as a document setting (matrix D16–D18); per-layer `:svg,inline` tagging remains |
+| `svg_id_prefix` | Removed | Deleted: no prefixing implementation exists on any surface (matrix D19–D21) |
 | `svg_embed_images` | Implement | Exporter setting |
 | `clickable_link` | Implement | Wrap in `<a>` |
 | `create_promo_image` | Implement | Exporter generates |
@@ -1098,115 +1115,22 @@ Every ai2html feature, mapped to our implementation:
 
 ---
 
-## 10. Implementation Phases
+## 10. Implementation Status
 
-### Phase 1: Foundation
-- [ ] Project scaffolding (package.json, tsconfig, vitest)
-- [ ] IR schema types (`src/ir/schema.ts`)
-- [ ] Zod validation (`src/ir/validate.ts`)
-- [ ] Hand-craft 5 basic IR fixtures
-- [ ] `loadAndValidateIR` with tests
+This section previously held a phase-by-phase build plan with ~70 unchecked task boxes. Every one of phases 1-8 has since shipped, so the checklist had become actively misleading — it read as "nothing is built."
 
-### Phase 2: Core Pipeline (text only)
-- [ ] `resolveSettings` — settings merge chain
-- [ ] `computeBreakpoints` — artboard visibility ranges
-- [ ] `computeStyles` — AI style → CSS conversion
-- [ ] `fontMap` — font lookup + weight guessing
-- [ ] `deduplicateStyles` — base selection, class assignment
-- [ ] `computePositions` — absolute → percentage
-- [ ] Unit tests for each transform
+**Build status now lives in `PROGRESS.md`.** Per-surface feature and settings support lives in `internal-docs/capability-matrix.md`. Do not reintroduce a task checklist here; a spec that doubles as a project tracker goes stale in exactly this way.
 
-### Phase 3: HTML Emitter
-- [ ] hast tree construction for single artboard
-- [ ] CSS generation (container, artboard, text styles)
-- [ ] Multi-artboard responsive (container queries)
-- [ ] Custom block injection (CSS, JS, HTML)
-- [ ] Accessibility (alt text, aria role)
-- [ ] Clickable link wrapper
-- [ ] Snapshot tests against golden HTML
-
-### Phase 4: ExtendScript Exporter
-- [ ] Document validation
-- [ ] Settings block parsing
-- [ ] Artboard enumeration + name parsing
-- [ ] Layer structure extraction
-- [ ] Text frame extraction (point + area)
-- [ ] Character style extraction
-- [ ] Clipping mask detection
-- [ ] Image export (artboard backgrounds)
-- [ ] IR JSON output
-- [ ] Test against sample .ai files
-
-### Phase 5: Advanced Features
-- [ ] SVG layer export + inline SVG
-- [ ] PNG layer export
-- [ ] Symbol/div layer (shapes → CSS)
-- [ ] Video layer
-- [ ] Rotated text (transform matrix)
-- [ ] `image_only` artboards
-- [ ] Dynamic responsiveness (`aspect-ratio` + padding shim)
-- [ ] `multiple-files` output mode
-- [ ] Promo image generation
-- [ ] Template system (Mustache/EJS)
-- [ ] Cache bust token
-- [ ] CSS custom property image loading (container query optimization)
-- [ ] `%%ASSET_PATH%%` token generation in shared CSS
-
-### Phase 6: Visual Regression
-- [ ] Playwright test infrastructure
-- [ ] Screenshot tests at multiple widths
-- [ ] Create .ai test files in Illustrator
-- [ ] Run ai2html on test files → commit reference output
-- [ ] Run our pipeline on same files → compare screenshots
-
-### Phase 7: Component Emitters (v1)
-- [ ] Svelte emitter — static component shell
-  - [ ] `assetsPath` prop + `%%ASSET_PATH%%` replacement
-  - [ ] `onMounted` callback
-  - [ ] CSS scoped via `#id` (not Svelte scoping)
-  - [ ] Container queries (same CSS as HTML emitter)
-  - [ ] SnippetElement → empty positioned divs (placeholder)
-  - [ ] TextElement.binding → static text (ignored in v1)
-- [ ] React emitter — static component shell
-  - [ ] Same feature set as Svelte (parallel implementation)
-  - [ ] `emit.react.typescript` option (.tsx generation)
-- [ ] Standalone HTML emitter
-- [ ] Emitter option loading from config file `emit` section
-
-### Phase 8: CLI + Polish
-- [ ] CLI with argument parsing
-- [ ] `--emit-options` flag or config file `emit` section
-- [ ] Watch mode
-- [ ] Error messages and warnings matching ai2html's
-- [ ] Documentation
-
-### Phase 9: Snippets (v1.1)
-- [ ] Svelte: `{@render key?.()}` inside positioned wrapper divs
-- [ ] React: `ReactNode` prop rendering inside positioned wrapper divs
-- [ ] Exporter: `:snippet` layer detection → SnippetElement creation
-- [ ] Stable key generation + warnings for auto-generated keys
-- [ ] Test fixtures: `snippet-layer`, `snippet-multi-artboard`
-
-### Phase 10: Tagged Text (v1.2)
-- [ ] Svelte: `taggedText.path` expressions, `{@html}` for allowHtml
-- [ ] React: optional chaining expressions, `dangerouslySetInnerHTML`
-- [ ] `onArtboardChange` callback (both emitters)
-- [ ] Exporter: `:text`/`:htext` layer detection → TextElement.binding
-- [ ] Stable path generation from layer name + object name
-- [ ] Security documentation for `allowHtml`
-- [ ] Test fixtures: `tagged-text`, `tagged-text-key-stability`, `tagged-text-html-injection`
-
-### Phase 11: Advanced Emitter Features (future)
-- [ ] Evaluate fit/overflow semantics against real component use cases before reintroducing them publicly
-- [ ] Revisit Svelte preload behavior once there is a concrete asset-loading strategy to optimize
+What remains genuinely unbuilt is listed under "v1.1+ Roadmap" in §1 and "Deferred" in `PROGRESS.md`.
 
 ---
 
+
 ## 11. Open Questions (to resolve during implementation)
 
-1. **CSS namespace collision prevention**: Should we hash the slug to ensure uniqueness, or rely on the document name being unique?
+1. **CSS namespace collision prevention**: Should we hash the slug to ensure uniqueness, or rely on the document name being unique? — *Now urgent, not hypothetical: container ids are slug-prefixed but text element ids are not (`g-ai0-1`), so two graphics on one page collide. `metadata.slug` is also unvalidated (`MetadataSchema.slug` in `schema.ts` is only `min(1)`, not a CSS-identifier check) while flowing into CSS selectors and `container-name`.*
 2. **Asset manifest hashing**: Should the core rename images to content-hashed filenames, or keep the exporter's names?
-3. **Web UI**: Drag-and-drop IR processing interface — separate project or part of this repo?
+3. ~~**Web UI**: Drag-and-drop IR processing interface — separate project or part of this repo?~~ **Resolved: part of this repo** — `apps/svg-dropzone` is a workspace package backed by `src/browser.ts`.
 4. **Batch processing**: Should the CLI support processing multiple IR files at once?
 5. **Print styles**: CSS custom properties + container queries may behave differently in print. ai2html has `media="screen,print"` on styles. Do we need print-specific fallbacks?
 6. **`prefers-reduced-data`**: Should the CSS custom property approach skip image loading when the user has opted for reduced data?
@@ -1216,7 +1140,11 @@ Every ai2html feature, mapped to our implementation:
 
 > **Svelte CSS scoping**: Should the Svelte emitter use Svelte's built-in scoping (`:global()` modifiers), or keep our own `#id`-based scoping?
 >
-> **Decision**: Keep `#id`-based scoping. This is consistent across all emitters, avoids framework-specific scoping quirks, and works the same whether the component is SSR'd or client-rendered.
+> **Original decision**: Keep `#id`-based scoping. Consistent across emitters, avoids framework-specific quirks, works the same SSR'd or client-rendered.
+>
+> **REVERSED — this decision was wrong and shipped a broken emitter.** The reasoning ignored that the markup goes out through `{@html}` in `svelte.ts`. Svelte's compiler cannot see inside `{@html}`, so it prunes every `#id` selector as unused. Compiling the emitted component against Svelte 5 produces `css_unused_selector` for every rule and comments out the entire stylesheet, including the `@container` breakpoint rules. The output is unstyled absolutely-positioned text.
+>
+> **Correct decision**: wrap the emitted stylesheet in Svelte's `:global { … }` block. The `#id` scoping *strategy* is still right — it is what keeps output namespaced — but Svelte must be told not to scope it a second time. The general lesson: a decision about a framework's semantics is not resolved until something compiles the output. **STATUS: DONE** — the emitted stylesheet is wrapped in `:global { … }`, `svelte` is a devDependency, and `test/unit/svelte-emitter-compile.test.ts` compiles the output against Svelte 5 and asserts zero `css_unused_selector` warnings.
 
 > **Layer types for snippets/tagged text**: Should `:snippet`, `:text`, `:htext` be new Layer types?
 >
@@ -1225,6 +1153,159 @@ Every ai2html feature, mapped to our implementation:
 > **Emitter-specific options**: In Settings or separate?
 >
 > **Decision**: Separate `emit` section in config file. Settings are exporter-generated and tool-agnostic. Emitter options are render-target concerns. The core pipeline ignores `emit`; each emitter reads its own section.
+
+## 12. Target Contract (redesign)
+
+The current implementation is treated as **evidence**, not as a specification. This section records what the contract should look like if written from scratch today, informed by the specific ways the present one has failed.
+
+**Order of work.** Capability declarations (§12.5) and structured warnings (§12.7) lead, because they depend on nothing else here and they are where all the *verified user harm* lives — settings that silently no-op. Then JSON purity (§12.2) and exclusive phase types (§12.1), which are local and mechanical. The envelope/scene split (§12.9) is deferred; §12.6 (one emitter) is a maintenance win, not a correctness one, and must not gate the parity fix — that bug's root cause is `escapeAttr` defined three times, which is a day's work to single-source.
+
+An earlier draft chained everything behind the envelope split, which meant the user-visible lying persisted through the riskiest work. That was backwards.
+
+### 12.1 Phase types must be exclusive, not additive
+
+**STATUS: DONE** (D20). See the implementation note in D20 for what shipped.
+
+**Evidence (pre-fix, retained as the reason the phase types exist).** The phase types did not enforce the pipeline. `settings-resolver.ts` fabricated a placeholder breakpoint (`minWidth: 0, maxWidth: Infinity`) purely so `ResolvedDocument` typechecked — meaning `computeBreakpoints` could be skipped entirely and produce silent garbage instead of a type error. `EmitterReadyLayer.elements` admitted both the emitter-ready variants *and* the raw ones, so "emitter-ready" guaranteed nothing; the cost was 10+ runtime property-sniffing guards scattered across the emitters and transforms. `compute-styles.ts` cast an image-rendered `TextElement` into the styled union rather than modelling it. All three are gone.
+
+**Target.**
+- Each phase type makes the previous phase's uncertainty *unrepresentable*. If a transform can be skipped without a type error, the phase type is decoration and should be deleted or fixed.
+- **Use an explicit `pipelinePhase` literal discriminator, not additive fields.** TypeScript is structural: adding a field per phase does not stop a later document from being assignable to an earlier phase's parameter, which is exactly why `computeBreakpoints` can currently be called twice or never with no type error. Per-phase field types are selected by the literal; each transform's signature names the exact phase it consumes and produces.
+- **Phase documents are internal.** The persisted canonical IR stays the validated source document — bundles already serialize the original IR (`output-bundle.ts#createOutputBundle`). Serializing intermediate phases would expand the long-term contract for no benefit.
+- Add a distinct `BreakpointedDocument` phase so `breakpoint` simply does not exist before `computeBreakpoints` runs. Delete the placeholder.
+- Model image-rendered text as its own element variant so no transform casts.
+- Remove the raw variants from `EmitterReadyLayer`. Every runtime `"in"`-check that disappears is the measure of success.
+
+### 12.2 The model is JSON, with no sentinels
+
+**STATUS: DONE** (D21). `compute-breakpoints.ts` models the unbounded top artboard with `maxWidth: undefined`, `assertJsonPure()` runs at five boundaries on the shared path and two on the ExtendScript path, and `assertUsableArtboardDimensions()` closes the stringified-divisor class.
+
+**Evidence (pre-fix).** `compute-breakpoints.ts` stored `Infinity`, which `JSON.stringify` turns into `null`; the emitters' `bp.widthRangeMax < Infinity` guard then passes and emits `max-width:nullpx`. Latent only because nothing currently serializes a post-breakpoint document — the Figma bridge, a worker, or an IR cache would all trigger it.
+
+**Target.** Absence is modelled by absence (`maxWidth?: number`), never by a sentinel. The document model round-trips through JSON unchanged, and a test asserts exactly that.
+
+The rule binds consumers too, not just the model: `extractBreakpointData()` carries the absent `maxWidth` through as absent (`isBreakpointActive()` treats it as unbounded) rather than substituting a large number. A `99999` at the consumer is the same defect relocated — it is a real upper bound to anything doing `minWidth <= w <= maxWidth`, so a 120000px artboard or a 100000px container matches no entry.
+
+**Where the invariant is enforced.** Runtime assertions (`src/core/json-purity.ts`) cover five transform boundaries on the Node/browser path and two — entry and exit — on the ExtendScript path. `groupArtboards` is not asserted anywhere; it coins no numbers. The reduced ExtendScript coverage is a measured cost tradeoff, not an assumption that the path is covered elsewhere: see decision D21 for the numbers and for the earlier version of this claim, which asserted nothing at all inside ExtendScript while implying full coverage.
+
+**What the assertions do not cover, at any boundary count.** The walk tests `typeof === "number"`, so a sentinel that is divided and stringified in one expression is already a string by the next boundary. `compute-positions.ts` writes `${round((pos.x / artboardWidth) * 100)}%`; a zero-width artboard therefore emitted `left: Infinity%` with both gates green and no warning. Five boundaries would not have caught it either. Non-finite *intermediates* are prevented at the input instead: Zod (`ArtboardSchema.width`/`height` are `.positive()`) on the shared path, and `assertUsableArtboardDimensions` (`src/core/artboard-dimensions.ts`) on the ExtendScript path, which runs no Zod. Artboard width and height are the only divisors in the ExtendScript-bound transforms; a new divisor needs the same input guard, because a purity assertion cannot substitute for one.
+
+### 12.3 One settings table, derived everywhere
+
+**Evidence.** `settings-definitions.ts` is already the single source for defaults and the Zod schema — this is the best-designed part of the codebase and the target extends it rather than replacing it. But everything else restates it: the panel maintains its own key map and labels, both ExtendScript exporters carry their own snake_case parsers with *different defaults* (`use_2x_images_if_possible` defaults `true` in one path and `undefined` in the other), and the docs table is hand-maintained. Adding one setting currently touches ~19 non-test files.
+
+**Target.** The definition table also drives the snake_case compatibility mapping, the panel controls and their labels/help, and the generated settings documentation. Adding a setting touches one file plus the code that acts on it.
+
+### 12.4 Settings resolve exactly once, in the core
+
+**Evidence.** Precedence is implemented three times with different layer counts — panel 5 (`panel/src/js/persistence.ts#resolveSettingsLayers`), Illustrator 3 (`illustrator/exporter.jsx#loadConfigFiles`), After Effects 3 (`ae-persistence.ts#resolveAeStateLayers`) — and the panel pre-merges its layers before handing them over, so the exporter's documented order is only accidentally correct.
+
+**Target.** Surfaces contribute *unmerged, labelled layers*; the core resolves and returns both the resolved value and its provenance. The panel sends only the keys the user actually edited. Provenance becomes a core output rather than a thing the UI reconstructs, which also collapses the five-badge display into what a user needs: locked, and changed.
+
+### 12.5 Surfaces declare capabilities; unsupported settings warn
+
+**Evidence.** This is the single largest source of user-visible wrongness. `output: multiple-files` is a no-op on Illustrator (`groupArtboards` is never called from `src/extendscript/index.ts`). `imageFormat: svg`/`png24` silently produce PNG8. The Figma UI offers five image formats and always exports PNG at 1x. In every case the export *succeeds* and the user gets no signal.
+
+**Target.** Each surface declares the settings and features it honors. The core validates the resolved settings against the active surface's declaration and warns on anything unhonored. `internal-docs/capability-matrix.md` and the public support matrix are generated from those declarations, so documentation cannot drift from behavior. A UI must not render a control for a capability its surface does not declare.
+
+### 12.6 One HTML emitter
+
+**Evidence.** `html.ts` and `html-string.ts` are ~1050 lines with an identical function decomposition and 100% duplicated logic, differing only in hast-vs-string idiom, kept in sync by a test that cannot see the divergence class that actually occurs. They disagree today on four fields because hast's escaping subset differs from `escapeHtml`'s. `escapeAttr` is defined four times across the repo.
+
+**Target.** One emitter builds a serializable node tree of plain objects — which the JSON-serializable rule already requires — and one ES5-safe serializer renders it. Nothing downstream consumes hast; only its string output is used. The escaping contract becomes single-sourced, which retires the parity bug *by construction* rather than by test. A hast adapter can remain for consumers who want the tree.
+
+> **STATUS: DONE for HTML.** `emitters/html-tree.ts` builds the tree, `emitters/shared/html-node.ts` defines the nodes and holds the one ES3-safe serializer, and `html.ts` is the re-export entry point onto it for every surface (the `html-string.ts` / `emitHTMLString` alias has since been deleted). Output is byte-identical to both former emitters, verified against verbatim copies of each across every IR fixture × the full option cross-product × grouped/ungrouped before those copies were deleted. Attributes are an ordered array of pairs rather than an object, because ES3 does not define `for...in` order and the old string emitter's `Object.keys` iteration was therefore unspecified inside ExtendScript. `shared/to-hast.ts` keeps the rehype seam and doubles as the parity anchor that pins the escaping subsets to `hast-util-to-html`'s own. Cost: +788 B in both ExtendScript artifacts (this bundle only ever carried one of the two emitters, with builder and serializer fused, so there was no duplication here to delete); −239 lines repo-wide.
+>
+> **STATUS: DONE for Svelte and React.** Both now consume `buildHTMLTree()` through `emitters/shared/component-tree.ts`, which is what turns `buildHTMLTree()` from an exported convenience into the actual shared input. Three regexes retired: the `<style>` block is *removed from the tree as a node* rather than matched out of a string; the Google Fonts `<link>` tags are never built (the tree is built with `googleFonts: "none"` and the href is carried out separately to `<svelte:head>` / JSX, so `stripGoogleFontsLinkTags` has no caller in the emitters); and `/<!--[\s\S]*?-->/g` is gone, which stops the emitters eating comments an author wrote inside their own `html-before` / `html-after` blocks. Zero bytes in either ExtendScript artifact — neither emitter is in that entry graph.
+>
+> **`data-replaceable` is no longer inert.** `emitters/shared/replaceable-nodes.ts` — written for this and imported by neither emitter — now finds snippet and binding placeholders *structurally in the tree* and splits it at them (`segmentTree`). Only the ancestor spine down to a placeholder is reconstructed as real framework markup; every subtree with no placeholder inside stays one opaque `{@html}` / `dangerouslySetInnerHTML` chunk, which keeps author HTML and inline SVG away from the framework compilers and leaves the no-snippet case at exactly one chunk. Snippets become **Svelte 5 snippet props** (`{@render key?.()}`) and **React `ReactNode` props**; bound text becomes a `bindings` prop keyed by path, with the design-file text as the fallback branch and the original paragraph class re-applied so replacing the text does not drop its type styles. Prop names are derived through `emitters/shared/js-identifier.ts`, which is total: a key is sanitized to an identifier, kept clear of every JS/TS reserved word *and* of every identifier the emitters generate themselves, and made unique within the document, deterministically. Any key whose prop name had to change warns (`emit:snippet-prop-renamed`) naming the layer and the chosen name, instead of emitting a component that does not compile (`default`), silently shadows a generated binding (`cssText`, `resolveHtml`), or renders one snippet in two places. Layer names and binding paths are emitted as **string literals in a data position** (`snippetKeys` / `bindingPaths`), never inside a comment — `JSON.stringify` escapes neither `*/` nor a newline in a `//` comment, which made a layer name a code-execution vector in the desk's own build.
+>
+> **Full JSX generation was considered and refused as a separate project.** React's static markup is still injected, not converted. What a real JSX emitter would need, none of which is in this change: (1) **an HTML parser for `raw` nodes** — custom blocks, html-hook layers and inline SVG are arbitrary author markup that the ES3-safe tree deliberately does not parse, and inline SVG additionally needs the SVG attribute set camelCased (`stroke-width` → `strokeWidth`), so this pulls a parser into a path that currently has none; (2) **a complete HTML→JSX attribute table**, not the handful of names the spine needs today; (3) **`&nbsp;` and other entity `raw` nodes resolved to characters**, since JSX has no entity syntax; (4) **a golden corpus**, because unlike the HTML collapse there is no byte-identical target to verify against — the output is new by construction. Converting only the nodes we build and leaving `raw` as innerHTML would put two escaping models in one file, which is the defect class §12.6 exists to remove. The spine conversion that did ship is the reusable half of that work: `styleObjectLiteral`, the attribute mapping and the segmenter are what a full emitter would build on.
+
+### 12.7 Warnings are structured
+
+**STATUS: DONE.** `src/core/warnings.ts` now groups by a `category` assigned at the call site, in the fixed `WARNING_CATEGORY_ORDER`, and never inspects message text; `src/cli/index.ts` calls `formatGroupedWarnings(groupWarnings(...))` from its five report sites. `test/unit/illustrator-warning-plumbing.test.ts` asserts `plugins/illustrator/exporter.jsx` no longer defines its own `groupWarnings`.
+
+**Evidence (pre-fix).** `warnings.ts` classified warnings by substring-matching English prose (`w.includes("font")`), so "no fill color" landed in `other`. The core's grouping was dead code while a hand-copied ES5 fork in `exporter.jsx` was what users saw — and it only ran in automated mode, so the interactive user got a list truncated at 10 with no way to see the rest.
+
+**Target.** Warnings carry a stable code and category assigned at the call site, plus the artboard/layer/element they concern. Grouping, truncation, and presentation are then presentation decisions, and every surface can render them well.
+
+### 12.8 Surfaces load the core, or they are not surfaces
+
+**Evidence (pre-fix).** The After Effects exporter never loaded the core bundle (`grep -c All2Html` → 0) and carried forked copies of the google-fonts helpers and escaping, which had already drifted. It generates CSS directly, which §2.1 assigns to the core.
+
+**Target.** Any surface claiming to be part of this pipeline loads the shared bundle. Tool-agnostic logic is exported from an `src/extendscript/` bundle entry, never hand-copied. Both build scripts already concatenate string literals, so this costs one extra slot each.
+
+**Status: half done, and the halves are separable.** The helper half shipped (D13): `build:after-effects` concatenates `dist/extendscript/all2html-ae-core.js` — ES5 polyfills plus `emitters/shared/escape.ts` and `emitters/shared/google-fonts.ts`, rolled up from `src/extendscript/ae-index.ts` — and the forks are deleted. It is a *second* entry rather than `index.ts` because AE constructs no IR, and importing the pipeline measured 118 KB against the helper bundle's 13.5 KB. What has not shipped: AE still generates CSS directly and still runs no transform, so §2.1's assignment is still violated and `runtimeChecked` is still `false`. Closing that is the temporal-scene work, not another build slot.
+
+### 12.9 The product boundary is the embed, not the artboard
+
+**The scope question is settled: After Effects is in.** The product is defined by the user's job — *a graphics desk person made a thing and needs to embed it in a web page* — not by whether the output happens to be a positioned-text fragment. Motion work sits inside that boundary, and other motion tools should be able to join later.
+
+The mistake worth recording: an earlier draft of this section inferred product scope from code sharing, and concluded that because the AE exporter shares nothing with the core it might be a different product. That is backwards. Code sharing is an implementation fact. It describes how well the contract currently generalizes, not where the product ends.
+
+**What this changes.** The current IR conflates *the document model* with *the static-graphic document model*. `Document` is metadata + settings + fonts + customBlocks + assets + `artboards[]`, where an artboard's visibility is a function of viewport width. AE has every one of those concepts except the last, and reimplements several because there is no seam letting it take only the parts it needs.
+
+> **STATUS: DEFERRED.** The split below was costed after it was proposed and does not currently clear the bar — 46 `.artboards` call sites in `src/`, 52 in `test/`, and 72 JSON fixtures, to introduce a union with **one member implemented**. The `external` kind was dropped outright (no entry point; we would own third-party failures we cannot see). The claim in §12.8 that After Effects joining the core costs "one build-script slot" was wrong: that exporter contains zero occurrences of `irVersion` or `artboards` and never constructs IR at all, so putting it on the core means inventing the entire temporal scene — the largest item in the plan, priced as free.
+>
+> **What ships instead:** export the shared google-fonts and escape helpers through `src/extendscript/index.ts` and give AE the bundle slot (~90% of the dedupe benefit, zero contract churn). `Document` stays as-is. (`Artboard.relationship` was added here as "one field" and then removed again under D27: it had zero consumers, and a field nothing reads is the pattern this work exists to remove. It returns with `groupArtboards`, which is where it has to act and which is blocked on ES3 safety — D19.) If a second scene kind actually ships, add `scene` as an optional discriminated field then.
+>
+> **The envelope contents below are also wrong and must be revised before this is ever picked up.** `Settings` is predominantly static-renderer policy (`imageFormat`, `responsiveness`, `renderRotatedSkewedTextAs`, `includeResizerCss`), and assets are structurally artboard-bound — `Asset.artboardId` is required (`schema.ts#artboardId`) and cross-validated against the artboard graph by the document `superRefine`. Putting settings and assets in a "universal" envelope would move static coupling rather than remove it, then freeze it into the contract.
+>
+> **Correct decomposition when revisited:** only `irVersion`, `source`, and `metadata` are universal. Scene-specific configuration *and resources* live beside the scene. A unified resource catalog, if ever wanted, needs generic ownership — `{ owner: { kind, id } }` — not a mandatory `artboardId`.
+>
+> See `internal-docs/product-decisions.md` D9/D13/D13b.
+
+**Target — split the envelope from the scene.**
+
+```
+Document = Envelope + Scene
+
+Envelope  (shared by every surface, no exceptions)
+  irVersion, source, metadata, settings, fonts, customBlocks, assets
+
+Scene     (tagged union, per-kind transforms and emitters)
+  { kind: "static",   artboards: Artboard[] }      // visibility = f(viewport width)
+  { kind: "temporal", composition: Composition }   // visibility = f(time)
+  { kind: "external", runtime: RuntimeHandoff }    // all2html renders nothing; it wraps
+```
+
+The third kind was discovered by the pressure test in §12.10 and is not speculative — it is what a Datawrapper embed, a Rive state machine, a D3 script, and a Three.js scene all reduce to.
+
+Envelope transforms — settings resolution, font mapping and Google Fonts, asset management, custom blocks, warnings, output bundle and manifest — run for **every** document regardless of kind. That alone retires the AE exporter's forked google-fonts and escaping helpers and gets it the output-bundle contract it currently ignores.
+
+Scene transforms — `computeBreakpoints`, `computeStyles`, `deduplicateStyles`, `computePositions` — are static-specific and should be typed as such rather than presented as "the pipeline."
+
+Emitters declare which scene kinds they accept. This needs no new mechanism: it is the same capability declaration as §12.5, which generalizes here for free. The HTML/Svelte/React emitters declare `static`; the AE player declares `temporal`; a future emitter may accept both.
+
+**Consequence for §12.1.** This is now *upstream* of the phase-type work, not a side question. Cleaning up the phase types while assuming every document has `artboards[]` bakes static-ness into the types and guarantees a second pass. Decide the envelope/scene split first, then design the phase types over it.
+
+**Candidate future surfaces** (all fit the temporal or envelope-only shape, none require a new product):
+- **Lottie / Bodymovin** — the same After Effects comps, exported as vector JSON instead of rendered video. Scalable, far smaller, and text can stay live rather than baked into pixels. The most valuable near-term addition precisely because it is not a new tool for the user to learn.
+- **Rive** — state-machine animations with a small web runtime; strong fit for interactive explainers.
+- **Cavalry** — scriptable motion design, comparable extraction story to AE.
+- **Blender** — 3D explainers via its Python API; envelope-only, output is a rendered sequence.
+- **Spline** — web-native 3D.
+
+The test of the split: adding one of these should touch a scene kind and an emitter, and nothing in the envelope.
+
+### 12.10 Pressure test: what candidate tools break
+
+The envelope/scene split above was tested against tools all2html does not support, to find where the contract fails before committing to it. Six corrections came out of it. A candidate that fits cleanly is as informative as one that breaks — Photoshop (single canvas, text layers over raster) needs nothing new, which is evidence the static scene is correctly shaped for its class.
+
+**1. Scene kind belongs to the export, not the surface.** After Effects can produce a rendered video *or* Lottie/Bodymovin vector JSON from the same composition — `temporal-raster` and `temporal-vector`, same tool, same document. An earlier draft had surfaces declaring scene kinds; they cannot. The declaration lives on the export, and one surface may offer several.
+
+**2. Three scene kinds, not an open-ended set.** The first instinct was to generalize to "progression axes" — width, time, scroll offset, pan/zoom, interaction state. That over-generalizes. Rive state machines are graphs, not axes; a Datawrapper embed has no axis all2html controls. All of them — Rive, Datawrapper, Flourish, Observable, D3, Three.js, Spline — reduce to the same thing: **all2html does not render the scene, it wraps a runtime.** One `external` kind absorbs the whole category, and the axis abstraction is not needed.
+
+**3. The envelope is separable and is the larger product idea.** A third-party chart embed contributes *zero* scene, yet still wants everything else all2html does: credit line, alt text, headline/leadin, responsive wrapper, font handling, asset manifest, CMS-ready bundle. That case proves the envelope stands alone. "The newsroom embed envelope" is a broader and more defensible product than "the artboard renderer," and the split makes it reachable rather than hypothetical.
+
+**4. The coordinate contract is static-scoped, not a global IR rule.** `CLAUDE.md` currently states "all positions in IR are absolute pixels, top-left origin, per-artboard coordinate space" as though it governs the IR. Maps (QGIS, Mapbox) have a geographic coordinate space with viewport-relative labels; temporal scenes key overlays to time. The rule is correct *for the static scene* and must be scoped there.
+
+**5. `artboards[]` conflates two different relationships — and this is the one finding that ships now.** It is a single field on `Artboard`, independent of the deferred split. Multiple artboards currently mean "responsive alternates — pick one by width." But an InDesign document's pages, or a set of artboards a designer intends as separate deliverables, are a *sequence*: all of them, in order, not one chosen by viewport. The `multiple-files` setting is the model trying to express this and failing — which is why it is easier to leave unwired than to implement. The relationship must be explicit in the scene (`alternates` vs `sequence`) rather than inferred from a setting at emit time. **This reclassifies a "missing wiring" bug as a modelling gap** and should be fixed in the contract phase, not the cleanup phase. **Status: not in the IR.** The field was declared and validated ahead of its consumer and removed under D27; it lands together with the `groupArtboards` rewiring that consumes it, not before.
+
+**6. Capability declarations must be bidirectional.** §12.5 declares what a surface *honors*. Scrollytelling exposes the other direction: a scene driven by the host page's scroll position cannot be a self-contained embed, so the output must declare what it *requires of its host* — self-contained, requires a runtime script, requires scroll integration, requires host-page CSS. The output-bundle contract currently assumes self-containment universally. Without the reverse declaration, the failure mode is an embed that looks fine in preview and does nothing on the page.
+
+---
 
 ## Appendix A: Determinism Contract
 

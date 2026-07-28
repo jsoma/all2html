@@ -22,7 +22,6 @@ const KEY_MAP: Record<string, string> = {
   projectName: "project_name",
   htmlOutputExtension: "html_output_extension",
   imageSourcePath: "image_source_path",
-  writeImageFiles: "write_image_files",
   textResponsiveness: "text_responsiveness",
   maxWidth: "max_width",
   centerHtmlOutput: "center_html_output",
@@ -31,8 +30,6 @@ const KEY_MAP: Record<string, string> = {
   testingMode: "testing_mode",
   includeResizerCss: "include_resizer_css",
   includeResizerWidths: "include_resizer_widths",
-  inlineSvg: "inline_svg",
-  svgIdPrefix: "svg_id_prefix",
   svgEmbedImages: "svg_embed_images",
   pngTransparent: "png_transparent",
   cacheBustToken: "cache_bust_token",
@@ -47,6 +44,9 @@ for (const [panel, exporter] of Object.entries(KEY_MAP)) {
   REVERSE_KEY_MAP[exporter] = panel;
 }
 
+/** Every panel setting key, derived from the adapter map (the panel's key authority). */
+export const PANEL_SETTING_KEYS = Object.keys(KEY_MAP) as PanelSettingKey[];
+
 export function exporterToPanelKey(exporterKey: string): PanelSettingKey | undefined {
   return REVERSE_KEY_MAP[exporterKey] as PanelSettingKey | undefined;
 }
@@ -56,9 +56,7 @@ export function exporterToPanelKey(exporterKey: string): PanelSettingKey | undef
  * Only includes keys that are explicitly set (not undefined).
  * All values become strings (matching ai2html-settings text block format).
  */
-export function panelToExporterSettings(
-  panel: PanelSettings,
-): Record<string, string> {
+export function panelToExporterSettings(panel: PanelSettings): Record<string, string> {
   const out: Record<string, string> = {};
 
   for (const [panelKey, exporterKey] of Object.entries(KEY_MAP)) {
@@ -75,9 +73,7 @@ export function panelToExporterSettings(
  * Convert exporter snake_case settings back to panel camelCase format.
  * Used when loading settings from config files.
  */
-export function exporterToPanelSettings(
-  exporter: Record<string, unknown>,
-): PanelSettings {
+export function exporterToPanelSettings(exporter: Record<string, unknown>): PanelSettings {
   const panel: Record<string, unknown> = {};
 
   for (const [exporterKey, value] of Object.entries(exporter)) {

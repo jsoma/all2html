@@ -1,8 +1,9 @@
-import { parse as parseJsonc, type ParseError, printParseErrorCode } from "jsonc-parser";
+import { type ParseError, parse as parseJsonc, printParseErrorCode } from "jsonc-parser";
 import { z } from "zod";
+import { EmitterConfigSchema } from "../../../src/emitters/types.js";
 import { FontMappingSchema, MetadataSchema, SettingsSchema } from "../../../src/ir/schema.js";
-import type { FigmaPluginConfig } from "./types.js";
 import { FigmaPluginError } from "./errors.js";
+import type { FigmaPluginConfig } from "./types.js";
 
 const FigmaPluginConfigSchema = z
   .object({
@@ -17,15 +18,24 @@ const FigmaPluginConfigSchema = z
         }),
       )
       .optional(),
+    // The canonical emitter-options block, byte-for-byte the schema the CLI
+    // reads from `all2html.config.json`. Reusing it keeps the config thin: no
+    // Figma-specific emitter contract exists, and shipped emitter features are
+    // otherwise unreachable from this surface.
+    emit: EmitterConfigSchema,
   })
   .strict();
 
 function formatParseErrors(errors: ParseError[]): string {
-  return errors.map((error) => `${printParseErrorCode(error.error)} at offset ${error.offset}`).join("; ");
+  return errors
+    .map((error) => `${printParseErrorCode(error.error)} at offset ${error.offset}`)
+    .join("; ");
 }
 
 function formatSchemaError(error: z.ZodError): string {
-  return error.issues.map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`).join("; ");
+  return error.issues
+    .map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`)
+    .join("; ");
 }
 
 export function parsePluginConfig(raw: string | undefined): FigmaPluginConfig {

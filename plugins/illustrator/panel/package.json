@@ -8,9 +8,9 @@
     "typecheck": "tsc -p tsconfig.build.json --noEmit",
     "check:svelte": "svelte-check --tsconfig ./tsconfig.json",
     "check:jsx": "tsc -p tsconfig.jsx.json --noEmit",
-    "build": "rimraf dist/* && tsc -p tsconfig.build.json && vite build --watch false",
-    "zxp": "rimraf dist/* && tsc -p tsconfig.build.json && cross-env ZXP_PACKAGE=true vite build --watch false",
-    "zip": "rimraf dist/* && tsc -p tsconfig.build.json && cross-env ZIP_PACKAGE=true vite build --watch false",
+    "build": "rimraf dist/cep && tsc -p tsconfig.build.json && vite build --watch false",
+    "zxp": "rimraf dist/cep dist/zxp && tsc -p tsconfig.build.json && cross-env ZXP_PACKAGE=true vite build --watch false",
+    "zip": "rimraf dist/cep dist/zip dist/zxp && tsc -p tsconfig.build.json && cross-env ZIP_PACKAGE=true vite build --watch false",
     "symlink": "cross-env BOLT_ACTION=symlink vite",
     "delsymlink": "cross-env BOLT_ACTION=delsymlink vite"
   },

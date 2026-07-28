@@ -1,14 +1,18 @@
 import type {
   ComputedTextStyle,
+  DeduplicatedArtboard,
+  DeduplicatedDocument,
+  DeduplicatedElement,
+  DeduplicatedLayer,
+  DeduplicatedTextElement,
   EffectStyleEntry,
-  EmitterReadyArtboard,
-  EmitterReadyLayer,
-  EmitterReadyTextElement,
   StyleClassEntry,
   StyledDocument,
+  StyledElement,
   StyledTextElement,
   TextEffect,
 } from "../ir/types.js";
+import { formatCssColor } from "./css-color.js";
 
 function getStyleKey(style: ComputedTextStyle): string {
   return Object.entries(style)
@@ -30,16 +34,10 @@ function styleDiff(base: ComputedTextStyle, variant: ComputedTextStyle): Compute
   return hasDiff ? diff : null;
 }
 
-function isStyledText(el: { type: string }): el is StyledTextElement {
-  return el.type === "text" && "computedParagraphStyles" in el;
-}
-
-function formatColor(c: { r: number; g: number; b: number; opacity?: number }): string {
-  const opacity = c.opacity ?? 100;
-  if (opacity < 100) {
-    return `rgba(${c.r},${c.g},${c.b},${(opacity / 100).toFixed(2)})`;
-  }
-  return `rgb(${c.r},${c.g},${c.b})`;
+/** Pure discriminant test — both tags are declared literals on the element union,
+ *  so nothing has to sniff for the presence of a computed field. */
+function isStyledText(el: StyledElement): el is StyledTextElement {
+  return el.type === "text" && el.renderAs === "html";
 }
 
 function effectsToCSS(effects: TextEffect[]): string {
@@ -49,7 +47,7 @@ function effectsToCSS(effects: TextEffect[]): string {
   const shadows = effects.filter((e) => e.type === "dropShadow");
   if (shadows.length > 0) {
     const shadowValues = shadows.map(
-      (s) => `${s.offsetX}px ${s.offsetY}px ${s.blurRadius}px ${formatColor(s.color)}`,
+      (s) => `${s.offsetX}px ${s.offsetY}px ${s.blurRadius}px ${formatCssColor(s.color)}`,
     );
     parts.push(`text-shadow: ${shadowValues.join(", ")};`);
   }
@@ -75,14 +73,10 @@ function getEffectKey(effects: TextEffect[]): string {
     .join("|");
 }
 
-export interface DeduplicatedDocument extends Omit<StyledDocument, "artboards"> {
-  artboards: EmitterReadyArtboard[];
-}
-
 export function deduplicateStyles(doc: StyledDocument): DeduplicatedDocument {
   const ns = doc.settings.namespace;
 
-  const artboards: EmitterReadyArtboard[] = doc.artboards.map((ab) => {
+  const artboards: DeduplicatedArtboard[] = doc.artboards.map((ab) => {
     // Collect all paragraph styles with character counts — plain object, not Map
     const styleCounts: Record<string, { style: ComputedTextStyle; count: number }> = {};
 
@@ -216,8 +210,8 @@ export function deduplicateStyles(doc: StyledDocument): DeduplicatedDocument {
     }
 
     // Assign class names to elements
-    const layers: EmitterReadyLayer[] = ab.layers.map((layer) => {
-      const elements = layer.elements.map((el) => {
+    const layers: DeduplicatedLayer[] = ab.layers.map((layer) => {
+      const elements: DeduplicatedElement[] = layer.elements.map((el) => {
         if (!isStyledText(el)) return el;
 
         const paragraphClassNames: (string | null)[] = [];
@@ -248,12 +242,13 @@ export function deduplicateStyles(doc: StyledDocument): DeduplicatedDocument {
           effectClassName = effectClassByKey[key] ?? null;
         }
 
-        const enriched: EmitterReadyTextElement = {
+        // No `computedPosition` placeholder: positions are `computePositions`' output,
+        // one phase later, and the `deduplicated` phase type no longer demands them.
+        const enriched: DeduplicatedTextElement = {
           ...el,
           paragraphClassNames,
           runClassNames,
           effectClassName,
-          computedPosition: { width: "" },
         };
         return enriched;
       });
@@ -270,5 +265,5 @@ export function deduplicateStyles(doc: StyledDocument): DeduplicatedDocument {
     };
   });
 
-  return { ...doc, artboards };
+  return { ...doc, pipelinePhase: "deduplicated", artboards };
 }

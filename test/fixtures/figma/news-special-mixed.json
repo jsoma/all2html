@@ -84,14 +84,14 @@
     "assets": [
       {
         "id": "bg-news-special-mixed-640",
-        "path": "all2html-output/news-special-mixed-news-special-mixed-640.png",
+        "path": "news-special-mixed-news-special-mixed-640.png",
         "mimeType": "image/png",
         "width": 640,
         "height": 420,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-news-special-mixed-640",
         "source": {
@@ -101,12 +101,12 @@
       },
       {
         "id": "png-news-special-mixed-route-highlight-640",
-        "path": "all2html-output/news-special-mixed-news-special-mixed-640-route-highlight.png",
+        "path": "news-special-mixed-news-special-mixed-640-route-highlight.png",
         "mimeType": "image/png",
         "width": 640,
         "height": 420,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
           "transparent": true
         },
@@ -204,14 +204,14 @@
     "assets": [
       {
         "id": "bg-news-special-mixed-960",
-        "path": "all2html-output/news-special-mixed-news-special-mixed-960.png",
+        "path": "news-special-mixed-news-special-mixed-960.png",
         "mimeType": "image/png",
         "width": 960,
         "height": 440,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
-          "transparent": false
+          "transparent": true
         },
         "artboardId": "figma:figma-news-special-mixed-960",
         "source": {
@@ -221,12 +221,12 @@
       },
       {
         "id": "png-news-special-mixed-route-highlight-960",
-        "path": "all2html-output/news-special-mixed-news-special-mixed-960-route-highlight.png",
+        "path": "news-special-mixed-news-special-mixed-960-route-highlight.png",
         "mimeType": "image/png",
         "width": 960,
         "height": 440,
         "exportParams": {
-          "format": "png",
+          "format": "png24",
           "scale": 1,
           "transparent": true
         },

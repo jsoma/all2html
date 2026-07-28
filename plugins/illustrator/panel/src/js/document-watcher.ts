@@ -3,9 +3,9 @@
  * CEP has no reliable event for document switching, so we poll.
  */
 
+import type { DocumentInfo } from "../shared/types.js";
 import { getDocumentInfo } from "./bridge.js";
 import { createPollingWatcher } from "./polling-watcher.js";
-import type { DocumentInfo } from "../shared/types.js";
 
 type DocumentChangeCallback = (doc: DocumentInfo | null) => void;
 
@@ -22,10 +22,7 @@ function getDocumentWatchKey(info: DocumentInfo | null): string | null {
  * Start polling for document changes.
  * Calls `callback` whenever the active document changes.
  */
-export function startWatching(
-  callback: DocumentChangeCallback,
-  intervalMs = 1500,
-): void {
+export function startWatching(callback: DocumentChangeCallback, intervalMs = 1500): void {
   watcher.start(callback, intervalMs);
 }
 

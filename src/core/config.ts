@@ -14,9 +14,19 @@ const ConfigFontMappingSchema = z
     style: z.string().optional(),
     vshift: z.string().optional(),
   })
+  // Strict like the top-level config: a typo inside a font entry used to be
+  // silently stripped while the rest of the file was validated.
+  .strict()
   .refine((font) => font.sourceFont || font.aifont, {
     path: ["sourceFont"],
     message: "sourceFont is required",
+  })
+  // `aifont` is a compatibility alias for `sourceFont`, not a second field.
+  // When both are present they must agree — silently letting `sourceFont` win
+  // hid the conflict from the one person who could resolve it.
+  .refine((font) => !font.sourceFont || !font.aifont || font.sourceFont === font.aifont, {
+    path: ["aifont"],
+    message: "aifont conflicts with sourceFont; the two must match when both are present",
   })
   .transform(({ aifont, sourceFont, ...font }): FontMapping => {
     const normalizedSourceFont = sourceFont ?? aifont;
@@ -51,6 +61,24 @@ function formatSchemaError(error: z.ZodError): string {
     .join("; ");
 }
 
+/**
+ * The one config validator. `parseConfigText` is JSONC parsing plus this; the
+ * pipeline calls it directly on the object a surface hands in as inline config,
+ * so a JS caller passing junk fails here with a named path instead of deep in a
+ * transform. There is deliberately no second schema anywhere.
+ */
+export function parseConfigObject(
+  input: unknown,
+  sourceLabel: string = "inline config",
+): All2HtmlConfig {
+  const validated = All2HtmlConfigSchema.safeParse(input);
+  if (!validated.success) {
+    throw new Error(`Invalid config file "${sourceLabel}": ${formatSchemaError(validated.error)}`);
+  }
+
+  return validated.data;
+}
+
 export function parseConfigText(
   raw: string,
   sourceLabel: string = "inline config",
@@ -61,12 +89,7 @@ export function parseConfigText(
     throw new Error(`Invalid config file "${sourceLabel}": ${formatParseErrors(parseErrors)}`);
   }
 
-  const validated = All2HtmlConfigSchema.safeParse(parsed);
-  if (!validated.success) {
-    throw new Error(`Invalid config file "${sourceLabel}": ${formatSchemaError(validated.error)}`);
-  }
-
-  return validated.data;
+  return parseConfigObject(parsed, sourceLabel);
 }
 
 export function getConfigSettings(config?: All2HtmlConfig): Partial<Settings> | undefined {

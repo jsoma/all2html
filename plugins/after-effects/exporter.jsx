@@ -19,6 +19,27 @@
       : null;
   var ALL2HTML_AUTOMATED = $.global && $.global.ALL2HTML_AUTOMATED ? true : false;
 
+  // The shared ES5 helper bundle, concatenated ahead of this file by
+  // scripts/package-after-effects.mjs (built from src/extendscript/ae-index.ts).
+  // It installs the ES5 polyfills and owns the escaping and Google Fonts
+  // helpers this exporter used to carry hand-copied — see the "No forked
+  // helpers between exporters and core" rule in CLAUDE.md and decision D13.
+  //
+  // This is the helper slot only: the IR pipeline and the capability checker
+  // live in the *other* bundle (dist/extendscript/all2html-core.js) and are
+  // deliberately not loaded here. After Effects still does not construct IR.
+  var CORE = typeof All2HtmlAE !== "undefined" ? All2HtmlAE : null;
+
+  function requireCore() {
+    if (!CORE) {
+      fail(
+        "The all2html core helper bundle is missing. Run 'pnpm build:after-effects' and " +
+          "launch dist/after-effects/all2html-ae.jsx, not plugins/after-effects/exporter.jsx."
+      );
+    }
+    return CORE;
+  }
+
   function logDiagnostic(level, message, detail) {
     try {
       if ($.global && typeof $.global.__ALL2HTML_LOG__ === "function") {
@@ -200,11 +221,17 @@
     return Math.round(value * 10000) / 10000;
   }
 
-  function escapeInlineJson(json) {
-    return String(json)
-      .replace(/<\//g, "<\\/")
-      .replace(/\u2028/g, "\\u2028")
-      .replace(/\u2029/g, "\\u2029");
+  // String.replace interprets $-patterns ($$, $&, ...) in the replacement,
+  // which corrupts substituted content containing them (e.g. overlay text
+  // inside the model JSON). Splice literally instead.
+  function replaceFirstLiteral(str, token, replacement) {
+    var idx = str.indexOf(token);
+    if (idx === -1) return str;
+    return str.slice(0, idx) + replacement + str.slice(idx + token.length);
+  }
+
+  function normalizeLineBreaks(value) {
+    return String(value).replace(/\r\n?/g, "\n");
   }
 
   function getProperty(group, name) {
@@ -296,6 +323,37 @@
     return null;
   }
 
+  // Explicit comp targeting: a supplied targetCompId is honored or the export
+  // fails with an error naming it. Falling back to whatever comp happens to be
+  // active would silently export the wrong comp after a delete/rename.
+  function resolveTargetComp(panelSettings) {
+    var targetCompId =
+      panelSettings &&
+      panelSettings.targetCompId !== undefined &&
+      panelSettings.targetCompId !== null
+        ? String(panelSettings.targetCompId)
+        : "";
+
+    if (targetCompId !== "") {
+      var target = findCompById(targetCompId);
+      if (!target) {
+        fail(
+          'The selected composition (id "' +
+            targetCompId +
+            '") was not found in this project. ' +
+            "Re-select a composition in the panel and export again."
+        );
+      }
+      return target;
+    }
+
+    var active = app.project ? app.project.activeItem : null;
+    if (!active || !(active instanceof CompItem)) {
+      fail("Please make a composition active before export.");
+    }
+    return active;
+  }
+
   function getFontSourceName(fontEntry) {
     if (!fontEntry) return "";
     return String(fontEntry.sourceFont || fontEntry.aifont || "");
@@ -362,208 +420,45 @@
     return value === "import" || value === "link" ? value : "none";
   }
 
-  function stripWrappingQuotes(value) {
-    var trimmed = String(value || "").replace(/^\s+|\s+$/g, "");
-    if (trimmed.length < 2) return trimmed;
-    var first = trimmed.charAt(0);
-    var last = trimmed.charAt(trimmed.length - 1);
-    if ((first === "'" && last === "'") || (first === '"' && last === '"')) {
-      return trimmed.substring(1, trimmed.length - 1).replace(/\\(["'])/g, "$1");
-    }
-    return trimmed;
-  }
-
-  function getPrimaryCssFamily(cssFamily) {
-    var value = String(cssFamily || "");
-    var quote = "";
-    var start = 0;
-    var i;
-    for (i = 0; i < value.length; i += 1) {
-      var chr = value.charAt(i);
-      if (quote) {
-        if (chr === "\\" && i + 1 < value.length) {
-          i += 1;
-          continue;
-        }
-        if (chr === quote) quote = "";
-        continue;
-      }
-      if (chr === "'" || chr === '"') {
-        quote = chr;
-        continue;
-      }
-      if (chr === ",") {
-        var family = stripWrappingQuotes(value.substring(start, i));
-        if (family && !isSkippedGoogleFontFamily(family)) return family;
-        start = i + 1;
-      }
-    }
-    var lastFamily = stripWrappingQuotes(value.substring(start));
-    return lastFamily && !isSkippedGoogleFontFamily(lastFamily) ? lastFamily : "";
-  }
-
-  function isSkippedGoogleFontFamily(family) {
-    var normalized = String(family || "").replace(/^\s+|\s+$/g, "").toLowerCase();
-    var skipped = [
-      "arial",
-      "arial black",
-      "avenir",
-      "avenir next",
-      "blinkmacsystemfont",
-      "calibri",
-      "cambria",
-      "candara",
-      "comic sans ms",
-      "consolas",
-      "courier",
-      "courier new",
-      "didot",
-      "fantasy",
-      "futura",
-      "garamond",
-      "geneva",
-      "georgia",
-      "gill sans",
-      "helvetica",
-      "helvetica neue",
-      "impact",
-      "menlo",
-      "monaco",
-      "monospace",
-      "optima",
-      "palatino",
-      "sans",
-      "sans-serif",
-      "serif",
-      "system-ui",
-      "tahoma",
-      "times",
-      "times new roman",
-      "trebuchet ms",
-      "ui-monospace",
-      "ui-rounded",
-      "ui-sans-serif",
-      "ui-serif",
-      "verdana",
-      "-apple-system"
-    ];
-    var i;
-    if (!normalized || normalized.indexOf("var(") === 0) return true;
-    for (i = 0; i < skipped.length; i += 1) {
-      if (normalized === skipped[i]) return true;
-    }
-    return false;
-  }
-
-  function normalizeGoogleFontWeight(weight) {
-    var normalized = String(weight || "").replace(/^\s+|\s+$/g, "").toLowerCase();
-    if (!normalized || normalized === "normal" || normalized === "regular") return "400";
-    if (normalized === "bold") return "700";
-    var parsed = parseInt(normalized, 10);
-    if (isNaN(parsed)) return "400";
-    parsed = Math.round(parsed / 100) * 100;
-    if (parsed < 100) parsed = 100;
-    if (parsed > 900) parsed = 900;
-    return String(parsed);
-  }
-
-  function addUnique(values, value) {
-    var i;
-    for (i = 0; i < values.length; i += 1) {
-      if (values[i] === value) return;
-    }
-    values.push(value);
-  }
-
-  function findGoogleFontRequest(requests, family) {
-    var i;
-    for (i = 0; i < requests.length; i += 1) {
-      if (requests[i].family === family) return requests[i];
-    }
-    return null;
-  }
-
-  function compareWeights(a, b) {
-    return parseInt(a, 10) - parseInt(b, 10);
-  }
-
-  function encodeGoogleFontFamily(family) {
-    return encodeURIComponent(family).replace(/%20/g, "+");
-  }
-
-  function buildGoogleFontsUrl(fontMappings) {
-    var requests = [];
-    var i;
-
-    for (i = 0; i < fontMappings.length; i += 1) {
-      var family = getPrimaryCssFamily(fontMappings[i].family);
-      if (!family) continue;
-
-      var request = findGoogleFontRequest(requests, family);
-      if (!request) {
-        request = { family: family, normalWeights: [], italicWeights: [] };
-        requests.push(request);
-      }
-
-      var weight = normalizeGoogleFontWeight(fontMappings[i].weight);
-      if (/italic|oblique/i.test(String(fontMappings[i].style || ""))) {
-        addUnique(request.italicWeights, weight);
-      } else {
-        addUnique(request.normalWeights, weight);
-      }
-    }
-
-    if (requests.length === 0) return "";
-
-    var params = [];
-    for (i = 0; i < requests.length; i += 1) {
-      var r = requests[i];
-      r.normalWeights.sort(compareWeights);
-      r.italicWeights.sort(compareWeights);
-      var familyParam = "family=" + encodeGoogleFontFamily(r.family);
-      if (r.italicWeights.length === 0) {
-        var normalWeights = r.normalWeights.length > 0 ? r.normalWeights : ["400"];
-        familyParam += ":wght@" + normalWeights.join(";");
-      } else {
-        var pairs = [];
-        var j;
-        for (j = 0; j < r.normalWeights.length; j += 1) {
-          pairs.push("0," + r.normalWeights[j]);
-        }
-        for (j = 0; j < r.italicWeights.length; j += 1) {
-          pairs.push("1," + r.italicWeights[j]);
-        }
-        familyParam += ":ital,wght@" + pairs.join(";");
-      }
-      params.push(familyParam);
-    }
-    params.push("display=swap");
-    return "https://fonts.googleapis.com/css2?" + params.join("&");
-  }
-
-  function escapeHtmlAttr(value) {
-    return String(value || "")
-      .replace(/&/g, "&amp;")
-      .replace(/"/g, "&quot;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
-
+  // Google Fonts URL building, family parsing, weight normalization and the
+  // attribute escaper all live in the shared bundle now
+  // (src/emitters/shared/google-fonts.ts + escape.ts, re-exported through
+  // src/extendscript/ae-index.ts). ~185 lines of hand-copied ES5 were deleted
+  // here; the tags are built rather than taken from the shared
+  // `renderGoogleFontsLinkTags` only because this surface joins them with
+  // newlines (the markup is spliced into a hand-written template that a person
+  // reads), while the static emitters join with "". Nothing else differs.
+  //
+  // The tags carried a `data-all2html-google-fonts` marker attribute until now.
+  // It was never read here: it existed so the Svelte and React emitters could
+  // regex the link tags back out of serialized HTML, and since the one-emitter
+  // collapse (SPEC §12.6 / D23) those emitters consume the node tree and never
+  // build the links at all. It was dropped from the emitters earlier and kept
+  // here only to hold AE output byte-identical across the bundle-slot
+  // migration; that migration is done, so it goes.
   function buildGoogleFontMarkup(mode, fontMappings) {
-    var url = mode === "none" ? "" : buildGoogleFontsUrl(fontMappings || []);
+    var core = requireCore();
+    var url = mode === "none" ? "" : core.googleFontsUrl(fontMappings || []);
     if (!url) return { links: "", importCss: "" };
     if (mode === "import") {
       return { links: "", importCss: '@import url("' + url + '");' };
     }
-    return {
-      links:
-        '<link data-all2html-google-fonts="true" rel="preconnect" href="https://fonts.googleapis.com">\n' +
-        '<link data-all2html-google-fonts="true" rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
-        '<link data-all2html-google-fonts="true" rel="stylesheet" href="' +
-        escapeHtmlAttr(url) +
-        '">',
-      importCss: ""
-    };
+
+    var tags = core.googleFontsLinkTags(fontMappings || []);
+    var rendered = [];
+    var i;
+    for (i = 0; i < tags.length; i += 1) {
+      rendered.push(
+        '<link rel="' +
+          tags[i].rel +
+          '" href="' +
+          core.escapeAttr(tags[i].href) +
+          '"' +
+          (tags[i].crossorigin ? " crossorigin" : "") +
+          ">"
+      );
+    }
+    return { links: rendered.join("\n"), importCss: "" };
   }
 
   function findFontMapping(fontMappings, sourceFont) {
@@ -638,8 +533,8 @@
         end: end,
         type: "text",
         text: {
-          content: String(textDocument.text || ""),
-          altText: String(textDocument.text || ""),
+          content: normalizeLineBreaks(textDocument.text || ""),
+          altText: normalizeLineBreaks(textDocument.text || ""),
           style: buildTextStyle(textDocument, fontMappings)
         },
         "static": {
@@ -1020,25 +915,25 @@
 
   function buildHtml(templatePath, model, googleFontsMode, fontMappings) {
     var template = EMBEDDED_PLAYER_TEMPLATE || readFile(templatePath);
-    var json = escapeInlineJson(JSON.stringify(model, null, 2));
+    var json = requireCore().escapeInlineJson(JSON.stringify(model, null, 2));
     var fontMarkup = buildGoogleFontMarkup(googleFontsMode, fontMappings || []);
     var hasLinkPlaceholder = template.indexOf("__GOOGLE_FONT_LINKS__") !== -1;
     var hasImportPlaceholder = template.indexOf("__GOOGLE_FONT_IMPORT__") !== -1;
-    template = template.replace("__GOOGLE_FONT_LINKS__", fontMarkup.links);
-    template = template.replace("__GOOGLE_FONT_IMPORT__", fontMarkup.importCss);
+    template = replaceFirstLiteral(template, "__GOOGLE_FONT_LINKS__", fontMarkup.links);
+    template = replaceFirstLiteral(template, "__GOOGLE_FONT_IMPORT__", fontMarkup.importCss);
 
     if (!hasLinkPlaceholder && fontMarkup.links) {
       template = fontMarkup.links + "\n" + template;
     }
     if (!hasImportPlaceholder && fontMarkup.importCss) {
       if (template.indexOf("<style>") !== -1) {
-        template = template.replace("<style>", "<style>\n" + fontMarkup.importCss);
+        template = replaceFirstLiteral(template, "<style>", "<style>\n" + fontMarkup.importCss);
       } else {
         template = "<style>\n" + fontMarkup.importCss + "\n</style>\n" + template;
       }
     }
 
-    return template.replace("__MODEL_JSON__", json);
+    return replaceFirstLiteral(template, "__MODEL_JSON__", json);
   }
 
   function getOutputRoot(config, panelSettings) {
@@ -1074,19 +969,20 @@
     try {
       logDiagnostic("info", "Starting After Effects export");
       var startedAt = new Date().getTime();
+      var scriptFile = new File($.fileName);
+      var baseFolder = scriptFile.parent.fsName;
+      // JSON must be available before settings/config parsing — standalone
+      // runs have no native JSON and would otherwise silently drop both.
+      ensureJsonGlobal(baseFolder);
       var panelSettings = loadPanelSettings();
       var projectConfig = loadProjectConfig();
-      var comp = findCompById(panelSettings.targetCompId) || app.project.activeItem;
-      if (!comp || !(comp instanceof CompItem))
-        fail("Please make a composition active before export.");
+      var comp = resolveTargetComp(panelSettings);
       var overlayPrefix = getOverlayPrefix(projectConfig, panelSettings);
       var outputRoot = getOutputRoot(projectConfig, panelSettings);
       var preferredVideoTemplate = getVideoTemplatePreference(projectConfig, panelSettings);
       var preferredPosterTemplate = getPosterTemplatePreference(projectConfig, panelSettings);
       var googleFontsMode = getGoogleFontsMode(projectConfig, panelSettings);
 
-      var scriptFile = new File($.fileName);
-      var baseFolder = scriptFile.parent.fsName;
       var slug = safeCompName(comp.name);
       var outFolder = outputRoot + "/" + slug;
       var templatePath = baseFolder + "/player-template.html";
@@ -1097,10 +993,10 @@
       var summaryName = slug + "-summary.json";
 
       ensureFolder(outFolder);
-      ensureJsonGlobal(baseFolder);
 
       var fontMappings = loadFontMappings(projectConfig);
       var model = buildModel(comp, videoName, fontMappings, overlayPrefix);
+      var posterRequested = !!preferredPosterTemplate;
       var posterSummary = renderPoster(
         comp,
         outFolder,
@@ -1115,29 +1011,78 @@
 
       writeFile(outFolder + "/" + jsonName, JSON.stringify(model, null, 2) + "\n");
       writeFile(outFolder + "/" + htmlName, buildHtml(templatePath, model, googleFontsMode, fontMappings));
+      var expectedVideoPath = outFolder + "/" + videoName;
       var renderSummary = renderVideo(
         comp,
-        outFolder + "/" + videoName,
+        expectedVideoPath,
         overlayPrefix,
         preferredVideoTemplate
       );
+
+      // One status, checked against the filesystem — never an unconditional
+      // success flag. Local render is complete only when the expected output
+      // file exists after render(); an AME submission is queued (the file will
+      // exist later, at the expected path); anything else is failed.
+      var status;
+      var warnings = [];
+      var videoError = null;
+      if (renderSummary.mode === "ame") {
+        status = "queued";
+      } else if (renderSummary.rendered) {
+        status = "complete";
+      } else {
+        status = "failed";
+        videoError =
+          "The render queue finished but the expected video file was not written: " +
+          expectedVideoPath;
+      }
+
+      // Poster disposition: an auto-detected poster that failed is a warning;
+      // a poster the caller explicitly requested that failed fails the run.
+      var posterError = null;
+      if (!posterSummary.rendered) {
+        if (posterSummary.error) {
+          posterError = String(posterSummary.error);
+        } else if (posterSummary.template) {
+          posterError =
+            "The render queue finished but no poster file was written for " +
+            posterBaseName +
+            ".";
+        } else {
+          posterError = "No poster output-module template was found.";
+        }
+        if (posterRequested) {
+          status = "failed";
+        } else {
+          warnings.push("Poster skipped: " + posterError);
+        }
+      }
+
+      var errorParts = [];
+      if (videoError) errorParts.push(videoError);
+      if (posterError && posterRequested) errorParts.push("Poster: " + posterError);
+      var topError = errorParts.length > 0 ? errorParts.join(" ") : null;
+
       var summary = {
+        status: status,
         slug: slug,
         outputFolder: outFolder,
+        error: topError,
+        warnings: warnings,
         video: {
-          path: outFolder + "/" + videoName,
           mode: renderSummary.mode,
           template: renderSummary.template,
-          rendered: renderSummary.rendered
+          path: expectedVideoPath,
+          error: videoError
         },
         poster: {
+          requested: posterRequested,
+          template: posterSummary.template,
           path: posterSummary.path,
           name: posterSummary.name,
           frame: posterSummary.frame,
           time: posterSummary.time,
-          template: posterSummary.template,
-          rendered: posterSummary.rendered,
-          error: posterSummary.error || null
+          error: posterError
         },
         json: outFolder + "/" + jsonName,
         html: outFolder + "/" + htmlName,
@@ -1146,28 +1091,28 @@
 
       writeFile(outFolder + "/" + summaryName, JSON.stringify(summary, null, 2) + "\n");
       setAutomatedResult({
-        success: true,
+        status: status,
+        error: topError,
         outputPath: outFolder,
         slug: slug,
         overlayCount: summary.overlayCount,
         elapsed: round4((new Date().getTime() - startedAt) / 1000) + "s",
         compName: comp.name,
-        videoMode: renderSummary.mode,
-        videoRendered: renderSummary.rendered,
-        videoTemplate: renderSummary.template,
-        posterTemplate: posterSummary.template,
-        posterRendered: posterSummary.rendered,
-        posterPath: posterSummary.path,
-        posterError: posterSummary.error || null,
+        video: summary.video,
+        poster: summary.poster,
+        warnings: warnings,
         summaryPath: outFolder + "/" + summaryName,
         htmlPath: outFolder + "/" + htmlName,
-        jsonPath: outFolder + "/" + jsonName,
-        videoPath: outFolder + "/" + videoName
+        jsonPath: outFolder + "/" + jsonName
       });
-      logDiagnostic("info", "After Effects export finished", outFolder);
+      if (status === "failed") {
+        logDiagnostic("error", "After Effects export failed", topError || "unknown failure");
+      } else {
+        logDiagnostic("info", "After Effects export finished", outFolder);
+      }
     } catch (e) {
       setAutomatedResult({
-        success: false,
+        status: "failed",
         error: String(e)
       });
       throw e;

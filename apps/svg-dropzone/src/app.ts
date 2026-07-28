@@ -2,21 +2,22 @@
 
 import wasmUrl from "@resvg/resvg-wasm/index_bg.wasm?url";
 import {
+  type BrowserSvgConversionResult,
   bundleToZipBytes,
   convertLoadedSvgFilesInBrowser,
   createBrowserSvgRasterizer,
   createOutputBundle,
-  getBundleFile,
   getBrowserEmitter,
+  getBundleFile,
   importSVGFilesWithRasterizer,
+  type LoadedSVGImportFiles,
   loadSVGImportFilesFromBrowser,
+  type OutputBundle,
   parseConfigText,
   processDocumentInBrowser,
-  type BrowserSvgConversionResult,
-  type LoadedSVGImportFiles,
-  type OutputBundle,
   type SvgRasterizer,
 } from "../../../src/browser.js";
+import { escapeAttr, escapeHtml } from "../../../src/emitters/shared/escape.js";
 import "./styles.css";
 
 type SupportedFormat = "html" | "standalone" | "svelte" | "react";
@@ -80,7 +81,13 @@ export function mountSvgDropzoneApp(
     files: [] as File[],
     configFile: null as File | null,
     isDragging: false,
+    // Invariant: `currentRun` was produced at `inputRevision`. Every input
+    // change bumps the revision AND clears the run, so the presence of a run
+    // means it reflects the current inputs — which is what the download
+    // handler relies on.
     currentRun: null as RunState | null,
+    inputRevision: 0,
+    isGenerating: false,
   };
 
   root.innerHTML = `
@@ -178,16 +185,21 @@ export function mountSvgDropzoneApp(
   const viewerBody = root.querySelector<HTMLElement>("[data-viewer-body]")!;
   const outputFileSelect = root.querySelector<HTMLSelectElement>("[data-output-file]")!;
   const downloadButton = root.querySelector<HTMLButtonElement>("[data-download]")!;
+  const generateButton = root.querySelector<HTMLButtonElement>("[data-generate]")!;
 
-  root.querySelector<HTMLElement>("[data-pick-files]")!.addEventListener("click", () => fileInput.click());
-  root.querySelector<HTMLElement>("[data-pick-folder]")!.addEventListener("click", () => folderInput.click());
-  root.querySelector<HTMLElement>("[data-generate]")!.addEventListener("click", async () => {
+  root
+    .querySelector<HTMLElement>("[data-pick-files]")!
+    .addEventListener("click", () => fileInput.click());
+  root
+    .querySelector<HTMLElement>("[data-pick-folder]")!
+    .addEventListener("click", () => folderInput.click());
+  generateButton.addEventListener("click", async () => {
     await generate();
   });
   root.querySelector<HTMLElement>("[data-reset]")!.addEventListener("click", () => {
+    invalidateInput();
     state.files = [];
     state.configFile = null;
-    state.currentRun = null;
     fileInput.value = "";
     folderInput.value = "";
     configInput.value = "";
@@ -203,15 +215,20 @@ export function mountSvgDropzoneApp(
   });
   outputFileSelect.addEventListener("change", () => renderRunState());
 
+  formatSelect.addEventListener("change", () => invalidateInput());
+  slugInput.addEventListener("input", () => invalidateInput());
   fileInput.addEventListener("change", () => {
+    invalidateInput();
     state.files = Array.from(fileInput.files || []);
     renderSelection();
   });
   folderInput.addEventListener("change", () => {
+    invalidateInput();
     state.files = Array.from(folderInput.files || []);
     renderSelection();
   });
   configInput.addEventListener("change", () => {
+    invalidateInput();
     state.configFile = configInput.files?.[0] ?? null;
     renderSelection();
   });
@@ -228,6 +245,7 @@ export function mountSvgDropzoneApp(
       if (eventName === "drop") {
         const droppedFiles = Array.from((event as DragEvent).dataTransfer?.files || []);
         if (droppedFiles.length > 0) {
+          invalidateInput();
           state.files = droppedFiles;
           renderSelection();
         }
@@ -242,6 +260,20 @@ export function mountSvgDropzoneApp(
   function setDragging(isDragging: boolean): void {
     state.isDragging = isDragging;
     dropzone.classList.toggle("is-dragging", isDragging);
+  }
+
+  /**
+   * Any file/config/format/slug change makes an in-flight or completed run
+   * stale: bump the revision (so a pending `generate()` discards its result on
+   * completion — success or failure) and drop the committed run (so the viewer
+   * and the download ZIP never show output for inputs that no longer exist).
+   */
+  function invalidateInput(): void {
+    state.inputRevision += 1;
+    if (state.currentRun) {
+      state.currentRun = null;
+      renderRunState();
+    }
   }
 
   function renderSelection(): void {
@@ -271,7 +303,9 @@ export function mountSvgDropzoneApp(
       return;
     }
 
-    summaryList.innerHTML = currentRun.artboardSummary.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+    summaryList.innerHTML = currentRun.artboardSummary
+      .map((item) => `<li>${escapeHtml(item)}</li>`)
+      .join("");
     warningList.innerHTML =
       currentRun.importWarnings.length === 0 && currentRun.renderWarnings.length === 0
         ? "<li>No warnings.</li>"
@@ -282,8 +316,10 @@ export function mountSvgDropzoneApp(
             .map((item) => `<li>${escapeHtml(item)}</li>`)
             .join("");
 
+    // `value` is a double-quoted attribute and the label is text content: two
+    // different grammars, two different escapers (`src/emitters/shared/escape.ts`).
     outputFileSelect.innerHTML = currentRun.fileSummary
-      .map((path) => `<option value="${escapeHtml(path)}">${escapeHtml(path)}</option>`)
+      .map((path) => `<option value="${escapeAttr(path)}">${escapeHtml(path)}</option>`)
       .join("");
     if (!currentRun.fileSummary.includes(outputFileSelect.value)) {
       outputFileSelect.value = currentRun.emittedPath;
@@ -295,7 +331,7 @@ export function mountSvgDropzoneApp(
     if (!selectedFile?.text) {
       viewerBody.innerHTML = `<div class="empty-state">No preview available for ${escapeHtml(selectedPath)}.</div>`;
     } else if (currentRun.format === "html" || currentRun.format === "standalone") {
-      viewerBody.innerHTML = `<iframe class="preview-frame" title="all2html preview"></iframe>`;
+      viewerBody.innerHTML = `<iframe class="preview-frame" title="all2html preview" sandbox="allow-scripts"></iframe>`;
       const frame = viewerBody.querySelector<HTMLIFrameElement>("iframe")!;
       frame.srcdoc = selectedFile.text;
     } else {
@@ -317,19 +353,31 @@ export function mountSvgDropzoneApp(
   }
 
   async function generate(): Promise<void> {
+    if (state.isGenerating) {
+      return;
+    }
     if (state.files.length === 0) {
       warningList.innerHTML = "<li>Select SVG files or a ZIP before generating.</li>";
       return;
     }
 
+    // Snapshot everything the run depends on before the first await: the
+    // revision (so completion can tell whether the inputs it read still
+    // stand) and the form controls (which used to be read after two awaits,
+    // so mid-run edits leaked into an already-running pipeline).
+    const revision = state.inputRevision;
+    const format = formatSelect.value as SupportedFormat;
+    const slugOverride = slugInput.value.trim();
+
+    state.isGenerating = true;
+    generateButton.disabled = true;
     try {
       const parsedConfig = state.configFile
         ? deps.parseConfig(await state.configFile.text(), state.configFile.name)
         : undefined;
       const rasterizer = await deps.createRasterizer();
       const loaded = await deps.loadFiles(state.files);
-      const format = formatSelect.value as SupportedFormat;
-      const slug = slugInput.value.trim() || loaded.slug;
+      const slug = slugOverride || loaded.slug;
 
       const conversion = await deps.convert({
         loaded,
@@ -344,11 +392,20 @@ export function mountSvgDropzoneApp(
         buildBundle: deps.buildBundle,
       });
 
+      if (revision !== state.inputRevision) {
+        return; // Stale success: the inputs changed mid-run. Discard.
+      }
       state.currentRun = toRunState(conversion);
       renderRunState();
     } catch (error) {
+      if (revision !== state.inputRevision) {
+        return; // Stale failure: never wipe state that belongs to newer inputs.
+      }
       const message = error instanceof Error ? error.message : String(error);
       renderErrorState(message);
+    } finally {
+      state.isGenerating = false;
+      generateButton.disabled = false;
     }
   }
 }
@@ -387,14 +444,6 @@ export function getOutputFormatLabel(format: SupportedFormat): string {
     case "react":
       return "React";
   }
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {

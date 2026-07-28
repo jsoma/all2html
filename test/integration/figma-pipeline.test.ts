@@ -4,6 +4,7 @@ import { exportExtractedFrames, summarizeSelection } from "../../plugins/figma/s
 import type { ExtractedFrame, SelectionNodeLike } from "../../plugins/figma/src/types.js";
 import { processDocument } from "../../src/core/pipeline.js";
 import { getEmitter } from "../../src/emitters/registry.js";
+import { withAssetBase } from "../../src/emitters/types.js";
 import { loadAndValidateIR } from "../../src/ir/validate.js";
 
 function makeFrame(overrides: Partial<ExtractedFrame> = {}): ExtractedFrame {
@@ -64,12 +65,12 @@ function makeFrame(overrides: Partial<ExtractedFrame> = {}): ExtractedFrame {
     assets: [
       {
         id: `asset-${sourceNodeId}`,
-        path: `all2html-output/${sourceNodeId}.png`,
+        path: `${sourceNodeId}.png`,
         mimeType: "image/png",
         width: overrides.width ?? 640,
         height: 360,
         artboardId: makeFigmaArtboardId({ sourceNodeId, originalName }),
-        exportParams: { format: "png", scale: 1, transparent: false },
+        exportParams: { format: "png24", scale: 1, transparent: true },
         bytes: new TextEncoder().encode("png"),
       },
     ],
@@ -90,7 +91,7 @@ describe("Figma canonical plugin pipeline", () => {
           assets: [
             {
               id: "asset-frame-2",
-              path: "all2html-output/frame-2.png",
+              path: "frame-2.png",
               mimeType: "image/png",
               width: 1024,
               height: 360,
@@ -98,7 +99,7 @@ describe("Figma canonical plugin pipeline", () => {
                 sourceNodeId: "frame-2",
                 originalName: "story:1024:dynamic",
               }),
-              exportParams: { format: "png", scale: 1, transparent: false },
+              exportParams: { format: "png24", scale: 1, transparent: true },
               bytes: new TextEncoder().encode("png"),
             },
           ],
@@ -123,7 +124,14 @@ describe("Figma canonical plugin pipeline", () => {
     expect(groups).toHaveLength(1);
     expect(groups[0].artboards).toHaveLength(2);
 
-    const htmlResult = getEmitter("html").emitAll(document, groups);
+    // The Figma surface's layout, stated the way `plugins/figma/src/export.ts`
+    // states it: emitted files at the ZIP root, assets under `imageOutputPath`,
+    // one value handed to both the emitters and the bundle.
+    const htmlResult = getEmitter("html").emitAll(
+      document,
+      groups,
+      withAssetBase(undefined, document.settings.imageOutputPath || ""),
+    );
     expect(htmlResult.files).toHaveLength(1);
     expect(htmlResult.files[0].output).toContain("Figma pipeline test");
     expect(htmlResult.files[0].output).toContain("https://example.com");

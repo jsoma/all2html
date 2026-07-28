@@ -1,34 +1,42 @@
 {
+  "irVersion": "0.1.0",
+  "source": {
+    "tool": "illustrator",
+    "toolVersion": "29.8.9",
+    "adapterVersion": "0.1.0"
+  },
   "settings": {
-    "settings_version": "0.121.1",
-    "image_format": "auto",
-    "responsiveness": "fixed",
-    "include_resizer_script": "true",
-    "use_lazy_loader": "false",
+    "imageFormat": ["auto"],
     "output": "one-file",
-    "html_output_path": "ai2html-output/",
-    "image_output_path": "ai2html-output/",
-    "image_source_path": "",
-    "local_preview_template": "",
-    "png_number_of_colors": "128",
-    "jpg_quality": "80",
-    "headline": "",
-    "leadin": "",
-    "notes": "",
-    "sources": "",
-    "credit": ""
+    "responsiveness": "fixed",
+    "htmlOutputPath": "ai2html-output/",
+    "imageOutputPath": "ai2html-output/",
+    "jpgQuality": 80,
+    "pngNumberOfColors": 128,
+    "useLazyLoader": false
   },
   "fonts": [],
   "artboards": [
     {
+      "id": "illustrator:artboard:full-1",
       "name": "full",
       "width": 700,
       "height": 425,
+      "source": {
+        "tool": "illustrator",
+        "name": "full",
+        "width": 700,
+        "height": 425
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:full-1:layer:layer-1-1",
           "name": "Layer 1",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 1"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -62,9 +70,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     },
                     {
                       "text": "small text",
@@ -75,9 +83,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -113,42 +121,92 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
               ]
             }
-          ],
-          "id": "artboard:full:layer:layer-1",
-          "source": {
-            "tool": "illustrator",
-            "name": "Layer 1"
-          }
+          ]
         }
-      ],
-      "id": "artboard:full",
-      "source": {
-        "tool": "illustrator",
-        "name": "full",
-        "width": 700,
-        "height": 425
-      }
+      ]
     },
     {
+      "id": "illustrator:artboard:medium-2",
       "name": "medium",
       "width": 490,
       "height": 350,
+      "source": {
+        "tool": "illustrator",
+        "name": "medium",
+        "width": 490,
+        "height": 350
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:medium-2:layer:layer-1-1",
           "name": "Layer 1",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 1"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
+            {
+              "type": "text",
+              "id": "g-ai1-1",
+              "kind": "point",
+              "position": {
+                "x": 20.6298828125,
+                "y": 246.8671875,
+                "width": 452.513671875,
+                "height": 53.5205078125
+              },
+              "opacity": 100,
+              "valign": "middle",
+              "renderAs": "html",
+              "paragraphs": [
+                {
+                  "text": "But also some small text",
+                  "alignment": "center",
+                  "leading": 48,
+                  "spaceBefore": 0,
+                  "spaceAfter": 0,
+                  "runs": [
+                    {
+                      "text": "But also some ",
+                      "fontName": "HelveticaNeue",
+                      "fontSize": 40,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    },
+                    {
+                      "text": "small text",
+                      "fontName": "HelveticaNeue-Bold",
+                      "fontSize": 40,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0
+                      },
+                      "letterSpacing": 0,
+                      "capitalization": "normal",
+                      "baselineShift": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
             {
               "type": "text",
               "id": "g-ai1-2",
@@ -179,39 +237,38 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
               ]
             }
-          ],
-          "id": "artboard:medium:layer:layer-1",
-          "source": {
-            "tool": "illustrator",
-            "name": "Layer 1"
-          }
+          ]
         }
-      ],
-      "id": "artboard:medium",
-      "source": {
-        "tool": "illustrator",
-        "name": "medium",
-        "width": 490,
-        "height": 350
-      }
+      ]
     },
     {
+      "id": "illustrator:artboard:mobile-3",
       "name": "mobile",
       "width": 375,
       "height": 471,
+      "source": {
+        "tool": "illustrator",
+        "name": "mobile",
+        "width": 375,
+        "height": 471
+      },
       "layers": [
         {
+          "id": "illustrator:artboard:mobile-3:layer:layer-1-1",
           "name": "Layer 1",
           "type": "default",
-          "inlineSvg": false,
+          "source": {
+            "tool": "illustrator",
+            "name": "Layer 1"
+          },
           "visible": true,
           "opacity": 100,
           "elements": [
@@ -245,9 +302,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     },
                     {
                       "text": "small text",
@@ -258,9 +315,9 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
@@ -296,29 +353,17 @@
                         "g": 0,
                         "b": 0
                       },
+                      "letterSpacing": 0,
                       "capitalization": "normal",
-                      "baselineShift": "normal",
-                      "letterSpacing": 0
+                      "baselineShift": "normal"
                     }
                   ]
                 }
               ]
             }
-          ],
-          "id": "artboard:mobile:layer:layer-1",
-          "source": {
-            "tool": "illustrator",
-            "name": "Layer 1"
-          }
+          ]
         }
-      ],
-      "id": "artboard:mobile",
-      "source": {
-        "tool": "illustrator",
-        "name": "mobile",
-        "width": 375,
-        "height": 471
-      }
+      ]
     }
   ],
   "customBlocks": [],
@@ -329,17 +374,17 @@
       "mimeType": "image/png",
       "width": 1400,
       "height": 850,
+      "artboardId": "illustrator:artboard:full-1",
+      "source": {
+        "tool": "illustrator",
+        "name": "full"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 80,
         "colors": 128
-      },
-      "artboardId": "artboard:full",
-      "source": {
-        "tool": "illustrator",
-        "name": "full"
       }
     },
     "template-medium": {
@@ -348,17 +393,17 @@
       "mimeType": "image/png",
       "width": 980,
       "height": 700,
+      "artboardId": "illustrator:artboard:medium-2",
+      "source": {
+        "tool": "illustrator",
+        "name": "medium"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 80,
         "colors": 128
-      },
-      "artboardId": "artboard:medium",
-      "source": {
-        "tool": "illustrator",
-        "name": "medium"
       }
     },
     "template-mobile": {
@@ -367,17 +412,17 @@
       "mimeType": "image/png",
       "width": 750,
       "height": 942,
+      "artboardId": "illustrator:artboard:mobile-3",
+      "source": {
+        "tool": "illustrator",
+        "name": "mobile"
+      },
       "exportParams": {
         "format": "png",
         "scale": 2,
         "transparent": false,
         "quality": 80,
         "colors": 128
-      },
-      "artboardId": "artboard:mobile",
-      "source": {
-        "tool": "illustrator",
-        "name": "mobile"
       }
     }
   },
@@ -389,11 +434,5 @@
     "notes": "",
     "sources": "",
     "credit": ""
-  },
-  "irVersion": "0.1.0",
-  "source": {
-    "tool": "illustrator",
-    "toolVersion": "29.8.5",
-    "adapterVersion": "0.1.0"
   }
 }
