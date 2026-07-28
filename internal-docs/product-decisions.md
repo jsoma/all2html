@@ -101,7 +101,7 @@ If envelope-only ever matters, it is `scene: null`, not a kind.
 
 **Reversal of my own proposal.** I had this as the centerpiece of the contract phase. The cost was never counted; when counted, it does not clear the bar.
 
-Measured cost: **46 `.artboards` call sites in `src/`, 52 in `test/`, 72 JSON fixture files**, plus `schema.ts:267`. Roughly 170 sites — to introduce a three-member union with **one member implemented**. Dropping `external` (D9) makes it a two-member union with one member implemented, which is worse: a tagged union with a single arm is just a type with extra ceremony.
+Measured cost: **46 `.artboards` call sites in `src/`, 52 in `test/`, 72 JSON fixture files**, plus the `artboards` field in `src/ir/schema.ts`. Roughly 170 sites — to introduce a three-member union with **one member implemented**. Dropping `external` (D9) makes it a two-member union with one member implemented, which is worse: a tagged union with a single arm is just a type with extra ceremony.
 
 The headline justification was that it "retires the AE exporter's forked helpers." That is worth ~200 lines of dedupe. The claim in SPEC §12.8 that AE joining the core "costs one extra build-script slot" was wrong: `plugins/after-effects/exporter.jsx` contains **zero** occurrences of `irVersion` or `artboards`. It never constructs IR at all. Putting AE on the core means inventing the temporal scene, a Composition schema, Zod validation, a temporal emitter, fixtures, and goldens. That is the largest item in the plan, and it was priced as free.
 
@@ -119,7 +119,7 @@ The greenfield/no-users license is real, but it is a license to change things *w
 Independent review returned **"no-go as written"** on a sharper ground than cost. My `Envelope = {irVersion, source, metadata, settings, fonts, customBlocks, assets}` would have **moved static coupling without removing it**, then frozen it into a contract advertised as universal:
 
 - **`Settings` is predominantly static-renderer policy**, not universal document config — `imageFormat`, `responsiveness`, `renderRotatedSkewedTextAs`, `includeResizerCss`, `inlineSvg`, promo images. A temporal export would have been obliged to carry `renderRotatedSkewedTextAs`.
-- **Assets are structurally artboard-bound today.** `Asset.artboardId` is required (`schema.ts:193`, `z.string().min(1)`) and cross-validated against the artboard/layer graph (`schema.ts:304`). Asset lookup is indexed by artboard and layer (`shared/assets.ts:14`). An "envelope" asset would have to pretend it belongs to an artboard.
+- **Assets are structurally artboard-bound today.** `Asset.artboardId` is required (`schema.ts#artboardId`, `z.string().min(1)`) and cross-validated against the artboard/layer graph (the document `superRefine` in `src/ir/schema.ts`). Asset lookup is indexed by artboard and layer (`shared/assets.ts#buildScopedAssetIndex`). An "envelope" asset would have to pretend it belongs to an artboard.
 - **Custom blocks are output injections**, consumed directly by the HTML and CSS emitters — not source-independent document metadata.
 
 Committing that boundary first was assessed as the single highest-risk item in the whole plan: it bakes today's static coupling into the "universal" contract and forces a *second* schema cutover the moment AE or an external runtime becomes a real consumer.
@@ -148,9 +148,9 @@ If code volume is measured at all, measure `src/`, not `test/`.
 
 **Reversal.** I diagnosed `output: multiple-files` shipping broken as a symptom of weak test assertions ("existence, not behavior"). That diagnosis is wrong.
 
-`test/integration/multiple-files.test.ts:17-56` is genuinely behavioral: it asserts group count, per-group artboards and widths, slug uniqueness after sanitization, per-file id prefixing, and cross-contamination. It passes, and it is correct.
+`test/integration/multiple-files.test.ts` is genuinely behavioral: it asserts group count, per-group artboards and widths, slug uniqueness after sanitization, per-file id prefixing, and cross-contamination. It passes, and it is correct.
 
-The actual cause is at `src/extendscript/index.ts:29-44` — a hardcoded six-step pipeline that never calls `groupArtboards` and returns `{ html: string }`, a shape that **cannot express multiple files**. It is a *surface coverage gap*, not an assertion-quality gap. Rewriting assertions across 723 tests would not have found it.
+The actual cause is `src/extendscript/index.ts#processAndEmit` — at the time a hardcoded six-step pipeline that never called `groupArtboards` and returns `{ html: string }`, a shape that **cannot express multiple files**. It is a *surface coverage gap*, not an assertion-quality gap. Rewriting assertions across 723 tests would not have found it.
 
 **Instead:** one test per surface entry point, running shared fixtures through that surface's real path and asserting file count and format. That harness is what makes every later phase verifiable, and it is cheap.
 
@@ -160,7 +160,7 @@ The adversarial-input parity fixture is still worth adding — that bug is real 
 
 ## D16 — Dead code is guilty until proven dead [decided]
 
-"Delete dead code first" was too blunt and would have destroyed evidence. `groupArtboards` is dead *from Illustrator* but alive from `src/core/pipeline-shared.ts:61`. `core/warnings.ts` grouping is dead while a hand-copied ES5 fork at `exporter.jsx:1372` is what users actually see.
+"Delete dead code first" was too blunt and would have destroyed evidence. `groupArtboards` is dead *from Illustrator* but alive from `pipeline-shared.ts#groupArtboards`. `core/warnings.ts` grouping is dead while a hand-copied ES5 fork (`illustrator/exporter.jsx#groupStructuredWarnings`) is what users actually see.
 
 In this codebase, dead code is usually an **unwired feature**, not a removed one — which is the same insight as §12.10.5 (`multiple-files` was a modelling gap, not laziness).
 
@@ -170,7 +170,7 @@ In this codebase, dead code is usually an **unwired feature**, not a removed one
 
 ## D18 — Vertical cutovers, not horizontal phases [decided]
 
-My phasing was *ground truth → all contracts → all deletion*. Review found a dependency inversion: "settings resolve once in the core" and capability enforcement have **no executable consumer** until the surfaces are integrated, because Illustrator pre-merges config/panel/text-block settings before the core is ever called (`exporter.jsx:1602`) and derives a *second* exporter-local settings object that drives image extraction before the core runs (`exporter.jsx:1621`). Leaving surface integration to Phase 3 strands the Phase 2 contracts with nothing exercising them.
+My phasing was *ground truth → all contracts → all deletion*. Review found a dependency inversion: "settings resolve once in the core" and capability enforcement have **no executable consumer** until the surfaces are integrated, because Illustrator pre-merges config/panel/text-block settings before the core is ever called (`illustrator/exporter.jsx#loadConfigFiles`) and derives a *second* exporter-local settings object that drives image extraction before the core runs (`illustrator/exporter.jsx#exportImages`). Leaving surface integration to Phase 3 strands the Phase 2 contracts with nothing exercising them.
 
 **Revised shape — one complete path at a time:**
 1. Characterization tests + capability inventory *(done — `capability-matrix.md`)*
@@ -179,13 +179,13 @@ My phasing was *ground truth → all contracts → all deletion*. Review found a
 4. Define and cut the temporal path with After Effects
 5. Only then generalize declarations, doc generation, and deletion
 
-**Corollary — do not repair `multiple-files` on the old contract.** Fixing it now means investing in the setting-driven, name-inferred grouping in `group-artboards.ts:10` that `alternates | sequence` is meant to replace. Characterization tests precede the contract; contract-sensitive *fixes* belong in the vertical cutover.
+**Corollary — do not repair `multiple-files` on the old contract.** Fixing it now means investing in the setting-driven, name-inferred grouping in `group-artboards.ts#groupArtboards` that `alternates | sequence` is meant to replace. Characterization tests precede the contract; contract-sensitive *fixes* belong in the vertical cutover.
 
 ---
 
 ## D19 — Wiring grouped output into Illustrator is blocked on ES3 [decided]
 
-Concrete blocker I had not found. `src/core/group-artboards.ts:20,29` uses `new Map` twice, and `test/integration/extendscript-bundle.test.ts:57` forbids emitted `Map`/`Set` constructors because ExtendScript lacks them. That is *why* `src/extendscript/index.ts` bypasses grouping and emits a single HTML string — it is not an oversight.
+Concrete blocker I had not found. `src/core/group-artboards.ts` used `new Map` twice, and `test/integration/extendscript-bundle.test.ts` forbids emitted `Map`/`Set` constructors (`Map` in `test/integration/extendscript-bundle.test.ts`) because ExtendScript lacks them. That is *why* `src/extendscript/index.ts` bypasses grouping and emits a single HTML string — it is not an oversight.
 
 So `output: multiple-files` on Illustrator is not "missing wiring." It requires making `groupArtboards` ES3-safe first. Sequence: make it ES3-safe → include it in the bundle → widen the return shape beyond `{ html: string }`.
 
@@ -198,8 +198,8 @@ Structural typing means additive phase fields do **not** prevent skipping a phas
 The contract is a phase-indexed document carrying an explicit `pipelinePhase` literal, with per-phase field types selected by that literal. Each transform's signature then names the exact phase it consumes and produces, and later phases are not structurally assignable to earlier ones.
 
 Two riders:
-- **Image-rendered text becomes its own discriminated variant** at validation time, which removes the cast at `compute-styles.ts:126` *and* the placeholder `computedPosition: { width: "" }` inserted at `deduplicate-styles.ts:251` before positions exist.
-- **Phase documents stay internal.** The persisted canonical IR remains the validated source document; bundles already serialize the original IR (`output-bundle.ts:45`). Serializing intermediate phases would expand the long-term contract for nothing.
+- **Image-rendered text becomes its own discriminated variant** at validation time, which removes the cast in `src/core/compute-styles.ts` *and* the placeholder `computedPosition: { width: "" }` inserted by `deduplicate-styles.ts#computedPosition` before positions exist.
+- **Phase documents stay internal.** The persisted canonical IR remains the validated source document; bundles already serialize the original IR (`output-bundle.ts#createOutputBundle`). Serializing intermediate phases would expand the long-term contract for nothing.
 
 **Implemented.** `PhaseDocument<P>` in `src/ir/types.ts`, with a distinct `breakpointed` phase between resolved and styled and a distinct `deduplicated` phase between styled and emitter-ready. `Document.pipelinePhase` is a type-level `?: never` marker, which is what also stops a phase document being fed back to `resolveSettings` or serialized as IR. Both placeholders are gone, both casts are gone, and all 12 runtime `"in"`-probes in the transforms and emitters are gone. `test/unit/pipeline-phase-types.test.ts` holds the negative assertions as `@ts-expect-error` lines that `pnpm run typecheck` enforces. ES5 bundle went *down* 279 B.
 
@@ -207,7 +207,7 @@ Two riders:
 
 ## D21 — JSON purity needs per-transform invariants, not one round-trip test [decided]
 
-Zod rejects non-finite numbers at *input* (`schema.ts:5`), but computed documents have no equivalent check, which is exactly how `compute-breakpoints.ts:11` introduces `Infinity` unchallenged. A single round-trip test is necessary but not sufficient — transform boundaries assert finite-number invariants on their output (`src/core/json-purity.ts`).
+Zod rejects non-finite numbers at *input* (`schema.ts#JsonLiteralSchema`), but computed documents have no equivalent check, which is exactly how `compute-breakpoints.ts#Infinity` introduced it unchallenged. A single round-trip test is necessary but not sufficient — transform boundaries assert finite-number invariants on their output (`src/core/json-purity.ts`).
 
 **Which boundaries, and why not all of them.** The original wording — "each transform boundary" — was both an overstatement and an under-delivery, and both halves are now fixed:
 
@@ -242,7 +242,7 @@ No cutover ships without a real Illustrator run.
 
 ## D23 — The semantic tree feeds all four emitters, not just HTML [decided]
 
-Collapsing `html.ts` and `html-string.ts` does not fix Svelte and React: both call the HTML emitter, then **regex-extract the `<style>` block and strip comments** (`react.ts:26`, `svelte.ts:24`). They consume serialized HTML, not structure.
+Collapsing `html.ts` and `html-string.ts` does not fix Svelte and React: both call the HTML emitter, then **regex-extract the `<style>` block and strip comments** (`src/emitters/react.ts`, `src/emitters/svelte.ts`). They consume serialized HTML, not structure.
 
 So the node tree is the shared input to HTML, React, and Svelte adapters — otherwise the framework emitters stay string-manipulation wrappers no matter how clean the HTML side becomes. This also connects to D8 (Svelte/React are real emitters).
 
@@ -294,7 +294,7 @@ No migration work. Revisit when a public UXP API ships.
 
 The first implementation of §12.5 suppressed the warning whenever the resolved value equalled the value in `SETTING_DEFINITIONS`. That establishes nothing: a default is a promise the surface may not keep, and comparing against it inverts the answer in **both** directions wherever a surface diverges at its default.
 
-Figma is the proof. It exports at `scale: 1` (`runtime-extract.ts:352,389`) while `use2xImages` defaults to `true`:
+Figma is the proof. It exports at `scale: 1` (`runtime-extract.ts#createBackgroundAsset`) while `use2xImages` defaults to `true`:
 
 - omitted, or explicitly `true` → no warning, and the user silently gets 1x — the opposite of what they were promised;
 - explicitly `false` → a warning, even though 1x is exactly what Figma does.

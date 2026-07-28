@@ -480,7 +480,7 @@ export const figmaCapabilities: SurfaceCapabilities = {
     // D29
     localPreviewTemplate: {
       status: "unsupported",
-      note: "The browser standalone emitter reads the template only to discard it.",
+      note: "The browser standalone emitter has no filesystem to read a template file from.",
     },
   },
 };
@@ -579,7 +579,7 @@ const NODE_PROMO_IMAGE: SettingSupport = {
 // D30 — the one place the browser dropzone diverges from the Node CLI.
 const BROWSER_PREVIEW_TEMPLATE: SettingSupport = {
   status: "unsupported",
-  note: "The browser standalone emitter reads the template only to discard it.",
+  note: "The browser standalone emitter has no filesystem to read a template file from.",
 };
 
 const CLI_SETTINGS: { [key: string]: SettingSupport } = {
@@ -670,8 +670,10 @@ export const cliCapabilities: SurfaceCapabilities = {
 
 /**
  * The browser dropzone. Identical to the CLI apart from one real divergence:
- * `standalone-browser.ts` reads `localPreviewTemplate` only to discard it
- * (matrix D30), whereas the Node standalone emitter applies it.
+ * the Node standalone emitter applies `localPreviewTemplate` by reading the
+ * file off disk, and `standalone-browser.ts` has no filesystem to read it from
+ * (matrix D30). It does not read the setting at all — this declaration is the
+ * only thing that tells the user their template was not applied.
  */
 export const browserCapabilities: SurfaceCapabilities = {
   surface: "browser",

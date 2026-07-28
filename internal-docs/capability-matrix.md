@@ -29,75 +29,75 @@ Columns: **IL** = Illustrator script/panel · **AE** = After Effects · **FIG** 
 |---|---|---|---|---|---|
 | 1 | `imageFormat` | **DEAD** except jpg [D1] | no | **DEAD** except auto/png24 [D2] | yes¹ |
 | 2 | `writeImageFiles` | **DEAD** [D3] | no | **DEAD** [D4] | **DEAD** [D5] |
-| 3 | `pngTransparent` | yes `exporter.jsx:1134` | no | **DEAD at default** [D6] | yes² |
-| 4 | `pngNumberOfColors` | yes `exporter.jsx:1135` | no | **DEAD at default** [D7] | yes² |
-| 5 | `jpgQuality` | yes `exporter.jsx:1126` | no | **DEAD** [D8] | yes² |
-| 6 | `use2xImages` | yes `exporter.jsx:1049,1118` | no | **DEAD at default** [D9] | yes² |
-| 7 | `cacheBustToken` | yes `assets.ts:64` | no | yes | yes |
-| 8 | `namespace` | yes `html-string.ts:394` | no | yes³ | yes |
-| 9 | `projectName` | yes `exporter.jsx:998` | no | yes `main.ts:173` | yes |
+| 3 | `pngTransparent` | yes `illustrator/exporter.jsx#exportArtboardImage` | no | **DEAD at default** [D6] | yes² |
+| 4 | `pngNumberOfColors` | yes `illustrator/exporter.jsx#exportArtboardImage` | no | **DEAD at default** [D7] | yes² |
+| 5 | `jpgQuality` | yes `illustrator/exporter.jsx#exportArtboardImage` | no | **DEAD** [D8] | yes² |
+| 6 | `use2xImages` | yes `illustrator/exporter.jsx#exportArtboardImage` | no | **DEAD at default** [D9] | yes² |
+| 7 | `cacheBustToken` | yes `shared/assets.ts#resolveAssetPath` | no | yes | yes |
+| 8 | `namespace` | yes `html-tree.ts#namespace` | no | yes³ | yes |
+| 9 | `projectName` | yes `illustrator/exporter.jsx#project_name` | no | yes `figma/src/main.ts#projectName` | yes |
 | 10 | `output` | yes [D10 fixed] | no | yes⁴ | yes⁴ |
-| 11 | `htmlOutputPath` | yes `exporter.jsx:1623` | no | **DEAD** [D11] | **DEAD** [D12] |
+| 11 | `htmlOutputPath` | yes `illustrator/exporter.jsx#resolveDocumentOutputPath` | no | **DEAD** [D11] | **DEAD** [D12] |
 | 12 | `htmlOutputExtension` | yes — `extendscript/index.ts` stamps it on every emitted file record, `exporter.jsx` writes `slug + extension` | no | yes⁵ | yes⁵ |
 | 13 | `imageOutputPath` | yes⁶ | no | yes⁷ | yes |
-| 14 | `imageSourcePath` | yes `assets.ts:59` | no | yes³ | yes |
-| 15 | `responsiveness` | yes `css.ts:131` | no | yes | yes |
-| 16 | `textResponsiveness` | yes `compute-positions.ts:154` | no | yes³ | yes |
-| 17 | `maxWidth` | yes `css.ts:87` | no | yes³ | yes |
-| 18 | `centerHtmlOutput` | yes `css.ts:92` | no | yes | yes |
-| 19 | `renderTextAs` | yes `exporter.jsx:671` | no | **DEAD** [D13] | yes² |
-| 20 | `renderRotatedSkewedTextAs` | yes `exporter.jsx:674` | no | **DEAD** [D14] | **DEAD** [D15] |
-| 21 | `googleFonts` | yes `css.ts:61` | **yes** `exporter.jsx:369` | yes | yes |
-| 22 | `testingMode` | yes `css.ts:98` | no | yes³ | yes |
-| 23 | `includeResizerCss` | yes `css.ts:31` | no | yes³ | yes |
-| 24 | `includeResizerWidths` | yes `html-string.ts:211` | no | yes³ | yes |
-| 25 | `responsiveImageMode` | **no** [N1] | no | yes `css.ts:30` | yes |
+| 14 | `imageSourcePath` | yes `shared/assets.ts#resolveAssetPath` | no | yes³ | yes |
+| 15 | `responsiveness` | yes `compute-breakpoints.ts#responsiveness` | no | yes | yes |
+| 16 | `textResponsiveness` | yes `compute-positions.ts#textResponsiveness` | no | yes³ | yes |
+| 17 | `maxWidth` | yes `shared/css.ts#maxWidth` | no | yes³ | yes |
+| 18 | `centerHtmlOutput` | yes `shared/css.ts#centerHtmlOutput` | no | yes | yes |
+| 19 | `renderTextAs` | yes `illustrator/exporter.jsx#renderTextAs` | no | **DEAD** [D13] | yes² |
+| 20 | `renderRotatedSkewedTextAs` | yes `illustrator/exporter.jsx#renderRotatedSkewedTextAs` | no | **DEAD** [D14] | **DEAD** [D15] |
+| 21 | `googleFonts` | yes `shared/css.ts#googleFonts` | **yes** `after-effects/exporter.jsx#getGoogleFontsMode` | yes | yes |
+| 22 | `testingMode` | yes `shared/css.ts#testingMode` | no | yes³ | yes |
+| 23 | `includeResizerCss` | yes `shared/css.ts#includeResizerCss` | no | yes³ | yes |
+| 24 | `includeResizerWidths` | yes `html-tree.ts#includeResizerWidths` | no | yes³ | yes |
+| 25 | `responsiveImageMode` | **no** [N1] | no | yes `shared/css.ts#responsiveImageMode` | yes |
 | 26 | `useLazyLoader` | yes⁸ | no | yes⁸ | yes⁸ |
 | 27 | `inlineSvg` (setting) | **DEAD** [D16] | no | **DEAD** [D17] | **DEAD** [D18] |
 | 28 | `svgIdPrefix` | **DEAD** [D19] | no | **DEAD** [D20] | **DEAD** [D21] |
-| 29 | `svgEmbedImages` | yes `exporter.jsx:1003` | no | **DEAD** [D22] | **DEAD** [D23] |
-| 30 | `clickableLink` | yes `html-string.ts:475` | no | yes³ | yes |
-| 31 | `createPromoImage` | yes `exporter.jsx:1766` | no | **DEAD** [D24] | **DEAD** [D25] |
+| 29 | `svgEmbedImages` | yes `illustrator/exporter.jsx#exportSvgLayer` | no | **DEAD** [D22] | **DEAD** [D23] |
+| 30 | `clickableLink` | yes `html-tree.ts#clickableLink` | no | yes³ | yes |
+| 31 | `createPromoImage` | yes `illustrator/exporter.jsx#create_promo_image` | no | **DEAD** [D24] | **DEAD** [D25] |
 | 32 | `promoImageWidth` | yes⁹ | no | **DEAD** [D26] | **DEAD** [D27] |
 | 33 | `localPreviewTemplate` | **DEAD** [D28] | no | **DEAD** [D29] | yes (CLI) / **DEAD** (browser) [D30] |
 
 ### Footnotes
 
-1. Honored only on `import svg` (`import-core.ts:1071`). The value `svg` is explicitly rejected with a warning and downgraded to png (`import-core.ts:949`) — an honest refusal, not a dead cell. `render <ir.json>` never rasterizes, so the key is inert there.
+1. Honored only on `import svg` (`import-core.ts#resolveBackgroundImageFormat`). The value `svg` is explicitly rejected with a warning and downgraded to png in that same function — an honest refusal, not a dead cell. `render <ir.json>` never rasterizes, so the key is inert there.
 2. Same: honored on `import svg`, inert on `render`.
-3. Accepted only via Advanced JSONC (`plugins/figma/src/config.ts:9` → canonical `SettingsSchema`); no dedicated UI control. Honored because the core pipeline reads it.
-4. Honored for every format the surface can emit. `standalone` used to collapse to one file because its registry entry discarded `groups`; it now runs through the same `perGroup()` helper as html/svelte/react (`registry-shared.ts:93`).
+3. Accepted only via Advanced JSONC (`plugins/figma/src/config.ts#SettingsSchema` → the canonical schema); no dedicated UI control. Honored because the core pipeline reads it.
+4. Honored for every format the surface can emit. `standalone` used to collapse to one file because its registry entry discarded `groups`; it now runs through the same `perGroup` helper as html/svelte/react (`registry-shared.ts#perGroup`).
 5. `html` only. The other formats write their own extension — `.svelte`, `.jsx`/`.tsx`, `.html` for standalone — declared per format as `producedByFormat`, so the checker compares the request against what the chosen format actually writes rather than against the global default. A non-default extension warns naming what the format writes instead; the untouched `.html` default stays silent, because choosing `--format react` is itself the decision that dictates `.jsx`.
-6. Only a *fallback* for the whole output dir. Images always go to `settings.outputPath` (`exporter.jsx:1176`), so it cannot relocate images independently of HTML.
-7. **Fixed.** Was: the value moved the `<img src>` prefix while `plugins/figma/src/export.ts` omitted `assetRoot`, so any non-default value desynced the HTML from the ZIP layout. `export.ts:68` now passes `assetRoot: document.settings.imageOutputPath || ""` into `createOutputBundle`, so the emitted `src` and the ZIP entry are derived from one value. The `partial` declaration is deleted — Figma's `defaultStatus` is `honored`. Pinned by `test/unit/figma-plugin.test.ts` ("keeps HTML src paths and ZIP entries in sync").
+6. Only a *fallback* for the whole output dir: `resolveDocumentOutputPath` reads it only when `html_output_path` is absent (`illustrator/exporter.jsx#resolveDocumentOutputPath`), and images are then written under that one `settings.outputPath` (`illustrator/exporter.jsx#exportImages`), so it cannot relocate images independently of HTML.
+7. **Fixed.** Was: the value moved the `<img src>` prefix while `plugins/figma/src/export.ts` omitted `assetRoot`, so any non-default value desynced the HTML from the ZIP layout. `figma/src/export.ts#assetRoot` now derives it from `document.settings.imageOutputPath` and passes it into `createOutputBundle`, so the emitted `src` and the ZIP entry are derived from one value. The `partial` declaration is deleted — Figma's `defaultStatus` is `honored`. Pinned by `test/unit/figma-plugin.test.ts` ("keeps HTML src paths and ZIP entries in sync").
 8. Images get native `loading="lazy"`. Videos used to get `data-src` and no `src` with no loader anywhere in `src/`, which is D31; `src/emitters/shared/lazy-video.ts` now ships the loader on all four formats — a `<script>` for html/standalone, a lifecycle effect for svelte/react — so the setting is honored end to end.
-9. Read from the raw snake_case `docSettings.promo_image_width`, not the canonical setting. Reachable via text block / config file only; the panel cannot set it.
+9. Read from the raw snake_case `promo_image_width` on `docSettings` (`illustrator/exporter.jsx#promo_image_width`), not the canonical setting. Reachable via text block / config file only; the panel cannot set it.
 
 ### DEAD-cell evidence
 
 | ID | Accepted at | Not honored — proof |
 |---|---|---|
-| D1 | `exporter.jsx:1418`; panel select at `ImageSettings.svelte:59` — it still lists all 5 values, but `gateOptions()` (`panel/src/js/capability.ts:110`) now renders `png24` and `svg` disabled and labelled "not supported", so a stored value displays without being newly selectable | `exporter.jsx:1120-1137` — only branch is `if (format === "jpg") … else PNG8`. Artifact: `mask-test/ir.json` has `"imageFormat":["svg"]` → output is `PNG image data, 8-bit colormap` while `exportParams.format` records `"svg"`. |
-| D2 | `ui.html:371` (auto/png/png24/jpg/svg) | `runtime-extract.ts:674,567,538,525` — all formats hardcoded. Zero readers of `settings.imageFormat` in `src/emitters` or `src/core`. What it hardcodes is `exportAsync({format:"PNG"})`, i.e. full-color PNG with alpha, so `auto` and `png24` are honored by accident and only `png` (8-bit), `jpg` and `svg` are dead. |
-| D3 | `exporter.jsx:1484`; `adapter.ts:25` | Zero readers in `src/`. `exporter.jsx:1687` calls `exportImages` unconditionally. |
-| D4 | `config.ts:9` | Zero readers; assets always written to ZIP. |
-| D5 | `ir.json` settings | Zero readers; `cli/index.ts:197` writes assets unconditionally. |
-| D6–D9 | `config.ts:9` | Figma hardcodes transparency, has no quantizer, never emits JPEG, and sets no `constraint` on any `exportAsync`, so the documented default `{type:"SCALE",value:1}` applies (`ExportSettingsImage` in `@figma/plugin-typings`; the recorded params are `runtime-extract.ts:350`). D6, D7 and D9 diverge **at the default**: the defaults promise opaque, 128-color, 2x, and Figma produces alpha, full-color, 1x, so all three warn on every export. D8 does not: Figma never emits JPEG at all, so `jpgQuality` is unobservable rather than wrong and warns only when the user moves it. |
-| D10 | Panel select `MainSettings.svelte:88`; `exporter.jsx:1421` | **Fixed.** Was: `src/extendscript/index.ts` never imported `group-artboards` (it uses two `Map`s, which the bundle guard forbids) and `processAndEmit` ended in a single `emitHTMLString`, so `multiple-files-test/ir.json` with two base names produced exactly **1** `.html`. Now: `groupArtboards` accumulates into plain objects, `processAndEmit` returns `files[]` (one per group), and `exporter.jsx` writes each. Pinned by `test/integration/surface-entrypoints.test.ts`, which drives the shipped bundle. |
-| D11–D12 | `config.ts:9` / `ir.json` | Zero readers; Figma delivers a ZIP, CLI uses `-o` only. Verified with a fixture carrying `htmlOutputPath`. |
-| D13 | `ui.html:381`; also set by the `image-only-graphic` preset `ui.ts:167` | `runtime-extract.ts:193` hardcodes `renderAs:"html"`; text always hidden before raster (`:637`). |
-| D14–D15 | `ui.html:388` / `ir.json` | Zero references in `src/`; honored only by `exporter.jsx:674`. |
-| D16–D18 | `AdvancedSettings.svelte:244`; `config.ts:9` | No reader of `settings.inlineSvg` anywhere. Emitters read only the **per-layer** flag (`html.ts:250`). |
-| D19–D21 | `AdvancedSettings.svelte:259`; `exporter.jsx:1459` | Zero readers. The only prefixing implementation was `src/core/svg-postprocess.ts`, which had **zero importers repo-wide**; it was deleted under D16 and nothing replaces it. All four surfaces declare `unsupported`, so the setting warns instead of no-opping. |
-| D22–D23 | `config.ts:9` / `ir.json` | Zero readers; `runtime-extract.ts:502` takes no embed option. |
-| D24–D27 | `config.ts:9` / `ir.json` | Zero implementation references outside the type and definition files. |
-| D28 | `exporter.jsx:1465` | Only consumer is `standalone.ts:26`; `src/extendscript/index.ts:12` imports only `emitHTMLString` and never touches the registry, so standalone is unreachable from Illustrator. |
-| D29–D30 | `config.ts:9` / dropzone upload | `standalone-browser.ts:18` reads the value only to warn and discard it. |
+| D1 | `illustrator/exporter.jsx#buildCanonicalIrSettings` reads `image_format`; panel select at `ImageSettings.svelte:59` — it still lists all 5 values, but `gateOptions()` (`panel/src/js/capability.ts:110`) now renders `png24` and `svg` disabled and labelled "not supported", so a stored value displays without being newly selectable | `illustrator/exporter.jsx#exportArtboardImage` — only branch is `if (format === "jpg") … else PNG8`. Artifact: `mask-test/ir.json` has `"imageFormat":["svg"]` → output is `PNG image data, 8-bit colormap` while `exportParams.format` records `"svg"`. |
+| D2 | `ui.html#imageFormat` (auto/png/png24/jpg/svg) | every `exportAsync` call in `figma/src/runtime-extract.ts` hardcodes its format. Zero readers of `settings.imageFormat` in `src/emitters` or `src/core`. What it hardcodes is `exportAsync({format:"PNG"})`, i.e. full-color PNG with alpha, so `auto` and `png24` are honored by accident and only `png` (8-bit), `jpg` and `svg` are dead. |
+| D3 | `illustrator/exporter.jsx#write_image_files`; `panel/src/js/adapter.ts#writeImageFiles` | Zero readers in `src/`. `illustrator/exporter.jsx#exportImages` is called unconditionally. |
+| D4 | `figma/src/config.ts#SettingsSchema` | Zero readers; assets always written to ZIP. |
+| D5 | `ir.json` settings | Zero readers; `cli/index.ts#createOutputBundle` writes assets unconditionally. |
+| D6–D9 | `figma/src/config.ts#SettingsSchema` | Figma hardcodes transparency, has no quantizer, never emits JPEG, and sets no `constraint` on any `exportAsync`, so the documented default `{type:"SCALE",value:1}` applies (`ExportSettingsImage` in `@figma/plugin-typings`; the recorded params are `runtime-extract.ts:350`). D6, D7 and D9 diverge **at the default**: the defaults promise opaque, 128-color, 2x, and Figma produces alpha, full-color, 1x, so all three warn on every export. D8 does not: Figma never emits JPEG at all, so `jpgQuality` is unobservable rather than wrong and warns only when the user moves it. |
+| D10 | Panel select `MainSettings.svelte#output`; `illustrator/exporter.jsx#buildCanonicalIrSettings` | **Fixed.** Was: `src/extendscript/index.ts` never imported `group-artboards` (it uses two `Map`s, which the bundle guard forbids) and `processAndEmit` ended in a single `emitHTMLString`, so `multiple-files-test/ir.json` with two base names produced exactly **1** `.html`. Now: `groupArtboards` accumulates into plain objects, `processAndEmit` returns `files[]` (one per group), and `exporter.jsx` writes each. Pinned by `test/integration/surface-entrypoints.test.ts`, which drives the shipped bundle. |
+| D11–D12 | `figma/src/config.ts#SettingsSchema` / `ir.json` | Zero readers; Figma delivers a ZIP, CLI uses `-o` only. Verified with a fixture carrying `htmlOutputPath`. |
+| D13 | `ui.html#renderTextAs`; also set by the `image-only-graphic` preset (`figma/src/ui.ts#getPresetControls`) | `figma/src/runtime-extract.ts#extractTextElement` hardcodes `renderAs:"html"`; text is always hidden before raster (`runtime-extract.ts#hideTextNodes`). |
+| D14–D15 | `ui.html#renderRotatedSkewedTextAs` / `ir.json` | Zero references in `src/`; honored only by `illustrator/exporter.jsx#renderRotatedSkewedTextAs`. |
+| D16–D18 | `AdvancedSettings.svelte#inlineSvg`; `figma/src/config.ts#SettingsSchema` | No reader of `settings.inlineSvg` anywhere. Emitters read only the **per-layer** flag (`html-tree.ts#inlineSvg`). |
+| D19–D21 | `AdvancedSettings.svelte#svgIdPrefix`; `illustrator/exporter.jsx#svg_id_prefix` | Zero readers. The only prefixing implementation was `src/core/svg-postprocess.ts`, which had **zero importers repo-wide**; it was deleted under D16 and nothing replaces it. All four surfaces declare `unsupported`, so the setting warns instead of no-opping. |
+| D22–D23 | `figma/src/config.ts#SettingsSchema` / `ir.json` | Zero readers; `figma/src/runtime-extract.ts#extractSpecialLayer` exports SVG with no embed option. |
+| D24–D27 | `figma/src/config.ts#SettingsSchema` / `ir.json` | Zero implementation references outside the type and definition files. |
+| D28 | `illustrator/exporter.jsx#local_preview_template` | Only consumer is `standalone.ts#localPreviewTemplate`; `src/extendscript/index.ts#emitHTMLString` is the only emitter Illustrator imports and it never touches the registry, so standalone is unreachable from Illustrator. |
+| D29–D30 | `figma/src/config.ts#SettingsSchema` / dropzone upload | The browser standalone emitter has no filesystem to read a template from, and `standalone-browser.ts` therefore never mentions the setting at all; the capability declaration (`capabilities.ts#BROWSER_PREVIEW_TEMPLATE`) is what warns. |
 | D31 | Default `true` (`settings-definitions.ts`), every surface | **Fixed.** Was: the video arm emitted `data-src` with no `src` and zero hits for `IntersectionObserver` / `lazyload` / `loadImages` existed in `src/`, so a lazily-loaded video never played. Now `src/emitters/shared/lazy-video.ts` is the single source for the loader — html/standalone get an `IntersectionObserver` `<script>`, svelte/react get the equivalent lifecycle effect — and the `warnedByEmitter` declaration is deleted along with the per-layer warning. Images were never affected (native `loading="lazy"`). |
 
 **Asset records are part of the claim.** D1's evidence is an `exportParams.format` recording `svg` over PNG8 bytes — a surface describing its own output wrongly. Figma had the same defect in the other direction: `runtime-extract.ts` stamped `{format:"png", scale:1, transparent:false}` on bytes that are full-color PNG with alpha, contradicting the declaration added beside it. The record now names what `exportAsync({format:"PNG"})` actually produces — `png24`, `scale:1`, `transparent:true` — and `test/unit/figma-runtime.test.ts` asserts the record and `figmaCapabilities` agree on all three, so the two cannot drift apart again. An `exportParams` that misdescribes its bytes is a declaration defect, not a cosmetic one: it is the only machine-readable statement of what a downstream consumer received.
 
-**Declaration note.** `imageFormat` on Illustrator is declared `partial` rather than `unsupported`, because `jpg` *is* honored (`exporter.jsx:1126`); only `png24` and `svg` fall back to 8-bit PNG, and only those warn. `imageFormat` on Figma is `partial` for the same reason: `runtime-extract.ts:567,674` exports full-color PNG with alpha, which is exactly `png24`, so `auto` and `png24` land where the user asked and `png` (8-bit), `jpg` and `svg` warn. Warning about a value the surface does produce is the same defect as staying silent about one it does not. Likewise the CLI's rasterization settings are declared `partial` with `paths: ["import"]`, so they warn on `render` and stay silent on `import svg` — footnotes 1 and 2, made executable. `localPreviewTemplate` (D30) is the one place the browser dropzone genuinely diverges from the Node CLI, so `browser` is its own declaration rather than an alias of `cli`.
+**Declaration note.** `imageFormat` on Illustrator is declared `partial` rather than `unsupported`, because `jpg` *is* honored (`illustrator/exporter.jsx#exportArtboardImage`); only `png24` and `svg` fall back to 8-bit PNG, and only those warn. `imageFormat` on Figma is `partial` for the same reason: `figma/src/runtime-extract.ts#exportAsync` is always called with `{format:"PNG"}`, which produces full-color PNG with alpha — exactly `png24` — so `auto` and `png24` land where the user asked and `png` (8-bit), `jpg` and `svg` warn. Warning about a value the surface does produce is the same defect as staying silent about one it does not. Likewise the CLI's rasterization settings are declared `partial` with `paths: ["import"]`, so they warn on `render` and stay silent on `import svg` — footnotes 1 and 2, made executable. `localPreviewTemplate` (D30) is the one place the browser dropzone genuinely diverges from the Node CLI, so `browser` is its own declaration rather than an alias of `cli`.
 
 **Content-dependent cells warn from the emitter — currently a seam with no occupant.** `SettingSupport.warnedByEmitter` exists for the case where a setting is honored for some document content and dead for other content, which a settings-only check cannot decide. D31 (`useLazyLoader`: honored for images, dead for video) was the one live user, and it was fixed rather than declared, so **no declaration carries the field today**. The field and the checker's `continue` on it are kept deliberately: the shape of the problem recurs, and re-deriving it under time pressure is how content-dependent gaps get mis-declared as blanket `unsupported` — which would fire on every export ever made, including the ones that are not broken. See D25's corollary in `product-decisions.md`.
 
@@ -109,9 +109,9 @@ Columns: **IL** = Illustrator script/panel · **AE** = After Effects · **FIG** 
 
 | Feature | IL | AE | FIG | CLI/SVG |
 |---|---|---|---|---|
-| Format `html` | yes (**only** format; hardcoded `extendscript/index.ts:41`) | no¹⁰ | yes | yes |
+| Format `html` | yes (**only** format; hardcoded `src/extendscript/index.ts#emitHTMLString`) | no¹⁰ | yes | yes |
 | Format `standalone` | no (emitter exists, unreachable) | no | yes | yes |
-| Format `svelte` | no | no | no (gated `messages.ts:29`) | yes |
+| Format `svelte` | no | no | no (gated `figma/src/messages.ts#isUiToSandboxMessage`) | yes |
 | Format `react` | no | no | no (same gate) | yes |
 | Tag `:svg` | yes | no | yes | yes (render) / no (import) |
 | Tag inline SVG | yes — `:svg,inline` **or** `:inline` | no | yes — `:svg:inline` **only** | yes (render) / no (import) |
@@ -129,14 +129,14 @@ Columns: **IL** = Illustrator script/panel · **AE** = After Effects · **FIG** 
 | Promo image | yes | no | **DEAD** [D24] | **DEAD** [D25] |
 | Lazy loading | images + video yes [D31 fixed] | no | images + video yes | images + video yes |
 
-10. AE writes HTML, but through no core emitter: `exporter.jsx:1132` splices three literal tokens into its own `player-template.html`. It emits a bespoke `stage/media/layers` model, **not** `ir.json`. `grep -c All2Html` = 0.
+10. AE writes HTML, but through no core emitter: `after-effects/exporter.jsx#buildHtml` splices literal tokens into its own `player-template.html`. It emits a bespoke `stage/media/layers` model, **not** `ir.json`. `grep -c All2Html` = 0.
 11. Code path exists but no tracked fixture contains a `:div` layer — code-verified only.
 12. No exporter or importer ever populates `TextElement.effects`.
 13. Not DEAD: `UNSUPPORTED_TOKENS` in `extract/layers.ts:33` recognizes the tag solely in order to report it (`unsupportedLayerTokenWarning`, `runtime-extract.ts:70`). The tag is ignored and the layer exports as ordinary artwork, so the user is told what happened instead of the parser claiming a layer type the runtime refuses three files later.
 
 ### Tag syntax divergence (exact)
 
-- **Illustrator** (`exporter.jsx:356-372`) — splits on the **first `:`**, lowercases the remainder, exact match, no trimming. Accepts `:svg`, `:svg,inline`, `:inline`, `:png`, `:symbol`, `:div`, `:video`, `:html-before`, `:html-after`. Artboard-name tokens are a *separate* syntax (`name:tok1,tok2`, `key=value`, bare integer).
+- **Illustrator** (`extractLayers` in `plugins/illustrator/exporter.jsx`) — splits on the **first `:`**, lowercases the remainder, exact match, no trimming. Accepts `:svg`, `:svg,inline`, `:inline`, `:png`, `:symbol`, `:div`, `:video`, `:html-before`, `:html-after`. Artboard-name tokens are a *separate* syntax (`name:tok1,tok2`, `key=value`, bare integer).
 - **Figma** (`extract/layers.ts:14-46`) — case-insensitive, matched as **prefix or suffix**, first match wins. Accepts `:svg:inline` but **not** `:svg,inline` or `:inline`. Only direct children of the selected frame are scanned. Frame tokens: `:dynamic`, `:fixed`, `:image-only` (documented) and `:image` (accepted for compatibility), bare integer = width override. `:symbol` and `:div` are recognized only to warn — the layer exports as ordinary artwork.
 - **SVG importer** (`import-core.ts:137-177`) — filename-stem suffixes only: `:dynamic`/`--dynamic`, `:image`/`--image`, `:<int>`/`--<int>`. **No layer tags at all**; every layer is `type:"default"`.
 
@@ -146,10 +146,10 @@ Columns: **IL** = Illustrator script/panel · **AE** = After Effects · **FIG** 
 
 These are unwired features, not dead code. Per decision D16, each needs either a test pinning its intended caller or a deletion that names its replacement.
 
-1. **Text effects → `g-effect{N}` classes.** Fully implemented (`deduplicate-styles.ts:45-64`, applied at `css.ts:156`). **Zero producers** — `TextElement.effects` is never set by any exporter or importer. The only IR carrying it is a hand-written fixture.
+1. **Text effects → `g-effect{N}` classes.** Fully implemented (`deduplicate-styles.ts#effectsToCSS`, applied at `shared/css.ts#effectStyleClasses`). **Zero producers** — `TextElement.effects` is never set by any exporter or importer. The only IR carrying it is a hand-written fixture.
 2. ~~**`src/core/svg-postprocess.ts`** entire.~~ **Resolved by deletion (D16).** Zero importers repo-wide; its `options.idPrefix` was the only implementation that would have satisfied `svgIdPrefix` (D19–D21). Deleted with its test rather than wired: nothing on any surface asked for it, and the `unsupported` declarations are what stop the setting from silently no-opping. Re-implementing means writing prefixing into the emitter that mints the ids and flipping the four declarations in the same change.
 3. **SnippetElement rendering.** Emitters render `data-replaceable` nodes, but no surface emits an element of that type. (Consistent with the v1.1 deferral.)
-4. **The `emit` config block** — `fitMode`, `positionMode: "percentage"`, `allowUnsafeHtml: false`, React `typescript`. **Figma reaches it now**: `plugins/figma/src/config.ts:25` parses `emit` with the canonical `EmitterConfigSchema` — the same schema the CLI reads, not a plugin-local shape — and `export.ts` forwards it as the third argument to `emitAll`. **Illustrator still does not**: `src/extendscript/index.ts:214` calls `emitHTMLString(ready, { artboards, slug })` with no emitter options, so the block is unreachable from the production surface.
+4. **The `emit` config block** — `fitMode`, `positionMode: "percentage"`, `allowUnsafeHtml: false`, React `typescript`. **Figma reaches it now**: `figma/src/config.ts#EmitterConfigSchema` parses `emit` with the canonical schema — the same one the CLI reads, not a plugin-local shape — and `export.ts` forwards it as the third argument to `emitAll`. **Illustrator still does not**: `src/extendscript/index.ts#emitHTMLString` is called as `emitHTMLString(ready, { artboards, slug })` with no emitter options, so the block is unreachable from the production surface.
 5. **`emitHTML` vs `emitHTMLString` reachability.** Illustrator is the sole consumer of the string emitter; CLI, browser, and Figma all use the hast emitter. Any capability added only to the registry path is structurally unreachable from Illustrator.
 
 ---

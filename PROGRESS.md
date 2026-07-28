@@ -152,16 +152,16 @@ Verified against the code and reproduced. These are defects, not limitations —
 
 | What | Where | Effect |
 |---|---|---|
-| `imageFormat: svg`/`png24` → PNG8 on Illustrator | `exporter.jsx:1178-1194` (`exportArtboardImage`) | Wrong format, but no longer silent: the `partial` declaration warns, and the panel select renders both values disabled and labelled "not supported" (`gateOptions`, `ImageSettings.svelte:59`). The exporter branch is unfixed |
-| Illustrator emits HTML only | `src/extendscript/index.ts:214` (`processAndEmit`) | Standalone/Svelte/React unreachable from the production surface, and so is the `emit` options block — the call is `emitHTMLString(ready, { artboards, slug })` with no emitter config. `output: multiple-files` *is* honored (one HTML file per artboard group); only the format is fixed |
-| Figma `:symbol` and `:div` are not implemented | `extract/layers.ts:33`, `runtime-extract.ts:70` | The tag is recognized **only in order to warn**; it is then ignored and the layer exports as ordinary artwork. Not a silent drop and not a rejected layer — the parser no longer claims a layer type the runtime refuses |
+| `imageFormat: svg`/`png24` → PNG8 on Illustrator | `illustrator/exporter.jsx#exportArtboardImage` | Wrong format, but no longer silent: the `partial` declaration warns, and the panel select renders both values disabled and labelled "not supported" (`gateOptions`, `ImageSettings.svelte:59`). The exporter branch is unfixed |
+| Illustrator emits HTML only | `src/extendscript/index.ts#processAndEmit` | Standalone/Svelte/React unreachable from the production surface, and so is the `emit` options block — the call is `emitHTMLString(ready, { artboards, slug })` with no emitter config. `output: multiple-files` *is* honored (one HTML file per artboard group); only the format is fixed |
+| Figma `:symbol` and `:div` are not implemented | `extract/layers.ts#UNSUPPORTED_TOKENS`, `runtime-extract.ts#unsupportedLayerTokenWarning` | The tag is recognized **only in order to warn**; it is then ignored and the layer exports as ordinary artwork. Not a silent drop and not a rejected layer — the parser no longer claims a layer type the runtime refuses |
 
 Fixed on `review/contract-cleanup`, listed so the rows are not re-derived from stale
-notes: element-id collisions (`html-tree.ts:193` now emits `idPrefix + element.id`),
-`output: multiple-files` collapsing for `standalone` (`registry-shared.ts:93` — every
+notes: element-id collisions (`html-tree.ts#idPrefix` now emits `idPrefix + element.id`),
+`output: multiple-files` collapsing for `standalone` (`registry-shared.ts#perGroup` — every
 emitter goes through `perGroup()`), `useLazyLoader` on video (`src/emitters/shared/lazy-video.ts`
 ships the loader on all four formats), the Figma frame token (`IMAGE_ONLY_TOKENS` in
-`extract/frames.ts:24` accepts both `image-only` and `image`), and the stale
+`plugins/figma/src/extract/frames.ts` accepts both `image-only` and `image`), and the stale
 `test/visual/fixture-output/` lane, which was deleted rather than regenerated because
 nothing produced it.
 

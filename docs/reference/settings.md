@@ -619,8 +619,8 @@ Honored on: all2html CLI.
 |---|---|---|
 | Illustrator | **no** | Illustrator emits an HTML fragment only, so the standalone preview template is never applied. |
 | After Effects | n/a | Surface default — see [Surfaces](#surfaces). |
-| Figma plugin | **no** | The browser standalone emitter reads the template only to discard it. |
-| Browser converter | **no** | The browser standalone emitter reads the template only to discard it. |
+| Figma plugin | **no** | The browser standalone emitter has no filesystem to read a template file from. |
+| Browser converter | **no** | The browser standalone emitter has no filesystem to read a template file from. |
 
 ## Not Settings
 

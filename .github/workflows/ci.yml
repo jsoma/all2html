@@ -47,6 +47,11 @@ jobs:
       - name: Verify generated docs are current
         run: pnpm check:generated-docs
 
+      # Every `file:line` / `file#symbol` citation in CLAUDE.md, PROGRESS.md,
+      # SPEC.md and internal-docs/ must still point at code that supports it.
+      - name: Verify doc citations
+        run: pnpm check:doc-citations
+
       - name: Run tests
         run: pnpm test
 

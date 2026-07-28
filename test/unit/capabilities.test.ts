@@ -417,8 +417,23 @@ describe("declarations match what the code actually does", () => {
   });
 
   it("the browser converter diverges from the CLI on localPreviewTemplate only", () => {
-    // Matrix D30 vs the CLI's `yes`: standalone-browser.ts reads the value only
-    // to discard it, while the Node standalone emitter applies it.
+    // Matrix D30 vs the CLI's `yes`: the Node standalone emitter reads the
+    // template off disk, and standalone-browser.ts has no filesystem to read it
+    // from. It does not read the setting *at all* — the only occurrences are in
+    // the comment explaining that the warning belongs to the checker — so this
+    // declaration is the only thing telling the user their template was dropped.
+    // The declaration said "reads the template only to discard it", which the
+    // emitter has never done and which shipped into the user-facing warning and
+    // docs/reference/settings.md.
+    const browserSource = readFileSync(
+      join(repoRoot, "src/emitters/standalone-browser.ts"),
+      "utf-8",
+    );
+    const mentions = browserSource
+      .split("\n")
+      .filter((line) => line.includes("localPreviewTemplate"));
+    expect(mentions.length).toBeGreaterThan(0);
+    expect(mentions.filter((line) => !/^\s*(\*|\/\/|\/\*)/.test(line))).toEqual([]);
     const cli = getSurfaceCapabilities("cli").settings;
     const browser = getSurfaceCapabilities("browser").settings;
     const diverging = Object.keys({ ...cli, ...browser }).filter(
