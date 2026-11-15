@@ -4,55 +4,43 @@
         <loc>https://jsoma.github.io/all2html/</loc>
       </url>
       <url>
-        <loc>https://jsoma.github.io/all2html/install/</loc>
-      </url>
-      <url>
-        <loc>https://jsoma.github.io/all2html/options/illustrator/</loc>
-      </url>
-      <url>
-        <loc>https://jsoma.github.io/all2html/options/after-effects/</loc>
-      </url>
-      <url>
-        <loc>https://jsoma.github.io/all2html/options/figma/</loc>
-      </url>
-      <url>
-        <loc>https://jsoma.github.io/all2html/options/svg-conversion/</loc>
-      </url>
-      <url>
         <loc>https://jsoma.github.io/all2html/examples/</loc>
-      </url>
-      <url>
-        <loc>https://jsoma.github.io/all2html/examples/svg-photo-card/</loc>
-      </url>
-      <url>
-        <loc>https://jsoma.github.io/all2html/examples/responsive-svg/</loc>
-      </url>
-      <url>
-        <loc>https://jsoma.github.io/all2html/examples/dynamic-resizing/</loc>
-      </url>
-      <url>
-        <loc>https://jsoma.github.io/all2html/examples/multi-artboard-responsive/</loc>
-      </url>
-      <url>
-        <loc>https://jsoma.github.io/all2html/examples/mixed-responsiveness/</loc>
       </url>
       <url>
         <loc>https://jsoma.github.io/all2html/examples/custom-blocks/</loc>
       </url>
       <url>
+        <loc>https://jsoma.github.io/all2html/examples/dynamic-resizing/</loc>
+      </url>
+      <url>
         <loc>https://jsoma.github.io/all2html/examples/image-only/</loc>
+      </url>
+      <url>
+        <loc>https://jsoma.github.io/all2html/examples/links-accessibility/</loc>
+      </url>
+      <url>
+        <loc>https://jsoma.github.io/all2html/examples/mixed-responsiveness/</loc>
+      </url>
+      <url>
+        <loc>https://jsoma.github.io/all2html/examples/multi-artboard-responsive/</loc>
+      </url>
+      <url>
+        <loc>https://jsoma.github.io/all2html/examples/responsive-svg/</loc>
       </url>
       <url>
         <loc>https://jsoma.github.io/all2html/examples/special-layers/</loc>
       </url>
       <url>
-        <loc>https://jsoma.github.io/all2html/examples/links-accessibility/</loc>
+        <loc>https://jsoma.github.io/all2html/examples/svg-photo-card/</loc>
       </url>
       <url>
         <loc>https://jsoma.github.io/all2html/examples/todo/</loc>
       </url>
       <url>
         <loc>https://jsoma.github.io/all2html/how-it-works/</loc>
+      </url>
+      <url>
+        <loc>https://jsoma.github.io/all2html/how-it-works/adapters/</loc>
       </url>
       <url>
         <loc>https://jsoma.github.io/all2html/how-it-works/canonical-ir/</loc>
@@ -67,16 +55,34 @@
         <loc>https://jsoma.github.io/all2html/how-it-works/special-layers/</loc>
       </url>
       <url>
-        <loc>https://jsoma.github.io/all2html/reference/settings/</loc>
+        <loc>https://jsoma.github.io/all2html/install/</loc>
       </url>
       <url>
-        <loc>https://jsoma.github.io/all2html/reference/support-matrix/</loc>
+        <loc>https://jsoma.github.io/all2html/options/after-effects/</loc>
+      </url>
+      <url>
+        <loc>https://jsoma.github.io/all2html/options/figma/</loc>
+      </url>
+      <url>
+        <loc>https://jsoma.github.io/all2html/options/illustrator/</loc>
+      </url>
+      <url>
+        <loc>https://jsoma.github.io/all2html/options/svg-conversion/</loc>
+      </url>
+      <url>
+        <loc>https://jsoma.github.io/all2html/reference/bundle-manifest/</loc>
       </url>
       <url>
         <loc>https://jsoma.github.io/all2html/reference/formats/</loc>
       </url>
       <url>
         <loc>https://jsoma.github.io/all2html/reference/ir-schema/</loc>
+      </url>
+      <url>
+        <loc>https://jsoma.github.io/all2html/reference/settings/</loc>
+      </url>
+      <url>
+        <loc>https://jsoma.github.io/all2html/reference/support-matrix/</loc>
       </url>
       <url>
         <loc>https://jsoma.github.io/all2html/troubleshooting/</loc>
