@@ -1436,7 +1436,7 @@ function exportImages(doc, artboards, settings) {
           name: ab.source && ab.source.name ? ab.source.name : ab.name
         },
         exportParams: {
-          format: format,
+          format: format === "jpg" ? "jpg" : "png",
           scale: settings.use2xImages ? 2 : 1,
           transparent: settings.pngTransparent || false,
           quality: resolveJpgQuality(settings),
@@ -1928,6 +1928,21 @@ function normalizeIllustratorInputs(docSettings, fonts, docName) {
   };
 }
 
+// The CEP bridge can deliver JSON wrapped in another JSON string. Validate the
+// decoded shape before iterating it, or strings become character-index settings
+// and fonts (and the user's export silently falls back to defaults).
+function parsePanelPayload(raw, expectArray) {
+  var value = raw;
+  for (var depth = 0; depth < 2 && typeof value === "string"; depth++) {
+    value = JSON.parse(value);
+  }
+  var isArray = Object.prototype.toString.call(value) === "[object Array]";
+  if (!value || typeof value !== "object" || isArray !== expectArray) {
+    throw new Error("Expected panel " + (expectArray ? "fonts array" : "settings object"));
+  }
+  return value;
+}
+
 function runExporter() {
   // Reset global state (ExtendScript may persist globals across runs)
   warnings = [];
@@ -1982,7 +1997,7 @@ function runExporter() {
         panelFile.encoding = "UTF-8";
         var panelSettingsRaw = panelFile.read();
         panelFile.close();
-        panelSettings = JSON.parse(panelSettingsRaw);
+        panelSettings = parsePanelPayload(panelSettingsRaw, false);
       }
     }
   } catch(e) {
@@ -1992,7 +2007,7 @@ function runExporter() {
   // CEP panel font injection
   try {
     if ($.global.__ALL2HTML_PANEL_FONTS__) {
-      var panelFonts = JSON.parse($.global.__ALL2HTML_PANEL_FONTS__);
+      var panelFonts = parsePanelPayload($.global.__ALL2HTML_PANEL_FONTS__, true);
       if (panelFonts && panelFonts.length > 0) {
         for (var fi = 0; fi < panelFonts.length; fi++) {
           var pf = panelFonts[fi];
@@ -2118,7 +2133,7 @@ function runExporter() {
     source: {
       tool: "illustrator",
       toolVersion: app.version,
-      adapterVersion: "0.1.0"
+      adapterVersion: "0.1.2"
     },
     settings: canonicalIrSettings,
     fonts: inputs.fonts,

@@ -86,7 +86,8 @@ export interface FakeDocumentSpec {
   /** Written to `<path>/all2html.config.json` before the run. */
   configFile?: Record<string, unknown>;
   /** Delivered the way the CEP panel delivers it: a temp file the exporter reads. */
-  panelSettings?: Record<string, unknown>;
+  panelSettings?: Record<string, unknown> | string;
+  panelFonts?: unknown[] | string;
 }
 
 export interface RecordedExport {
@@ -412,6 +413,7 @@ export function runIllustratorExporter(spec: FakeDocumentSpec = {}): ExporterRun
 
   const globalScope: Record<string, unknown> = { ALL2HTML_AUTOMATED: true };
   if (spec.panelSettings) globalScope.__ALL2HTML_PANEL_SETTINGS_PATH__ = panelSettingsPath;
+  if (spec.panelFonts) globalScope.__ALL2HTML_PANEL_FONTS__ = JSON.stringify(spec.panelFonts);
   const dollar = { global: globalScope, writeln(): void {} };
 
   const constant = (name: string) =>

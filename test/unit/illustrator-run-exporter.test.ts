@@ -77,6 +77,37 @@ describe("the output directory the exporter writes to is constructed", () => {
  * and the settings it *persists* come from the same validated object.
  */
 describe("one validated settings source feeds both ir.json and the export run", () => {
+  it("decodes wrapped panel settings and fonts before exporting", () => {
+    const result = run({
+      panelSettings: JSON.stringify({ image_format: "png", png_transparent: true }),
+      panelFonts: JSON.stringify([{ sourceFont: "ArialMT", family: "Arial" }]),
+    });
+    const validated = loadAndValidateIR(result.irDocument);
+    expect(validated.settings.pngTransparent).toBe(true);
+    expect(result.exports[0].options.transparency).toBe(true);
+    expect(validated.fonts).toEqual([{ sourceFont: "ArialMT", family: "Arial" }]);
+    expect(Object.values(validated.assets)[0].exportParams?.transparent).toBe(true);
+  });
+
+  it.each(["svg", "png24"])("records the actual PNG format when %s falls back", (format) => {
+    const result = run({ panelSettings: { image_format: format } });
+    const validated = loadAndValidateIR(result.irDocument);
+    expect(validated.settings.imageFormat).toEqual([format]);
+    expect(result.exports[0].type).toBe("ExportType.PNG8");
+    expect(Object.values(validated.assets)[0].exportParams?.format).toBe("png");
+    expect(result.envelope.structuredWarnings.some((w) => w.code === "setting:unsupported")).toBe(
+      true,
+    );
+  });
+
+  it("warns about a panel fonts object instead of interpreting it as a list", () => {
+    const result = run({ panelFonts: JSON.stringify({ length: 1, 0: "]" }) });
+    expect(loadAndValidateIR(result.irDocument).fonts).toEqual([]);
+    expect(
+      result.envelope.structuredWarnings.some((w) => w.code === "font:panel-injection-failed"),
+    ).toBe(true);
+  });
+
   it("repairs project_name before writing it, and names the files with the repair", () => {
     const result = run({ settingsBlock: { project_name: "../../pwn" } });
 

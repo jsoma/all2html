@@ -1,7 +1,7 @@
 import type { CEP_Config } from "vite-cep-plugin";
 
 const config: CEP_Config = {
-  version: "0.1.1",
+  version: "0.1.2",
   id: "com.all2html.panel",
   displayName: "all2html",
   symlink: "local",

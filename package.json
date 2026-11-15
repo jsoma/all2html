@@ -1,6 +1,6 @@
 {
   "name": "all2html",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Plugin-based system for converting design tool documents into responsive HTML",
   "type": "module",
   "main": "./dist/index.js",
